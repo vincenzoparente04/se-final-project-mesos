@@ -1,7 +1,5 @@
 package model.board;
 
-
-
 // Box for the totem
 public class OfferTile {
     private final char letter;
