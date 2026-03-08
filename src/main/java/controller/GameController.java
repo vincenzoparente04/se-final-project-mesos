@@ -1,6 +1,12 @@
 package controller;
 
+import controller.endGame.EndOfGameManager;
+import controller.endOfRound.EndOfRoundManager;
+import controller.round.RoundManager;
+import controller.setup.SetupManager;
 import model.GameModel;
+import view.GameView;
+
 import java.util.List;
 
 // GameController: pure orchestrator, no game logic, only calls methods in the correct order
