@@ -52,7 +52,7 @@ public class tribe {
     public int getTotalCharacterCount()
 
 
-    //used by EventResolver and EndOfGameManager to find "active" buildings in that moment
+    // used by EventResolver and EndOfGameManager to find "active" buildings in that moment
     public List<BuildingCard> getBuildingsWithTrigger(BuildingEffectTrigger trigger)
 
 
