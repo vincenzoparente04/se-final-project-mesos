@@ -1,13 +1,21 @@
 package model;
 
+import javafx.beans.Observable;
 import model.board.Board;
 import model.deck.BuildingDeck;
+import model.deck.TribeDeck;
+import model.enums.Era;
+import model.enums.GamePhase;
+import model.enums.GameState;
+import model.player.Player;
+
+import java.util.List;
 
 public class GameModel extends Observable {
 
     // board components
     private final Board board;
-    private final TribeDeck tribeDeck;
+    private TribeDeck tribeDeck;
     private final BuildingDeck buildingDeckEraI;
     private final BuildingDeck buildingDeckEraII;
     private final BuildingDeck buildingDeckEraIII;
@@ -29,7 +37,7 @@ public class GameModel extends Observable {
 
     // getter for players
     public List<Player> getPlayers()
-    public Player getPlayerByColor(PlayerColor color) // REFACTOR
+    //public Player getPlayerByColor(PlayerColor color) // REFACTOR
     public int getPlayerCount()
 
     // getter for game state

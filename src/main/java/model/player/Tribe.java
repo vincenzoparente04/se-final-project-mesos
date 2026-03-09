@@ -1,6 +1,12 @@
 package model.player;
 
-public class tribe {
+import model.cards.BuildingCard;
+import model.cards.CharacterCard;
+import model.enums.CharacterType;
+
+import java.util.List;
+
+public class Tribe {
     // flat list of all the cards in the tribe, listed in order of recruitment
     // (first recruited → first in the list)
     private final List<CharacterCard> characters;

@@ -1,8 +1,14 @@
 package model.deck;
 
+import model.cards.TribeCard;
+import model.enums.Era;
+
+import java.util.Deque;
+import java.util.List;
+
 public class TribeDeck {
     // Deque: always draw from the top
-    private final Deque<TribeCard> cards;
+    private Deque<TribeCard> cards;
 
     // keep track of the current Era based on the last card drawn
     private Era currentEra;
