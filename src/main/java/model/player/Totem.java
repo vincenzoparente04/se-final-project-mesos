@@ -1,8 +1,9 @@
 package model.player;
 
 import model.enums.TotemColor;
+import model.enums.TotemLocation
 
-public class totem {
+public class Totem {
     private final Player owner;
     // where it is physically located: on the TurnOrderTile or on which OrderTile
     private TotemLocation location;
@@ -16,6 +17,7 @@ public class totem {
 
     //getter
     public Player getOwner()
+    public TotemColor getColor()
     public TotemLocation getLocation()
 
     //setter

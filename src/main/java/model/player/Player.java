@@ -1,15 +1,15 @@
 package model.player;
 
-public class player {
-    private final string name;
+import model.enums.TotemColor;
+
+
+public class Player {
+    private final String name;
     private final Totem totem;
     private final Tribe tribe;
     private int food;
     private int prestigePoints;
 
-    // -- constructor --
-    // creates the totem associated to the player and initializes the tribe, food and prestige points
-    public void Player(String name, PlayerColor color)
 
     // -- food --
     public int getFood()
@@ -30,5 +30,5 @@ public class player {
 
     public Totem getTotem()
     public String getName()
-    public PlayerColor getColor()
+    public TotemColor getColor()
 }

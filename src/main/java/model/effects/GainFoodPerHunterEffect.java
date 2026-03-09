@@ -1,5 +1,9 @@
 package model.cards;
 
+import model.GameModel;
+import model.enums.CharacterType;
+import model.player.Player;
+
 public class GainFoodPerHunterEffect implements ImmediateEffect {
     @Override
     public void apply(Player player, GameModel model) {
