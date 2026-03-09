@@ -2,8 +2,6 @@ package model.player;
 
 public class player {
     private final string name;
-    // ###serve il color?
-    private final PlayerColor color;
     private final Totem totem;
     private final Tribe tribe;
     private int food;

@@ -56,7 +56,7 @@ public class tribe {
     public List<BuildingCard> getBuildingsWithTrigger(BuildingEffectTrigger trigger)
 
 
-    // -- query for the View -- 
+    // -- query for the View --
     // groups cards by characterType, used by the view to display them in the correct position in the tribe
     public Map<CharacterType, List<CharacterCard>> getCharactersByCharactersType()
 }
