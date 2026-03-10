@@ -1,4 +1,8 @@
-package model.cards;
+package model.effects;
+
+
+import model.GameModel;
+import model.player.Player;
 
 public interface BuildingEffect {
     BuildingEffectTrigger getTrigger();

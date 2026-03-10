@@ -1,5 +1,7 @@
 package model.cards;
 
+import model.effects.ImmediateEffect;
+
 // it's a group of cards which include character e event cards, wich are the types of cards in the deck
 public abstract class TribeCard extends Card {
     // returns the effect to apply when a player recruits this card. Null if it has no effect.

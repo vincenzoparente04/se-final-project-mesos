@@ -1,5 +1,8 @@
 package model.cards;
 
+import model.effects.BuildingEffect;
+
+
 public class BuildingCard extends Card {
     private final int foodCost;         // base cost in Food
     private final int endGamePoints;    // PP guaranteed at the end of the game
