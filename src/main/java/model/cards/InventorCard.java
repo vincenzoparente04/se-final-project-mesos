@@ -1,5 +1,7 @@
 package model.cards;
 
+import model.enums.InventionIcon;
+
 public class InventorCard extends CharacterCard {
     private final InventionIcon inventionIcon;
 

@@ -1,5 +1,8 @@
 package model.cards;
 
+import model.enums.CardType;
+import model.enums.Era;
+
 public abstract class Card {
     private final int id;
     private final Era era;           // ERA_I, ERA_II, ERA_III

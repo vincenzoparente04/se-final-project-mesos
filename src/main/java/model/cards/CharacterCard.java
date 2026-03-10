@@ -1,5 +1,7 @@
 package model.cards;
 
+import model.enums.CharacterType;
+
 // adds the character type to the card, which is used for the end game scoring.
 // the classification of card type is kept separated between character, event and building
 public abstract class CharacterCard extends TribeCard {
