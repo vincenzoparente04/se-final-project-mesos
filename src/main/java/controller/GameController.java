@@ -9,7 +9,7 @@ import java.util.List;
 
 
 public class GameController {
-    private GameModel gameModel;
+    private final GameModel gameModel;
 
     public GameController(GameModel gameModel) {
         this.gameModel = gameModel;
