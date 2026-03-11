@@ -1,5 +1,7 @@
 package model.board;
 
+import model.player.Totem;
+
 // Box for the totem
 public class OfferTile {
     private final char letter;
