@@ -15,8 +15,19 @@ public class Player {
     public int getFood()
     public void addFood(int amount)
 
-    // Controller checks that the player has enough food before calling removeFood
-    public void removeFood(int amount)
+    // viene passato il cibo e il moltiplicatore di aura da pagare (se non ho abbastanza cibo), il metodo
+    // controlla se ho abbastanza cibo -> false allora toglie tutto il cibo disponibile e chiama remove aura
+    // usando il moltiplicatore per le restanti risorse da togliere
+    // quando devo pagare solo cibo il multiplier = 0
+    public void removeFood(int amount, int prestigePointsMultiplier) {
+        int temp = getFood();
+        if(amount <= temp) { food -= amount; }
+        else {
+            food -= temp;
+            removePrestigePoints((amount - temp) * prestigePointsMultiplier);
+        }
+
+    }
 
     // -- prestige points --
     public int getPrestigePoints()
