@@ -16,10 +16,12 @@ public class GameController {
     }
 
     //functions to be called by client
-    public void startGame(List<Player> players) {} //da capire come viene creata la partita. Come il client ci interagisce
+    public void startGame(List<Player> players) {
+        gameModel.startGame();
+    } //da capire come viene creata la partita. Come il client ci interagisce
 
     public void placeTotem(Player player, OfferTile offerTile) {
-        //delega gameModel.placeModel()
+        gameModel.placeTotem(player, offerTile);
     }
     public void drawCard(Player player, Card card) {
         //delega a gameModel.drawCard()

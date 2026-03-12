@@ -1,22 +1,39 @@
 package model.board;
 
+import model.player.Player;
+import model.player.Totem;
+
+import java.util.List;
+
 // First tile of the track that determines the turn order for the next round and gives food bonuses to players based on their position
 public class TurnOrderTile {
     private final int playerCount; // number of players in the game
-    private final List<Totem> slots;
-    // slots.get(0) = first place (who goes first in the next round)
-    // slots.get(playerCount-1) = last place (food penalty)
+    private List<Totem> slots;
 
 
     public TurnOrderTile(int playerCount)
+
+    public void setup(int playerCount)
+    // configura il numero di slot corretti
+
+    public void placeTotemAtSlot(Totem totem, int slotIndex){
+    }
+
+    // returns the turn order for the next round
+    // it is simply the order of the slots from top to bottom
+    public List<Player> getTurnOrder(){}
+
+
+
+
+
+
 
     // place back the totems from the first available slot from the top to the bottom
     // called by the Controller after a player resolves their action
     public void placeBackTotem(Totem totem)
 
-    // returns the turn order for the next round
-    // it is simply the order of the slots from top to bottom
-    public List<Totem> getTurnOrder()
+
 
     // get the last placed totem — used by the Controller to apply the penalty
     public Totem getLastPlacedTotem()

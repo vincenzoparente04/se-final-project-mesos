@@ -11,6 +11,9 @@ public class TopRow {
     public void addTribeCard(TribeCard card)
     public void addBuildingCard(BuildingCard card)
 
+
+
+
     // removes and returns the TribeCard that need to go down to the BottomRow
     // the BuildingCard remain in the TopRow
     // REFACTOR: BISOGNA FARE LO STESSO PER I BUILDINGS QUANDO C'E' UNA NUOVA ERA

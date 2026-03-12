@@ -22,25 +22,97 @@ public class GameModel extends Observable {
     private BuildingDeck buildingDeckEraII;
     private BuildingDeck buildingDeckEraIII;
     private final List<Player> players;
+    private int playerCount;
+    private Player currentPlayer;
+    private int currentPlayerIndex;
 
     private GamePhase currentPhase;
     private GameState gameState;
     private int currentRound;
     private Era currentEra;
 
-    // setup phase -------------------------------------------------
-    public void initializeGame(List<String> playerNames)
-    // create players, create decks using CardFactory
-    // calls board.setup()
-    // distributes food and PP
-    // randomize the players' order
-    // then setPhase(PLACEMENT)
+    // setup phase -----------------------------------------------------------------------------------------------------
+    public void startGame(List<String> playerNames){
+        createPlayers(playerNames);
+        tribeDeck.initializeDeck(allCards, playerCount); // vedi in che classe sarà la lista completa delle carte (meglio tenerla in tribeDeck e passaresolo playerCount)
+        buildingDeckEraI.initializeDeck(playerCount);
+        buildingDeckEraII.initializeDeck(playerCount);
+        buildingDeckEraIII.initializeDeck(playerCount);
+        board.setupBoard(tribeDeck, buildingDeckEraI, playerCount);
+        randomizeTurnOrder();
+        distributeFood();
+        distributePP();
+        // then setPhase(PLACEMENT) con notifyChange("phase_changed")
+    }
 
-    // placement phase (actions called by the Controller ---------------------
-    public boolean canPlaceTotem(Player player, OfferTile tile)
-    public void placeTotem(Player player, OfferTile tile)
-    // delegates to board.getOfferTrack().placeTotem()
-    // if all totem are placed: setPhase(ACTION)
+    // placement phase (actions called by the Controller) --------------------------------------------------------------
+    // Il trigger è la View che riceve "phase_changed" e abilita l'interazione per currentPlayer.
+    // L'utente tocca una casella dell'OfferTrack.
+    // 1. valida la mossa
+    // 2. esegue il piazzamento
+    // 3. avanza il turno o cambia fase
+    public void placeTotem(Player player, OfferTile offerTile){
+        canPlaceTotem(player, tile);
+        board.getOfferTrack().placeTotem(player.getTotem(), offerTile);
+        notifyChange("totem_placed");
+        advancePlacementTurn();
+    }
+
+    // action phase (actions called by the Controller) -----------------------------------------------------------------
+
+
+    // HELPERS - setup phase
+    private List<Player> createPlayers(List<String> playerNames){
+        // chiama public Player(String name, PlayerColor color)
+        //      che farà new Tribe() e new Totem()
+    }
+    private void distributeFood(){
+        player.addFood() // per ogni giocatore
+    }
+    private void distributePP(){
+        player.addPP() // per ogni giocatore
+    }
+    private void randomizeTurnOrder(){
+        board.getTurnOrderTile().placeTotemAtSlot(player.getTotem(), index);
+        player.getTotem.setLocation();
+        // chiamerà:
+        // turnOrderTile.placeTotemAtSlot();
+        // player.totem.setLocation()
+        // TODO da implementare
+    }
+
+
+    // HELPERS - placement phase
+    public boolean canPlaceTotem(Player player, OfferTile tile){
+        // Controlla:
+        //player == currentPlayer          // è il turno di questo giocatore?
+        //currentPhase == PLACEMENT        // siamo nella fase giusta?
+        //tile.isOccupied()                // la casella è libera?
+        //player.getTotem().getLocation()  // il Totem è disponibile?
+        //    == TotemLocation.TURN_ORDER_TILE
+    }
+    private void advancePlacementTurn(){
+        List<Player> order = board.getTurnOrderTile().getTurnOrder();
+        currentPlayerIndex++;
+
+        if(currentPlayerIndex < order.size()){
+            currentPlayer = order.get(currentPlayerIndex);
+            notifyChange("turn_changed");
+        }
+        if(currentPlayerIndex >= order.size()){
+            setPhase(GamePhase.ACTION);
+            currentPlayerIndex = 0;
+            currentPlayer = getFirstPlayerInActionPhase();
+            notifyChange("phase_changed")
+        }
+    }
+    private Player getFirstPlayerInActionPhase(){
+        board.getOfferTrack().getOccupiedTilesInOrder().get(0).getOccupant().getOwner();
+    }
+
+
+    // CODICE PRECEDENTE -----------------------------------------------------------------------------------------------
+
 
     // action phase (called by the Controller)
     public boolean canDrawCard(Player player, Card card)
@@ -93,4 +165,6 @@ public class GameModel extends Observable {
 
     private boolean isGameOver()
     // currentRound > 10 || tribeDeck.isEmpty()
+
+
 }

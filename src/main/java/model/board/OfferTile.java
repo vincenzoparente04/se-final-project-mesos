@@ -11,8 +11,13 @@ public class OfferTile {
 
     public boolean isOccupied()
     public void placeTotem(Totem totem)
-    public void removeTotem()
     public Totem getOccupant()
+
+
+
+
+
+    public void removeTotem()
     public OfferTileAction getAction()
     public int getFoodBonus()
     public char getLetter()
