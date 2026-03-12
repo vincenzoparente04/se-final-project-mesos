@@ -1,10 +1,18 @@
 package model.deck;
 
+import model.cards.BuildingCard;
+import model.enums.Era;
+
+import java.util.List;
+
 public class BuildingDeck {
-    private final Era era;
-    private final List<BuildingCard> cards;
+    private Era era;
+    private List<BuildingCard> cards;
 
     //setup
+    public void initializeDeck(int playerCount){
+    }
+    public BuildingDeck(Era era){}
     public void addCard(BuildingCard card)
 
     //access

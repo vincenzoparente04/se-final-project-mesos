@@ -5,22 +5,42 @@ package model.board;
 // responsible for applying the game logic and mutating the state of the board accordingly; the View is responsible for
 // displaying the current state of the board.
 
+import model.deck.BuildingDeck;
+import model.deck.TribeDeck;
+import model.player.Player;
+import model.player.Totem;
+
 public class Board {
     private final OfferTrack offerTrack;
     private final TurnOrderTile turnOrderTile;
-    private final TopRow topRow;
-    private final BottomRow bottomRow;
+    private TopRow topRow;
+    private BottomRow bottomRow;
 
-    public OfferTrack getOfferTrack(){
+    public OfferTrack getOfferTrack() {
         return offerTrack;
     }
-    public TurnOrderTile getTurnOrderTile(){
+
+    public TurnOrderTile getTurnOrderTile() {
         return turnOrderTile;
     }
-    public TopRow getTopRow(){
-        return topRow;
+
+    public void setupBoard(TribeDeck tribeDeck, BuildingDeck buildingDeckEraI, int playerCount){
+        turnOrderTile.setup(playerCount);
+        offerTrack.setup(playerCount);
+        populateBottomRow(tribeDeck, playerCount);
+        populateTopRow(tribeDeck, buildingDeckEraI, playerCount);
     }
-    public BottomRow getBottomRow(){
-        return bottomRow;
+
+    public void placeTotem(Totem totem, OfferTile offerTile) {
+        offerTile.placeTotem(totem);
+    }
+
+    // helpers:
+    private void populateBottomRow(TribeDeck tribeDeck, int playerCount){
+        tribeDeck.draw(); // in loop
+    }
+    private void populateTopRow(TribeDeck tribeDeck, BuildingDeck buildingDeckI, int playerCount){
+        tribeDeck.draw(); // in loop
+        buildingDeckI.drawAll();
     }
 }

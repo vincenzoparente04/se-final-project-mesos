@@ -1,6 +1,9 @@
 package model.board;
 
 
+import model.cards.BuildingCard;
+import model.cards.TribeCard;
+
 // Bottom row of the market, where players can recruit cards from
 // the TribeCard are discarded at the end of the round
 // the BuildingCard remain
@@ -11,6 +14,8 @@ public class BottomRow {
 
     public void addTribeCard(TribeCard card)
     public void addBuildingCard(BuildingCard card)
+
+
 
     // gets or returns only the EventCard present — needed by the Controller to resolve them
     public List<EventCard> getEvents()
