@@ -23,7 +23,7 @@ public class Tribe {
     // -- query for type --
     // used by EventResolver, CostCalculator, calculateEndGamePoints
 
-    public int countByType(CharacterType type)
+    public int countByType(CharacterType type) {}
 
     // returns all the CharacterCard of the specified type, listed in order of recruitment
     // ###potrebbe non servire
@@ -33,7 +33,7 @@ public class Tribe {
     // -- query for specific types --
     // sums all the stars of the ShamanCard in the tribe used by EventResolver during
     // Shamanic Ritual
-    public int getTotalShamanStars()
+    public int getTotalShamanStars(){}
 
     // sums the discounts of all the BuilderCard used by CostCalculator when a player wants
     // to take a Building
@@ -48,6 +48,10 @@ public class Tribe {
 
     // used by EventResolver during Sustenance
     public int countGatherers()
+
+    // dice lo sconto durente l'evento dovuto ai raccoglitori -> rende inutile countGatherers
+    // numRaccoglitori * 3
+    public int getTotalGatherersDiscount(){}
 
 
     // -- query for set (used by some buildingCard) --

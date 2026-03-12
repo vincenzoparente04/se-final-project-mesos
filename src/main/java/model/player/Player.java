@@ -37,7 +37,7 @@ public class Player {
 
     // The Tribe is directly exposed: the Controller queries it and adds cards through
     // tribe.addCharacter() or tribe.addBuilding()
-    public Tribe getTribe()
+    public Tribe getTribe(){}
 
     public Totem getTotem()
     public String getName()
