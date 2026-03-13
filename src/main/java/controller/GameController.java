@@ -20,6 +20,11 @@ public class GameController {
         gameModel.startGame();
     } //da capire come viene creata la partita. Come il client ci interagisce
 
+    /**
+     * @implNote Is called by the clients and forwards the request to the gameModel.
+     * @param player
+     * @param offerTile
+     */
     public void placeTotem(Player player, OfferTile offerTile) {
         gameModel.placeTotem(player, offerTile);
     }

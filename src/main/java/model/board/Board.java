@@ -31,8 +31,14 @@ public class Board {
         populateTopRow(tribeDeck, buildingDeckEraI, playerCount);
     }
 
-    public void placeTotem(Totem totem, OfferTile offerTile) {
-        offerTile.placeTotem(totem);
+    /**
+     * @implNote delegate the placeTotem implementation to the offerTrack
+     * @param totem
+     * @param offerTile
+     * @throws Exception
+     */
+    public void placeTotem(Totem totem, OfferTile offerTile) throws Exception {
+        offerTrack.placeTotem(totem, offerTile);
     }
 
     // helpers:
