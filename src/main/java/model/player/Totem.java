@@ -21,5 +21,7 @@ public class Totem {
     public TotemLocation getLocation()
 
     //setter
-    public void setLocation(TotemLocation location)
+    public void setLocation(TotemLocation location){
+        this.location = location;
+    }
 }

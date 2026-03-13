@@ -9,8 +9,15 @@ public class OfferTile {
     private final int foodBonus;           // 0 if no bonus
     private Totem occupant;                // null if free
 
-    public boolean isOccupied()
-    public void placeTotem(Totem totem)
+    public boolean isOccupied(){
+        return occupant != null;
+    }
+
+    public void placeTotem(Totem totem){
+        this.occupant = totem;
+    }
+
+
     public Totem getOccupant()
 
 

@@ -51,10 +51,33 @@ public class GameModel extends Observable {
     // 1. valida la mossa
     // 2. esegue il piazzamento
     // 3. avanza il turno o cambia fase
+    //TODO: -decide if we're gonna recive the objects player and offerTile from the controller or if we're gonna find them by their IDs here or in the subclasses
+    //TODO: -decide how to handle the exceptions, how to call them
+    /**
+     * @implNote Validate the placeTotemAction, then delegates to the board the placeTotem implementation. At the end notifies the changes and updates the placement turn phase.
+     * @param player
+     * @param offerTile
+     */
     public void placeTotem(Player player, OfferTile offerTile){
-        canPlaceTotem(player, tile);
-        board.getOfferTrack().placeTotem(player.getTotem(), offerTile);
+
+        //validate the move
+        try {
+            canPlaceTotem(player, tile);
+        }catch(Exception e){
+            //how to handle the exceptions?
+        }
+
+        //place the totem on the offer tile
+        try{
+            board.placeTotem(player.getTotem(), offerTile);
+        }catch(Exception e){
+            //how to handle the exception?
+        }
+
+        //notifies change
         notifyChange("totem_placed");
+
+        //update the placement turn phase
         advancePlacementTurn();
     }
 
@@ -83,13 +106,29 @@ public class GameModel extends Observable {
 
 
     // HELPERS - placement phase
-    public boolean canPlaceTotem(Player player, OfferTile tile){
+    public boolean canPlaceTotem(Player player, OfferTile tile) throws Exception{
         // Controlla:
         //player == currentPlayer          // è il turno di questo giocatore?
         //currentPhase == PLACEMENT        // siamo nella fase giusta?
         //tile.isOccupied()                // la casella è libera?
         //player.getTotem().getLocation()  // il Totem è disponibile?
         //    == TotemLocation.TURN_ORDER_TILE
+
+        //player is currentPlayer
+        if(player != currentPlayer){
+            throw new Exception("It's not your turn!");
+        }
+
+        //currentPhase== PLACEMENT;
+        if(currentPhase != GamePhase.PLACEMENT){
+            throw new Exception("It's not the placement phase!");
+        }
+
+        //player.getTotem().getLocation() == TotemLocation.TURN_ORDER_TILE;
+        if(currentPlayer.getTotem().getLocation() != TotemLocation.TURN_ORDER_TILE){
+            throw new Exception("Your totem is already on the offer track");
+        }
+
     }
     private void advancePlacementTurn(){
         List<Player> order = board.getTurnOrderTile().getTurnOrder();
