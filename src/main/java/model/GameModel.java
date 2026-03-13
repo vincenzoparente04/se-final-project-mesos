@@ -11,8 +11,14 @@ import model.deck.TribeDeck;
 import model.enums.Era;
 import model.enums.GamePhase;
 import model.enums.GameState;
+import model.enums.TotemColor;
 import model.player.Player;
+import model.player.Totem;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 public class GameModel extends Observable {
 
@@ -21,7 +27,7 @@ public class GameModel extends Observable {
     private BuildingDeck buildingDeckEraI;
     private BuildingDeck buildingDeckEraII;
     private BuildingDeck buildingDeckEraIII;
-    private final List<Player> players;
+    private List<Player> players;
     private int playerCount;
     private Player currentPlayer;
     private int currentPlayerIndex;
@@ -31,18 +37,17 @@ public class GameModel extends Observable {
     private int currentRound;
     private Era currentEra;
 
+    // color choosing phase
+    private Set<TotemColor> availableColors;
+    private int colorChoosingPlayerIndex;
+    private Player colorChoosingPlayer;
+
     // setup phase -----------------------------------------------------------------------------------------------------
     public void startGame(List<String> playerNames){
         createPlayers(playerNames);
-        tribeDeck.initializeDeck(allCards, playerCount); // vedi in che classe sarà la lista completa delle carte (meglio tenerla in tribeDeck e passaresolo playerCount)
-        buildingDeckEraI.initializeDeck(playerCount);
-        buildingDeckEraII.initializeDeck(playerCount);
-        buildingDeckEraIII.initializeDeck(playerCount);
-        board.setupBoard(tribeDeck, buildingDeckEraI, playerCount);
-        randomizeTurnOrder();
-        distributeFood();
-        distributePP();
-        // then setPhase(PLACEMENT) con notifyChange("phase_changed")
+        initializeColorChoosing();
+        // Players will now send their color choices via chooseColor(player, color)
+        // Once all have chosen, completeSetup() will be automatically called
     }
 
     // placement phase (actions called by the Controller) --------------------------------------------------------------
@@ -88,12 +93,103 @@ public class GameModel extends Observable {
     private List<Player> createPlayers(List<String> playerNames){
         // chiama public Player(String name, PlayerColor color)
         //      che farà new Tribe() e new Totem()
+
+        //this.players = new ArrayList<>();
+        for (String name : playerNames) {
+            players.add(new Player(name));
+        }
+        return players;
     }
+
+
+    /**
+     * Called by the Controller when a Player sends their color choice through client-server communication.
+     * Validates the choice, assigns the totem color, and advances to the next player.
+     *
+     * @param player The player making the choice
+     * @param color The totem color chosen by the player
+     * @throws IllegalStateException if it's not the player's turn to choose or color is unavailable
+     */
+    public void chooseColor(Player player, TotemColor color) throws IllegalStateException {
+        // Validate: is it this player's turn to choose?
+        if (player != colorChoosingPlayer) {
+            throw new IllegalStateException(
+                "It's not " + player.getName() + "'s turn to choose a color. " +
+                "Waiting for " + colorChoosingPlayer.getName()
+            );
+        }
+
+        // Validate: is the color available?
+        if (!availableColors.contains(color)) {
+            throw new IllegalStateException(
+                "Color " + color + " is not available. Available colors: " + availableColors
+            );
+        }
+
+        // Assign the totem to the player with the chosen color
+        player.setTotem(new Totem(player, color));
+
+        // Remove the color from available pool
+        availableColors.remove(color);
+
+        // Notify observers about the color assignment
+        notifyChange("color_chosen:" + player.getName() + ":" + color);
+
+        // Advance to next player's color choice or start the game
+        advanceColorChoosingTurn();
+    }
+
+    /**
+     * Initialize the color choosing phase.
+     * Called from startGame() before actual game setup.
+     */
+    private void initializeColorChoosing() {
+        // Create a mutable set of all available colors (all enum values)
+        availableColors = EnumSet.allOf(TotemColor.class);
+
+        // Start with the first player
+        colorChoosingPlayerIndex = 0;
+        colorChoosingPlayer = players.get(colorChoosingPlayerIndex);
+
+        // Notify that color choosing phase has started
+        notifyChange("color_choosing_started:" + colorChoosingPlayer.getName());
+    }
+
+    /**
+     * Advance to the next player's turn to choose a color.
+     * When all players have chosen, proceed with game setup.
+     */
+    private void advanceColorChoosingTurn() {
+        colorChoosingPlayerIndex++;
+
+        // Check if there are more players to choose
+        if (colorChoosingPlayerIndex < players.size()) {
+            colorChoosingPlayer = players.get(colorChoosingPlayerIndex);
+            notifyChange("color_choosing_next:" + colorChoosingPlayer.getName());
+        } else {
+            // All players have chosen their colors - now complete the setup
+            notifyChange("color_choosing_completed");
+            completeSetup();
+        }
+    }
+
+    /**
+     * Complete the game setup after all players have chosen their colors.
+     * This initializes all decks, the board, and starts the game.
+     */
+    private void completeSetup() {
+        tribeDeck.initializeDeck(playerCount);
+        buildingDeckEraI.initializeDeck(playerCount);
+        buildingDeckEraII.initializeDeck(playerCount);
+        buildingDeckEraIII.initializeDeck(playerCount);
+        board.setupBoard(tribeDeck, buildingDeckEraI, playerCount);
+        randomizeTurnOrder();
+        distributeFood();
+        setPhase(GamePhase.PLACEMENT);
+    }
+
     private void distributeFood(){
         player.addFood() // per ogni giocatore
-    }
-    private void distributePP(){
-        player.addPP() // per ogni giocatore
     }
     private void randomizeTurnOrder(){
         board.getTurnOrderTile().placeTotemAtSlot(player.getTotem(), index);

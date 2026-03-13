@@ -5,10 +5,18 @@ import model.enums.TotemColor;
 
 public class Player {
     private final String name;
-    private final Totem totem;
+    private Totem totem;
     private final Tribe tribe;
     private int food;
     private int prestigePoints;
+
+    public Player(String name) {
+        this.name = name;
+        this.prestigePoints = 0;
+        this.food = 0;
+        this.totem = null;
+        this.tribe = new Tribe();
+    }
 
 
     // -- food --
@@ -39,7 +47,14 @@ public class Player {
     // tribe.addCharacter() or tribe.addBuilding()
     public Tribe getTribe(){}
 
-    public Totem getTotem()
+    public Totem getTotem() {
+        return totem;
+    }
+
+    public void setTotem(Totem totem) {
+        this.totem = totem;
+    }
+
     public String getName()
     public TotemColor getColor()
 }
