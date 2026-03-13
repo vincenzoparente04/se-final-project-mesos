@@ -3,7 +3,6 @@ package model;
 import javafx.beans.Observable;
 import model.board.Board;
 import model.board.OfferTile;
-import model.cards.BuilderCard;
 import model.cards.BuildingCard;
 import model.cards.Card;
 import model.deck.BuildingDeck;
@@ -90,15 +89,17 @@ public class GameModel extends Observable {
 
 
     // HELPERS - setup phase
-    private List<Player> createPlayers(List<String> playerNames){
-        // chiama public Player(String name, PlayerColor color)
-        //      che farà new Tribe() e new Totem()
-
-        //this.players = new ArrayList<>();
+    /**
+     * @param playerNames
+     * @implNote Creates Player objects for each player name provided and adds them to the players list.
+     * This is called during startGame() to initialize the player list before the color choosing phase.
+     */
+    private void createPlayers(List<String> playerNames){
+        this.players = new ArrayList<>();
         for (String name : playerNames) {
-            players.add(new Player(name));
+            this.players.add(new Player(name));
+            this.playerCount++;
         }
-        return players;
     }
 
 
@@ -187,6 +188,8 @@ public class GameModel extends Observable {
         distributeFood();
         setPhase(GamePhase.PLACEMENT);
     }
+
+
 
     private void distributeFood(){
         player.addFood() // per ogni giocatore
