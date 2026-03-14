@@ -1,5 +1,6 @@
 package model.board;
 
+import model.enums.TotemLocation;
 import model.player.Player;
 import model.player.Totem;
 
@@ -11,10 +12,22 @@ public class TurnOrderTile {
     private final List<TurnOrderSlot> slots;
     // gli slot vengono costruiti nel costruttori in base al numero di giocatori
 
-    public TurnOrderSlot returnTotem(Player player)
-    // trova il primo slot libero dall'alto (isFree())
-    // chiama slot.placeTotem(player.getTotem())
-    // restituisce lo slot in cui è atterrato
+    public void returnTotem(Player player){
+        TurnOrderSlot slot = getFirstFreeSlot();
+        slot.placeTotem(player.getTotem());
+        player.getTotem().setLocation(TotemLocation.TURN_ORDER_TILE);
+        slot.applyEffect();
+    }
+
+    private TurnOrderSlot getFirstFreeSlot() {
+        // scorre la lista degli slot già creati durante il setup
+        // restituisce il riferimento al primo che ha occupant == null
+        return slots.stream()
+                .filter(TurnOrderSlot::isFree)
+                .findFirst()
+                .orElseThrow();
+    }
+
 
     public List<Player> getTurnOrder()
     // scorre gli slot in ordine

@@ -316,9 +316,7 @@ public class GameModel extends Observable {
         cardsDrawnFromTopRow    = 0;
         cardsDrawnFromBottomRow = 0;
 
-        TurnOrderSlot slot = board.getTurnOrderTile().returnTotem(currentPlayer);
-        currentPlayer.getTotem().setLocation(TotemLocation.TURN_ORDER_TILE);
-        applyTotemReturnEffect(slot);
+        board.getTurnOrderTile().returnTotem(currentPlayer);
 
         Player next = getNextPlayerInActionOrder();
         if (next != null) {
@@ -341,18 +339,6 @@ public class GameModel extends Observable {
                 .filter(p -> p.getTotem().getLocation() == TotemLocation.OFFER_TRACK)
                 .findFirst()
                 .orElse(null);
-    }
-
-    private void applyTotemReturnEffect(TurnOrderSlot slot) {
-        if (slot.isLast()) {
-            // ultimo slot: paga 1 Food oppure perdi 2 PP
-            currentPlayer.removeFood(1, 2);
-        }
-
-        // slot normale: prendi il Food bonus se presente
-        if (slot.getFoodBonus() > 0) {
-            currentPlayer.addFood(slot.getFoodBonus());
-        }
     }
 
     private void setPhase(GamePhase phase) {
