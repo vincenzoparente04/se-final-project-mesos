@@ -170,7 +170,7 @@ public class GameModel extends Observable {
 
     // PLACEMENT PHASE -------------------------------------------------------------------------------------------------
 
-    //TODO: -decide if we're gonna recive the objects player and offerTile from the controller or if we're gonna find them by their IDs here or in the subclasses
+    //TODO: -decide if we're gonna receive the objects player and offerTile from the controller or if we're gonna find them by their IDs here or in the subclasses
     //TODO: -decide how to handle the exceptions, how to call them
     /**
      * @implNote Validate the placeTotemAction, then delegates to the board the placeTotem implementation. At the end notifies the changes and updates the placement turn phase.
