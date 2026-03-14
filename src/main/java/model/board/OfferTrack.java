@@ -1,6 +1,7 @@
 package model.board;
 
 import model.enums.TotemLocation;
+import model.player.Player;
 import model.player.Totem;
 
 import java.util.List;
@@ -28,7 +29,9 @@ public class OfferTrack {
 
     public List<OfferTile> getOccupiedTilesInOrder() // listed left to right, used to determine who resolves actions and in which order
 
-
+    public OfferTile getOccupiedTileByPlayer(Player player)
+    // scorre le tile e restituisce quella il cui occupant
+    // è il totem del player
 
 
 

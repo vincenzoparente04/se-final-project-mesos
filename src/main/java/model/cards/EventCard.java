@@ -5,7 +5,7 @@ import model.player.Player;
 
 import java.util.List;
 
-abstract class EventCard extends TribeCard {
+public abstract class EventCard extends TribeCard {
     // HUNT, SHAMANIC_RITUAL, CAVE_PAINTINGS, SUSTENANCE
     private final EventType eventType;
 

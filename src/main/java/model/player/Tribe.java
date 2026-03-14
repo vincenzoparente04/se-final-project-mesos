@@ -9,8 +9,8 @@ import java.util.List;
 public class Tribe {
     // flat list of all the cards in the tribe, listed in order of recruitment
     // (first recruited → first in the list)
-    private final List<CharacterCard> characters;
-    private final List<BuildingCard> buildings;
+    private List<CharacterCard> characters;
+    private List<BuildingCard> buildings;
 
     // -- addition of cards --
     public void addCharacter(CharacterCard card)

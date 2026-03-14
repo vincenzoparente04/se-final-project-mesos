@@ -3,14 +3,15 @@ package model;
 import javafx.beans.Observable;
 import model.board.Board;
 import model.board.OfferTile;
+import model.board.OfferTileAction;
+import model.board.TurnOrderSlot;
 import model.cards.BuildingCard;
 import model.cards.Card;
+import model.cards.CharacterCard;
+import model.cards.EventCard;
 import model.deck.BuildingDeck;
 import model.deck.TribeDeck;
-import model.enums.Era;
-import model.enums.GamePhase;
-import model.enums.GameState;
-import model.enums.TotemColor;
+import model.enums.*;
 import model.player.Player;
 import model.player.Totem;
 
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+
+import static model.enums.TotemLocation.TURN_ORDER_TILE;
 
 public class GameModel extends Observable {
 
@@ -30,6 +33,8 @@ public class GameModel extends Observable {
     private int playerCount;
     private Player currentPlayer;
     private int currentPlayerIndex;
+    private int cardsDrawnFromTopRow;
+    private int cardsDrawnFromBottomRow;
 
     private GamePhase currentPhase;
     private GameState gameState;
@@ -66,7 +71,7 @@ public class GameModel extends Observable {
 
         //validate the move
         try {
-            canPlaceTotem(player, tile);
+            canPlaceTotem(player, offerTile);
         }catch(Exception e){
             //how to handle the exceptions?
         }
@@ -190,7 +195,6 @@ public class GameModel extends Observable {
     }
 
 
-
     private void distributeFood(){
         player.addFood() // per ogni giocatore
     }
@@ -248,51 +252,148 @@ public class GameModel extends Observable {
         board.getOfferTrack().getOccupiedTilesInOrder().get(0).getOccupant().getOwner();
     }
 
+    // ACTION PHASE ----------------------------------------------------------------------------------------------------
+
+    public void drawCard(int cardId) {
+        if (!canDrawCard(cardId)) return;
+
+        // aggiorna il contatore della riga corretta
+        if (board.getTopRow().containsCard(cardId)) {
+            cardsDrawnFromTopRow++;
+        } else {
+            cardsDrawnFromBottomRow++;
+        }
+
+        // rimuove la carta dal tabellone
+        Card card = board.findCardById(cardId);
+        board.removeCard(cardId);
+        currentPlayer.getTribe().addCharacter(card); // TODO capire come gestire i tipi qui
+        applyImmediateEffect(card);
+        notifyChange("card_drawn");
+
+        if (hasCurrentPlayerFinishedDrawing()) {
+            advanceActionTurn();
+        }
+    }
+
+    public boolean canDrawCard(int cardId) {
+        // TODO REFACTOR: aggiungi controllo per non pescare carte evento
+        if (currentPhase != GamePhase.ACTION) return false;
+
+        if (board.findCardById(cardId) == null) return false;
+
+        // la carta si trova in una riga da cui il giocatore può ancora pescare in questo turno?
+        OfferTileAction action = getCurrentPlayerAction();
+
+        if (board.getTopRow().containsCard(cardId)) {
+            return cardsDrawnFromTopRow < action.getTopRowCards();
+        }
+        if (board.getBottomRow().containsCard(cardId)) {
+            return cardsDrawnFromBottomRow < action.getBottomRowCards();
+        }
+
+        return false;
+    }
+
+    private boolean hasCurrentPlayerFinishedDrawing() {
+        OfferTileAction action = getCurrentPlayerAction();
+
+        // ha ancora carte da prendere dalla TopRow?
+        boolean stillNeedsTop = cardsDrawnFromTopRow < action.getTopRowCards()
+                && board.getTopRow().hasAvailableCards();
+
+        // ha ancora carte da prendere dalla BottomRow?
+        boolean stillNeedsBottom = cardsDrawnFromBottomRow < action.getBottomRowCards()
+                && board.getBottomRow().hasAvailableCards();
+
+        // il turno è finito quando non ha più nulla da pescare
+        return !stillNeedsTop && !stillNeedsBottom;
+    }
+
+    public OfferTileAction getCurrentPlayerAction() {
+        return board.getOfferTrack()
+                .getOccupiedTileByPlayer(currentPlayer)
+                .getAction();
+    }
+
+    private void applyImmediateEffect(Card card) {
+        // TODO
+    }
+
+    private void advanceActionTurn() {
+        cardsDrawnFromTopRow    = 0;
+        cardsDrawnFromBottomRow = 0;
+
+        TurnOrderSlot slot = board.getTurnOrderTile().returnTotem(currentPlayer);
+        currentPlayer.getTotem().setLocation(TotemLocation.TURN_ORDER_TILE);
+        applyTotemReturnEffect(slot);
+
+        Player next = getNextPlayerInActionOrder();
+        if (next != null) {
+            currentPlayer = next;
+            notifyChange("turn_changed");
+        } else {
+            setPhase(GamePhase.END_OF_ROUND);
+        }
+    }
+
+    private Player getNextPlayerInActionOrder() {
+        // scorre i totem ancora sull'OfferTrack da sinistra a destra
+        // restituisce il proprietario del primo totem trovato
+        // restituisce null se non ce ne sono più
+        // TODO non capisco java funzionale, controllate se è giusta porca zozza
+        return board.getOfferTrack()
+                .getOccupiedTilesInOrder()
+                .stream()
+                .map(tile -> tile.getOccupant().getOwner())
+                .filter(p -> p.getTotem().getLocation() == TotemLocation.OFFER_TRACK)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void applyTotemReturnEffect(TurnOrderSlot slot) {
+        if (slot.isLast()) {
+            // ultimo slot: paga 1 Food oppure perdi 2 PP
+            currentPlayer.removeFood(1, 2);
+        }
+
+        // slot normale: prendi il Food bonus se presente
+        if (slot.getFoodBonus() > 0) {
+            currentPlayer.addFood(slot.getFoodBonus());
+        }
+    }
+
+    private void setPhase(GamePhase phase) {
+        this.currentPhase = phase;
+        notifyChange("phase_changed");
+
+        // le fasi automatiche si auto-avviano
+        if (phase == GamePhase.END_OF_ROUND) resolveEndOfRound();
+    }
+
+    // END OF ROUND PHASE ----------------------------------------------------------------------------------------------
+
+    private void resolveEndOfRound() {
+        resolveEvents();
+        board.endRound(tribeDeck, players.size());
+
+        if (isGameOver()) {
+            setPhase(GamePhase.END_OF_GAME);
+        } else {
+            currentRound++;
+            setPhase(GamePhase.PLACEMENT);
+        }
+    }
+
+    private void resolveEvents() {
+        // delega alla BottomRow che conosce i propri eventi
+        List<EventCard> events = board.getBottomRow().getSortedEvents();
+        events.forEach(e -> e.resolve(players));
+        notifyChange("events_resolved");
+    }
+
 
     // CODICE PRECEDENTE -----------------------------------------------------------------------------------------------
-
-
-    // action phase (called by the Controller)
-    public boolean canDrawCard(Player player, Card card)
-    public void drawCard(Player player, Card card)
-    // delegates to board.removeCard(card)
-    // delegates to player.getTribe().addCard(card)
-    // applies immediate effects if present
-
-    public boolean canDrawBuildingCard(Player player, BuildingCard card)
-    public void drawBuildingCard(Player player, BuildingCard card)
-    // delegates to board.removeBuildingCard(card)
-    // delegates to player.getTribe().addBuildingCard(card)
-    // applies immediate effects if present
-
-
-    // DA RIVEDERE, PROBABILMENTE METODO INUTILE E METTIAMO UN ALTRA LOGICA PER PASSARE ALLA NUOVA FASE
-    public boolean canConfirmAction(Player player)
-    public void confirmAction(Player player)
-    // il giocatore ha finito di prendere carte
-    // TurnOrderTile.returnTotem(player)
-    // se tutti hanno confermato → setPhase(BONUS_ACTION o EVENT_RESOLUTION)
-
-    // ── fasi automatiche ─────────────────────────────────────────
-    // REFACTOR, DA RIVEDERE TUTTO, VEDI APPUNTI SU WHATSAPP
-
-    private void setPhase(GamePhase phase)
-    // aggiorna currentPhase
-    // notifyChange("phase_changed")
-    // se fase automatica → la risolve subito:
-    //   EVENT_RESOLUTION → resolveEvents()
-    //   ROW_CLEANUP      → cleanupRound()
-    //   END_OF_GAME      → resolveEndOfGame()
-
-    private void resolveEvents()
-    // board.getBottomRow().resolveEvents(players, buildingEffectRegistry)
-    // poi setPhase(ROW_CLEANUP)
-
-    private void cleanupRound()
-    // board.endRound(tribeDeck, getPlayerCount())
-    // currentRound++
-    // se isGameOver() → setPhase(END_OF_GAME)
-    // altrimenti → setPhase(PLACEMENT)
 
     private void resolveEndOfGame()
     // calcola punti finali per ogni giocatore

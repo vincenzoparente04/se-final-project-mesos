@@ -2,31 +2,55 @@ package model.board;
 
 
 import model.cards.BuildingCard;
+import model.cards.CharacterCard;
+import model.cards.EventCard;
 import model.cards.TribeCard;
+
+import java.util.List;
 
 // Bottom row of the market, where players can recruit cards from
 // the TribeCard are discarded at the end of the round
 // the BuildingCard remain
 // the EventCard present here are resolved at the end of the round
 public class BottomRow {
-    private final List<TribeCard> tribeCards;
-    private final List<BuildingCard> buildingCards;
+    private List<TribeCard> tribeCards;
+    private List<BuildingCard> buildingCards;
 
+    // TODO: sono per popolare la row, da implementare
     public void addTribeCard(TribeCard card)
     public void addBuildingCard(BuildingCard card)
 
+    public CharacterCard findCardById(int cardId)
+    // scorre la lista interna e restituisce la carta con quell'id
 
+    public boolean containsCard(int cardId)
+    // controlla se la carta è presente
 
-    // gets or returns only the EventCard present — needed by the Controller to resolve them
-    public List<EventCard> getEvents()
+    public void removeCard(int cardId)
+    // rimuove la carta dalla lista interna
 
-    // removes all the TribeCard (discard at the end of the round)
-    // the BuildingCard remain in the BottomRow
-    // REFACTOR: aggiungi metodo per scartare gli edifici se cambia l'era
-    public List<TribeCard> discardTribeCards()
+    public boolean hasAvailableCards()
+    // restituisce true se la lista non è vuota
 
-    // removes a specific card when a player takes it
-    public void takeCard(Card card)
+    // TODO: non so come cazzo possiamo fa a filtrare gli eventi per tipo
+    public List<EventCard> getSortedEvents() {
+        // raccoglie tutti gli EventCard presenti nella riga
+
+        // ordina: Sustenance sempre ultima
+        // a parità di tipo → ordine per Era (I prima di II, II prima di III)
+
+        return events;
+    }
+
+    public void discardTribeCards(){
+        // tribeCards.clear()
+
+    }
+
+    public void receiveTribeCards(List<TribeCard> cards)
+    // tribeCards.addAll(cards)
+
+    // CODICE VECCHIO --------------------------------------------------------------------------------------------------
 
     public List<Card> getAllVisibleCards()
     public List<TribeCard> getTribeCards()
