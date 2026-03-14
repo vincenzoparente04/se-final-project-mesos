@@ -1,26 +1,26 @@
-package model;
+package model.phaseHandlers;
 
+import model.GameModel;
 import model.board.OfferTileAction;
 import model.cards.Card;
-import model.enums.GamePhase;
 import model.enums.TotemLocation;
 import model.player.Player;
 
-public class ActionPhase implements GamePhaseHandler{
+public class ActionPhase implements GamePhaseHandler {
 
-    private final Model model;
+    private final GameModel model;
 
     private Player currentPlayer;
     private int cardsDrawnFromTopRow;
     private int cardsDrawnFromBottomRow;
 
-    public ActionPhase(Model model) {
+    public ActionPhase(GameModel model) {
         this.model = model;
     }
 
     @Override
     public void onEnter() {
-        currentPlayer = getFirstPlayerOnOfferTrack();
+        currentPlayer = model.getBoard().getOfferTrack().getOccupiedTilesInOrder().getFirst().getOccupant();
         resetDrawCounters();
 
         model.notifyChange("action_started:" + currentPlayer.getName());

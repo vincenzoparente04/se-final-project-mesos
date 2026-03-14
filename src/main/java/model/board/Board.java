@@ -32,13 +32,6 @@ public class Board {
         return turnOrderTile;
     }
 
-    public void setupBoard(TribeDeck tribeDeck, BuildingDeck buildingDeckEraI, int playerCount){
-        turnOrderTile.setup(playerCount);
-        offerTrack.setup(playerCount);
-        populateBottomRow(tribeDeck, playerCount);
-        populateTopRow(tribeDeck, buildingDeckEraI, playerCount);
-    }
-
     public void setup(int playerCount){
         tribeDeck.initializeDeck(playerCount);
         buildingDeckEraI.initializeDeck(playerCount);

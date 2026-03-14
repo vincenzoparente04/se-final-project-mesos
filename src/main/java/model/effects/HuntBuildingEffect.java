@@ -1,7 +1,6 @@
 package model.effects;
 
 
-import model.GameModel;
 import model.player.Player;
 
 public class HuntBuildingEffect implements BuildingEffect {

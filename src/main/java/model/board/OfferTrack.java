@@ -9,7 +9,8 @@ import java.util.List;
 public class OfferTrack {
     private final List<OfferTile> tiles;  // listed from A to G
 
-    public void setup(int playerCount)
+    public void setup(int playerCount){
+    }
     // configura le caselle corrette per il numero di giocatori
 
     /**
@@ -27,7 +28,9 @@ public class OfferTrack {
     }
 
 
-    public List<OfferTile> getOccupiedTilesInOrder() // listed left to right, used to determine who resolves actions and in which order
+    public List<OfferTile> getOccupiedTilesInOrder() {
+        return tiles;
+    }// listed left to right, used to determine who resolves actions and in which order
 
     public OfferTile getOccupiedTileByPlayer(Player player)
     // scorre le tile e restituisce quella il cui occupant

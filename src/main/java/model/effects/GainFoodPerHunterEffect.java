@@ -1,6 +1,5 @@
 package model.effects;
 
-import model.GameModel;
 import model.enums.CharacterType;
 import model.player.Player;
 

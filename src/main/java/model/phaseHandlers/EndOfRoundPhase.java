@@ -1,11 +1,11 @@
-package model;
+package model.phaseHandlers;
 
-import model.enums.GamePhase;
+import model.GameModel;
 
 public class EndOfRoundPhase implements GamePhaseHandler {
-    private final Model model;
+    private final GameModel model;
 
-    public EndOfRoundPhase(Model model) {
+    public EndOfRoundPhase(GameModel model) {
         this.model = model;
     }
 
