@@ -7,6 +7,16 @@ public class TurnOrderSlot {
     private final boolean isLast;  // fisso — true solo per l'ultimo slot
     private Totem occupant;        // variabile — null se lo slot è libero
 
+    public void applyEffect(){
+        if (isLast) {
+            this.occupant.getOwner().removeFood(1, 2);
+        }
+
+        if (foodBonus > 0) {
+            this.occupant.getOwner().addFood(slot.getFoodBonus());
+        }
+    }
+
     public boolean isOccupied()     { return occupant != null; }
     public boolean isFree()         { return occupant == null; }
     public int getFoodBonus()       { return foodBonus; }
