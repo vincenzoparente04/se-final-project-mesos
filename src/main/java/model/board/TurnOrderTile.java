@@ -28,6 +28,7 @@ public class TurnOrderTile {
                 .orElseThrow();
     }
 
+    public void placeTotemAtSlot(Totem totem, int index){}
 
     public List<Player> getTurnOrder()
     // scorre gli slot in ordine

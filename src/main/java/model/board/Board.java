@@ -11,11 +11,18 @@ import model.deck.TribeDeck;
 import model.player.Player;
 import model.player.Totem;
 
+import java.util.List;
+
 public class Board {
     private final OfferTrack offerTrack;
     private final TurnOrderTile turnOrderTile;
     private TopRow topRow;
     private BottomRow bottomRow;
+
+    private TribeDeck tribeDeck;
+    private BuildingDeck buildingDeckEraI;
+    private BuildingDeck buildingDeckEraII;
+    private BuildingDeck buildingDeckEraIII;
 
     public OfferTrack getOfferTrack() {
         return offerTrack;
@@ -30,6 +37,23 @@ public class Board {
         offerTrack.setup(playerCount);
         populateBottomRow(tribeDeck, playerCount);
         populateTopRow(tribeDeck, buildingDeckEraI, playerCount);
+    }
+
+    public void setup(int playerCount){
+        tribeDeck.initializeDeck(playerCount);
+        buildingDeckEraI.initializeDeck(playerCount);
+        buildingDeckEraII.initializeDeck(playerCount);
+        buildingDeckEraIII.initializeDeck(playerCount);
+        turnOrderTile.setup(playerCount);
+        offerTrack.setup(playerCount);
+        topRow.restore(tribeDeck, playerCount);
+        topRow.addBuildingCard(); // in loop o come cazzo ve pare
+        bottomRow.populate(tribeDeck, playerCount);
+    }
+
+    public void randomizeTurnOrder(List<Player> players){
+        // fatto da rocco a random
+        turnOrderTile.placeTotemAtSlot(player, x);
     }
 
     /**
@@ -60,6 +84,11 @@ public class Board {
     public void removeCard(int cardId) {
         if (topRow.containsCard(cardId)) topRow.removeCard(cardId);
         else bottomRow.removeCard(cardId);
+    }
+
+    // TODO:
+    public void resolveEvents(List<Player> players){
+
     }
 
     public void endRound(TribeDeck tribeDeck, int playerCount) {

@@ -5,6 +5,7 @@ import model.cards.BuildingCard;
 import model.cards.CharacterCard;
 import model.cards.EventCard;
 import model.cards.TribeCard;
+import model.deck.TribeDeck;
 
 import java.util.List;
 
@@ -19,6 +20,8 @@ public class BottomRow {
     // TODO: sono per popolare la row, da implementare
     public void addTribeCard(TribeCard card)
     public void addBuildingCard(BuildingCard card)
+    public void populate(TribeDeck tribeDeck, int playerCount)
+    {}
 
     public CharacterCard findCardById(int cardId)
     // scorre la lista interna e restituisce la carta con quell'id
