@@ -54,46 +54,6 @@ public class GameModel extends Observable {
         // Once all have chosen, completeSetup() will be automatically called
     }
 
-    // placement phase (actions called by the Controller) --------------------------------------------------------------
-    // Il trigger è la View che riceve "phase_changed" e abilita l'interazione per currentPlayer.
-    // L'utente tocca una casella dell'OfferTrack.
-    // 1. valida la mossa
-    // 2. esegue il piazzamento
-    // 3. avanza il turno o cambia fase
-    //TODO: -decide if we're gonna recive the objects player and offerTile from the controller or if we're gonna find them by their IDs here or in the subclasses
-    //TODO: -decide how to handle the exceptions, how to call them
-    /**
-     * @implNote Validate the placeTotemAction, then delegates to the board the placeTotem implementation. At the end notifies the changes and updates the placement turn phase.
-     * @param player
-     * @param offerTile
-     */
-    public void placeTotem(Player player, OfferTile offerTile){
-
-        //validate the move
-        try {
-            canPlaceTotem(player, offerTile);
-        }catch(Exception e){
-            //how to handle the exceptions?
-        }
-
-        //place the totem on the offer tile
-        try{
-            board.placeTotem(player.getTotem(), offerTile);
-        }catch(Exception e){
-            //how to handle the exception?
-        }
-
-        //notifies change
-        notifyChange("totem_placed");
-
-        //update the placement turn phase
-        advancePlacementTurn();
-    }
-
-    // action phase (actions called by the Controller) -----------------------------------------------------------------
-
-
-    // HELPERS - setup phase
     /**
      * @param playerNames
      * @implNote Creates Player objects for each player name provided and adds them to the players list.
@@ -107,43 +67,6 @@ public class GameModel extends Observable {
         }
     }
 
-
-    /**
-     * Called by the Controller when a Player sends their color choice through client-server communication.
-     * Validates the choice, assigns the totem color, and advances to the next player.
-     *
-     * @param player The player making the choice
-     * @param color The totem color chosen by the player
-     * @throws IllegalStateException if it's not the player's turn to choose or color is unavailable
-     */
-    public void chooseColor(Player player, TotemColor color) throws IllegalStateException {
-        // Validate: is it this player's turn to choose?
-        if (player != colorChoosingPlayer) {
-            throw new IllegalStateException(
-                "It's not " + player.getName() + "'s turn to choose a color. " +
-                "Waiting for " + colorChoosingPlayer.getName()
-            );
-        }
-
-        // Validate: is the color available?
-        if (!availableColors.contains(color)) {
-            throw new IllegalStateException(
-                "Color " + color + " is not available. Available colors: " + availableColors
-            );
-        }
-
-        // Assign the totem to the player with the chosen color
-        player.setTotem(new Totem(player, color));
-
-        // Remove the color from available pool
-        availableColors.remove(color);
-
-        // Notify observers about the color assignment
-        notifyChange("color_chosen:" + player.getName() + ":" + color);
-
-        // Advance to next player's color choice or start the game
-        advanceColorChoosingTurn();
-    }
 
     /**
      * Initialize the color choosing phase.
@@ -160,6 +83,44 @@ public class GameModel extends Observable {
         // Notify that color choosing phase has started
         notifyChange("color_choosing_started:" + colorChoosingPlayer.getName());
     }
+
+    /**
+     * Called by the Controller when a Player sends their color choice through client-server communication.
+     * Validates the choice, assigns the totem color, and advances to the next player.
+     *
+     * @param player The player making the choice
+     * @param color The totem color chosen by the player
+     * @throws IllegalStateException if it's not the player's turn to choose or color is unavailable
+     */
+    public void chooseColor(Player player, TotemColor color) throws IllegalStateException {
+        // Validate: is it this player's turn to choose?
+        if (player != colorChoosingPlayer) {
+            throw new IllegalStateException(
+                    "It's not " + player.getName() + "'s turn to choose a color. " +
+                            "Waiting for " + colorChoosingPlayer.getName()
+            );
+        }
+
+        // Validate: is the color available?
+        if (!availableColors.contains(color)) {
+            throw new IllegalStateException(
+                    "Color " + color + " is not available. Available colors: " + availableColors
+            );
+        }
+
+        // Assign the totem to the player with the chosen color
+        player.setTotem(new Totem(player, color));
+
+        // Remove the color from available pool
+        availableColors.remove(color);
+
+        // Notify observers about the color assignment
+        notifyChange("color_chosen:" + player.getName() + ":" + color);
+
+        // Advance to next player's color choice or start the game
+        advanceColorChoosingTurn();
+    }
+
 
     /**
      * Advance to the next player's turn to choose a color.
@@ -207,8 +168,38 @@ public class GameModel extends Observable {
         // TODO da implementare
     }
 
+    // PLACEMENT PHASE -------------------------------------------------------------------------------------------------
 
-    // HELPERS - placement phase
+    //TODO: -decide if we're gonna recive the objects player and offerTile from the controller or if we're gonna find them by their IDs here or in the subclasses
+    //TODO: -decide how to handle the exceptions, how to call them
+    /**
+     * @implNote Validate the placeTotemAction, then delegates to the board the placeTotem implementation. At the end notifies the changes and updates the placement turn phase.
+     * @param player
+     * @param offerTile
+     */
+    public void placeTotem(Player player, OfferTile offerTile){
+
+        //validate the move
+        try {
+            canPlaceTotem(player, offerTile);
+        }catch(Exception e){
+            //how to handle the exceptions?
+        }
+
+        //place the totem on the offer tile
+        try{
+            board.placeTotem(player.getTotem(), offerTile);
+        }catch(Exception e){
+            //how to handle the exception?
+        }
+
+        //notifies change
+        notifyChange("totem_placed");
+
+        //update the placement turn phase
+        advancePlacementTurn();
+    }
+
     public boolean canPlaceTotem(Player player, OfferTile tile) throws Exception{
         // Controlla:
         //player == currentPlayer          // è il turno di questo giocatore?
@@ -233,6 +224,7 @@ public class GameModel extends Observable {
         }
 
     }
+
     private void advancePlacementTurn(){
         List<Player> order = board.getTurnOrderTile().getTurnOrder();
         currentPlayerIndex++;
@@ -249,7 +241,7 @@ public class GameModel extends Observable {
         }
     }
     private Player getFirstPlayerInActionPhase(){
-        board.getOfferTrack().getOccupiedTilesInOrder().get(0).getOccupant().getOwner();
+        return board.getOfferTrack().getOccupiedTilesInOrder().get(0).getOccupant().getOwner();
     }
 
     // ACTION PHASE ----------------------------------------------------------------------------------------------------
