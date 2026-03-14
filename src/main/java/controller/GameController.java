@@ -46,7 +46,13 @@ public class GameController {
         }
     }
 
-    public void drawCard(Player player, Card card) {
-        //delega a gameModel.drawCard()
+    /**
+     * @implNote Is called by the client and forwards the card picked by the player the gameModel.
+     * The client sends his chosen card color during the action phase.
+     * @param player The player making the card choice
+     * @param cardId is selected card's ID.
+     */
+    public void drawCard(Player player, int cardId) {
+       gameModel.drawCard(player, cardId)
     }
 }

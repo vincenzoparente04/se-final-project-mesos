@@ -5,6 +5,7 @@ package model.board;
 // responsible for applying the game logic and mutating the state of the board accordingly; the View is responsible for
 // displaying the current state of the board.
 
+import model.cards.CharacterCard;
 import model.deck.BuildingDeck;
 import model.deck.TribeDeck;
 import model.player.Player;
@@ -48,5 +49,30 @@ public class Board {
     private void populateTopRow(TribeDeck tribeDeck, BuildingDeck buildingDeckI, int playerCount){
         tribeDeck.draw(); // in loop
         buildingDeckI.drawAll();
+    }
+
+    public CharacterCard findCardById(int cardId) {
+        CharacterCard card = topRow.findCardById(cardId);
+        if (card != null) return card;
+        return bottomRow.findCardById(cardId);
+    }
+
+    public void removeCard(int cardId) {
+        if (topRow.containsCard(cardId)) topRow.removeCard(cardId);
+        else bottomRow.removeCard(cardId);
+    }
+
+    public void endRound(TribeDeck tribeDeck, int playerCount) {
+        bottomRow.discardTribeCards();
+        bottomRow.receiveTribeCards(topRow.extractTribeCardsForBottomRow());
+        topRow.restore(tribeDeck, playerCount);
+    }
+
+    public BottomRow getBottomRow() {
+        return bottomRow;
+    }
+
+    public TopRow getTopRow() {
+        return topRow;
     }
 }

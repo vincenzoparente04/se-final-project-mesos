@@ -7,4 +7,12 @@ public class OfferTileAction {
     // REFACOTR: BASTA UN SONO ATTRIBUTO PER LA CASELLA CON CIBO
     // food to take: 3 for the first tile when playing in 5, 0 in all the other cases
     private final int foodAmount;
+
+    public int getBottomRowCards() {
+        return bottomRowCards;
+    }
+
+    public int getTopRowCards() {
+        return topRowCards;
+    }
 }
