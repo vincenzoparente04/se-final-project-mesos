@@ -1,5 +1,7 @@
-package model;
+package model.phaseHandlers;
 
+import model.GameModel;
+import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.player.Player;
@@ -9,13 +11,13 @@ import java.util.EnumSet;
 import java.util.Set;
 
 public class ColorChoosingPhase implements GamePhaseHandler {
-    private final Model model;
+    private final GameModel model;
 
     private Set<TotemColor> availableColors;
     private int currentIndex;
     private Player currentPlayer;
 
-    public ColorChoosingPhase(Model model) {
+    public ColorChoosingPhase(GameModel model) {
         this.model = model;
     }
 
@@ -70,5 +72,26 @@ public class ColorChoosingPhase implements GamePhaseHandler {
             model.setPhase(new SetupPhase(model));
         }
     }
+
+    @Override
+    public void placeTotem(Player player, OfferTile offerTile) {
+
+    }
+
+    @Override
+    public void drawCard(int cardId) {
+
+    }
+
+    @Override
+    public GamePhase getPhase() {
+        return null;
+    }
+
+    @Override
+    public Player getCurrentPlayer() {
+        return null;
+    }
+
 
 }

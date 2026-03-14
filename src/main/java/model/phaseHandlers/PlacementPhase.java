@@ -1,5 +1,6 @@
-package model;
+package model.phaseHandlers;
 
+import model.GameModel;
 import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
@@ -9,13 +10,14 @@ import model.player.Player;
 import java.util.List;
 
 public class PlacementPhase implements GamePhaseHandler {
-    private final Model model;
+    private final GameModel model;
 
     private List<Player> turnOrder;
     private int currentIndex;
     private Player currentPlayer;
 
-    public PlacementPhase(Model model) {
+    public PlacementPhase(GameModel model) {
+        this.model = model;
     }
 
     @Override
@@ -44,22 +46,16 @@ public class PlacementPhase implements GamePhaseHandler {
         }
 
         // delegate physical placement to board
-        model.getBoard().placeTotem(player.getTotem(), tile);
+        model.getBoard().placeTotem(player.getTotem(), offerTile);
 
         model.notifyChange("totem_placed:" + player.getName());
 
         advanceTurn();
     }
 
+    // TODO da rivedere
     @Override
     public boolean canPlaceTotem(Player player, OfferTile tile) throws Exception{
-        // Controlla:
-        //player == currentPlayer          // è il turno di questo giocatore?
-        //currentPhase == PLACEMENT        // siamo nella fase giusta?
-        //tile.isOccupied()                // la casella è libera?
-        //player.getTotem().getLocation()  // il Totem è disponibile?
-        //    == TotemLocation.TURN_ORDER_TILE
-
         //player is currentPlayer
         if(player != currentPlayer){
             throw new Exception("It's not your turn!");

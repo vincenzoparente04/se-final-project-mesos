@@ -2,7 +2,6 @@ package controller;
 
 import model.GameModel;
 import model.board.OfferTile;
-import model.cards.Card;
 import model.enums.TotemColor;
 import model.player.Player;
 
@@ -26,7 +25,7 @@ public class GameController {
      * @param player
      * @param offerTile
      */
-    public void placeTotem(Player player, OfferTile offerTile) {
+    public void placeTotem(Player player, OfferTile offerTile) throws Exception {
         gameModel.placeTotem(player, offerTile);
     }
 
@@ -52,7 +51,7 @@ public class GameController {
      * @param player The player making the card choice
      * @param cardId is selected card's ID.
      */
-    public void drawCard(Player player, int cardId) {
-       gameModel.drawCard(player, cardId)
+    public void drawCard(Player player, int cardId) throws Exception {
+       gameModel.drawCard(cardId);
     }
 }

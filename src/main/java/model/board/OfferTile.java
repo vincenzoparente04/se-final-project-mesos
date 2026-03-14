@@ -18,7 +18,9 @@ public class OfferTile {
     }
 
 
-    public Totem getOccupant()
+    public Totem getOccupant(){
+        return occupant;
+    }
 
 
 

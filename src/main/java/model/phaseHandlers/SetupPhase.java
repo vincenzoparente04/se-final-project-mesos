@@ -1,12 +1,12 @@
-package model;
+package model.phaseHandlers;
 
-import model.enums.GamePhase;
+import model.GameModel;
 import model.player.Player;
 
 public class SetupPhase implements GamePhaseHandler {
-    private final Model model;
+    private final GameModel model;
 
-    public SetupPhase(Model model) {
+    public SetupPhase(GameModel model) {
         this.model = model;
     }
 
