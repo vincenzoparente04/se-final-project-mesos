@@ -31,46 +31,33 @@ public class PlacementPhase implements GamePhaseHandler {
 
     @Override
     public void placeTotem(Player player, OfferTile offerTile) throws Exception {
-        if (!canPlaceTotem(player, offerTile)) {
-            // build a meaningful error message
-            if (player != currentPlayer) {
-                throw new Exception("It's not your turn! Waiting for " + currentPlayer.getName());
-            }
-            if (player.getTotem().getLocation() != TotemLocation.TURN_ORDER_TILE) {
-                throw new Exception("Your totem is already on the offer track.");
-            }
-            if (tile.isOccupied()) {
-                throw new Exception("That offer tile is already occupied.");
-            }
-            throw new Exception("Invalid placement.");
+        try{
+            canPlaceTotem(player, offerTile);
+        } catch (Exception e){
+
         }
-
-        // delegate physical placement to board
         model.getBoard().placeTotem(player.getTotem(), offerTile);
-
         model.notifyChange("totem_placed:" + player.getName());
-
         advanceTurn();
     }
 
     // TODO da rivedere
-    @Override
-    public boolean canPlaceTotem(Player player, OfferTile tile) throws Exception{
-        //player is currentPlayer
+    public void canPlaceTotem(Player player, OfferTile tile) throws Exception{
         if(player != currentPlayer){
-            throw new Exception("It's not your turn!");
+            throw new Exception("It's not your turn! Waiting for " + currentPlayer.getName());
         }
 
-        //currentPhase== PLACEMENT;
-        if(currentPhase != GamePhase.PLACEMENT){
+        if(model.getCurrentPhase() != GamePhase.PLACEMENT){
             throw new Exception("It's not the placement phase!");
         }
 
-        //player.getTotem().getLocation() == TotemLocation.TURN_ORDER_TILE;
         if(currentPlayer.getTotem().getLocation() != TotemLocation.TURN_ORDER_TILE){
             throw new Exception("Your totem is already on the offer track");
         }
 
+        if (tile.isOccupied()) {
+            throw new Exception("That offer tile is already occupied.");
+        }
     }
 
     private void advanceTurn() {
@@ -88,13 +75,8 @@ public class PlacementPhase implements GamePhaseHandler {
 
     @Override
     public void chooseColor(Player player, TotemColor color) throws IllegalStateException {
-
     }
 
-    @Override
-    public boolean canAct(Player player, Object target) {
-        return false;
-    }
 
     @Override
     public GamePhase getPhase() {

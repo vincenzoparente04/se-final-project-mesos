@@ -30,6 +30,7 @@ public class GameModel {
         currentPhaseHandler.chooseColor(player, totemColor);
     }
 
+
    public void placeTotem(Player player, OfferTile offerTile) throws Exception {
         currentPhaseHandler.placeTotem(player, offerTile);
    }

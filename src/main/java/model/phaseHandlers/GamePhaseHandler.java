@@ -9,7 +9,7 @@ public interface GamePhaseHandler {
     /** Called when the phase begins. Initializes phase-specific state. */
     void onEnter();
 
-    void chooseColor(Player player, TotemColor color) throws IllegalStateException;
+    void chooseColor(Player player, TotemColor object) throws IllegalStateException;
 
     public void placeTotem(Player player, OfferTile offerTile);
 
