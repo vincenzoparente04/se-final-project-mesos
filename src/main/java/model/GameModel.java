@@ -30,7 +30,6 @@ public class GameModel {
         currentPhaseHandler.chooseColor(player, totemColor);
     }
 
-
    public void placeTotem(Player player, OfferTile offerTile) throws Exception {
         currentPhaseHandler.placeTotem(player, offerTile);
    }
@@ -54,7 +53,6 @@ public class GameModel {
     }
 
     // ── getters ──────────────────────────────────────────────────────────────────
-
     public Board getBoard()                     { return board; }
     public List<Player> getPlayers()            { return players; }
     public int getPlayerCount()                 { return playerCount; }

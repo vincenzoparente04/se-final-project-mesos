@@ -3,24 +3,23 @@ package model.phaseHandlers;
 import model.GameModel;
 import model.board.OfferTileAction;
 import model.cards.Card;
+import model.enums.GamePhase;
 import model.enums.TotemLocation;
 import model.player.Player;
 
-public class ActionPhase implements GamePhaseHandler {
-
-    private final GameModel model;
+public class ActionPhase extends GamePhaseHandler {
 
     private Player currentPlayer;
     private int cardsDrawnFromTopRow;
     private int cardsDrawnFromBottomRow;
 
     public ActionPhase(GameModel model) {
-        this.model = model;
+        super(model);
     }
 
     @Override
     public void onEnter() {
-        currentPlayer = model.getBoard().getOfferTrack().getOccupiedTilesInOrder().getFirst().getOccupant();
+        currentPlayer = model.getBoard().getOfferTrack().getOccupiedTilesInOrder().getFirst().getOccupant().getOwner();
         resetDrawCounters();
 
         model.notifyChange("action_started:" + currentPlayer.getName());
@@ -123,4 +122,15 @@ public class ActionPhase implements GamePhaseHandler {
                 .findFirst()
                 .orElse(null);
     }
+
+    @Override
+    public GamePhase getPhase() {
+        return model.getCurrentPhase();
+    }
+
+    @Override
+    public Player getCurrentPlayer() {
+        return model.getCurrentPlayer();
+    }
+
 }
