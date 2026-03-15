@@ -1,24 +1,39 @@
 package model.phaseHandlers;
 
+import model.GameModel;
 import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.player.Player;
 
-public interface GamePhaseHandler {
-    /** Called when the phase begins. Initializes phase-specific state. */
-    void onEnter();
+public abstract class GamePhaseHandler {
 
-    void chooseColor(Player player, TotemColor object) throws IllegalStateException;
+    protected final GameModel model;
 
-    public void placeTotem(Player player, OfferTile offerTile);
+    public GamePhaseHandler(GameModel model) {
+        this.model = model;
+    }
 
-    public void drawCard(int cardId);
+    public void onEnter() {}
 
+    public void chooseColor(Player player, TotemColor color) {
+        throw new IllegalStateException(
+                "Cannot choose color during " + getPhase()
+        );
+    }
 
-    /** Returns the enum value identifying this phase. */
-    GamePhase getPhase();
+    public void placeTotem(Player player, OfferTile tile) {
+        throw new IllegalStateException(
+                "Cannot place totem during " + getPhase()
+        );
+    }
 
-    /** Returns the player whose turn it currently is (null for automatic phases). */
-    Player getCurrentPlayer();
+    public void drawCard(int cardId) {
+        throw new IllegalStateException(
+                "Cannot draw card during " + getPhase()
+        );
+    }
+
+    public abstract GamePhase getPhase();
+    public abstract Player getCurrentPlayer();
 }

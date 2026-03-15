@@ -1,13 +1,13 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.enums.GamePhase;
 import model.player.Player;
 
-public class SetupPhase implements GamePhaseHandler {
-    private final GameModel model;
+public class SetupPhase extends GamePhaseHandler {
 
     public SetupPhase(GameModel model) {
-        this.model = model;
+        super(model);
     }
 
     @Override
@@ -29,6 +29,16 @@ public class SetupPhase implements GamePhaseHandler {
         for (Player player : model.getPlayers()) {
             player.addFood(3);  // TODO: confirm starting food amount from rules
         }
+    }
+
+    @Override
+    public GamePhase getPhase() {
+        return model.getCurrentPhase();
+    }
+
+    @Override
+    public Player getCurrentPlayer() {
+        return model.getCurrentPlayer();
     }
 
 

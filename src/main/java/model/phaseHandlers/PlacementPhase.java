@@ -9,15 +9,14 @@ import model.player.Player;
 
 import java.util.List;
 
-public class PlacementPhase implements GamePhaseHandler {
-    private final GameModel model;
+public class PlacementPhase extends GamePhaseHandler {
 
     private List<Player> turnOrder;
     private int currentIndex;
     private Player currentPlayer;
 
     public PlacementPhase(GameModel model) {
-        this.model = model;
+        super(model);
     }
 
     @Override
@@ -80,12 +79,12 @@ public class PlacementPhase implements GamePhaseHandler {
 
     @Override
     public GamePhase getPhase() {
-        return null;
+        return model.getCurrentPhase();
     }
 
     @Override
     public Player getCurrentPlayer() {
-        return null;
+        return model.getCurrentPlayer();
     }
 
 }

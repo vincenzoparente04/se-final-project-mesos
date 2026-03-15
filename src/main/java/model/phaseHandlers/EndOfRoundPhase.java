@@ -1,12 +1,13 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.enums.GamePhase;
+import model.player.Player;
 
-public class EndOfRoundPhase implements GamePhaseHandler {
-    private final GameModel model;
+public class EndOfRoundPhase extends GamePhaseHandler {
 
     public EndOfRoundPhase(GameModel model) {
-        this.model = model;
+        super(model);
     }
 
     @Override
@@ -22,5 +23,15 @@ public class EndOfRoundPhase implements GamePhaseHandler {
             model.incrementRound();
             model.setPhase(new PlacementPhase(model));
         }
+    }
+
+    @Override
+    public GamePhase getPhase() {
+        return model.getCurrentPhase();
+    }
+
+    @Override
+    public Player getCurrentPlayer() {
+        return model.getCurrentPlayer();
     }
 }

@@ -10,15 +10,14 @@ import model.player.Totem;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class ColorChoosingPhase implements GamePhaseHandler {
-    private final GameModel model;
+public class ColorChoosingPhase extends GamePhaseHandler {
 
     private Set<TotemColor> availableColors;
     private int currentIndex;
     private Player currentPlayer;
 
     public ColorChoosingPhase(GameModel model) {
-        this.model = model;
+        super(model);
     }
 
     @Override
@@ -84,12 +83,12 @@ public class ColorChoosingPhase implements GamePhaseHandler {
 
     @Override
     public GamePhase getPhase() {
-        return null;
+        return model.getCurrentPhase();
     }
 
     @Override
     public Player getCurrentPlayer() {
-        return null;
+        return model.getCurrentPlayer();
     }
 
 
