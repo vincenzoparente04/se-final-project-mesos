@@ -31,8 +31,7 @@ public class ColorChoosingPhase implements GamePhaseHandler {
     }
 
     @Override
-    public void chooseColor(Player player, TotemColor color) throws IllegalStateException {
-        // Validate: is it this player's turn to choose?
+    public void chooseColor(Player player,  TotemColor color) throws IllegalStateException {
         if (player != currentPlayer) {
             throw new IllegalStateException(
                     "It's not " + player.getName() + "'s turn to choose a color. " +
