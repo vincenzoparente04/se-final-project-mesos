@@ -72,16 +72,6 @@ public class ColorChoosingPhase extends GamePhaseHandler {
     }
 
     @Override
-    public void placeTotem(Player player, OfferTile offerTile) {
-
-    }
-
-    @Override
-    public void drawCard(int cardId) {
-
-    }
-
-    @Override
     public GamePhase getPhase() {
         return model.getCurrentPhase();
     }
