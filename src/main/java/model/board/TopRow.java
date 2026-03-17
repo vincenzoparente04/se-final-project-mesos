@@ -1,6 +1,6 @@
 package model.board;
-import model.cards.BuildingCard;
-import model.cards.CharacterCard;
+import model.cards.buildingCards.BuildingCard;
+import model.cards.charachterCards.CharacterCard;
 import model.cards.TribeCard;
 import model.deck.TribeDeck;
 

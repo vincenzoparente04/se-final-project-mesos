@@ -1,11 +1,11 @@
-package model.cards;
+package model.cards.eventCards;
 
 import model.enums.CardType;
 import model.player.Player;
 
 import java.util.List;
 
-public class ShamanicRitualEventCard extends EventCard{
+public class ShamanicRitualEventCard extends EventCard {
     /**
      *
      * @param players
@@ -14,7 +14,7 @@ public class ShamanicRitualEventCard extends EventCard{
     @Override
     void resolve(List<Player> players) {
         // farla con programmazione funzionale
-        int maxStars = players.stream()
+        int maxStars = plaxyers.stream()
                 .mapToInt(p -> p.getTribe().getTotalShamanStars())
                 .max()
                 .orElse(0);

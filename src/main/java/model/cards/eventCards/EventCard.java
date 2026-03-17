@@ -1,5 +1,6 @@
-package model.cards;
+package model.cards.eventCards;
 
+import model.cards.TribeCard;
 import model.enums.EventType;
 import model.player.Player;
 

@@ -1,4 +1,4 @@
-package model.cards;
+package model.cards.charachterCards;
 
 public class BuilderCard extends CharacterCard {
     private final int buildingDiscount;  // food discount for each building construction

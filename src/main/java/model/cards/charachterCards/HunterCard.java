@@ -1,4 +1,4 @@
-package model.cards;
+package model.cards.charachterCards;
 
 import model.effects.ImmediateEffect;
 
