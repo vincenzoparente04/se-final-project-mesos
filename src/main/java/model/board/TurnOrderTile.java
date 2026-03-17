@@ -34,6 +34,10 @@ public class TurnOrderTile {
     // scorre gli slot in ordine
     // per ogni slot occupato restituisce slot.getOccupant().getOwner()
 
+    public List<TurnOrderSlot> getSlots() {
+        return slots;
+    }
+
     public void setup(int playerCount) {
         // costruisce gli slot con i bonus corretti per playerCount
         // es. per 3 giocatori:
