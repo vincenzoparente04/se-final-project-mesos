@@ -1,7 +1,7 @@
 package model.player;
 
-import model.cards.BuildingCard;
-import model.cards.CharacterCard;
+import model.cards.buildingCards.BuildingCard;
+import model.cards.charachterCards.CharacterCard;
 import model.enums.CharacterType;
 
 import java.util.List;

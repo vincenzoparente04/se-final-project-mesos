@@ -1,14 +1,12 @@
-package model.cards;
+package model.cards.eventCards;
 
 import model.enums.CardType;
 import model.enums.CharacterType;
-import model.enums.EventType;
 import model.player.Player;
-import model.player.Tribe;
 
 import java.util.List;
 
-public class CavePaintingsEventCard implements EventCard{
+public class CavePaintingsEventCard extends EventCard {
     /**
      * @implNote il calcolo è dovuto a un pattern ricorrente trovato negli eventi di questo tipo
      * @param players

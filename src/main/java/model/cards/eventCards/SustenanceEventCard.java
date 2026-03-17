@@ -1,12 +1,11 @@
-package model.cards;
+package model.cards.eventCards;
 
 import model.enums.CardType;
-import model.player.Tribe;
 import model.player.Player;
 
 import java.util.List;
 
-public class SustenanceEventCard extends EventCard{
+public class SustenanceEventCard extends EventCard {
     /**
      * Resolves the sustenance event for all players in the game.
      * * @param players The list of players participating in the event.

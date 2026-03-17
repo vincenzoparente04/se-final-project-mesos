@@ -1,6 +1,6 @@
 package model.deck;
 
-import model.cards.BuildingCard;
+import model.cards.buildingCards.BuildingCard;
 import model.enums.Era;
 
 import java.util.List;

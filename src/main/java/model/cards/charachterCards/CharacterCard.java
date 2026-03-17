@@ -1,5 +1,6 @@
-package model.cards;
+package model.cards.charachterCards;
 
+import model.cards.TribeCard;
 import model.enums.CharacterType;
 
 // adds the character type to the card, which is used for the end game scoring.

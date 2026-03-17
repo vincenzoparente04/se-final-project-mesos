@@ -5,7 +5,7 @@ package model.board;
 // responsible for applying the game logic and mutating the state of the board accordingly; the View is responsible for
 // displaying the current state of the board.
 
-import model.cards.CharacterCard;
+import model.cards.charachterCards.CharacterCard;
 import model.deck.BuildingDeck;
 import model.deck.TribeDeck;
 import model.player.Player;

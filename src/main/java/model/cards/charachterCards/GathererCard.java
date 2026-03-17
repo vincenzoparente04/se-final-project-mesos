@@ -1,4 +1,4 @@
-package model.cards;
+package model.cards.charachterCards;
 
 public class GathererCard extends CharacterCard {
     // Gatherer cards give 3 food points discount during Sustenance
