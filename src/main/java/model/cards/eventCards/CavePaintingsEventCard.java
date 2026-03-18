@@ -12,7 +12,7 @@ public class CavePaintingsEventCard extends EventCard {
      * @param players
      */
     @Override
-    void resolve(List<Player> players) {
+    public void resolve(List<Player> players) {
         for(Player p : players){
             int artists = p.getTribe().countByType(CharacterType.ARTIST);
             // se non ho il numero minimo di artisti pago

@@ -1,5 +1,6 @@
 package model.cards;
 
+import model.board.CardVisitor;
 import model.effects.ImmediateEffect;
 import model.enums.Era;
 
