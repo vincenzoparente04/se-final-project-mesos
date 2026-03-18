@@ -2,7 +2,6 @@ package model;
 
 import model.board.Board;
 import model.board.OfferTile;
-import model.enums.Era;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.phaseHandlers.ColorChoosingPhase;
@@ -17,7 +16,7 @@ public class GameModel {
     private List<Player> players;
     private int playerCount;
     private int currentRound;
-    private Era currentEra;
+    private int currentEra;
 
     private GamePhaseHandler currentPhaseHandler;
 
@@ -57,7 +56,6 @@ public class GameModel {
     public List<Player> getPlayers()            { return players; }
     public int getPlayerCount()                 { return playerCount; }
     public int getCurrentRound()                { return currentRound; }
-    public Era getCurrentEra()                  { return currentEra; }
     public GamePhaseHandler getPhaseHandler()   { return currentPhaseHandler; }
 
     public GamePhase getCurrentPhase() {
@@ -67,6 +65,10 @@ public class GameModel {
     public Player getCurrentPlayer() {
         return currentPhaseHandler != null ? currentPhaseHandler.getCurrentPlayer() : null;
     }
+
+    public int getCurrentEra() {
+        currentEra = board.getTribeDeck().getCurrentEra();
+        return currentEra; }
 
 
     // helpers:

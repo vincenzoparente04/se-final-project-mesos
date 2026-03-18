@@ -5,6 +5,7 @@ import model.enums.GamePhase;
 import model.player.Player;
 
 public class EndOfRoundPhase extends GamePhaseHandler {
+    private int currentEra;
 
     public EndOfRoundPhase(GameModel model) {
         super(model);
@@ -20,7 +21,14 @@ public class EndOfRoundPhase extends GamePhaseHandler {
         model.getBoard().resolveEvents(model.getPlayers()); // TODO è giusto che sia il board (bottom row) a risovere gli eventi
         model.notifyChange("events_resolved");
 
-        model.getBoard().endRound();
+        this.currentEra = model.getCurrentEra();
+
+        model.getBoard().endRound(model.getPlayerCount());
+
+        if (this.currentEra != model.getCurrentEra()) {
+            model.notifyChange("era_changed:" + model.getCurrentEra());
+            model.getBoard().changeEra();
+        }
 
         if (model.isGameOver()) {
             model.setPhase(new EndOfGamePhase(model));

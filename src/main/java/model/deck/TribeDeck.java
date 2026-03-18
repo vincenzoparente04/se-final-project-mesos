@@ -1,8 +1,8 @@
 package model.deck;
 
 import model.cards.TribeCard;
-import model.enums.Era;
 
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
@@ -11,7 +11,7 @@ public class TribeDeck {
     private Deque<TribeCard> cards;
 
     // keep track of the current Era based on the last card drawn
-    private Era currentEra;
+    private int currentEra;
 
     // -- setup --
     public void initializeDeck(List<TribeCard> allCards, int playerCount)
@@ -20,13 +20,29 @@ public class TribeDeck {
     public void addCard(TribeCard card)
 
 
-    // -- draw --
-    // ###servono entrambi sia draw che drawMultiple
-    // draws the card from the top. Returns null if the deck is empty.
-    public TribeCard draw()
+    /**
+     * Draws a card from the top of the deck and updates the current Era based on the drawn card.
+     * @return the drawn TribeCard
+     */
+    public TribeCard draw(){
+        if (cards.isEmpty()) return null;
+        TribeCard drawn = cards.pop();
+        currentEra = drawn.getEra();
+        return drawn;
+    }
 
-    // draws multiple cards in sequence — used to populate the rows
-    public List<TribeCard> drawMultiple(int count)
+    /**
+     * Draws multiple cards from the deck.
+     * @param count
+     * @return a list of drawn TribeCards
+     */
+    public List<TribeCard> drawMultiple(int count){
+        List<TribeCard> drawn = new ArrayList<>();
+        for (int i = 0; i<count; i++){
+            drawn.add(draw());
+        }
+        return drawn;
+    }
 
 
     // -- state --
@@ -39,7 +55,10 @@ public class TribeDeck {
 
     // returns true if the last drawn card belongs to a different Era than the currentEra,
     // the Controller checks this after every draw to trigger the start of a new Era
-    public boolean isNewEraRevealed()
+    public boolean isNewEraRevealed(){}
 
-    public Era getCurrentEra()
+    //TODO: da inizializzare a 1 la current era
+    public int getCurrentEra(){
+        return currentEra;
+    }
 }
