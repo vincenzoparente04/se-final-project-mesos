@@ -1,5 +1,15 @@
 package model.cards.charachterCards;
 
+import model.enums.Era;
+import model.player.Player;
+
 public class ArtistCard extends CharacterCard {
-    // all the effects from artist cards depends on the number of them in each player type. so there are no attribute
+    public ArtistCard(int id, Era era, int playerCount) {
+        super(id, era, playerCount);
+    }
+
+    @Override
+    public void registerToTribe(Player player) {
+            player.getTribe().addArtist(this);
+    }
 }

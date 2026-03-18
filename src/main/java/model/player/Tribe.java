@@ -1,72 +1,86 @@
 package model.player;
 
 import model.cards.buildingCards.BuildingCard;
-import model.cards.charachterCards.CharacterCard;
+import model.cards.charachterCards.*;
 import model.enums.CharacterType;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Tribe {
-    // flat list of all the cards in the tribe, listed in order of recruitment
-    // (first recruited → first in the list)
-    private List<CharacterCard> characters;
-    private List<BuildingCard> buildings;
+    // 6 liste diverse per gestire i vari tipi di character card, più una lista per i building card
+    private final List<ArtistCard> artists = new ArrayList<>();
+    private final List<BuilderCard> builders = new ArrayList<>();
+    private final List<GathererCard> gatherers = new ArrayList<>();
+    private final List<HunterCard> hunters = new ArrayList<>();
+    private final List<InventorCard> inventors = new ArrayList<>();
+    private final List<ShamanCard> shamans = new ArrayList<>();
 
-    // -- addition of cards --
-    public void addCharacter(CharacterCard card)
-    public void addBuilding(BuildingCard card)
+    private List<BuildingCard> buildings = new ArrayList<>();
 
-    //getter
-    public List<CharacterCard> getAllCharacters()
-    public List<BuildingCard> getAllBuildings()
+    // metodi per aggiungere le carte alle varie liste
+    public void addArtist(ArtistCard card) { artists.add(card); }
+    public void addBuilder(BuilderCard card) { builders.add(card); }
+    public void addGatherer(GathererCard card) { gatherers.add(card); }
+    public void addHunter(HunterCard card) { hunters.add(card); }
+    public void addInventor(InventorCard card) { inventors.add(card); }
+    public void addShaman(ShamanCard card) { shamans.add(card); }
 
-    // -- query for type --
-    // used by EventResolver, CostCalculator, calculateEndGamePoints
-
-    public int countByType(CharacterType type) {}
-
-    // returns all the CharacterCard of the specified type, listed in order of recruitment
-    // ###potrebbe non servire
-    public List<CharacterCard> getByType(CharacterType type)
+    public void addBuilding(BuildingCard card) { buildings.add(card); }
 
 
-    // -- query for specific types --
-    // sums all the stars of the ShamanCard in the tribe used by EventResolver during
-    // Shamanic Ritual
-    public int getTotalShamanStars(){}
+    // query methods — tutta la logica di conteggio vive qui
+    public int getHunterCount()         { return hunters.size(); }
+    public int getArtistCount()         { return artists.size(); }
+    public int getBuilderCount()        { return builders.size(); }
+    public int getInventorCount()       { return inventors.size(); }
+    public int getGathererCount()       { return gatherers.size(); }
+    public int getShamanCount()         { return shamans.size(); }
 
-    // sums the discounts of all the BuilderCard used by CostCalculator when a player wants
-    // to take a Building
-    public int getTotalBuilderDiscount()
+    public int getTotalCharacterCount() {
+        return hunters.size() + builders.size() + shamans.size()
+                + artists.size() + inventors.size() + gatherers.size();
+    }
 
-    // sums the total prestige points given by builders at the end of the game
-    public int getTotalBuilderPrestigePoints()
+    public int getTotalBuilderDiscount() {
+        return builders.stream()
+                .mapToInt(BuilderCard::getBuilderDiscount)
+                .sum();
+    }
 
-    // returns the number of DIFFERENT icons present among all the Inventor used by
-    // calculateEndGamePoints of the Inventor
-    public int getDifferentInventionIcons()
+    public int getTotalShamanStars() {
+        return shamans.stream()
+                .mapToInt(ShamanCard::getStarCount)
+                .sum();
+    }
 
-    // used by EventResolver during Sustenance
-    public int countGatherers()
+    public int getDistinctInventionIcons() {
+        return (int) inventors.stream()
+                .map(InventorCard::getInventionIcon)
+                .distinct()
+                .count();
+    }
 
-    // dice lo sconto durente l'evento dovuto ai raccoglitori -> rende inutile countGatherers
-    // numRaccoglitori * 3
-    public int getTotalGatherersDiscount(){}
+    public int getTotalGatherersDiscount() {
+        return getGathererCount() * 3;
+    }
 
+    public int getTotalBuildersPrestigePoints(){
+        return builders.stream()
+                .mapToInt(BuilderCard::getPrestigePoints)
+                .sum();
+    }
 
-    // -- query for set (used by some buildingCard) --
-    // complete sets of CharacterCard of different colors give points at the end of the game
-    public int countCompleteSets()
-
-    // total number of Character card - used during Sustenance
-    public int getTotalCharacterCount()
-
-
-    // used by EventResolver and EndOfGameManager to find "active" buildings in that moment
-    public List<BuildingCard> getBuildingsWithTrigger(BuildingEffectTrigger trigger)
-
-
-    // -- query for the View --
-    // groups cards by characterType, used by the view to display them in the correct position in the tribe
-    public Map<CharacterType, List<CharacterCard>> getCharactersByCharactersType()
+    // capire meglio in base a come verrà usata
+    public int countCompleteSets() {
+        return Stream.of(
+                artists.size(),
+                builders.size(),
+                gatherers.size(),
+                hunters.size(),
+                inventors.size(),
+                shamans.size()
+        ).min(Integer::compareTo).orElse(0);
+    }
 }
