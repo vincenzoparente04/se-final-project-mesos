@@ -32,6 +32,10 @@ public class Board {
         return offerTrack;
     }
 
+    public TribeDeck getTribeDeck() {
+        return tribeDeck;
+    }
+
     public TurnOrderTile getTurnOrderTile() {
         return turnOrderTile;
     }
@@ -111,10 +115,20 @@ public class Board {
         }
     }
 
-    public void endRound(TribeDeck tribeDeck, int playerCount) {
+    public void endRound(int playerCount) {
         bottomRow.discardTribeCards();
         bottomRow.receiveTribeCards(topRow.extractTribeCardsForBottomRow());
         topRow.restore(tribeDeck, playerCount);
+    }
+
+    public void changeEra() {
+        bottomRow.discardBuildingCards();
+        bottomRow.receiveBuildingCards(topRow.extractBuildingCardsForBottomRow());
+        if (buildingDeckEraII.isEmpty()) {
+            topRow.restoreEra(buildingDeckEraIII);
+        }else{
+            topRow.restoreEra(buildingDeckEraII);
+        }
     }
 
     public BottomRow getBottomRow() {

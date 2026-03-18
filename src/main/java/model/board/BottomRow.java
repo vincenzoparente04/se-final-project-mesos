@@ -71,7 +71,15 @@ public class BottomRow implements CardVisitor {
         tribeCards.clear();
     }
 
+    public void discardBuildingCards(){
+        buildingCards.clear();
+    }
+
     public void receiveTribeCards(List<TribeCard> cards) {
         tribeCards.addAll(cards);
+    }
+
+    public void receiveBuildingCards(List<BuildingCard> cards) {
+        buildingCards.addAll(cards);
     }
 }
