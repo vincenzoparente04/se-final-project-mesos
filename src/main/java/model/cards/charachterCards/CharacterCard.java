@@ -1,19 +1,27 @@
 package model.cards.charachterCards;
 
+import model.cards.Drawable;
 import model.board.CardVisitor;
 import model.cards.TribeCard;
-import model.enums.CharacterType;
+import model.enums.Era;
+import model.player.Player;
 
-public abstract class CharacterCard extends TribeCard {
+public abstract class CharacterCard extends TribeCard{
+    public CharacterCard(int id, Era era, int playerCount) {
+        super(id, era, playerCount);
+    }
 
+    @Override
+    public void draw(Player player){
+        registerToTribe(player);
+    }
 
-
-    public CharacterType getCharacterType()
-
-    // returns the number of prestige points provided by this card at the end of the game. (not 0 only for builders)
-    // the Controller calls this method at the end of the game to calculate the player's score.
-    public int calculateEndGamePoints(){return 0;}
-
+    /**
+     * @implNote Registers this character card inside the correct list
+     *           of the player's tribe.
+     * @param player
+     */
+    public abstract void registerToTribe(Player player);
 
     @Override
     public void accept(CardVisitor visitor) {
