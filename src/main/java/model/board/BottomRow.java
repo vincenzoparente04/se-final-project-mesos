@@ -46,11 +46,6 @@ public class BottomRow implements CardVisitor {
      * @return the list of events to resolve, sorted by type and era
      */
     public List<EventCard> getSortedEvents() {
-        // raccoglie tutti gli EventCard presenti nella riga
-
-        // ordina: Sustenance sempre ultima
-        // a parità di tipo → ordine per Era (I prima di II, II prima di III)
-
         for(TribeCard card : tribeCards){
             card.accept(this);
         }
@@ -60,11 +55,10 @@ public class BottomRow implements CardVisitor {
 
     @Override
     public void visit(CharacterCard card) {
-        // non fa niente, i CharacterCard non sono eventi
+        // do nothing, there are no character card in the bottom row
     }
     @Override
     public void visit(EventCard card) {
-        // aggiunge l'EventCard alla lista degli eventi da risolvere
         eventsToResolve.add(card);
     }
     @Override
