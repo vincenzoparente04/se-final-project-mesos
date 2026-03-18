@@ -1,6 +1,14 @@
 package model.cards.charachterCards;
 
+import model.enums.Era;
+
 public class GathererCard extends CharacterCard {
-    // Gatherer cards give 3 food points discount during Sustenance
-    // they have no immediate effects nor PP at the end of the game
+    public GathererCard(int id, Era era, int playerCount) {
+        super(id, era, playerCount);
+    }
+
+    @Override
+    public void registerToTribe(model.player.Player player) {
+        player.getTribe().addGatherer(this);
+    }
 }
