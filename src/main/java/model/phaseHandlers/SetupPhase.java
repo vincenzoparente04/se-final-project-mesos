@@ -4,6 +4,8 @@ import model.GameModel;
 import model.enums.GamePhase;
 import model.player.Player;
 
+import java.util.List;
+
 public class SetupPhase extends GamePhaseHandler {
 
     public SetupPhase(GameModel model) {
@@ -25,10 +27,18 @@ public class SetupPhase extends GamePhaseHandler {
         model.setPhase(new PlacementPhase(model));
     }
 
+    /**
+     * Gives each player the starting amount of food based on their position in the turn order, as determined by the TurnOrderTile.
+     */
     private void distributeStartingResources() {
-        for (Player player : model.getPlayers()) {
-            player.addFood(3);  // TODO: confirm starting food amount from rules
-        }
+        List<Player> players = model.getBoard().getTurnOrderTile().getTurnOrder();
+        for(int i = 0; i < players.size(); i++) {
+            Player p = players.get(i);
+            switch (i) {
+                case 0 -> p.addFood(2); //player 1
+                case 1,2 -> p.addFood(3); //player 2 and 3
+                case 3,4 -> p.addFood(4); //player 4 and 5
+            }
     }
 
     @Override
