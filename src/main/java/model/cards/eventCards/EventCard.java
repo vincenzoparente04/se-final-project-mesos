@@ -1,5 +1,6 @@
 package model.cards.eventCards;
 
+import model.board.CardVisitor;
 import model.cards.TribeCard;
 import model.enums.Era;
 import model.enums.EventType;
@@ -16,5 +17,10 @@ public abstract class EventCard extends TribeCard implements Drawable {
     }
 
     // metodi
-    abstract void resolve(List<Player> players);
+    public abstract void resolve(List<Player> players);
+
+    @Override
+    public void accept(CardVisitor visitor) {
+        visitor.visit(this);
+    }
 }

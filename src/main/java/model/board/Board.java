@@ -6,6 +6,7 @@ package model.board;
 // displaying the current state of the board.
 
 import model.cards.charachterCards.CharacterCard;
+import model.cards.eventCards.EventCard;
 import model.deck.BuildingDeck;
 import model.deck.TribeDeck;
 import model.player.Player;
@@ -97,9 +98,17 @@ public class Board {
         else bottomRow.removeCard(cardId);
     }
 
-    // TODO:
+    /**
+     * @implNote this method is responsible for resolving the events present in the bottom row at the end of the round, it is called by the EndOfRoundPhaseHandler
+     * at first it collects all the EventCard in the bottom row. BottomRow returns the events already sorted by type and era,
+     * then it calls the resolve method of each EventCard, passing the list of players as parameter, so that the EventCard can apply its effect on the players.
+     * @param players
+     */
     public void resolveEvents(List<Player> players){
-
+        List<EventCard> events = bottomRow.getSortedEvents();
+        for (EventCard event : events) {
+            event.resolve(players);
+        }
     }
 
     public void endRound(TribeDeck tribeDeck, int playerCount) {

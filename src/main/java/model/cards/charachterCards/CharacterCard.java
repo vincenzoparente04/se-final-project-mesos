@@ -1,6 +1,7 @@
 package model.cards.charachterCards;
 
 import model.cards.Drawable;
+import model.board.CardVisitor;
 import model.cards.TribeCard;
 import model.enums.Era;
 import model.player.Player;
@@ -21,4 +22,9 @@ public abstract class CharacterCard extends TribeCard{
      * @param player
      */
     public abstract void registerToTribe(Player player);
+
+    @Override
+    public void accept(CardVisitor visitor) {
+        visitor.visit(this);
+    }
 }
