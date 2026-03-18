@@ -1,5 +1,6 @@
 package model.cards;
 
+import model.board.CardVisitor;
 import model.effects.ImmediateEffect;
 
 // it's a group of cards which include character e event cards, wich are the types of cards in the deck
@@ -9,4 +10,6 @@ public abstract class TribeCard extends Card {
     // The Controller calls this method immediately when a player recruits the card, before applying the effect
     // there is no logic in the card, it only describes the effect, while the Controller is responsible for applying it to the game state
     public ImmediateEffect getImmediateEffect() {return null;};
+
+    public abstract void accept(CardVisitor visitor);
 }

@@ -12,7 +12,7 @@ public class ShamanicRitualEventCard extends EventCard {
      * @implNote Il metodo assegna i punti al vincitore e li rimuove al perdente
      */
     @Override
-    void resolve(List<Player> players) {
+    public void resolve(List<Player> players) {
         // farla con programmazione funzionale
         int maxStars = plaxyers.stream()
                 .mapToInt(p -> p.getTribe().getTotalShamanStars())
