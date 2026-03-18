@@ -1,5 +1,6 @@
 package model.cards.eventCards;
 
+import model.board.CardVisitor;
 import model.enums.CardType;
 import model.player.Player;
 
@@ -15,7 +16,7 @@ public class SustenanceEventCard extends EventCard {
      * of the {@code Player} class, using the current era as the penalty multiplier.
      */
     @Override
-    void resolve(List<Player> players) {
+    public void resolve(List<Player> players) {
         players.forEach( p -> {
             int characterCount = p.getTribe().getTotalCharacterCount();
             int foodToPay = characterCount - p.getTribe().getTotalGatherersDiscount();
@@ -27,5 +28,10 @@ public class SustenanceEventCard extends EventCard {
     @Override
     public CardType getCardType() {
         return null;
+    }
+
+    @Override
+    public void accept(CardVisitor visitor) {
+        visitor.visit(this);
     }
 }
