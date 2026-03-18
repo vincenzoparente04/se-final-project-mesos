@@ -12,7 +12,10 @@ import model.deck.TribeDeck;
 import model.player.Player;
 import model.player.Totem;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static model.enums.TotemLocation.TURN_ORDER_TILE;
 
 public class Board {
     private final OfferTrack offerTrack;
@@ -45,13 +48,28 @@ public class Board {
         bottomRow.populate(tribeDeck, playerCount);
     }
 
+    /**
+     * Randomizes the turn order by shuffling the list of players and placing their totems on the TurnOrderTile in the new order.
+     * @param players
+     */
     public void randomizeTurnOrder(List<Player> players){
-        // fatto da rocco a random
-        turnOrderTile.placeTotemAtSlot(player, x);
+        List<TurnOrderSlot> slots = turnOrderTile.getSlots();
+
+        //shuffles the players list
+        List<Player> randomized = new ArrayList<>(players);
+        java.util.Collections.shuffle(randomized);
+
+        //for each player in the shuffled list, places their totem on the corresponding slot on the TurnOrderTile and updates the totem's location
+        for (int i =0; i < randomized.size(); i++) {
+            Totem t = randomized.get(i).getTotem();
+
+            slots.get(i).placeTotem(t);
+            t.setLocation(TURN_ORDER_TILE);
+        }
     }
 
     /**
-     * @implNote delegate the placeTotem implementation to the offerTrack
+     * Delegate the placeTotem implementation to the offerTrack
      * @param totem
      * @param offerTile
      * @throws Exception
