@@ -23,9 +23,4 @@ public class SustenanceEventCard extends EventCard {
             p.removeFood(foodToPay, this.getEra().ordinal());
         });
     }
-
-    @Override
-    public CardType getCardType() {
-        return null;
-    }
 }

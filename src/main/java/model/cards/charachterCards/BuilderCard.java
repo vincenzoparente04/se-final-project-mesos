@@ -1,12 +1,24 @@
 package model.cards.charachterCards;
 
-public class BuilderCard extends CharacterCard {
-    private final int buildingDiscount;  // food discount for each building construction
-    private final int endGamePoints;     // prestige points provided at the end of the game
+import model.enums.Era;
+import model.player.Player;
 
-    public int getBuildingDiscount()
+public class BuilderCard extends CharacterCard {
+    private final int builderDiscount;  // food discount for each building construction
+    private final int prestigePoints;
+
+    public BuilderCard(int id, Era era, int playerCount, int buildingDiscount, int pp) {
+        super(id, era, playerCount);
+        this.builderDiscount = buildingDiscount;
+        this.prestigePoints = pp;
+    }
+
+    public int getPrestigePoints() { return prestigePoints; }
+    public int getBuilderDiscount(){ return builderDiscount; }
 
     @Override
-    public int calculateEndGamePoints() { return endGamePoints; }
+    public void registerToTribe(Player player) {
+        player.getTribe().addBuilder(this);
+    }
 }
 
