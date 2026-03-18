@@ -26,11 +26,6 @@ public class SustenanceEventCard extends EventCard {
     }
 
     @Override
-    public CardType getCardType() {
-        return null;
-    }
-
-    @Override
     public void accept(CardVisitor visitor) {
         visitor.visit(this);
     }
