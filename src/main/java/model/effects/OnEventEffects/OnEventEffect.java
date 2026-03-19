@@ -11,7 +11,7 @@ public class OnEventEffect implements BuildingEffect {
 
     }
 
-    public void applyOnSustenance(Player player, CharacterCard characterCard) {};
+    public int applyOnSustenance(Player player) { return 0; };
     public void applyOnShamanicRitual(Player player){};
     public void applyOnCavePaintings(Player player){};
     public void applyOnHunt(Player player){};
