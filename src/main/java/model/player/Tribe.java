@@ -66,9 +66,42 @@ public class Tribe {
         return getGathererCount() * 3;
     }
 
-    public int getTotalBuildersPrestigePoints(){
+    public int calculateBuildersEndGamePoints() {
         return builders.stream()
                 .mapToInt(BuilderCard::getPrestigePoints)
+                .sum();
+    }
+
+    /**
+     * 10 PP for every 2 Artists in your tribe.
+     */
+    public int calculateArtistEndGamePoints() {
+        return (artists.size() / 2) * 10;
+    }
+
+    /**
+     * PP equal to the number of Inventors multiplied by
+     * the number of different Invention icons on the respective cards.
+     */
+    // TODO da controllare
+    public int calculateInventorEndGamePoints() {
+        long distinctIcons = inventors.stream()
+                .map(InventorCard::getInventionIcon)
+                .distinct()
+                .count();
+
+        return inventors.size() * (int) distinctIcons;
+    }
+
+    /**
+     * PP from Buildings: the printed Prestige Points on each card.
+     * EndOfGameEffect bonuses are NOT calculated here — they are
+     * registered in the Player and called separately by EndOfGamePhase.
+     */
+    // TODO da unire le varie liste buildings in una sola
+    public int calculateBuildingPrintedPoints() {
+        return buildings.stream()
+                .mapToInt(BuildingCard::getEndGamePoints)
                 .sum();
     }
 
