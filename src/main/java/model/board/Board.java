@@ -115,6 +115,16 @@ public class Board {
         }
     }
 
+    // TODO Filippone controlla un po'
+    public void resolveAllEvents(List<Player> players){
+        List<EventCard> eventsBottomRow = bottomRow.getSortedEvents();
+        List<EventCard> eventsTopRow = topRow.getSortedEvents();
+        // unisci le liste
+        for (EventCard event : events) {
+            event.resolve(players);
+        }
+    }
+
     public void endRound(int playerCount) {
         bottomRow.discardTribeCards();
         bottomRow.receiveTribeCards(topRow.extractTribeCardsForBottomRow());
