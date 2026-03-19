@@ -5,6 +5,7 @@ import model.cards.charachterCards.*;
 import model.enums.CharacterType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -28,6 +29,15 @@ public class Tribe {
     public void addShaman(ShamanCard card) { shamans.add(card); }
 
     public void addBuilding(BuildingCard card) { buildings.add(card); }
+
+    // getters
+    public List<ArtistCard> getArtists() { return Collections.unmodifiableList(artists); }
+    public List<BuilderCard> getBuilders() { return Collections.unmodifiableList(builders); }
+    public List<GathererCard> getGatherers() { return Collections.unmodifiableList(gatherers); }
+    public List<HunterCard> getHunters() { return Collections.unmodifiableList(hunters); }
+    public List<InventorCard> getInventors() { return Collections.unmodifiableList(inventors); }
+    public List<ShamanCard> getShamans() { return Collections.unmodifiableList(shamans); }
+    public List<BuildingCard> getBuildings() { return Collections.unmodifiableList(buildings); }
 
 
     // query methods — tutta la logica di conteggio vive qui
