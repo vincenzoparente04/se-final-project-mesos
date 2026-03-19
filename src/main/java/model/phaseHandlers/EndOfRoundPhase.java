@@ -17,7 +17,7 @@ public class EndOfRoundPhase extends GamePhaseHandler {
      */
     @Override
     public void onEnter(){
-        model.getBoard().resolveEvents(model.getPlayers()); // TODO è giusto che sia il board (bottom row) a risovere gli eventi
+        model.getBoard().resolveEvents(model.getPlayers());
         model.notifyChange("events_resolved");
 
         int currentEra = model.getCurrentEra();

@@ -61,7 +61,7 @@ public class ColorChoosingPhase extends GamePhaseHandler {
     private void advanceTurn() {
         currentIndex++;
 
-        if (currentIndex < model.getPlayers().size()) {
+        if (currentIndex < model.getPlayerCount()) {
             currentPlayer = model.getPlayers().get(currentIndex);
             model.notifyChange("color_choosing_next:" + currentPlayer.getName());
         } else {
