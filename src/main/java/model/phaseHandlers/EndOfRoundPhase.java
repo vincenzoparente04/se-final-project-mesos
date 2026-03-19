@@ -1,6 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.enums.Era;
 import model.enums.GamePhase;
 import model.player.Player;
 
@@ -20,11 +21,11 @@ public class EndOfRoundPhase extends GamePhaseHandler {
         model.getBoard().resolveEvents(model.getPlayers());
         model.notifyChange("events_resolved");
 
-        int currentEra = model.getCurrentEra();
+        Era currentEra = model.getCurrentEra();
 
         model.getBoard().endRound(model.getPlayerCount());
 
-        if (currentEra != model.getCurrentEra()) {
+        if (model.getCurrentEra().compareTo(currentEra) != 0) {
             model.notifyChange("era_changed:" + model.getCurrentEra());
             model.getBoard().changeEra();
         }

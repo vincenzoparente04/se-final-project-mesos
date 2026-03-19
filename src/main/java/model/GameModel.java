@@ -2,6 +2,7 @@ package model;
 
 import model.board.Board;
 import model.board.OfferTile;
+import model.enums.Era;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.phaseHandlers.ColorChoosingPhase;
@@ -16,7 +17,7 @@ public class GameModel {
     private List<Player> players;
     private int playerCount;
     private int currentRound;
-    private int currentEra;
+    private Era currentEra;
 
     private GamePhaseHandler currentPhaseHandler;
 
@@ -70,12 +71,11 @@ public class GameModel {
      * @implNote the current era is determined by the current era of the tribe deck, which is updated at each tribe deck draw.<br>
      * <p><b>NOTE: </b><br><u>this.currentEra</u> is updated only when this method is called. So the real updated current era is stored in the tribe dech</p>
      * @return the current era
-     *
-     * @return
      */
-    public int getCurrentEra() {
+    public Era getCurrentEra() {
         currentEra = board.getTribeDeck().getCurrentEra();
-        return currentEra; }
+        return currentEra;
+    }
 
 
     // helpers:
