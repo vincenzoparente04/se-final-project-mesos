@@ -66,6 +66,13 @@ public class GameModel {
         return currentPhaseHandler != null ? currentPhaseHandler.getCurrentPlayer() : null;
     }
 
+    /**
+     * @implNote the current era is determined by the current era of the tribe deck, which is updated at each tribe deck draw.<br>
+     * <p><b>NOTE: </b><br><u>this.currentEra</u> is updated only when this method is called. So the real updated current era is stored in the tribe dech</p>
+     * @return the current era
+     *
+     * @return
+     */
     public int getCurrentEra() {
         currentEra = board.getTribeDeck().getCurrentEra();
         return currentEra; }
