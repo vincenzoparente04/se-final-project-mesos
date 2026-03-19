@@ -1,6 +1,7 @@
 package model.deck;
 
 import model.cards.TribeCard;
+import model.enums.Era;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -11,7 +12,7 @@ public class TribeDeck {
     private Deque<TribeCard> cards;
 
     // keep track of the current Era based on the last card drawn
-    private int currentEra;
+    private Era currentEra;
 
     // -- setup --
     public void initializeDeck(List<TribeCard> allCards, int playerCount)
@@ -58,7 +59,7 @@ public class TribeDeck {
     public boolean isNewEraRevealed(){}
 
     //TODO: da inizializzare a 1 la current era
-    public int getCurrentEra(){
+    public Era getCurrentEra(){
         return currentEra;
     }
 }

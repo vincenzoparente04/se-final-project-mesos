@@ -1,11 +1,12 @@
 package model.deck;
 
 import model.cards.buildingCards.BuildingCard;
+import model.enums.Era;
 
 import java.util.List;
 
 public class BuildingDeck {
-    private int era;
+    private Era era;
     private List<BuildingCard> cards;
 
     public boolean isEmpty() {
@@ -24,5 +25,5 @@ public class BuildingDeck {
         return cards;
     }
 
-    public int getEra(){}
+    public Era getEra(){return era;}
 }
