@@ -2,6 +2,8 @@ package model.board;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.TribeCard;
+import model.cards.eventCards.EventCard;
+import model.cards.eventCards.SustenanceEventCard;
 import model.deck.BuildingDeck;
 import model.deck.TribeDeck;
 
@@ -13,6 +15,8 @@ import java.util.List;
 public class TopRow {
     private List<TribeCard> tribeCards;
     private List<BuildingCard> buildingCards;
+    private List<EventCard> eventsToResolve;
+    private List<SustenanceEventCard> sustenanceToResolve;
 
     // picks from the deck and fills the top row at the beginning of the round
     public void addTribeCard(TribeCard card)
@@ -48,6 +52,14 @@ public class TopRow {
         List<BuildingCard> buildingCardsToMove = new ArrayList<>(buildingCards);
         buildingCards.clear();
         return  buildingCardsToMove;
+    }
+
+    public List<EventCard> getSortedEvents() {
+        for(TribeCard card : tribeCards){
+            card.accept(this);
+        }
+        eventsToResolve.addAll(sustenanceToResolve);
+        return eventsToResolve;
     }
 
     /**
