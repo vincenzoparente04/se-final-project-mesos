@@ -11,5 +11,5 @@ public abstract class OnCharacterAcquiredEffect implements BuildingEffect {
         // si registra nella lista OnAcquire
     }
 
-    public abstract void applyEffect(Player player, CharacterCard characterCard);
+    public abstract void applyEffect(Player player);
 }
