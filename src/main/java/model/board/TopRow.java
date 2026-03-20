@@ -54,13 +54,6 @@ public class TopRow {
         return  buildingCardsToMove;
     }
 
-    public List<EventCard> getSortedEvents() {
-        for(TribeCard card : tribeCards){
-            card.accept(this);
-        }
-        eventsToResolve.addAll(sustenanceToResolve);
-        return eventsToResolve;
-    }
 
     /**
      * @implNote this method is responsible for restoring the top row drawing cards from tribe deck

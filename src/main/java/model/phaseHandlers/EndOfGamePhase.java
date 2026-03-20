@@ -34,7 +34,6 @@ public class EndOfGamePhase extends GamePhaseHandler {
      * Sustenance must be resolved last as usual.
      */
     private void resolveAllVisibleEvents() {
-       // TODO a Filippone pensace te
         model.getBoard().resolveAllEvents(model.getPlayers());
         model.notifyChange("final_events_resolved");
     }
