@@ -5,8 +5,10 @@ package model.board;
 // responsible for applying the game logic and mutating the state of the board accordingly; the View is responsible for
 // displaying the current state of the board.
 
+import model.cards.TribeCard;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
+import model.cards.eventCards.SustenanceEventCard;
 import model.deck.BuildingDeck;
 import model.deck.TribeDeck;
 import model.player.Player;
@@ -17,11 +19,13 @@ import java.util.List;
 
 import static model.enums.TotemLocation.TURN_ORDER_TILE;
 
-public class Board {
+public class Board implements CardVisitor {
     private final OfferTrack offerTrack;
     private final TurnOrderTile turnOrderTile;
     private TopRow topRow;
     private BottomRow bottomRow;
+    private List<EventCard> eventsToResolve;
+    private List<SustenanceEventCard> sustenanceToResolve;
 
     private TribeDeck tribeDeck;
     private BuildingDeck buildingDeckEraI;
@@ -115,15 +119,42 @@ public class Board {
         }
     }
 
-    // TODO Filippone controlla un po'
+
+    /**
+     * Solves all the events on the board. Called only by EndOfGamePhase
+     * @implNote sort events by era and type, moving sustenance event at the end of the list from all cards present on the board. Then resolves all the events <br>
+     * <b>NOTE: </b> to create the list of all cards present on the board it puts bottomRow cards first because maybe there could be some ERA_II card
+     * @param players
+     */
     public void resolveAllEvents(List<Player> players){
-        List<EventCard> eventsBottomRow = bottomRow.getSortedEvents();
-        List<EventCard> eventsTopRow = topRow.getSortedEvents();
-        // unisci le liste
-        for (EventCard event : events) {
+        List<TribeCard> allCards = new ArrayList<>(bottomRow.getTribeCards());
+        allCards.addAll(topRow.getTribeCards());
+
+        eventsToResolve = new ArrayList<EventCard>();
+        sustenanceToResolve = new ArrayList<SustenanceEventCard>();
+        for(TribeCard card : allCards){
+            card.accept(this);
+        }
+        eventsToResolve.addAll(sustenanceToResolve);
+
+        for (EventCard event : eventsToResolve) {
             event.resolve(players);
         }
     }
+
+    @Override
+    public void visit(CharacterCard card) {
+        // do nothing, there are no character card in the bottom row
+    }
+    @Override
+    public void visit(EventCard card) {
+        eventsToResolve.add(card);
+    }
+    @Override
+    public void visit(SustenanceEventCard card) {
+        sustenanceToResolve.add(card);
+    }
+
 
     public void endRound(int playerCount) {
         bottomRow.discardTribeCards();
