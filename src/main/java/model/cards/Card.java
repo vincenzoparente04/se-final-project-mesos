@@ -1,6 +1,7 @@
 package model.cards;
 
 import model.enums.Era;
+import model.player.Player;
 
 public abstract class Card implements Drawable {
     private final int id;
