@@ -104,7 +104,7 @@ public class ActionPhase extends GamePhaseHandler {
             model.notifyChange("turn_changed:" + currentPlayer.getName());
         } else {
             // no more totems on the offer track → round is over
-            model.setPhase(new EndOfRoundPhase(model));
+            model.setPhase(new PreEndOfRoundPhase(model));
         }
     }
 
