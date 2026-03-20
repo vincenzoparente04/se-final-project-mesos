@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 class HuntEventCardTest {
 
     @Test
-    @DisplayName("resolve adds food and prestige based on 2 hunters and eraI")
+    @DisplayName("resolve adds food and prestige based on 2 hunters and Era I")
     void resolveAddsFoodAndPrestigeFromHuntersERAI() {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
@@ -30,12 +30,12 @@ class HuntEventCardTest {
 
         card.resolve(List.of(player));
 
-        verify(player).addFood(2);
-        verify(player).addPrestigePoints(2); //2*1
+        verify(player, times(1)).addFood(2);
+        verify(player, times(1)).addPrestigePoints(2); //2*1
     }
 
     @Test
-    @DisplayName("resolve adds food and prestige based on 4 hunters and eraIII")
+    @DisplayName("resolve adds food and prestige based on 4 hunters and Era III")
     void resolveAddsFoodAndPrestigeFromHuntersERAIII() {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
@@ -46,8 +46,8 @@ class HuntEventCardTest {
 
         card.resolve(List.of(player));
 
-        verify(player).addFood(4);
-        verify(player).addPrestigePoints(12); //4*3
+        verify(player, times(1)).addFood(4);
+        verify(player, times(1)).addPrestigePoints(12); //4*3
     }
 
     @Test
@@ -62,12 +62,12 @@ class HuntEventCardTest {
 
         card.resolve(List.of(player));
 
-        verify(player).addFood(0);
-        verify(player).addPrestigePoints(0);
+        verify(player, times(1)).addFood(0);
+        verify(player, times(1)).addPrestigePoints(0);
     }
 
     @Test
-    @DisplayName("Multiple players with different hunter counts (Similar to a real game scenario)")
+    @DisplayName("resolve handles multiple players with different hunter counts")
     void resolveMultiplePlayers() {
         Player p1 = mock(Player.class);
         Tribe t1 = mock(Tribe.class);

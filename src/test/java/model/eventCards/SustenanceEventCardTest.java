@@ -7,7 +7,6 @@ import model.player.Tribe;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.beans.Transient;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
@@ -33,11 +32,11 @@ class SustenanceEventCardTest {
 
         card.resolve(List.of(player));
 
-        verify(player).removeFood(7 , 3); //10-3 
+        verify(player, times(1)).removeFood(7 , 3); //10-3 
     }
 
     @Test
-    @DisplayName("if gatherers discount exceeds characters, should not remove food and so should do nothing")
+    @DisplayName("resolve does nothing when gatherer discount exceeds characters")
     void resolveForwardsNegativeFoodToPay() {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
@@ -56,7 +55,7 @@ class SustenanceEventCardTest {
     }
 
     @Test
-    @DisplayName("Real game scenario: 3 players with different character counts and gatherer discounts")
+    @DisplayName("resolve handles multiple players with mixed food costs")
     void resolveMultiplePlayers() {
         Player p1 = mock(Player.class);
         Player p2 = mock(Player.class);
@@ -98,7 +97,7 @@ class SustenanceEventCardTest {
     // EDGE CASES
 
     @Test 
-    @DisplayName("Edge case: player with zero characters and zero gatherer discount")
+    @DisplayName("resolve does nothing for zero characters and zero gatherer discount")
     void resolvePlayerWithZeroCharactersAndZeroGathererDiscount() {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);

@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +31,7 @@ class CavePaintingsEventCardTest {
 
         card.resolve(List.of(player));
 
-        verify(player).removePrestigePoints(2);
+        verify(player, times(1)).removePrestigePoints(2);
         verify(player, never()).addPrestigePoints(org.mockito.ArgumentMatchers.anyInt());
     }
 
@@ -46,12 +47,12 @@ class CavePaintingsEventCardTest {
 
         card.resolve(List.of(player));
 
-        verify(player).addPrestigePoints(4); //2*2
+        verify(player, times(1)).addPrestigePoints(4); //2*2
         verify(player, never()).removePrestigePoints(org.mockito.ArgumentMatchers.anyInt());
     }
 
     @Test
-    @DisplayName("Edge cases: 3 players, one with artists equal to era ordinal, one above and one below")
+    @DisplayName("resolve handles mixed artists counts: equal, above and below threshold")
     void resolveAddsPrestigeWhenArtistsAlmostEqualEraOrdinal() {
         //2 artists
         Player p1 = mock(Player.class);
@@ -75,11 +76,11 @@ class CavePaintingsEventCardTest {
 
         card.resolve(List.of(p1, p2, p3));
 
-        verify(p1).addPrestigePoints(4); //2*2
+        verify(p1, times(1)).addPrestigePoints(4); //2*2
         verify(p1, never()).removePrestigePoints(org.mockito.ArgumentMatchers.anyInt());
-        verify(p2).removePrestigePoints(2);
+        verify(p2, times(1)).removePrestigePoints(2);
         verify(p2, never()).addPrestigePoints(org.mockito.ArgumentMatchers.anyInt());
-        verify(p3).addPrestigePoints(6); //2*3
+        verify(p3, times(1)).addPrestigePoints(6); //2*3
         verify(p3, never()).removePrestigePoints(org.mockito.ArgumentMatchers.anyInt());
     }
 }
