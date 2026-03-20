@@ -67,7 +67,7 @@ class HuntEventCardTest {
     }
 
     @Test
-    @DisplayName("Multiple players with different hunter counts and eras (Similar to a real game scenario)")
+    @DisplayName("Multiple players with different hunter counts (Similar to a real game scenario)")
     void resolveMultiplePlayers() {
         Player p1 = mock(Player.class);
         Tribe t1 = mock(Tribe.class);
