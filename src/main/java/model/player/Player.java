@@ -22,8 +22,8 @@ public class Player {
 
 
     // -- food --
-    public int getFood()
-    public void addFood(int amount)
+    public int getFood(){ return food; }
+    public void addFood(int amount){ food += amount; }
 
     // viene passato il cibo e il moltiplicatore di aura da pagare (se non ho abbastanza cibo), il metodo
     // controlla se ho abbastanza cibo -> false allora toglie tutto il cibo disponibile e chiama remove aura
@@ -40,14 +40,14 @@ public class Player {
     }
 
     // -- prestige points --
-    public int getPrestigePoints()
-    public void addPrestigePoints(int amount)
-    public void removePrestigePoints(int amount)
+    public int getPrestigePoints(){ return prestigePoints; }
+    public void addPrestigePoints(int amount){ prestigePoints += amount; }
+    public void removePrestigePoints(int amount){ prestigePoints -= amount; }
 
 
     // The Tribe is directly exposed: the Controller queries it and adds cards through
     // tribe.addCharacter() or tribe.addBuilding()
-    public Tribe getTribe(){}
+    public Tribe getTribe(){ return tribe; }
 
     public Totem getTotem() {
         return totem;
@@ -69,8 +69,7 @@ public class Player {
         isImmuneToShaman = immuneToShaman;
     }
 
-    public
 
-    public String getName()
-    public TotemColor getColor()
+    public String getName(){ return name; }
+    public TotemColor getColor(){}
 }
