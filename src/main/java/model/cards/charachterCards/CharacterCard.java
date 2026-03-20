@@ -1,6 +1,5 @@
 package model.cards.charachterCards;
 
-import model.cards.Drawable;
 import model.board.CardVisitor;
 import model.cards.TribeCard;
 import model.enums.Era;

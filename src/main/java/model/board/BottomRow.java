@@ -9,6 +9,7 @@ import model.cards.eventCards.SustenanceEventCard;
 import model.deck.TribeDeck;
 import model.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 // Bottom row of the market, where players can recruit cards from
@@ -16,6 +17,7 @@ import java.util.List;
 // the BuildingCard remain
 // the EventCard present here are resolved at the end of the round
 public class BottomRow implements CardVisitor {
+
     private List<TribeCard> tribeCards;
     private List<BuildingCard> buildingCards;
     private List<EventCard> eventsToResolve;
@@ -46,6 +48,8 @@ public class BottomRow implements CardVisitor {
      * @return the list of events to resolve, sorted by type and era
      */
     public List<EventCard> getSortedEvents() {
+        eventsToResolve = new ArrayList<EventCard>();
+        sustenanceToResolve = new ArrayList<SustenanceEventCard>();
         for(TribeCard card : tribeCards){
             card.accept(this);
         }
@@ -81,5 +85,9 @@ public class BottomRow implements CardVisitor {
 
     public void receiveBuildingCards(List<BuildingCard> cards) {
         buildingCards.addAll(cards);
+    }
+
+    public List<TribeCard> getTribeCards() {
+        return tribeCards;
     }
 }
