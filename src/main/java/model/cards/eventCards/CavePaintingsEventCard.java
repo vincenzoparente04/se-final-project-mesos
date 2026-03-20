@@ -7,6 +7,11 @@ import model.player.Player;
 import java.util.List;
 
 public class CavePaintingsEventCard extends EventCard {
+
+    public CavePaintingsEventCard(int id, Era era, int playerCount) {
+        super(id, era, playerCount);
+    }
+
     /**
      * @implNote il calcolo è dovuto a un pattern ricorrente trovato negli eventi di questo tipo
      * @param players

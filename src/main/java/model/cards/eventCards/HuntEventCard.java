@@ -7,6 +7,11 @@ import model.player.Player;
 import java.util.List;
 
 public class HuntEventCard extends EventCard {
+
+    public HuntEventCard(int id, Era era, int playerCount) {
+        super(id, era, playerCount);
+    }
+
     /**
      *
      * @param players

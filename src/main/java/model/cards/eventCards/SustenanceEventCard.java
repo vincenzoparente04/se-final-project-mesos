@@ -7,6 +7,12 @@ import model.player.Player;
 import java.util.List;
 
 public class SustenanceEventCard extends EventCard {
+
+    public SustenanceEventCard(int id, Era era, int playerCount) {
+        super(id, era, playerCount);
+    }
+
+    
     /**
      * Resolves the sustenance event for all players in the game.
      * * @param players The list of players participating in the event.
