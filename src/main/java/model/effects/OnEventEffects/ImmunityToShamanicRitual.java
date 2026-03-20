@@ -4,8 +4,13 @@ import model.effects.EndGameEffects.EndGameEffect;
 import model.player.Player;
 
 public class ImmunityToShamanicRitual extends OnEventEffect {
+
+    /**
+     * @implNote set true the attribute isImmuneToShaman
+     * @param player
+     */
     @Override
     public void applyOnShamanicRitual(Player player) {
-        // if the player has the shaman Rocco he loses zero points
+        player.setImmuneToShaman(true);
     }
 }

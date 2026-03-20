@@ -3,8 +3,13 @@ package model.effects.OnEventEffects;
 import model.player.Player;
 
 public class DoublePPShamanicRitual extends OnEventEffect {
+
+    /**
+     * @implNote set true the attribute hasDoublePointsForShaman
+     * @param player
+     */
     @Override
     public void applyOnShamanicRitual(Player player) {
-        // Se il giocatore possiede sia la carta orso che la carta iena il player prende il doppio dei punti arrosticini
+        player.setHasDoublePointsForShaman(true);
     }
 }
