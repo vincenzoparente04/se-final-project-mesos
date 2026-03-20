@@ -3,10 +3,9 @@ package model.player;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.charachterCards.*;
 import model.enums.CharacterType;
+import model.enums.InventionIcon;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class Tribe {
@@ -15,7 +14,7 @@ public class Tribe {
     private final List<BuilderCard> builders = new ArrayList<>();
     private final List<GathererCard> gatherers = new ArrayList<>();
     private final List<HunterCard> hunters = new ArrayList<>();
-    private final List<InventorCard> inventors = new ArrayList<>();
+    private final Map<InventionIcon, List<InventorCard>> inventorsByIcon = new EnumMap<>(InventionIcon.class);
     private final List<ShamanCard> shamans = new ArrayList<>();
 
     private List<BuildingCard> buildings = new ArrayList<>();
@@ -25,8 +24,10 @@ public class Tribe {
     public void addBuilder(BuilderCard card) { builders.add(card); }
     public void addGatherer(GathererCard card) { gatherers.add(card); }
     public void addHunter(HunterCard card) { hunters.add(card); }
-    public void addInventor(InventorCard card) { inventors.add(card); }
     public void addShaman(ShamanCard card) { shamans.add(card); }
+    public void addInventor(InventorCard card) {
+        inventorsByIcon.computeIfAbsent(card.getInventionIcon(), k -> new ArrayList<>()).add(card);
+    }
 
     public void addBuilding(BuildingCard card) { buildings.add(card); }
 
@@ -35,10 +36,11 @@ public class Tribe {
     public List<BuilderCard> getBuilders() { return Collections.unmodifiableList(builders); }
     public List<GathererCard> getGatherers() { return Collections.unmodifiableList(gatherers); }
     public List<HunterCard> getHunters() { return Collections.unmodifiableList(hunters); }
-    public List<InventorCard> getInventors() { return Collections.unmodifiableList(inventors); }
     public List<ShamanCard> getShamans() { return Collections.unmodifiableList(shamans); }
     public List<BuildingCard> getBuildings() { return Collections.unmodifiableList(buildings); }
-
+    public Map<InventionIcon, List<InventorCard>> getInventorsByIcon() {
+        return Collections.unmodifiableMap(inventorsByIcon);
+    }
 
     // query methods — tutta la logica di conteggio vive qui
     public int getHunterCount()         { return hunters.size(); }
