@@ -6,6 +6,13 @@ import model.player.Player;
 import java.util.List;
 
 public class ShamanicRitualEventCard extends EventCard {
+
+
+    public ShamanicRitualEventCard(int id, Era era, int playerCount) {
+        super(id, era, playerCount);
+    }
+
+
     /**
      *
      * @param players
@@ -14,7 +21,7 @@ public class ShamanicRitualEventCard extends EventCard {
     @Override
     public void resolve(List<Player> players) {
         // farla con programmazione funzionale
-        int maxStars = plaxyers.stream()
+        int maxStars = players.stream()
                 .mapToInt(p -> p.getTribe().getTotalShamanStars())
                 .max()
                 .orElse(0);
