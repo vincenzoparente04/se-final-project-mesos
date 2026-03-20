@@ -9,6 +9,8 @@ public class Player {
     private final Tribe tribe;
     private int food;
     private int prestigePoints;
+    private boolean isImmuneToShaman;
+    private boolean hasDoublePointsForShaman;
 
     public Player(String name) {
         this.name = name;
@@ -54,6 +56,20 @@ public class Player {
     public void setTotem(Totem totem) {
         this.totem = totem;
     }
+
+    public boolean isImmuneToShaman() { return isImmuneToShaman; }
+
+    public boolean isHasDoublePointForShaman() { return hasDoublePointForShaman; }
+
+    public void setHasDoublePointsForShaman(boolean hasDoublePointsForShaman) {
+        this.hasDoublePointsForShaman = hasDoublePointsForShaman;
+    }
+
+    public void setImmuneToShaman(boolean immuneToShaman) {
+        isImmuneToShaman = immuneToShaman;
+    }
+
+    public
 
     public String getName()
     public TotemColor getColor()

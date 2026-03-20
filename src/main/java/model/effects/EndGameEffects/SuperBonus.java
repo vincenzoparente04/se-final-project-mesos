@@ -15,6 +15,6 @@ public class SuperBonus extends EndGameEffect {
      */
     @Override
     public void applyEffect(Player player) {
-        player.addFood(superBonus);
+        player.addPrestigePoints(superBonus);
     }
 }
