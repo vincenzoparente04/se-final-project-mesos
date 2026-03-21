@@ -6,13 +6,6 @@ import model.player.Player;
 import java.util.List;
 
 public class ShamanicRitualEventCard extends EventCard {
-
-
-    public ShamanicRitualEventCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
-    }
-
-
     /**
      *
      * @param players
@@ -43,10 +36,5 @@ public class ShamanicRitualEventCard extends EventCard {
         players.stream()
                 .filter(p -> p.getTribe().getTotalShamanStars() == minStars)
                 .forEach(p -> p.removePrestigePoints(loss));
-    }
-
-    @Override
-    public CardType getCardType() {
-        return null;
     }
 }

@@ -1,17 +1,17 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.OfferTileAction;
+import model.board.Board;
 import model.cards.Card;
 import model.enums.GamePhase;
+import model.board.OfferTileAction.OfferTileAction
 import model.enums.TotemLocation;
 import model.player.Player;
 
 public class ActionPhase extends GamePhaseHandler {
 
     private Player currentPlayer;
-    private int cardsDrawnFromTopRow;
-    private int cardsDrawnFromBottomRow;
+    private OfferTileAction currentAction;
 
     public ActionPhase(GameModel model) {
         super(model);
@@ -19,100 +19,129 @@ public class ActionPhase extends GamePhaseHandler {
 
     @Override
     public void onEnter() {
-        currentPlayer = model.getBoard().getOfferTrack().getOccupiedTilesInOrder().getFirst().getOccupant().getOwner();
-        resetDrawCounters();
-
-        model.notifyChange("action_started:" + currentPlayer.getName());
+        startNextPlayerTurn();
     }
 
-    public void drawCard(int cardId) {
-        if (!canDrawCard(cardId)) return;
+    private void startNextPlayerTurn() {
+        Board board = model.getBoard();
 
-        // aggiorna il contatore della riga corretta
-        if (model.getBoard().getTopRow().containsCard(cardId)) {
-            cardsDrawnFromTopRow++;
-        } else {
-            cardsDrawnFromBottomRow++;
+        // Trova il prossimo giocatore da sinistra a destra sul tracciato offerte
+        currentPlayer = getNextPlayerOnOfferTrack();
+
+        // Se non ci sono più giocatori, la fase Action è finita
+        if (currentPlayer == null) {
+            currentAction = null;
+            model.setPhase(new PreEndOfRoundPhase(model));
+            return;
         }
 
-        // rimuove la carta dal tabellone
-        Card card = model.getBoard().findCardById(cardId);
-        model.getBoard().removeCard(cardId);
-        currentPlayer.getTribe().addCharacter(card); // TODO capire come gestire i tipi qui
-        applyImmediateEffect(card);
-        notifyChange("card_drawn");
+        currentAction = board.getOfferTrack()
+                .getOccupiedTileByPlayer(currentPlayer)
+                .getAction();
 
-        if (hasCurrentPlayerFinishedDrawing()) {
+        // ###questo controllo è sensato?
+        if (currentAction == null) {
+            throw new IllegalStateException("Nessuna azione associata alla tessera Offerta.");
+        }
+
+        model.notifyChange("action_started:" + currentPlayer.getName());
+
+        // Inizializza l'azione (es. la tessera "A" darà subito i 3 Cibo qui)
+        currentAction.onEnterAction(currentPlayer, model);
+
+        // controlla che effettivamente un player abbia completato l'azione
+        checkActionCompletionOrAutoAdvance();
+    }
+
+    @Override
+    public void drawCard(int cardId) {
+        ensureActiveTurn();
+
+        Board board = model.getBoard();
+        Card card = board.findCardById(cardId);
+
+        // ha senso?
+        if (card == null) {
+            throw new IllegalArgumentException("Carta non trovata sul tabellone.");
+        }
+
+        // controlla che il player stia pescando dalla row giusta
+        if (!currentAction.canDraw(card, board)) {
+            throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto).");
+        }
+
+        // controlla che la carta non sia un evento o un building troppo costoso per il player
+        if (!card.canBeAcquiredBy(currentPlayer, model)) {
+            throw new IllegalStateException("Non hai i requisiti per prendere questa carta (Cibo insufficiente o è un Evento).");
+        }
+
+        // -- ESECUZIONE PESCA --
+        // Rimuove la carta dal board
+        board.removeCard(cardId);
+
+        // La carta gestisce l'aggiunta alla tribù, il pagamento, effetti immediati
+        // ###sistemare i metodi di pesca nelle carte
+        card.acquiredBy(currentPlayer, model);
+
+        // L'azione scala i suoi contatori interni
+        currentAction.performDraw(card, board);
+
+        model.notifyChange("card_drawn:" + cardId);
+
+        // Dopo ogni pescata, verifichiamo se il turno è finito o deve essere forzatamente terminato
+        checkActionCompletionOrAutoAdvance();
+    }
+
+    /**
+     * Controlla se l'azione è tecnicamente finita (contatori a 0)
+     * OPPURE se il giocatore è in una situazione di "stallo" (es. restano solo Eventi o Edifici inarrivabili).
+     * In Mesos, non c'è il pulsante "Passa", il gioco avanza se non hai mosse legali.
+     */
+    private void checkActionCompletionOrAutoAdvance() {
+        if (currentAction.isFinished() || !hasAnyLegalMove()) {
             advanceActionTurn();
         }
     }
 
-    public boolean canDrawCard(int cardId) {
-        // TODO REFACTOR: aggiungi controllo per non pescare carte evento
+    // ###capire bene se serve davvero considerando che si è obbligati a pescare solo i personaggi
+    private boolean hasAnyLegalMove() {
+        Board board = model.getBoard();
 
-        if (model.getBoard().findCardById(cardId) == null) return false;
-
-        // la carta si trova in una riga da cui il giocatore può ancora pescare in questo turno?
-        OfferTileAction action = getCurrentPlayerAction();
-
-        if (model.getBoard().getTopRow().containsCard(cardId)) {
-            return cardsDrawnFromTopRow < action.getTopRowCards();
+        for (Card card : board.getAllCardsOnBoard()) {
+            // Se l'azione gli permette di guardare a questa riga...
+            if (currentAction.canDraw(card, board)) {
+                // ... e la carta può essere fisicamente presa ...
+                if (card.canBeAcquiredBy(currentPlayer, model)) {
+                    return true; // Ha ancora qualcosa che PUÒ e DEVE pescare
+                }
+            }
         }
-        if (model.getBoard().getBottomRow().containsCard(cardId)) {
-            return cardsDrawnFromBottomRow < action.getBottomRowCards();
-        }
-
         return false;
     }
 
-    private boolean hasCurrentPlayerFinishedDrawing() {
-        OfferTileAction action = getCurrentPlayerAction();
-
-        // ha ancora carte da prendere dalla TopRow?
-        boolean stillNeedsTop = cardsDrawnFromTopRow < action.getTopRowCards()
-                && model.getBoard().getTopRow().hasAvailableCards();
-
-        // ha ancora carte da prendere dalla BottomRow?
-        boolean stillNeedsBottom = cardsDrawnFromBottomRow < action.getBottomRowCards()
-                && model.getBoard().getBottomRow().hasAvailableCards();
-
-        // il turno è finito quando non ha più nulla da pescare
-        return !stillNeedsTop && !stillNeedsBottom;
-    }
-
-    public OfferTileAction getCurrentPlayerAction() {
-        return model.getBoard().getOfferTrack()
-                .getOccupiedTileByPlayer(currentPlayer)
-                .getAction();
-    }
-
-    private void applyImmediateEffect(Card card) {
-        // TODO
-    }
-
     private void advanceActionTurn() {
-        // return current player's totem to the turn order tile
-        model.getBoard().getTurnOrderTile().returnTotem(currentPlayer);
+        ensureActiveTurn();
 
-        resetDrawCounters();
+        // Riporta il totem sulla prima tile
+        // La logica del pagamento di 1 cibo per l'ultimo posto va gestita dentro questo metodo!
+        model.getBoard()
+                .getTurnOrderTile()
+                .returnTotemAndResolveEffects(currentPlayer);
 
-        // find the next player still on the offer track
-        Player next = getNextPlayerOnOfferTrack();
+        currentPlayer = null;
+        currentAction = null;
 
-        if (next != null) {
-            currentPlayer = next;
-            model.notifyChange("turn_changed:" + currentPlayer.getName());
-        } else {
-            // no more totems on the offer track → round is over
-            model.setPhase(new PreEndOfRoundPhase(model));
+        // Ricomincia il ciclo per il prossimo giocatore
+        startNextPlayerTurn();
+    }
+
+    private void ensureActiveTurn() {
+        if (currentPlayer == null || currentAction == null) {
+            throw new IllegalStateException("Nessun turno di azione attivo.");
         }
     }
 
-    private void resetDrawCounters() {
-        cardsDrawnFromTopRow = 0;
-        cardsDrawnFromBottomRow = 0;
-    }
-
+    // ###questo metodo va messo nel board?
     private Player getNextPlayerOnOfferTrack() {
         return model.getBoard().getOfferTrack()
                 .getOccupiedTilesInOrder()
@@ -125,12 +154,11 @@ public class ActionPhase extends GamePhaseHandler {
 
     @Override
     public GamePhase getPhase() {
-        return model.getCurrentPhase();
+        return GamePhase.ACTION;
     }
 
     @Override
     public Player getCurrentPlayer() {
-        return model.getCurrentPlayer();
+        return currentPlayer;
     }
-
 }
