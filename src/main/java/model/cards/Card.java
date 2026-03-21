@@ -1,5 +1,6 @@
 package model.cards;
 
+import model.GameModel;
 import model.enums.Era;
 import model.player.Player;
 
@@ -18,8 +19,5 @@ public abstract class Card implements Drawable {
     public Era getEra() { return era; }
     public int getMinPlayerCount() { return playerCount; }
 
-    @Override
-    public void draw(Player player) {
-        throw new UnsupportedOperationException("This card cannot be drawn");
-    }
+    public abstract void registerToTribe(Player player, GameModel model);
 }
