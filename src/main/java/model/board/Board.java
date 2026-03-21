@@ -56,6 +56,7 @@ public class Board implements CardVisitor {
         bottomRow.populate(tribeDeck, playerCount);
     }
 
+    // TODO non ha senso che stia qui
     /**
      * Randomizes the turn order by shuffling the list of players and placing their totems on the TurnOrderTile in the new order.
      * @param players
