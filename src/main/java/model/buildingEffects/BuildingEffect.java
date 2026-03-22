@@ -1,6 +1,5 @@
-package model.effects;
+package model.buildingEffects;
 
-import model.GameModel;
 import model.player.Player;
 
 public interface BuildingEffect {

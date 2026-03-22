@@ -1,7 +1,6 @@
-package model.effects.OnEventEffects;
+package model.buildingEffects.OnEventEffects;
 
-import model.cards.charachterCards.CharacterCard;
-import model.effects.BuildingEffect;
+import model.buildingEffects.BuildingEffect;
 import model.player.Player;
 
 public class OnEventEffect implements BuildingEffect {
