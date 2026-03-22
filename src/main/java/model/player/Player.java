@@ -9,8 +9,14 @@ public class Player {
     private final Tribe tribe;
     private int food;
     private int prestigePoints;
-    private boolean isImmuneToShaman;
-    private boolean hasDoublePointsForShaman;
+
+    private boolean shamanicImmunity = false;
+    private boolean shamanicBonusStars = false;
+    private boolean shamanicDoublePrestige = false;
+    private boolean extraFoodOnTotemReturn = false;
+    private boolean extraDraw = false;
+
+// setters e getters per tutti e tre
 
     public Player(String name) {
         this.name = name;
@@ -57,18 +63,29 @@ public class Player {
         this.totem = totem;
     }
 
-    public boolean isImmuneToShaman() { return isImmuneToShaman; }
+    // boolean getters
+    public boolean hasShamanicImmunity() { return shamanicImmunity; }
+    public boolean hasShamanicDoublePrestige() { return shamanicDoublePrestige; }
+    public boolean hasShamanicBonusIcons() { return shamanicBonusStars; }
+    public boolean hasExtraFoodOnTotemReturn() { return extraFoodOnTotemReturn; }
+    public boolean hasExtraDraw() { return extraDraw; }
 
-    public boolean isHasDoublePointForShaman() { return hasDoublePointForShaman; }
-
-    public void setHasDoublePointsForShaman(boolean hasDoublePointsForShaman) {
-        this.hasDoublePointsForShaman = hasDoublePointsForShaman;
+    // boolean setters
+    public void setShamanicImmunity(boolean shamanicImmunity) {
+        this.shamanicImmunity = shamanicImmunity;
     }
-
-    public void setImmuneToShaman(boolean immuneToShaman) {
-        isImmuneToShaman = immuneToShaman;
+    public void setShamanicBonusIcons(boolean shamanicBonusStars) {
+        this.shamanicBonusStars = shamanicBonusStars;
     }
-
+    public void setShamanicDoublePrestige(boolean shamanicDoublePrestige) {
+        this.shamanicDoublePrestige = shamanicDoublePrestige;
+    }
+    public void setExtraFoodOnTotemReturn(boolean extraFoodOnTotemReturn) {
+        this.extraFoodOnTotemReturn = extraFoodOnTotemReturn;
+    }
+    public void setExtraDraw(boolean extraDraw) {
+        this.extraDraw = extraDraw;
+    }
 
     public String getName(){ return name; }
     public TotemColor getColor(){}

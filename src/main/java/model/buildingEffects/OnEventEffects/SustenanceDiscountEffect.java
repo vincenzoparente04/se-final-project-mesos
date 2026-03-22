@@ -1,6 +1,5 @@
-package model.effects.OnEventEffects;
+package model.buildingEffects.OnEventEffects;
 
-import model.cards.charachterCards.CharacterCard;
 import model.player.Player;
 import model.player.Tribe;
 

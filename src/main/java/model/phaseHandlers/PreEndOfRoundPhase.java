@@ -1,10 +1,8 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.effects.PreEndOfRoundEffects.PreEndOfRoundEffect;
+import model.buildingEffects.PreEndOfRoundEffects.PreEndOfRoundEffect;
 import model.enums.GamePhase;
-import model.phaseHandlers.EndOfRoundPhase;
-import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
 
 public class PreEndOfRoundPhase extends GamePhaseHandler {
