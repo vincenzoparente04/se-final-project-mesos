@@ -1,10 +1,5 @@
 package model.board;
 
-// The main board class that contains all the components of the board and provides access to them for the Controller and the View.
-// It is only responsible for holding the state of the board and providing access to its components, while the Controller is
-// responsible for applying the game logic and mutating the state of the board accordingly; the View is responsible for
-// displaying the current state of the board.
-
 import model.cards.TribeCard;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.charachterCards.BuilderCard;
@@ -215,5 +210,11 @@ public class Board implements CardVisitor {
         }else{
             topRowBuilding.addAll(buildingDeckEraII.drawAll());
         }
+    }
+
+    public List<TribeCard> getAllCardsOnBoard() {
+        List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
+        allCards.addAll(topRowTribe);
+        return allCards;
     }
 }
