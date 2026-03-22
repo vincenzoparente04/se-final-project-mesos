@@ -1,5 +1,6 @@
 package model.board;
 
+import model.cards.Card;
 import model.cards.TribeCard;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.charachterCards.BuilderCard;
@@ -14,6 +15,7 @@ import model.player.Totem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static model.enums.TotemLocation.TURN_ORDER_TILE;
 
@@ -111,16 +113,6 @@ public class Board implements CardVisitor {
         buildingDeckI.drawAll();
     }
 
-    public CharacterCard findCardById(int cardId) {
-        CharacterCard card = topRow.findCardById(cardId);
-        if (card != null) return card;
-        return bottomRow.findCardById(cardId);
-    }
-
-    public void removeCard(int cardId) {
-        if (topRow.containsCard(cardId)) topRow.removeCard(cardId);
-        else bottomRow.removeCard(cardId);
-    }
 
     /**
      * @implNote this method is responsible for resolving the events present in the bottom row at the end of the round, it is called by the EndOfRoundPhaseHandler
@@ -140,9 +132,7 @@ public class Board implements CardVisitor {
      * @param players
      */
     public void resolveAllEvents(List<Player> players){
-        List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
-        allCards.addAll(topRowTribe);
-        getSortedEvents(allCards);
+        getSortedEvents(getAllCardsOnBoard());
         resolve(players);
     }
 
@@ -216,5 +206,34 @@ public class Board implements CardVisitor {
         List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
         allCards.addAll(topRowTribe);
         return allCards;
+    }
+
+    public void getNextPlyerOnOfferTrack() {
+
+    }
+
+    public boolean topRowContainsCard(int cardId) {
+        return Stream.of(topRowTribe, topRowBuilding)
+                .flatMap(List::stream)
+                .anyMatch(c -> c.getId() == cardId);
+    }
+
+    public boolean bottomRowContainsCard(int cardId) {
+        return Stream.of(bottomRowTribe, bottomRowBuilding)
+                .flatMap(List::stream)
+                .anyMatch(c -> c.getId() == cardId);
+    }
+
+    public Card findCardById(int cardId) {
+        return Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
+                .flatMap(List::stream)
+                .filter(c -> c.getId() == cardId)
+                .findFirst()
+                .orElse(null); // restituisce null se non trova nessuna carta con quell'ID
+    }
+
+    public void removeCard(int cardId) {
+        Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
+              .forEach(list -> list.removeIf(card -> card.getId() == cardId));
     }
 }
