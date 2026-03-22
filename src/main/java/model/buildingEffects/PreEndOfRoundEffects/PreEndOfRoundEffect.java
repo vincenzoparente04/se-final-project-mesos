@@ -1,7 +1,6 @@
-package model.effects.PreEndOfRoundEffects;
+package model.buildingEffects.PreEndOfRoundEffects;
 
-import model.board.Board;
-import model.effects.BuildingEffect;
+import model.buildingEffects.BuildingEffect;
 import model.player.Player;
 
 public abstract class PreEndOfRoundEffect implements BuildingEffect {

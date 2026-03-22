@@ -1,7 +1,7 @@
 package model.cards.buildingCards;
 
 import model.cards.Card;
-import model.effects.BuildingEffect;
+import model.buildingEffects.BuildingEffect;
 import model.enums.Era;
 
 

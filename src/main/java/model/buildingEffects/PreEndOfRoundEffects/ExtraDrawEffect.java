@@ -1,6 +1,5 @@
-package model.effects.PreEndOfRoundEffects;
+package model.buildingEffects.PreEndOfRoundEffects;
 
-import model.board.Board;
 import model.player.Player;
 
 public class ExtraDrawEffect extends PreEndOfRoundEffect {

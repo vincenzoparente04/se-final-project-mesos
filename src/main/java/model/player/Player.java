@@ -9,8 +9,11 @@ public class Player {
     private final Tribe tribe;
     private int food;
     private int prestigePoints;
-    private boolean isImmuneToShaman;
-    private boolean hasDoublePointsForShaman;
+    private boolean shamanicImmunity = false;
+    private boolean shamanicBonusStars = false;
+    private boolean shamanicDoublePrestige = false;
+
+// setters e getters per tutti e tre
 
     public Player(String name) {
         this.name = name;
@@ -57,18 +60,19 @@ public class Player {
         this.totem = totem;
     }
 
-    public boolean isImmuneToShaman() { return isImmuneToShaman; }
+    public boolean hasShamanicImmunity() { return shamanicImmunity; }
+    public boolean hasShamanicDoublePrestige() { return shamanicDoublePrestige; }
+    public boolean hasShamanicBonusIcons() { return shamanicBonusStars; }
 
-    public boolean isHasDoublePointForShaman() { return hasDoublePointForShaman; }
-
-    public void setHasDoublePointsForShaman(boolean hasDoublePointsForShaman) {
-        this.hasDoublePointsForShaman = hasDoublePointsForShaman;
+    public void setShamanicImmunity(boolean shamanicImmunity) {
+        this.shamanicImmunity = shamanicImmunity;
     }
-
-    public void setImmuneToShaman(boolean immuneToShaman) {
-        isImmuneToShaman = immuneToShaman;
+    public void setShamanicBonusIcons(boolean shamanicBonusStars) {
+        this.shamanicBonusStars = shamanicBonusStars;
     }
-
+    public void setShamanicDoublePrestige(boolean shamanicDoublePrestige) {
+        this.shamanicDoublePrestige = shamanicDoublePrestige;
+    }
 
     public String getName(){ return name; }
     public TotemColor getColor(){}

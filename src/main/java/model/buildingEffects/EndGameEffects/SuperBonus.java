@@ -1,4 +1,4 @@
-package model.effects.EndGameEffects;
+package model.buildingEffects.EndGameEffects;
 
 import model.player.Player;
 
