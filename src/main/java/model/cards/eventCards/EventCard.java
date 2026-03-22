@@ -10,10 +10,6 @@ import model.player.Player;
 import java.util.List;
 
 public abstract class EventCard extends TribeCard {
-    // HUNT, SHAMANIC_RITUAL, CAVE_PAINTINGS, SUSTENANCE
-    // ###possiamo toglierlo?
-    private final EventType eventType;
-
     public EventCard(int id, Era era, int playerCount) {
         super(id, era, playerCount);
     }
@@ -27,7 +23,6 @@ public abstract class EventCard extends TribeCard {
     @Override
     public void acquiredBy(Player player, GameModel model) {
         throw new IllegalStateException("Le carte Evento non possono mai essere acquisite!");
-    }
     }
 
     // metodi
