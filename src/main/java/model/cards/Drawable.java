@@ -1,7 +1,9 @@
 package model.cards;
 
+import model.GameModel;
 import model.player.Player;
 
 public interface Drawable {
-    void draw(Player player);
+    boolean canBeAcquiredBy(Player player, GameModel model);
+    void acquiredBy(Player player, GameModel model);
 }
