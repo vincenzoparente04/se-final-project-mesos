@@ -23,7 +23,7 @@ public class EndGameBuildingEffect implements BuildingEffect {
 
     @Override
     public void registerSelf(Player player) {
-        player.registerEndGameEffect(this);
+        player.getTribe().registerEndGameEffect(this);
     }
 
 

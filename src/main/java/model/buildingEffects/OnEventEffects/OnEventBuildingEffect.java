@@ -3,11 +3,11 @@ package model.buildingEffects.OnEventEffects;
 import model.buildingEffects.BuildingEffect;
 import model.player.Player;
 
-public class OnEventEffect implements BuildingEffect {
+public class OnEventBuildingEffect implements BuildingEffect {
 
     @Override
     public void registerSelf(Player player) {
-
+        player.getTribe().registerOnEventEffect(this);
     }
 
     public int applyOnSustenance(Player player) { return 0; };

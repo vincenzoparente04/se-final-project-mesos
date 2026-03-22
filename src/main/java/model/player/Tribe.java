@@ -1,8 +1,11 @@
 package model.player;
 
+import impl.org.controlsfx.tools.rectangle.change.ToNorthChangeStrategy;
+import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
+import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
+import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.charachterCards.*;
-import model.enums.CharacterType;
 import model.enums.InventionIcon;
 
 import java.util.*;
@@ -19,6 +22,11 @@ public class Tribe {
 
     private List<BuildingCard> buildings = new ArrayList<>();
 
+    // 3 liste per effetti dei buildings
+    private final List<EndGameBuildingEffect> endGameBuildingEffects = new ArrayList<>();
+    private final List<OnAcquireBuildingEffect> onAcquireBuildingEffects = new ArrayList<>();
+    private final List<OnEventBuildingEffect> onEventBuildingEffects = new ArrayList<>();
+
     // metodi per aggiungere le carte alle varie liste
     public void addArtist(ArtistCard card) { artists.add(card); }
     public void addBuilder(BuilderCard card) { builders.add(card); }
@@ -29,7 +37,20 @@ public class Tribe {
         inventorsByIcon.computeIfAbsent(card.getInventionIcon(), k -> new ArrayList<>()).add(card);
     }
 
-    public void addBuilding(BuildingCard card) { buildings.add(card); }
+    public void addBuilding(BuildingCard card) {
+        buildings.add(card);
+    }
+
+    // registrazione — chiamati dai registerSelf degli effetti
+    public void registerOnEventEffect(OnEventBuildingEffect effect) {
+        onEventBuildingEffects.add(effect);
+    }
+    public void registerOnAcquireEffect(OnAcquireBuildingEffect effect) {
+        onAcquireBuildingEffects.add(effect);
+    }
+    public void registerEndGameEffect(EndGameBuildingEffect effect) {
+        endGameBuildingEffects.add(effect);
+    }
 
     // getters
     public List<ArtistCard> getArtists() { return Collections.unmodifiableList(artists); }
@@ -41,6 +62,9 @@ public class Tribe {
     public Map<InventionIcon, List<InventorCard>> getInventorsByIcon() {
         return Collections.unmodifiableMap(inventorsByIcon);
     }
+    public List<OnEventBuildingEffect> getOnEventEffects() { return onEventBuildingEffects; }
+    public List<OnAcquireBuildingEffect> getOnAcquireEffects() { return onAcquireBuildingEffects; }
+    public List<EndGameBuildingEffect> getEndGameEffects() { return endGameBuildingEffects; }
 
     // query methods — tutta la logica di conteggio vive qui
     public int getHunterCount()         { return hunters.size(); }

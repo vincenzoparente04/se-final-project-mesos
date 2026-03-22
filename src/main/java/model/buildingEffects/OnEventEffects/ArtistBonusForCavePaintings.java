@@ -2,7 +2,7 @@ package model.buildingEffects.OnEventEffects;
 
 import model.player.Player;
 
-public class ArtistBonusForCavePaintings extends OnEventEffect{
+public class ArtistBonusForCavePaintings extends OnEventBuildingEffect {
     private final int foodMultiplier;
 
     public ArtistBonusForCavePaintings(int foodMultiplier){

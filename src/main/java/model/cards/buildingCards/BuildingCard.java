@@ -28,6 +28,7 @@ public class BuildingCard extends Card {
     @Override
     public void registerToTribe(Player player, GameModel model) {
         player.getTribe().addBuilding(this);
+        this.effect.registerSelf(player);
     }
 
     public int getDiscountedCost(Player player) {
