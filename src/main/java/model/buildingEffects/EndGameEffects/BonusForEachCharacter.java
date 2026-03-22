@@ -1,9 +1,8 @@
-package model.effects.EndGameEffects;
+package model.buildingEffects.EndGameEffects;
 
 import model.player.Player;
 import model.player.Tribe;
 
-import java.util.List;
 import java.util.function.ToIntFunction;
 
 public class BonusForEachCharacter extends EndGameEffect {
