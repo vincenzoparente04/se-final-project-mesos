@@ -141,17 +141,6 @@ public class ActionPhase extends GamePhaseHandler {
         }
     }
 
-    // ###questo metodo va messo nel board?
-    private Player getNextPlayerOnOfferTrack() {
-        return model.getBoard().getOfferTrack()
-                .getOccupiedTilesInOrder()
-                .stream()
-                .map(tile -> tile.getOccupant().getOwner())
-                .filter(p -> p.getTotem().getLocation() == TotemLocation.OFFER_TRACK)
-                .findFirst()
-                .orElse(null);
-    }
-
     @Override
     public GamePhase getPhase() {
         return GamePhase.ACTION;
