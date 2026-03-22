@@ -1,5 +1,6 @@
 package model.board;
 
+import model.board.OfferTileAction.OfferTileAction;
 import model.player.Totem;
 
 // Box for the totem

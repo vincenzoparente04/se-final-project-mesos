@@ -30,9 +30,4 @@ public class CavePaintingsEventCard extends EventCard {
             }
         }
     }
-
-    @Override
-    public CardType getCardType() {
-        return null;
-    }
 }

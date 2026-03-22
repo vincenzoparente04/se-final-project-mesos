@@ -10,13 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 public class ShamanicRitualEventCard extends EventCard {
-
-
-    public ShamanicRitualEventCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
-    }
-
-
     /**
      *
      * @param players
