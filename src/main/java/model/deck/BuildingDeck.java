@@ -16,7 +16,7 @@ public class BuildingDeck {
     //setup
     public void initializeDeck(int playerCount){
     }
-    public BuildingDeck(int era){}
+    public BuildingDeck(Era era){}
     public void addCard(BuildingCard card)
 
     //access

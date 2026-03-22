@@ -1,29 +1,33 @@
 package model.board;
 
-// The main board class that contains all the components of the board and provides access to them for the Controller and the View.
-// It is only responsible for holding the state of the board and providing access to its components, while the Controller is
-// responsible for applying the game logic and mutating the state of the board accordingly; the View is responsible for
-// displaying the current state of the board.
-
+import model.cards.Card;
 import model.cards.TribeCard;
+import model.cards.buildingCards.BuildingCard;
+import model.cards.charachterCards.BuilderCard;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
 import model.deck.BuildingDeck;
 import model.deck.TribeDeck;
+import model.enums.Era;
 import model.player.Player;
 import model.player.Totem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static model.enums.TotemLocation.TURN_ORDER_TILE;
 
 public class Board implements CardVisitor {
     private final OfferTrack offerTrack;
     private final TurnOrderTile turnOrderTile;
-    private TopRow topRow;
-    private BottomRow bottomRow;
+
+    private List<TribeCard> topRowTribe;
+    private List<TribeCard> bottomRowTribe;
+    private List<BuildingCard> topRowBuilding;
+    private List<BuildingCard> bottomRowBuilding;
+
     private List<EventCard> eventsToResolve;
     private List<SustenanceEventCard> sustenanceToResolve;
 
@@ -31,6 +35,19 @@ public class Board implements CardVisitor {
     private BuildingDeck buildingDeckEraI;
     private BuildingDeck buildingDeckEraII;
     private BuildingDeck buildingDeckEraIII;
+
+    public Board() {  // TODO: check how we want to construct the board
+        this.topRowTribe = new ArrayList<>();
+        this.bottomRowTribe = new ArrayList<>();
+        this.topRowBuilding = new ArrayList<>();
+        this.bottomRowBuilding = new ArrayList<>();
+        this.buildingDeckEraI = new BuildingDeck(Era.ERA_I);
+        this.buildingDeckEraII = new BuildingDeck(Era.ERA_II);
+        this.buildingDeckEraIII = new BuildingDeck(Era.ERA_III);
+        this.tribeDeck = new TribeDeck();
+        this.offerTrack = new OfferTrack();
+        this.turnOrderTile = new TurnOrderTile();
+    }
 
     public OfferTrack getOfferTrack() {
         return offerTrack;
@@ -51,12 +68,12 @@ public class Board implements CardVisitor {
         buildingDeckEraIII.initializeDeck(playerCount);
         turnOrderTile.setup(playerCount);
         offerTrack.setup(playerCount);
-        topRow.restore(tribeDeck, playerCount);
-        topRow.addBuildingCard(); // in loop o come cazzo ve pare
-        bottomRow.populate(tribeDeck, playerCount);
+        bottomRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 1));
+        topRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 4));
+        topRowBuilding.addAll(buildingDeckEraI.drawAll());
     }
 
-    // TODO non ha senso che stia qui
+    //TODO probabilmente va spostata la logica del randomize in setUpPhase, che poi chiamerà semplicemente placeTotem
     /**
      * Randomizes the turn order by shuffling the list of players and placing their totems on the TurnOrderTile in the new order.
      * @param players
@@ -96,30 +113,17 @@ public class Board implements CardVisitor {
         buildingDeckI.drawAll();
     }
 
-    public CharacterCard findCardById(int cardId) {
-        CharacterCard card = topRow.findCardById(cardId);
-        if (card != null) return card;
-        return bottomRow.findCardById(cardId);
-    }
-
-    public void removeCard(int cardId) {
-        if (topRow.containsCard(cardId)) topRow.removeCard(cardId);
-        else bottomRow.removeCard(cardId);
-    }
 
     /**
      * @implNote this method is responsible for resolving the events present in the bottom row at the end of the round, it is called by the EndOfRoundPhaseHandler
-     * at first it collects all the EventCard in the bottom row. BottomRow returns the events already sorted by type and era,
+     * at first it collects all the EventCard in the bottom row. getSortedEvents() returns the events already sorted by type and era,
      * then it calls the resolve method of each EventCard, passing the list of players as parameter, so that the EventCard can apply its effect on the players.
      * @param players
      */
     public void resolveEvents(List<Player> players){
-        List<EventCard> events = bottomRow.getSortedEvents();
-        for (EventCard event : events) {
-            event.resolve(players);
-        }
+        getSortedEvents(bottomRowTribe);
+        resolve(players);
     }
-
 
     /**
      * Solves all the events on the board. Called only by EndOfGamePhase
@@ -128,24 +132,38 @@ public class Board implements CardVisitor {
      * @param players
      */
     public void resolveAllEvents(List<Player> players){
-        List<TribeCard> allCards = new ArrayList<>(bottomRow.getTribeCards());
-        allCards.addAll(topRow.getTribeCards());
+        getSortedEvents(getAllCardsOnBoard());
+        resolve(players);
+    }
 
-        eventsToResolve = new ArrayList<EventCard>();
-        sustenanceToResolve = new ArrayList<SustenanceEventCard>();
-        for(TribeCard card : allCards){
-            card.accept(this);
-        }
-        eventsToResolve.addAll(sustenanceToResolve);
-
+    /**
+     * resolve all events in eventsToResolve which is previously sorted by getSortedEvents() method, it is called by resolveEvents() and resolveAllEvents() methods
+     * @param players
+     */
+    public void resolve(List<Player> players){
         for (EventCard event : eventsToResolve) {
             event.resolve(players);
         }
     }
 
+    /**
+     * @implNote collects all the events present in the bottom row (to be resolved) and it sorts them moving the sustenance event at the end of the list<br>
+     * <p><b>Note, this method works only if it's assumed that the cards order in the bottom row is the unmuted from the original order in the top row
+     * which has to be the same as picking order from the deck</b></p>
+     * @return the list of events to resolve, sorted by type and era
+     */
+    public void getSortedEvents(List<TribeCard> tribeToSort) {
+        eventsToResolve = new ArrayList<EventCard>();
+        sustenanceToResolve = new ArrayList<SustenanceEventCard>();
+        for(TribeCard card : tribeToSort){
+            card.accept(this);
+        }
+        eventsToResolve.addAll(sustenanceToResolve);
+    }
+
     @Override
     public void visit(CharacterCard card) {
-        // do nothing, there are no character card in the bottom row
+        // do nothing, CharacterCard does not have any effect to resolve
     }
     @Override
     public void visit(EventCard card) {
@@ -156,28 +174,66 @@ public class Board implements CardVisitor {
         sustenanceToResolve.add(card);
     }
 
-
+    /**
+     * 1. discard all tribe cards from bottom row
+     * 2. moves all tribe cards from top row to bottom row
+     * 3. restores top row tribe cards, drawing from tribe deck
+     * @param playerCount
+     */
     public void endRound(int playerCount) {
-        bottomRow.discardTribeCards();
-        bottomRow.receiveTribeCards(topRow.extractTribeCardsForBottomRow());
-        topRow.restore(tribeDeck, playerCount);
+        bottomRowTribe.clear();
+        bottomRowTribe.addAll(topRowTribe);
+        int cardsToDraw = playerCount + 4;
+        topRowTribe.addAll(tribeDeck.drawMultiple(cardsToDraw));
     }
 
+    /**
+     * 1. discard all building cards from bottom row
+     * 2. moves all building cards from top row to bottom row
+     * 3. restores top row building cards, drawing from next era building deck
+     */
     public void changeEra() {
-        bottomRow.discardBuildingCards();
-        bottomRow.receiveBuildingCards(topRow.extractBuildingCardsForBottomRow());
+        bottomRowBuilding.clear();
+        bottomRowBuilding.addAll(topRowBuilding);
         if (buildingDeckEraII.isEmpty()) {
-            topRow.restoreEra(buildingDeckEraIII);
+            topRowBuilding.addAll(buildingDeckEraIII.drawAll());
         }else{
-            topRow.restoreEra(buildingDeckEraII);
+            topRowBuilding.addAll(buildingDeckEraII.drawAll());
         }
     }
 
-    public BottomRow getBottomRow() {
-        return bottomRow;
+    public List<TribeCard> getAllCardsOnBoard() {
+        List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
+        allCards.addAll(topRowTribe);
+        return allCards;
     }
 
-    public TopRow getTopRow() {
-        return topRow;
+    public void getNextPlyerOnOfferTrack() {
+
+    }
+
+    public boolean topRowContainsCard(int cardId) {
+        return Stream.of(topRowTribe, topRowBuilding)
+                .flatMap(List::stream)
+                .anyMatch(c -> c.getId() == cardId);
+    }
+
+    public boolean bottomRowContainsCard(int cardId) {
+        return Stream.of(bottomRowTribe, bottomRowBuilding)
+                .flatMap(List::stream)
+                .anyMatch(c -> c.getId() == cardId);
+    }
+
+    public Card findCardById(int cardId) {
+        return Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
+                .flatMap(List::stream)
+                .filter(c -> c.getId() == cardId)
+                .findFirst()
+                .orElse(null); // restituisce null se non trova nessuna carta con quell'ID
+    }
+
+    public void removeCard(int cardId) {
+        Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
+              .forEach(list -> list.removeIf(card -> card.getId() == cardId));
     }
 }
