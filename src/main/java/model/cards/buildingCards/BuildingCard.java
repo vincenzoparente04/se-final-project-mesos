@@ -2,7 +2,7 @@ package model.cards.buildingCards;
 
 import model.GameModel;
 import model.cards.Card;
-import model.effects.BuildingEffect;
+import model.buildingEffects.BuildingEffect;
 import model.enums.Era;
 import model.player.Player;
 
