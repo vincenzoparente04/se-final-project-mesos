@@ -2,7 +2,7 @@ package model.buildingEffects.OnCharacterAcquiredEffects;
 
 import model.player.Player;
 
-public class BonusForCompletedSet extends OnCharacterAcquiredEffect{
+public class BonusForCompletedSet extends OnAcquireBuildingEffect {
     private int alreadyCompletedSets;
 
     /**

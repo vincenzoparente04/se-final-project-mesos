@@ -5,7 +5,7 @@ import model.player.Tribe;
 
 import java.util.function.ToIntFunction;
 
-public class SustenanceDiscountEffect extends OnEventEffect {
+public class SustenanceDiscountEffect extends OnEventBuildingEffect {
     private final int discountPerCharacter;
     private final ToIntFunction<Tribe> correctGetter;
 

@@ -2,7 +2,7 @@ package model.buildingEffects.OnEventEffects;
 
 import model.player.Player;
 
-public class HunterBonusForHuntEvent extends OnEventEffect{
+public class HunterBonusForHuntEvent extends OnEventBuildingEffect {
     private final int prestigeMultiplier;
     private final int foodMultiplier;
 

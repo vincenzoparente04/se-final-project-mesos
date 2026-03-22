@@ -11,7 +11,7 @@ import java.util.Set;
 
 
 // TODO ricontrollatelo che non capisco tutte le funzioni usate
-public class InventorsPairBonus extends OnCharacterAcquiredEffect {
+public class InventorsPairBonus extends OnAcquireBuildingEffect {
     private Set<InventionIcon> alreadyPaired;
 
     /**
