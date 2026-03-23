@@ -22,7 +22,7 @@ public abstract class GamePhaseHandler {
         );
     }
 
-    public void placeTotem(Player player, OfferTile tile) {
+    public void placeTotem(Player player, OfferTile tile) throws Exception {
         throw new IllegalStateException(
                 "Cannot place totem during " + getPhase()
         );

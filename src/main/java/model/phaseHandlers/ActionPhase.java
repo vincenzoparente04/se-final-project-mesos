@@ -4,8 +4,7 @@ import model.GameModel;
 import model.board.Board;
 import model.cards.Card;
 import model.enums.GamePhase;
-import model.board.OfferTileAction.OfferTileAction
-import model.enums.TotemLocation;
+import model.board.OfferTileAction.OfferTileAction;
 import model.player.Player;
 
 public class ActionPhase extends GamePhaseHandler {
