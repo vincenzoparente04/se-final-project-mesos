@@ -62,9 +62,9 @@ public class Tribe {
     public Map<InventionIcon, List<InventorCard>> getInventorsByIcon() {
         return Collections.unmodifiableMap(inventorsByIcon);
     }
-    public List<OnEventBuildingEffect> getOnEventEffects() { return onEventBuildingEffects; }
-    public List<OnAcquireBuildingEffect> getOnAcquireEffects() { return onAcquireBuildingEffects; }
-    public List<EndGameBuildingEffect> getEndGameEffects() { return endGameBuildingEffects; }
+    public List<OnEventBuildingEffect> getOnEventBuildingEffects() { return onEventBuildingEffects; }
+    public List<OnAcquireBuildingEffect> getOnAcquireBuildingEffects() { return onAcquireBuildingEffects; }
+    public List<EndGameBuildingEffect> getEndGameBuildingEffects() { return endGameBuildingEffects; }
 
     // query methods — tutta la logica di conteggio vive qui
     public int getHunterCount()         { return hunters.size(); }

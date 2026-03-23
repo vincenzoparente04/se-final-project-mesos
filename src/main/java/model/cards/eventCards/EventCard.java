@@ -4,7 +4,6 @@ import model.GameModel;
 import model.board.CardVisitor;
 import model.cards.TribeCard;
 import model.enums.Era;
-import model.enums.EventType;
 import model.player.Player;
 
 import java.util.List;
@@ -24,6 +23,9 @@ public abstract class EventCard extends TribeCard {
     public void acquiredBy(Player player, GameModel model) {
         throw new IllegalStateException("Le carte Evento non possono mai essere acquisite!");
     }
+
+    @Override
+    public void registerSelf(Player player){};
 
     // metodi
     public abstract void resolve(List<Player> players);

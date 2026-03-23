@@ -1,6 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
 import model.cards.eventCards.EventCard;
 import model.enums.GamePhase;
 import model.player.Player;
@@ -60,6 +61,10 @@ public class EndOfGamePhase extends GamePhaseHandler {
             player.addPrestigePoints(tribe.calculateBuildingPrintedPoints());
 
             // TODO aggiungere la chiamata al metodo della tribe che calcola gli effetti EndGame dei building
+            // effetti endgame dei building
+            for (EndGameBuildingEffect effect : player.getTribe().getEndGameBuildingEffects()) {
+                effect.applyEffect(player);
+            }
         }
 
         model.notifyChange("endgame_scoring_complete");

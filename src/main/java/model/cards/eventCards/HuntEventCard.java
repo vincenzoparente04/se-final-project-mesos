@@ -1,5 +1,6 @@
 package model.cards.eventCards;
 
+import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.enums.CardType;
 import model.enums.CharacterType;
 import model.player.Player;
@@ -19,14 +20,14 @@ public class HuntEventCard extends EventCard {
     @Override
     public void resolve(List<Player> players) {
         players.forEach( p -> {
-            int hunters = p.getTribe().countByType(CharacterType.HUNTER);
+            int hunters = p.getTribe().getHunterCount();
             p.addFood(hunters);
             p.addPrestigePoints(hunters * this.getEra().ordinal());
-        });
-    }
 
-    @Override
-    public CardType getCardType() {
-        return null;
+            // building effects
+            for (OnEventBuildingEffect effect : p.getTribe().getOnEventBuildingEffects()) {
+                effect.applyOnHunt(p);
+            }
+        });
     }
 }
