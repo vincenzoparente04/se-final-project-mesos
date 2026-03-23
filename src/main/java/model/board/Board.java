@@ -178,6 +178,10 @@ public class Board implements CardVisitor {
         }
     }
 
+    /**
+     * @implNote merges top row and bottom row tribe cards. The returned list has bottom row cards first, then top row cards.
+     * @return a list of all the tribe cards present on the board, both in the top and bottom row
+     */
     public List<TribeCard> getAllCardsOnBoard() {
         List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
         allCards.addAll(topRowTribe);
@@ -188,18 +192,31 @@ public class Board implements CardVisitor {
         return offerTrack.getNextPlayer();
     }
 
+    /**
+     * check if the card passed as argument is present in the top row
+     * @param cardId
+     */
     public boolean topRowContainsCard(int cardId) {
         return Stream.of(topRowTribe, topRowBuilding)
                 .flatMap(List::stream)
                 .anyMatch(c -> c.getId() == cardId);
     }
 
+    /**
+     * check if the card passed as argument is present in the bottom row
+     * @param cardId
+     */
     public boolean bottomRowContainsCard(int cardId) {
         return Stream.of(bottomRowTribe, bottomRowBuilding)
                 .flatMap(List::stream)
                 .anyMatch(c -> c.getId() == cardId);
     }
 
+    /**
+     * finds a card by its id between all 4 list (top row tribe, bottom row tribe, top row building, bottom row building)
+     * @param cardId
+     * @return the card object
+     */
     public Card findCardById(int cardId) {
         return Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
                 .flatMap(List::stream)
@@ -208,6 +225,10 @@ public class Board implements CardVisitor {
                 .orElse(null); // restituisce null se non trova nessuna carta con quell'ID
     }
 
+    /**
+     * @implNote search the card through all 4 lists and removes it
+     * @param cardId
+     */
     public void removeCard(int cardId) {
         Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
               .forEach(list -> list.removeIf(card -> card.getId() == cardId));
