@@ -10,8 +10,8 @@ import model.cards.eventCards.SustenanceEventCard;
 import model.deck.BuildingDeck;
 import model.deck.TribeDeck;
 import model.enums.Era;
+import model.enums.TotemLocation;
 import model.player.Player;
-import model.player.Totem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,16 +81,15 @@ public class Board implements CardVisitor {
     public void randomizeTurnOrder(List<Player> players){
         List<TurnOrderSlot> slots = turnOrderTile.getSlots();
 
-        //shuffles the players list
+        // 1. Mischia la lista dei giocatori per determinare l'ordine casuale iniziale
         List<Player> randomized = new ArrayList<>(players);
         java.util.Collections.shuffle(randomized);
 
-        //for each player in the shuffled list, places their totem on the corresponding slot on the TurnOrderTile and updates the totem's location
-        for (int i =0; i < randomized.size(); i++) {
-            Totem t = randomized.get(i).getTotem();
-
-            slots.get(i).placeTotem(t);
-            t.setLocation(TURN_ORDER_TILE);
+        // 2. Posiziona i giocatori negli slot e assegna il cibo secondo il regolamento
+        for (int i = 0; i < randomized.size(); i++) {
+            Player p = randomized.get(i);
+            slots.get(i).placeTotem(p);
+            p.setLocation(TotemLocation.TURN_ORDER_TILE);
         }
     }
 
@@ -100,8 +99,8 @@ public class Board implements CardVisitor {
      * @param offerTile
      * @throws Exception
      */
-    public void placeTotem(Totem totem, OfferTile offerTile) throws Exception {
-        offerTrack.placeTotem(totem, offerTile);
+    public void placeTotem(Player player, OfferTile offerTile) throws Exception {
+        offerTrack.placeTotem(player, offerTile);
     }
 
     // helpers:

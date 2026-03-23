@@ -1,14 +1,16 @@
 package model.player;
 
 import model.enums.TotemColor;
+import model.enums.TotemLocation;
 
 
 public class Player {
     private final String name;
-    private Totem totem;
     private final Tribe tribe;
     private int food;
     private int prestigePoints;
+    private TotemLocation totemLocation;
+    private TotemColor color;
 
     private boolean shamanicImmunity = false;
     private boolean shamanicBonusStars = false;
@@ -22,10 +24,10 @@ public class Player {
         this.name = name;
         this.prestigePoints = 0;
         this.food = 0;
-        this.totem = null;
         this.tribe = new Tribe();
+        this.totemLocation = TotemLocation.TURN_ORDER_TILE; // default location at the start of the game
+        this.color = null;
     }
-
 
     // -- food --
     public int getFood(){ return food; }
@@ -55,14 +57,6 @@ public class Player {
     // tribe.addCharacter() or tribe.addBuilding()
     public Tribe getTribe(){ return tribe; }
 
-    public Totem getTotem() {
-        return totem;
-    }
-
-    public void setTotem(Totem totem) {
-        this.totem = totem;
-    }
-
     // boolean getters
     public boolean hasShamanicImmunity() { return shamanicImmunity; }
     public boolean hasShamanicDoublePrestige() { return shamanicDoublePrestige; }
@@ -88,5 +82,11 @@ public class Player {
     }
 
     public String getName(){ return name; }
-    public TotemColor getColor(){}
+    public TotemColor getColor() { return color; }
+    public TotemLocation getLocation() { return totemLocation; }
+
+    public void setLocation(TotemLocation location){
+        this.totemLocation = location;
+    }
+    public void setColor(TotemColor color) { this.color = color; }
 }
