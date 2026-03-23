@@ -26,11 +26,11 @@ public class GameModel {
         setPhase(new ColorChoosingPhase(this));
     }
 
-    public void chooseColor(Player player, TotemColor totemColor) throws Exception {
+    public void chooseColor(Player player, TotemColor totemColor) {
         currentPhaseHandler.chooseColor(player, totemColor);
     }
 
-   public void placeTotem(Player player, OfferTile offerTile) throws Exception {
+   public void placeTotem(Player player, OfferTile offerTile) {
         currentPhaseHandler.placeTotem(player, offerTile);
    }
 
@@ -65,6 +65,10 @@ public class GameModel {
 
     public Player getCurrentPlayer() {
         return currentPhaseHandler != null ? currentPhaseHandler.getCurrentPlayer() : null;
+    }
+
+    public List<Player> getTurnOrder() {
+        return board.getTurnOrderTile().getTurnOrder();
     }
 
     /**

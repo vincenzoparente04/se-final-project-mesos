@@ -36,13 +36,7 @@ public class GameController {
      * @param color The totem color chosen by the player
      */
     public void chooseColor(Player player, TotemColor color) {
-        try {
-            gameModel.chooseColor(player, color);
-        } catch (IllegalStateException e) {
-            // Handle invalid color choice - notify the client about the error
-            System.err.println("Invalid color choice: " + e.getMessage());
-            throw e; // Re-throw so the client can handle it
-        }
+        gameModel.chooseColor(player, color);
     }
 
     /**

@@ -20,7 +20,7 @@ public class PlacementPhase extends GamePhaseHandler {
 
     @Override
     public void onEnter() {
-        turnOrder = model.getBoard().getTurnOrderTile().getTurnOrder();
+        turnOrder = model.getTurnOrder();
         currentIndex = 0;
         currentPlayer = turnOrder.get(currentIndex);
 
@@ -31,14 +31,9 @@ public class PlacementPhase extends GamePhaseHandler {
     public void placeTotem(Player player, OfferTile offerTile) {
         if(!canPlaceTotem(player, offerTile)) { return; };
 
-        try {
-            model.getBoard().placeTotem(player, offerTile);
-            model.notifyChange("totem_placed:" + player.getName());
-            advanceTurn();
-        } catch (Exception e) {
-            // solo errori tecnici imprevisti della board
-            model.notifyChange("error:move_failed");
-        }
+        model.getBoard().placeTotem(player, offerTile);
+        model.notifyChange("totem_placed:" + player.getName());
+        advanceTurn();
     }
 
 

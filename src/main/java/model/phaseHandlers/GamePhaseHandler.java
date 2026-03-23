@@ -16,17 +16,9 @@ public abstract class GamePhaseHandler {
 
     public void onEnter() {}
 
-    public void chooseColor(Player player, TotemColor color) {
-        throw new IllegalStateException(
-                "Cannot choose color during " + getPhase()
-        );
-    }
+    public void chooseColor(Player player, TotemColor color) {}
 
-    public void placeTotem(Player player, OfferTile tile) throws Exception {
-        throw new IllegalStateException(
-                "Cannot place totem during " + getPhase()
-        );
-    }
+    public void placeTotem(Player player, OfferTile tile) {}
 
     public void drawCard(int cardId) {
         throw new IllegalStateException(

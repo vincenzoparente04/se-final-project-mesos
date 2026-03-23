@@ -28,20 +28,8 @@ public class ColorChoosingPhase extends GamePhaseHandler {
     }
 
     @Override
-    public void chooseColor(Player player,  TotemColor color) throws IllegalStateException {
-        if (player != currentPlayer) {
-            throw new IllegalStateException(
-                    "It's not " + player.getName() + "'s turn to choose a color. " +
-                            "Waiting for " + currentPlayer.getName()
-            );
-        }
-
-        // Validate: is the color available?
-        if (!availableColors.contains(color)) {
-            throw new IllegalStateException(
-                    "Color " + color + " is not available. Available colors: " + availableColors
-            );
-        }
+    public void chooseColor(Player player,  TotemColor color) {
+        if (player != currentPlayer || !availableColors.contains(color)) {return;}
 
         // Assign the totem to the player with the chosen color
         player.setColor(color);

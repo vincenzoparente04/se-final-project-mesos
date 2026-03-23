@@ -76,7 +76,7 @@ public class Board implements CardVisitor {
      * @param offerTile
      * @throws Exception
      */
-    public void placeTotem(Player player, OfferTile offerTile) throws Exception {
+    public void placeTotem(Player player, OfferTile offerTile) {
         offerTrack.placeTotem(player, offerTile);
     }
 

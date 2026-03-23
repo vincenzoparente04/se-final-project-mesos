@@ -18,7 +18,7 @@ public class OfferTrack {
      * @param offerTile
      * @throws Exception
      */
-    public void placeTotem(Player player, OfferTile offerTile) throws Exception{
+    public void placeTotem(Player player, OfferTile offerTile) {
         offerTile.placeTotem(player);
         player.setLocation(TotemLocation.OFFER_TRACK);
     }
