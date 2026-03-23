@@ -120,7 +120,7 @@ public class BuildingCardFactory {
 
             // ── No effect (super bonus card — 25PP are already in endGamePoints) ─
             case "none"
-                    -> new BuildingFlagEffect(p -> {}); // no-op
+                    -> new OnPickingEffects(p -> {}); // no-op
 
             default -> throw new IllegalArgumentException("Unknown building effect: " + effectId);
         };
