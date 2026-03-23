@@ -69,7 +69,7 @@ public class SetupPhase extends GamePhaseHandler {
 
         @Override
         public GamePhase getPhase () {
-            return model.getCurrentPhase();
+            return GamePhase.SETUP;
         }
 
         @Override
