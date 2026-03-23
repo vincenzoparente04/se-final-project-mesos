@@ -14,22 +14,23 @@ public class OfferTrack {
 
     /**
      * @implNote Checks if the tile is occupied, if so throws an exception. It places the totem on the tile and set its location.
-     * @param totem
+     * @param player
      * @param offerTile
      * @throws Exception
      */
     public void placeTotem(Player player, OfferTile offerTile) throws Exception{
-        if(offerTile.isOccupied()){
-            throw new Exception("Cannot place the totem in an occupied tile");
-        }
         offerTile.placeTotem(player);
         player.setLocation(TotemLocation.OFFER_TRACK);
     }
 
+    public Player getNextPlayer() {
+        return tiles.stream().filter(OfferTile::isOccupied).findFirst().map(OfferTile::getOccupant).orElse(null);
+    }
 
-    public List<OfferTile> getOccupiedTilesInOrder() {
-        return tiles;
-    }// listed left to right, used to determine who resolves actions and in which order
+    //secondo me inutile
+    //public List<OfferTile> getOccupiedTilesInOrder() {
+    //    return tiles;
+    //}// listed left to right, used to determine who resolves actions and in which order
 
     public OfferTile getOccupiedTileByPlayer(Player player)
     // scorre le tile e restituisce quella il cui occupant

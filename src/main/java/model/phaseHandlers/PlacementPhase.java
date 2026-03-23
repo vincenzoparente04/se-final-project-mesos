@@ -35,12 +35,12 @@ public class PlacementPhase extends GamePhaseHandler {
         } catch (Exception e){
 
         }
-        model.getBoard().placeTotem(player.getTotem(), offerTile);
+        model.getBoard().placeTotem(player, offerTile);
         model.notifyChange("totem_placed:" + player.getName());
         advanceTurn();
     }
 
-    // TODO da rivedere
+    // TODO da rivedere. ma i controlli sono da tenere qui secondo me
     public void canPlaceTotem(Player player, OfferTile tile) throws Exception{
         if(player != currentPlayer){
             throw new Exception("It's not your turn! Waiting for " + currentPlayer.getName());

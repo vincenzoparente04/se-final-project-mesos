@@ -15,10 +15,10 @@ public class TribeDeck {
     private Era currentEra;
 
     // -- setup --
-    public void initializeDeck(List<TribeCard> allCards, int playerCount)
+    public void initializeDeck(int playerCount) {}
 
     // used during setup to add cards to the deck
-    public void addCard(TribeCard card)
+    public void addCard(TribeCard card) {}
 
 
     /**

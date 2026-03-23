@@ -3,7 +3,6 @@ package model.board;
 import model.cards.Card;
 import model.cards.TribeCard;
 import model.cards.buildingCards.BuildingCard;
-import model.cards.charachterCards.BuilderCard;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
@@ -16,8 +15,6 @@ import model.player.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static model.enums.TotemLocation.TURN_ORDER_TILE;
 
 public class Board implements CardVisitor {
     private final OfferTrack offerTrack;
@@ -94,8 +91,8 @@ public class Board implements CardVisitor {
     }
 
     /**
-     * Delegate the placeTotem implementation to the offerTrack
-     * @param totem
+     * Delegate the placeTotem implementation to the offerTrack(which delegates to OfferTile)
+     * @param player
      * @param offerTile
      * @throws Exception
      */
@@ -104,13 +101,13 @@ public class Board implements CardVisitor {
     }
 
     // helpers:
-    private void populateBottomRow(TribeDeck tribeDeck, int playerCount){
-        tribeDeck.draw(); // in loop
-    }
-    private void populateTopRow(TribeDeck tribeDeck, BuildingDeck buildingDeckI, int playerCount){
-        tribeDeck.draw(); // in loop
-        buildingDeckI.drawAll();
-    }
+    //private void populateBottomRow(TribeDeck tribeDeck, int playerCount){
+    //    tribeDeck.draw(); // in loop
+    //}
+    //private void populateTopRow(TribeDeck tribeDeck, BuildingDeck buildingDeckI, int playerCount){
+    //    tribeDeck.draw(); // in loop
+    //    buildingDeckI.drawAll();
+    //}
 
 
     /**
@@ -207,8 +204,8 @@ public class Board implements CardVisitor {
         return allCards;
     }
 
-    public void getNextPlyerOnOfferTrack() {
-
+    public Player getNextPlayerOnOfferTrack() {
+        return offerTrack.getNextPlayer();
     }
 
     public boolean topRowContainsCard(int cardId) {
