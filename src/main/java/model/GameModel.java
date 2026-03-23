@@ -52,7 +52,7 @@ public class GameModel {
         }
     }
 
-    // ── getters ──────────────────────────────────────────────────────────────────
+    // -- getters --
     public Board getBoard()                     { return board; }
     public List<Player> getPlayers()            { return players; }
     public int getPlayerCount()                 { return playerCount; }
@@ -80,7 +80,7 @@ public class GameModel {
 
     // helpers:
     public boolean isGameOver() {
-        return currentRound > 10 || board.isTribeDeckEmpty();
+        return currentRound > 10;
     }
 
     public void incrementRound() {
