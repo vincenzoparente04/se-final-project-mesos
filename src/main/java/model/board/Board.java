@@ -70,26 +70,6 @@ public class Board implements CardVisitor {
         topRowBuilding.addAll(buildingDeckEraI.drawAll());
     }
 
-    //TODO probabilmente va spostata la logica del randomize in setUpPhase, che poi chiamerà semplicemente placeTotem
-    /**
-     * Randomizes the turn order by shuffling the list of players and placing their totems on the TurnOrderTile in the new order.
-     * @param players
-     */
-    public void randomizeTurnOrder(List<Player> players){
-        List<TurnOrderSlot> slots = turnOrderTile.getSlots();
-
-        // 1. Mischia la lista dei giocatori per determinare l'ordine casuale iniziale
-        List<Player> randomized = new ArrayList<>(players);
-        java.util.Collections.shuffle(randomized);
-
-        // 2. Posiziona i giocatori negli slot e assegna il cibo secondo il regolamento
-        for (int i = 0; i < randomized.size(); i++) {
-            Player p = randomized.get(i);
-            slots.get(i).placeTotem(p);
-            p.setLocation(TotemLocation.TURN_ORDER_TILE);
-        }
-    }
-
     /**
      * Delegate the placeTotem implementation to the offerTrack(which delegates to OfferTile)
      * @param player
