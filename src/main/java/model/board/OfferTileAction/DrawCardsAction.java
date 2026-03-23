@@ -45,9 +45,9 @@ public class DrawCardsAction {
     @Override
     public void performDraw(Card card, Board board) {
         // Aggiorna il contatore giusto in base a dove si trovava la carta
-        if (board.getTopRow().containsCard(card.getId())) {
+        if (board.topRowContainsCard(card.getId())) {
             currentTopRowDraws++;
-        } else if (board.getBottomRow().containsCard(card.getId())) {
+        } else if (board.bottomRowContainsCard(card.getId())) {
             currentBottomRowDraws++;
         }
     }

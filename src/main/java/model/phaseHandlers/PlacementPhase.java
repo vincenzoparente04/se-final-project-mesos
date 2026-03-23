@@ -35,7 +35,7 @@ public class PlacementPhase extends GamePhaseHandler {
         } catch (Exception e){
 
         }
-        model.getBoard().placeTotem(player.getTotem(), offerTile);
+        model.getBoard().placeTotem(player, offerTile);
         model.notifyChange("totem_placed:" + player.getName());
         advanceTurn();
     }
@@ -50,7 +50,7 @@ public class PlacementPhase extends GamePhaseHandler {
             throw new Exception("It's not the placement phase!");
         }
 
-        if(currentPlayer.getTotem().getLocation() != TotemLocation.TURN_ORDER_TILE){
+        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE){
             throw new Exception("Your totem is already on the offer track");
         }
 
