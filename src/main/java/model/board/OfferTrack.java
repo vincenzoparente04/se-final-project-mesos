@@ -2,7 +2,6 @@ package model.board;
 
 import model.enums.TotemLocation;
 import model.player.Player;
-import model.player.Totem;
 
 import java.util.List;
 
@@ -19,12 +18,12 @@ public class OfferTrack {
      * @param offerTile
      * @throws Exception
      */
-    public void placeTotem(Totem totem, OfferTile offerTile) throws Exception{
+    public void placeTotem(Player player, OfferTile offerTile) throws Exception{
         if(offerTile.isOccupied()){
             throw new Exception("Cannot place the totem in an occupied tile");
         }
-        offerTile.placeTotem(totem);
-        totem.setLocation(TotemLocation.OFFER_TRACK);
+        offerTile.placeTotem(player);
+        player.setLocation(TotemLocation.OFFER_TRACK);
     }
 
 
@@ -40,8 +39,6 @@ public class OfferTrack {
 
 
 
-
-
-    public OfferTile getTile(char letter)
+    public OfferTile getTile(char letter) {}
     public List<OfferTile> getAvailableTiles()     // with no Totem on top
 }

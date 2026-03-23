@@ -1,19 +1,19 @@
 package model.board;
 
-import model.player.Totem;
+import model.player.Player;
 
 public class TurnOrderSlot {
     private final int foodBonus;   // fisso — 0 se nessun bonus
     private final boolean isLast;  // fisso — true solo per l'ultimo slot
-    private Totem occupant;        // variabile — null se lo slot è libero
+    private Player occupant;        // variabile — null se lo slot è libero
 
     public void applyEffect(){
         if (isLast) {
-            this.occupant.getOwner().removeFood(1, 2);
+            this.occupant.removeFood(1, 2);
         }
 
         if (foodBonus > 0) {
-            this.occupant.getOwner().addFood(slot.getFoodBonus());
+            this.occupant.addFood(getFoodBonus());
         }
     }
 
@@ -21,6 +21,6 @@ public class TurnOrderSlot {
     public boolean isFree()         { return occupant == null; }
     public int getFoodBonus()       { return foodBonus; }
     public boolean isLast()         { return isLast; }
-    public Totem getOccupant()      { return occupant; }
-    public void placeTotem(Totem totem) { this.occupant = totem; }
+    public Player getOccupant()      { return occupant; }
+    public void placeTotem(Player player) { this.occupant = player; }
 }

@@ -2,7 +2,6 @@ package model.board;
 
 import model.enums.TotemLocation;
 import model.player.Player;
-import model.player.Totem;
 
 import java.util.List;
 
@@ -14,8 +13,8 @@ public class TurnOrderTile {
 
     public void returnTotem(Player player){
         TurnOrderSlot slot = getFirstFreeSlot();
-        slot.placeTotem(player.getTotem());
-        player.getTotem().setLocation(TotemLocation.TURN_ORDER_TILE);
+        slot.placeTotem(player;
+        player.setLocation(TotemLocation.TURN_ORDER_TILE);
         slot.applyEffect();
     }
 
@@ -28,7 +27,7 @@ public class TurnOrderTile {
                 .orElseThrow();
     }
 
-    public void placeTotemAtSlot(Totem totem, int index){}
+    public void placeTotemAtSlot(Player player, int index){}
 
     public List<Player> getTurnOrder()
     // scorre gli slot in ordine
