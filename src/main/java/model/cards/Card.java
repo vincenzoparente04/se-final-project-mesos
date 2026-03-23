@@ -19,5 +19,5 @@ public abstract class Card implements Drawable {
     public Era getEra() { return era; }
     public int getMinPlayerCount() { return playerCount; }
 
-    public abstract void registerToTribe(Player player, GameModel model);
+    public abstract void registerToTribe(Player player);
 }

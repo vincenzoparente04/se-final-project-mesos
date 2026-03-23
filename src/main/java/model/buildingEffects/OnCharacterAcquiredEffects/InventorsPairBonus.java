@@ -28,7 +28,7 @@ public class InventorsPairBonus extends OnAcquireBuildingEffect {
                 alreadyPaired.add(entry.getKey());
             }
         }
-        player.registerOnAcquireEffect(this); // todo
+        player.getTribe().registerOnAcquireEffect(this);
     }
 
     /**

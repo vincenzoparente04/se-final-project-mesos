@@ -1,6 +1,7 @@
 package model.cards.eventCards;
 
 import model.board.CardVisitor;
+import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.enums.CardType;
 import model.player.Player;
 
@@ -25,8 +26,14 @@ public class SustenanceEventCard extends EventCard {
     public void resolve(List<Player> players) {
         players.forEach( p -> {
             int characterCount = p.getTribe().getTotalCharacterCount();
-            int foodToPay = characterCount - p.getTribe().getTotalGatherersDiscount();
+            int discount = p.getTribe().getTotalGatherersDiscount();
 
+            // building effects: accumula sconto extra
+            for (OnEventBuildingEffect effect : p.getTribe().getOnEventBuildingEffects()) {
+                discount += effect.applyOnSustenance(p);
+            }
+
+            int foodToPay = Math.max(0, characterCount - discount);
             p.removeFood(foodToPay, this.getEra().ordinal());
         });
     }

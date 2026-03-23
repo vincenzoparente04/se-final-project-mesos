@@ -12,7 +12,7 @@ public class BonusForCompletedSet extends OnAcquireBuildingEffect {
     @Override
     public void registerSelf(Player player) {
         this.alreadyCompletedSets = player.getTribe().countCompleteSets();
-        player.registerOnAcquireEffect(this);
+        player.getTribe().registerOnAcquireEffect(this);
     }
 
     /**

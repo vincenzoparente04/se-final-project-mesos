@@ -2,6 +2,7 @@ package model.cards.charachterCards;
 
 import model.GameModel;
 import model.board.CardVisitor;
+import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
 import model.cards.Drawable;
 import model.cards.TribeCard;
 import model.enums.Era;
@@ -19,7 +20,12 @@ public abstract class CharacterCard extends TribeCard {
 
     @Override
     public void acquiredBy(Player player, GameModel model){
-        registerToTribe(player, model);
+        registerToTribe(player);
+
+        // checks for OnAcquire effects
+        for (OnAcquireBuildingEffect effect : player.getTribe().getOnAcquireBuildingEffects()) {
+            effect.applyEffect(player);
+        }
     }
 
     @Override
