@@ -61,11 +61,6 @@ public class EndGameBuildingEffect implements BuildingEffect {
         new EndGameBuildingEffect(1, Tribe::calculateBuildersEndGamePoints)
         );
 
-        // 25 PP flat
-        BuildingCard inventorBuilding = new BuildingCard(
-        foodCost, era, printedPP,
-        new EndGameBuildingEffect(25, tribe -> 1)
-        );
      */
 
 }
