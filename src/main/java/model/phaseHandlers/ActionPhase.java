@@ -26,7 +26,7 @@ public class ActionPhase extends GamePhaseHandler {
         Board board = model.getBoard();
 
         // Trova il prossimo giocatore da sinistra a destra sul tracciato offerte
-        currentPlayer = getNextPlayerOnOfferTrack();
+        currentPlayer = board.getNextPlayerOnOfferTrack();
 
         // Se non ci sono più giocatori, la fase Action è finita
         if (currentPlayer == null) {

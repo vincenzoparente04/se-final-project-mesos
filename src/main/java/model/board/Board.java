@@ -95,7 +95,7 @@ public class Board implements CardVisitor {
 
     /**
      * Delegate the placeTotem implementation to the offerTrack
-     * @param totem
+     * @param player
      * @param offerTile
      * @throws Exception
      */

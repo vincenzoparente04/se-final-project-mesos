@@ -1,11 +1,9 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.player.Player;
-import model.player.Totem;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -46,7 +44,7 @@ public class ColorChoosingPhase extends GamePhaseHandler {
         }
 
         // Assign the totem to the player with the chosen color
-        player.setTotem(new Totem(player, color));
+        player.setColor(color);
 
         // Remove the color from available pool
         availableColors.remove(color);
