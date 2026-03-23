@@ -12,9 +12,9 @@ public class EndOfRoundPhase extends GamePhaseHandler {
     }
 
     /**
-     * @implNote in this phase we resolve the events present in the bottom row,
-     * then we call the endRound method of the board to discard the tribe cards and add new ones,
-     * then we check if the game is over (if a player has 12 or more points), if it is we set the phase to EndOfGamePhase, otherwise we increment the round and set the phase to PlacementPhase
+     * @implNote This method resolves all events on the board, checks for era changes, and transitions
+     * to the next phase (either PlacementPhase or EndOfGamePhase) based on whether the game is over.
+     * It also notifies observers of any changes that occur during this process.
      */
     @Override
     public void onEnter(){
@@ -40,11 +40,11 @@ public class EndOfRoundPhase extends GamePhaseHandler {
 
     @Override
     public GamePhase getPhase() {
-        return model.getCurrentPhase();
+        return GamePhase.END_OF_ROUND;
     }
 
     @Override
     public Player getCurrentPlayer() {
-        return model.getCurrentPlayer();
+        return null;
     }
 }

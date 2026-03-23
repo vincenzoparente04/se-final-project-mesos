@@ -31,16 +31,11 @@ public class ColorChoosingPhase extends GamePhaseHandler {
     public void chooseColor(Player player,  TotemColor color) {
         if (player != currentPlayer || !availableColors.contains(color)) {return;}
 
-        // Assign the totem to the player with the chosen color
+
         player.setColor(color);
-
-        // Remove the color from available pool
         availableColors.remove(color);
-
-        // Notify observers about the color assignment
         notifyChange("color_chosen:" + player.getName() + ":" + color);
 
-        // ── advance ──
         advanceTurn();
     }
 
@@ -58,14 +53,10 @@ public class ColorChoosingPhase extends GamePhaseHandler {
     }
 
     @Override
-    public GamePhase getPhase() {
-        return model.getCurrentPhase();
-    }
+    public GamePhase getPhase() { return GamePhase.COLOR_CHOOSING_PHASE; }
 
     @Override
     public Player getCurrentPlayer() {
-        return model.getCurrentPlayer();
+        return currentPlayer;
     }
-
-
 }
