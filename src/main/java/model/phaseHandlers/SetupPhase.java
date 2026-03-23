@@ -16,7 +16,7 @@ public class SetupPhase extends GamePhaseHandler {
     }
 
     /**
-     * @implSpec This method is responsible for setting up the board, randomizing turn order, and distributing
+     * @implNote  This method is responsible for setting up the board, randomizing turn order, and distributing
      * starting resources to players. Once all setup tasks are complete, it transitions the game to the PlacementPhase.
      */
     @Override

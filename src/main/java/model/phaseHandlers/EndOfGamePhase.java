@@ -20,6 +20,10 @@ public class EndOfGamePhase extends GamePhaseHandler {
         super(model);
     }
 
+    /**
+     * @implNote  This method resolves all visible events, calculates end-game scoring for each player,
+     * determines the winner, and notifies observers of the game over state and the winner(s).
+     */
     @Override
     public void onEnter() {
         resolveAllVisibleEvents();
@@ -30,7 +34,7 @@ public class EndOfGamePhase extends GamePhaseHandler {
     }
 
     /**
-     * Unlike normal rounds, the final round resolves events
+     * @implNote Unlike normal rounds, the final round resolves events
      * from BOTH the top and bottom rows.
      * Sustenance must be resolved last as usual.
      */
@@ -40,7 +44,7 @@ public class EndOfGamePhase extends GamePhaseHandler {
     }
 
     /**
-     * Calculates end-game prestige points for each player.
+     * @implNote  Calculates end-game prestige points for each player.
      * Each scoring source is handled by the Tribe, which already
      * has the typed lists and query methods needed.
      */
@@ -60,8 +64,7 @@ public class EndOfGamePhase extends GamePhaseHandler {
             // Buildings: printed PP + endgame effects
             player.addPrestigePoints(tribe.calculateBuildingPrintedPoints());
 
-            // TODO aggiungere la chiamata al metodo della tribe che calcola gli effetti EndGame dei building
-            // effetti endgame dei building
+            // end game builging effects
             for (EndGameBuildingEffect effect : player.getTribe().getEndGameBuildingEffects()) {
                 effect.applyEffect(player);
             }
@@ -71,10 +74,9 @@ public class EndOfGamePhase extends GamePhaseHandler {
     }
 
     /**
-     * Determines the winner.
-     * Tiebreak: most Food. If still tied, victory is shared.
+     * @implNote  Determines the winner. In case of prestige points tie, it chooses between who has more food,
+     * and if still tied, it's a shared victory.
      */
-    // TODO: da controllare
     private void determineWinner() {
         List<Player> players = model.getPlayers();
 
@@ -92,7 +94,7 @@ public class EndOfGamePhase extends GamePhaseHandler {
             return;
         }
 
-        // tiebreak: chi ha più Food
+        // in case of tie calculates who has more food
         int maxFood = tied.stream()
                 .mapToInt(Player::getFood)
                 .max()
@@ -101,10 +103,12 @@ public class EndOfGamePhase extends GamePhaseHandler {
         winners = tied.stream()
                 .filter(p -> p.getFood() == maxFood)
                 .toList();
-
-        // se ancora pari, la vittoria è condivisa — winners contiene più giocatori
     }
 
+    /**
+     * @implNote Returns the name(s) of the winner(s)
+     * @return Winners's name
+     */
     private String formatWinners() {
         if (winners.size() == 1) {
             return winners.getFirst().getName();
@@ -120,12 +124,8 @@ public class EndOfGamePhase extends GamePhaseHandler {
     }
 
     @Override
-    public GamePhase getPhase() {
-        return model.getCurrentPhase();
-    }
+    public GamePhase getPhase() { return GamePhase.END_OF_GAME; }
 
     @Override
-    public Player getCurrentPlayer() {
-        return null;
-    }
+    public Player getCurrentPlayer() { return null; }
 }
