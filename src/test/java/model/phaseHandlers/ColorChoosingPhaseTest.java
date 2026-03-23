@@ -3,7 +3,6 @@ package model.phaseHandlers;
 import model.GameModel;
 import model.enums.TotemColor;
 import model.player.Player;
-import model.player.Totem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;

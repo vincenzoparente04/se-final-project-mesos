@@ -50,7 +50,7 @@ public class PlacementPhase extends GamePhaseHandler {
             throw new Exception("It's not the placement phase!");
         }
 
-        if(currentPlayer.getTotem().getLocation() != TotemLocation.TURN_ORDER_TILE){
+        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE){
             throw new Exception("Your totem is already on the offer track");
         }
 
