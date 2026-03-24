@@ -10,7 +10,5 @@ public abstract class TribeCard extends Card {
         super(id, era, playerCount);
     }
 
-    public abstract void registerSelf(Player player);
-
     public abstract void accept(CardVisitor visitor);
 }

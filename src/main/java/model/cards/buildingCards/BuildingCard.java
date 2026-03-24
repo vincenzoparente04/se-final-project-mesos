@@ -26,7 +26,7 @@ public class BuildingCard extends Card {
 
     // override della register to tribe
     @Override
-    public void registerToTribe(Player player, GameModel model) {
+    public void registerToTribe(Player player) {
         player.getTribe().addBuilding(this);
         this.effect.registerSelf(player);
     }
@@ -36,7 +36,7 @@ public class BuildingCard extends Card {
         return Math.max(0, this.foodCost - buildersDiscount);
     }
 
-    // ritorna true se il palyer ha abbastanza cibo al netto dello sconto applicato dai builder
+    // ritorna true se il player ha abbastanza cibo al netto dello sconto applicato dai builder
     @Override
     public boolean canBeAcquiredBy(Player player, GameModel model) {
         return player.getFood() >= getDiscountedCost(player);
@@ -46,7 +46,7 @@ public class BuildingCard extends Card {
     @Override
     public void acquiredBy(Player player, GameModel model) {
         player.removeFood(getDiscountedCost(player), 0);
-        registerToTribe(player, model);
+        registerToTribe(player);
     }
 }
 
