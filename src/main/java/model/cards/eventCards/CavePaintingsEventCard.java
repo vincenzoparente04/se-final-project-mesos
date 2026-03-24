@@ -1,8 +1,7 @@
 package model.cards.eventCards;
 
 import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
-import model.enums.CardType;
-import model.enums.CharacterType;
+import model.enums.Era;
 import model.player.Player;
 
 import java.util.List;
@@ -14,18 +13,18 @@ public class CavePaintingsEventCard extends EventCard {
     }
 
     /**
-     * @implNote il calcolo è dovuto a un pattern ricorrente trovato negli eventi di questo tipo
+     * @implNote For each player, if they have less artists than the era of the card, they lose 2 prestige points.
+     * Otherwise, they gain prestige points equal to the number of artists multiplied by the era of the card.
+     * Calls if eventually there are buildings who affect the cave paintings event.
      * @param players
      */
     @Override
     public void resolve(List<Player> players) {
         for(Player p : players){
-            int artists = p.getTribe().;
-            // se non ho il numero minimo di artisti pago
+            int artists = p.getTribe().getArtistCount();
             if(artists < this.getEra().ordinal()){
                 p.removePrestigePoints(2);
             }
-            // altrimenti guadagno pp in base a quanti artisti ho
             else{
                 p.addPrestigePoints(this.getEra().ordinal() * artists);
             }

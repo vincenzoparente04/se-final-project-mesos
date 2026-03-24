@@ -1,19 +1,20 @@
 package model.cards.eventCards;
 
-import model.enums.CardType;
 import model.enums.Era;
 import model.player.Player;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ShamanicRitualEventCard extends EventCard {
+    public ShamanicRitualEventCard(int id, Era era, int playerCount) { super(id, era, playerCount); }
+
     /**
-     *
+     * @implNote Each player counts the number of shamanic icons they have (including those from buildings).
+     * The player(s) with the most icons gain prestige points equal to 5 times the era of the card and manages eventual
+     * ties. The method also considers the possible effects given by buildings.
      * @param players
-     * @implNote Il metodo assegna i punti al vincitore e li rimuove al perdente
      */
     public void resolve(List<Player> players) {
         // 1. calcola icone con bonus building

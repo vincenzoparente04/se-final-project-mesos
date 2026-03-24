@@ -16,6 +16,10 @@ public class BuilderCard extends CharacterCard {
     public int getPrestigePoints() { return prestigePoints; }
     public int getBuilderDiscount(){ return builderDiscount; }
 
+    /**
+     * @implNote Add a builder to its list in the tribe of the player who picked this card.
+     * @param player
+     */
     @Override
     public void registerToTribe(Player player) {
         player.getTribe().addBuilder(this);

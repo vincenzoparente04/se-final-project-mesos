@@ -19,5 +19,10 @@ public abstract class Card implements Drawable {
     public Era getEra() { return era; }
     public int getMinPlayerCount() { return playerCount; }
 
+    /**
+     * @implSpec  This method is called when a player acquires a card, add the card to
+     * the player's tribe (specifically in the correct list of its type) and apply any effects it has.
+     * @param player
+     */
     public abstract void registerToTribe(Player player);
 }
