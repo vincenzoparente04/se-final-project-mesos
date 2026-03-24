@@ -102,7 +102,6 @@ public class ActionPhase extends GamePhaseHandler {
         }
     }
 
-    // ###capire bene se serve davvero considerando che si è obbligati a pescare solo i personaggi
     private boolean hasAnyLegalMove() {
         Board board = model.getBoard();
 
