@@ -22,11 +22,11 @@ public class CavePaintingsEventCard extends EventCard {
     public void resolve(List<Player> players) {
         for(Player p : players){
             int artists = p.getTribe().getArtistCount();
-            if(artists < this.getEra().ordinal()){
+            if(artists < this.getEra().ordinal() + 1){
                 p.removePrestigePoints(2);
             }
             else{
-                p.addPrestigePoints(this.getEra().ordinal() * artists);
+                p.addPrestigePoints((this.getEra().ordinal() + 1 ) * artists);
             }
 
             // building effects

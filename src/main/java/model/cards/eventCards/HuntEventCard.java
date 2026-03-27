@@ -23,7 +23,7 @@ public class HuntEventCard extends EventCard {
         players.forEach( p -> {
             int hunters = p.getTribe().getHunterCount();
             p.addFood(hunters);
-            p.addPrestigePoints(hunters * this.getEra().ordinal());
+            p.addPrestigePoints(hunters * (this.getEra().ordinal() + 1));
 
             // building effects
             for (OnEventBuildingEffect effect : p.getTribe().getOnEventBuildingEffects()) {

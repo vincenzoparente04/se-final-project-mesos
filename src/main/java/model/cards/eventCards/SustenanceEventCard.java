@@ -34,7 +34,7 @@ public class SustenanceEventCard extends EventCard {
             }
 
             int foodToPay = Math.max(0, characterCount - discount);
-            p.removeFood(foodToPay, this.getEra().ordinal());
+            p.removeFood(foodToPay, (this.getEra().ordinal() + 1));
         });
     }
 
