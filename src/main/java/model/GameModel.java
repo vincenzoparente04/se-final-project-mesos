@@ -30,8 +30,8 @@ public class GameModel {
         currentPhaseHandler.chooseColor(player, totemColor);
     }
 
-   public void placeTotem(Player player, OfferTile offerTile) {
-        currentPhaseHandler.placeTotem(player, offerTile);
+   public void placeTotem(Player player, char tileId) {
+        currentPhaseHandler.placeTotem(player, tileId);
    }
 
    public void drawCard(int cardId) throws Exception {

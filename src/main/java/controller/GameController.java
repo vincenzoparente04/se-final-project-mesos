@@ -25,8 +25,8 @@ public class GameController {
      * @param player
      * @param offerTile
      */
-    public void placeTotem(Player player, OfferTile offerTile) throws Exception {
-        gameModel.placeTotem(player, offerTile);
+    public void placeTotem(Player player, char tileId) throws Exception {
+        gameModel.placeTotem(player, tileId);
     }
 
     /**

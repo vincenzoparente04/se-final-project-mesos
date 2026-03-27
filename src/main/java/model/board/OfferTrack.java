@@ -23,6 +23,18 @@ public class OfferTrack {
         player.setLocation(TotemLocation.OFFER_TRACK);
     }
 
+    /**
+     * @implNote Find the correct tile based on the char passed by the view to the controller
+     * @param letter
+     * @return
+     */
+    public OfferTile getTileByLetter(char letter) {
+        return tiles.stream()
+                .filter(tile -> tile.getLetter() == letter)
+                .findFirst()
+                .orElse(null);
+    }
+
     public Player getNextPlayer() {
         return tiles.stream().filter(OfferTile::isOccupied).findFirst().map(OfferTile::getOccupant).orElse(null);
     }
@@ -32,10 +44,12 @@ public class OfferTrack {
     //    return tiles;
     //}// listed left to right, used to determine who resolves actions and in which order
 
-    public OfferTile getOccupiedTileByPlayer(Player player)
-    // scorre le tile e restituisce quella il cui occupant
-    // è il totem del player
-
+    public OfferTile getOccupiedTileByPlayer(Player player) {
+        return tiles.stream()
+                .filter(tile -> player.equals(tile.getOccupant()))
+                .findFirst()
+                .orElse(null);
+    }
 
 
 
