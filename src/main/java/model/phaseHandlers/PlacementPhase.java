@@ -1,6 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.board.Board;
 import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
@@ -28,7 +29,9 @@ public class PlacementPhase extends GamePhaseHandler {
     }
 
     @Override
-    public void placeTotem(Player player, OfferTile offerTile) {
+    public void placeTotem(Player player, char tileId) {
+        Board board = model.getBoard();
+        OfferTile offerTile = board.findTileByLetter(tileId);
         if(!canPlaceTotem(player, offerTile)) { return; };
 
         model.getBoard().placeTotem(player, offerTile);

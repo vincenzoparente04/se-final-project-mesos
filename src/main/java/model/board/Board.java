@@ -226,6 +226,15 @@ public class Board implements CardVisitor {
     }
 
     /**
+     * @implNote Find the correct tile corresponding to the char passed by the controller
+     * @param letter
+     * @return
+     */
+    public OfferTile findTileByLetter(char letter) {
+        return offerTrack.getTileByLetter(letter);
+    }
+
+    /**
      * @implNote search the card through all 4 lists and removes it
      * @param cardId
      */

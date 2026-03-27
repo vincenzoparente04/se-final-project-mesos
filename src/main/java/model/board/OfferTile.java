@@ -28,9 +28,19 @@ public class OfferTile {
         return occupant;
     }
 
-    // TODO
-    public void removeTotem()
-    public OfferTileAction getAction()
-    public int getFoodBonus()
-    public char getLetter()
+    public void removeTotem() {
+        this.occupant = null;
+    }
+
+    public OfferTileAction getAction() {
+        return action;
+    }
+
+    public int getFoodBonus() {
+        return foodBonus;
+    }
+
+    public char getLetter() {
+        return letter;
+    }
 }
