@@ -32,8 +32,8 @@ public class ShamanicRitualEventCard extends EventCard {
         int min = Collections.min(iconCounts.values());
 
         // 3. funzioni ricavate dai valori delle carte
-        int gain = this.getEra().ordinal() * 5;
-        int loss = -3 - (2 * (this.getEra().ordinal() - 1));
+        int gain = (this.getEra().ordinal() + 1) * 5;
+        int loss = -3 - (2 * ((this.getEra().ordinal() + 1) - 1));
 
         // 4. assegna punti al massimo
         players.stream()

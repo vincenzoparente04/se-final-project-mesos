@@ -70,13 +70,17 @@ public class Tribe {
     public int getHunterCount()         { return hunters.size(); }
     public int getArtistCount()         { return artists.size(); }
     public int getBuilderCount()        { return builders.size(); }
-    public int getInventorCount()       { return inventors.size(); }
     public int getGathererCount()       { return gatherers.size(); }
     public int getShamanCount()         { return shamans.size(); }
+    public int getInventorCount() {
+        return inventorsByIcon.values().stream()
+                .mapToInt(List::size)
+                .sum();
+    }
 
     public int getTotalCharacterCount() {
         return hunters.size() + builders.size() + shamans.size()
-                + artists.size() + inventors.size() + gatherers.size();
+                + artists.size() + getInventorCount() + gatherers.size();
     }
 
     public int getTotalBuilderDiscount() {
@@ -92,10 +96,7 @@ public class Tribe {
     }
 
     public int getDistinctInventionIcons() {
-        return (int) inventors.stream()
-                .map(InventorCard::getInventionIcon)
-                .distinct()
-                .count();
+        return inventorsByIcon.size();
     }
 
     public int getTotalGatherersDiscount() {
@@ -121,12 +122,7 @@ public class Tribe {
      */
     // TODO da controllare
     public int calculateInventorEndGamePoints() {
-        long distinctIcons = inventors.stream()
-                .map(InventorCard::getInventionIcon)
-                .distinct()
-                .count();
-
-        return inventors.size() * (int) distinctIcons;
+        return getInventorCount() * getDistinctInventionIcons();
     }
 
     /**
@@ -148,7 +144,7 @@ public class Tribe {
                 builders.size(),
                 gatherers.size(),
                 hunters.size(),
-                inventors.size(),
+                getInventorCount(),
                 shamans.size()
         ).min(Integer::compareTo).orElse(0);
     }
