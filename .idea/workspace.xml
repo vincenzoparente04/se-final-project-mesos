@@ -4,17 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="566c2575-d7ba-48da-b463-a00362bdb018" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/GameModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/GameModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/board/Board.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/board/Board.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/cards/TribeCard.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/cards/TribeCard.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/cards/charachterCards/CharacterCard.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/cards/charachterCards/CharacterCard.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/phaseHandlers/ActionPhase.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/phaseHandlers/ActionPhase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/phaseHandlers/PlacementPhase.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/phaseHandlers/PlacementPhase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/model/phaseHandlers/EndOfRoundPhaseTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/model/phaseHandlers/EndOfRoundPhaseTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/model/phaseHandlers/SetupPhaseTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/model/phaseHandlers/SetupPhaseTest.java" afterDir="false" />
-    </list>
+    <list default="true" id="566c2575-d7ba-48da-b463-a00362bdb018" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
