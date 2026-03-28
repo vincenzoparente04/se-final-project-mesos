@@ -32,7 +32,7 @@ public class EndOfRoundPhaseTest {
 		rowsManager = mock(RowsManager.class);
 		phase = new EndOfRoundPhase(model);
 
-		when(model.getBoard()).thenReturn(rowsManager);
+		when(model.getRowsManager()).thenReturn(rowsManager);
 	}
 
 	/**

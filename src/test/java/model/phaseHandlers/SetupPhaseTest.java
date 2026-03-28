@@ -1,7 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.RowsManager;
+import model.board.Board;
 import model.board.TurnOrderTile;
 import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,14 +24,14 @@ import static org.mockito.Mockito.when;
 public class SetupPhaseTest {
 
 	private GameModel model;
-	private RowsManager rowsManager;
+	private Board rowsManager;
 	private TurnOrderTile turnOrderTile;
 	private SetupPhase phase;
 
 	@BeforeEach
 	void setUp() {
 		model = mock(GameModel.class);
-		rowsManager = mock(RowsManager.class);
+		rowsManager = mock(Board.class);
 		turnOrderTile = mock(TurnOrderTile.class);
 		phase = new SetupPhase(model);
 

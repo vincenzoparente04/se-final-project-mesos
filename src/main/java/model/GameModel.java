@@ -1,19 +1,20 @@
 package model;
 
-import model.board.RowsManager;
+import model.board.Board;
 import model.enums.Era;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.phaseHandlers.ColorChoosingPhase;
 import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
+import model.rowsManager.RowsManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GameModel {
+    private Board board;
     private RowsManager rowsManager;
-    private model.rowsManager.RowsManager rowsManager;
     private List<Player> players;
     private int playerCount;
     private int currentRound;
@@ -53,8 +54,8 @@ public class GameModel {
     }
 
     // -- getters --
-    public RowsManager getBoard()                     { return rowsManager; }
-    public model.rowsManager.RowsManager getRowsManager()         { return rowsManager; }
+    public Board getBoard()                     { return board; }
+    public RowsManager getRowsManager()         { return rowsManager; }
     public List<Player> getPlayers()            { return players; }
     public int getPlayerCount()                 { return playerCount; }
     public int getCurrentRound()                { return currentRound; }
@@ -69,7 +70,7 @@ public class GameModel {
     }
 
     public List<Player> getTurnOrder() {
-        return rowsManager.getTurnOrderTile().getTurnOrder();
+        return board.getTurnOrderTile().getTurnOrder();
     }
 
     /**

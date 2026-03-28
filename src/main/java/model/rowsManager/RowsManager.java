@@ -1,12 +1,8 @@
 package model.rowsManager;
 
-import model.board.CardVisitor;
 import model.cards.Card;
 import model.cards.TribeCard;
 import model.cards.buildingCards.BuildingCard;
-import model.cards.charachterCards.CharacterCard;
-import model.cards.eventCards.EventCard;
-import model.cards.eventCards.SustenanceEventCard;
 import model.player.Player;
 import model.rowsManager.deck.BuildingDeck;
 import model.rowsManager.deck.TribeDeck;
@@ -16,21 +12,22 @@ import java.util.List;
 import java.util.stream.Stream;
 
 //TODO: da capire come viene costruito il rows manager
-public class RowsManager implements CardVisitor {
+public class RowsManager {
     private List<TribeCard> topRowTribe;
     private List<TribeCard> bottomRowTribe;
     private List<BuildingCard> topRowBuilding;
     private List<BuildingCard> bottomRowBuilding;
-
-    private List<EventCard> eventsToResolve;
-    private List<SustenanceEventCard> sustenanceToResolve;
 
     private TribeDeck tribeDeck;
     private BuildingDeck buildingDeckEraI;
     private BuildingDeck buildingDeckEraII;
     private BuildingDeck buildingDeckEraIII;
 
-    private CardVisitor cardVisitor;
+    private EventResolver eventResolver;
+
+    public RowsManager() {
+        this.eventResolver = new EventResolver();
+    }
 
     public void setup(int playerCount) {
         tribeDeck.initializeDeck(playerCount);
@@ -42,65 +39,26 @@ public class RowsManager implements CardVisitor {
         topRowBuilding.addAll(buildingDeckEraI.drawAll());
     }
 
-
     /**
      * @implNote this method is responsible for resolving the events present in the bottom row at the end of the round, it is called by the EndOfRoundPhaseHandler
-     * at first it collects all the EventCard in the bottom row. getSortedEvents() returns the events already sorted by type and era,
+     * at first it collects all the EventCard in the bottom row. The EventResolver sorts events by type and era,
      * then it calls the resolve method of each EventCard, passing the list of players as parameter, so that the EventCard can apply its effect on the players.
      * @param players
      */
     public void resolveEvents(List<Player> players){
-        getSortedEvents(bottomRowTribe);
-        resolve(players);
+        eventResolver.sortEvents(bottomRowTribe);
+        eventResolver.resolve(players);
     }
 
     /**
      * Solves all the events on the board. Called only by EndOfGamePhase
-     * @implNote sort events by era and type, moving sustenance event at the end of the list from all cards present on the board. Then resolves all the events <br>
+     * @implNote EventResolver sorts events by era and type, moving sustenance event at the end of the list from all cards present on the board. Then resolves all the events <br>
      * <b>NOTE: </b> to create the list of all cards present on the board it puts bottomRow cards first because maybe there could be some ERA_II card
      * @param players
      */
     public void resolveAllEvents(List<Player> players){
-        getSortedEvents(getAllCardsOnBoard());
-        resolve(players);
-    }
-
-    /**
-     * resolve all events in eventsToResolve which is previously sorted by getSortedEvents() method, it is called by resolveEvents() and resolveAllEvents() methods
-     * @param players
-     */
-    public void resolve(List<Player> players){
-        for (EventCard event : eventsToResolve) {
-            event.resolve(players);
-        }
-    }
-
-    /**
-     * @implNote collects all the events present in the bottom row (to be resolved) and it sorts them moving the sustenance event at the end of the list<br>
-     * <p><b>Note, this method works only if it's assumed that the cards order in the bottom row is the unmuted from the original order in the top row
-     * which has to be the same as picking order from the deck</b></p>
-     * @return the list of events to resolve, sorted by type and era
-     */
-    public void getSortedEvents(List<TribeCard> tribeToSort) {
-        eventsToResolve = new ArrayList<EventCard>();
-        sustenanceToResolve = new ArrayList<SustenanceEventCard>();
-        for(TribeCard card : tribeToSort){
-            card.accept(this);
-        }
-        eventsToResolve.addAll(sustenanceToResolve);
-    }
-
-    @Override
-    public void visit(CharacterCard card) {
-        // do nothing, CharacterCard does not have any effect to resolve
-    }
-    @Override
-    public void visit(EventCard card) {
-        eventsToResolve.add(card);
-    }
-    @Override
-    public void visit(SustenanceEventCard card) {
-        sustenanceToResolve.add(card);
+        eventResolver.sortEvents(getAllCardsOnBoard());
+        eventResolver.resolve(players);
     }
 
     /**
@@ -130,8 +88,6 @@ public class RowsManager implements CardVisitor {
             topRowBuilding.addAll(buildingDeckEraII.drawAll());
         }
     }
-
-
 
     /**
      * check if the card passed as argument is present in the top row
@@ -188,5 +144,4 @@ public class RowsManager implements CardVisitor {
     public TribeDeck getTribeDeck() {
         return tribeDeck;
     }
-
 }

@@ -3,7 +3,6 @@ package model.cards.charachterCards;
 import model.GameModel;
 import model.board.CardVisitor;
 import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
-import model.cards.Drawable;
 import model.cards.TribeCard;
 import model.enums.Era;
 import model.player.Player;

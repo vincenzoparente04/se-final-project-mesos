@@ -2,13 +2,13 @@ package model.board;
 
 import model.player.Player;
 
-public class RowsManager {
+public class Board {
     private final OfferTrack offerTrack;
     private final TurnOrderTile turnOrderTile;
 
 
 
-    public RowsManager() {  // TODO: check how we want to construct the board
+    public Board() {  // TODO: check how we want to construct the board
         this.offerTrack = new OfferTrack();
         this.turnOrderTile = new TurnOrderTile();
     }

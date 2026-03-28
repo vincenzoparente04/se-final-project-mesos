@@ -1,11 +1,12 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.RowsManager;
+import model.board.Board;
 import model.cards.Card;
 import model.enums.GamePhase;
 import model.board.OfferTileAction.OfferTileAction;
 import model.player.Player;
+import model.rowsManager.RowsManager;
 
 public class ActionPhase extends GamePhaseHandler {
 
@@ -22,10 +23,10 @@ public class ActionPhase extends GamePhaseHandler {
     }
 
     private void startNextPlayerTurn() {
-        RowsManager rowsManager = model.getBoard();
+        Board board = model.getBoard();
 
         // Trova il prossimo giocatore da sinistra a destra sul tracciato offerte
-        currentPlayer = rowsManager.getNextPlayerOnOfferTrack();
+        currentPlayer = board.getNextPlayerOnOfferTrack();
 
         // Se non ci sono più giocatori, la fase Action è finita
         if (currentPlayer == null) {
@@ -34,7 +35,7 @@ public class ActionPhase extends GamePhaseHandler {
             return;
         }
 
-        currentAction = rowsManager.getOfferTrack()
+        currentAction = board.getOfferTrack()
                 .getOccupiedTileByPlayer(currentPlayer)
                 .getAction();
 
@@ -56,7 +57,7 @@ public class ActionPhase extends GamePhaseHandler {
     public void drawCard(int cardId) {
         ensureActiveTurn();
 
-        model.rowsManager.RowsManager rows = model.getRowsManager();
+        RowsManager rows = model.getRowsManager();
         Card card = rows.findCardById(cardId);
 
         // ha senso?
@@ -65,7 +66,7 @@ public class ActionPhase extends GamePhaseHandler {
         }
 
         // controlla che il player stia pescando dalla row giusta
-        if (!currentAction.canDraw(card, , model.getBoard())) {
+        if (!currentAction.canDraw(card, rows)) {
             throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto).");
         }
 
@@ -107,7 +108,7 @@ public class ActionPhase extends GamePhaseHandler {
 
         for (Card card : rows.getAllCardsOnBoard()) {
             // Se l'azione gli permette di guardare a questa riga...
-            if (currentAction.canDraw(card, , model.getBoard())) {
+            if (currentAction.canDraw(card, rows)) {
                 // ... e la carta può essere fisicamente presa ...
                 if (card.canBeAcquiredBy(currentPlayer, model)) {
                     return true; // Ha ancora qualcosa che PUÒ e DEVE pescare

@@ -1,7 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.RowsManager;
+import model.board.Board;
 import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemLocation;
@@ -29,11 +29,11 @@ public class PlacementPhase extends GamePhaseHandler {
 
     @Override
     public void placeTotem(Player player, char tileId) {
-        RowsManager rowsManager = model.getBoard();
-        OfferTile offerTile = rowsManager.findTileByLetter(tileId);
+        Board board = model.getBoard();
+        OfferTile offerTile = board.findTileByLetter(tileId);
         if(!canPlaceTotem(player, offerTile)) { return; };
 
-        model.getBoard().placeTotem(player, offerTile);
+        board.placeTotem(player, offerTile);
         model.notifyChange("totem_placed:" + player.getName());
         advanceTurn();
     }
