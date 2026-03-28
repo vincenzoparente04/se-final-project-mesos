@@ -1,10 +1,10 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.Board;
 import model.enums.Era;
 import model.enums.GamePhase;
 import model.player.Player;
+import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,16 +23,16 @@ import static org.mockito.Mockito.when;
 public class EndOfRoundPhaseTest {
 
 	private GameModel model;
-	private Board board;
+	private RowsManager rowsManager;
 	private EndOfRoundPhase phase;
 
 	@BeforeEach
 	void setUp() {
 		model = mock(GameModel.class);
-		board = mock(Board.class);
+		rowsManager = mock(RowsManager.class);
 		phase = new EndOfRoundPhase(model);
 
-		when(model.getBoard()).thenReturn(board);
+		when(model.getBoard()).thenReturn(rowsManager);
 	}
 
 	/**
@@ -54,14 +54,14 @@ public class EndOfRoundPhaseTest {
 		phase.onEnter();
 
 		// Assert: verify correct sequence of operations
-		var order = inOrder(board, model);
-		order.verify(board).resolveEvents(players);
+		var order = inOrder(rowsManager, model);
+		order.verify(rowsManager).resolveEvents(players);
 		order.verify(model).notifyChange("events_resolved");
-		order.verify(board).endRound(2);
+		order.verify(rowsManager).endRound(2);
 		order.verify(model).incrementRound();
 
 		// Verify no era change occurred and PlacementPhase is set
-		verify(board, never()).changeEra();
+		verify(rowsManager, never()).changeEra();
 		verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 		verify(model, never()).setPhase(argThat(handler -> handler instanceof EndOfGamePhase));
 	}
@@ -86,7 +86,7 @@ public class EndOfRoundPhaseTest {
 
 		// Assert: verify era change notification and board update
 		verify(model).notifyChange("era_changed:" + Era.ERA_II);
-		verify(board).changeEra();
+		verify(rowsManager).changeEra();
 		verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 	}
 

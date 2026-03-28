@@ -1,4 +1,4 @@
-package model.deck;
+package model.rowsManager.deck;
 
 import model.cards.TribeCard;
 import model.enums.Era;
@@ -50,13 +50,6 @@ public class TribeDeck {
     public boolean isEmpty()
     public int size()
 
-    // REFACTOR: BISOGNA CAMBIARE O DRAWMULTIPLE O ISNEWERAREVEALED PERCHE' BISOGNA CONTROLLARE OGNI CARTA CHE VIENE MESSA SUL TABELLONE
-    // PER CAPIRE SE SIAMO IN UNA NUOVA ERA.
-    // INOLTRE BISOGNERA' IMPLEMENTARE UN METODO CHE QUAND CAMBIA ERA SPOSTA GLI EDIFICI NELLA FILA INFERIORE
-
-    // returns true if the last drawn card belongs to a different Era than the currentEra,
-    // the Controller checks this after every draw to trigger the start of a new Era
-    public boolean isNewEraRevealed(){}
 
     //TODO: da inizializzare a 1 la current era
     public Era getCurrentEra(){

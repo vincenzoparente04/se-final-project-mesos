@@ -1,9 +1,8 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.Board;
+import model.board.RowsManager;
 import model.board.TurnOrderTile;
-import model.enums.GamePhase;
 import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +12,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -26,19 +24,19 @@ import static org.mockito.Mockito.when;
 public class SetupPhaseTest {
 
 	private GameModel model;
-	private Board board;
+	private RowsManager rowsManager;
 	private TurnOrderTile turnOrderTile;
 	private SetupPhase phase;
 
 	@BeforeEach
 	void setUp() {
 		model = mock(GameModel.class);
-		board = mock(Board.class);
+		rowsManager = mock(RowsManager.class);
 		turnOrderTile = mock(TurnOrderTile.class);
 		phase = new SetupPhase(model);
 
-		when(model.getBoard()).thenReturn(board);
-		when(board.getTurnOrderTile()).thenReturn(turnOrderTile);
+		when(model.getBoard()).thenReturn(rowsManager);
+		when(rowsManager.getTurnOrderTile()).thenReturn(turnOrderTile);
 	}
 
 	@Test
@@ -57,9 +55,9 @@ public class SetupPhaseTest {
 
 		phase.onEnter();
 
-		var order = inOrder(board, model);
-		order.verify(board).setup(5);
-		order.verify(board).randomizeTurnOrder(allPlayers);
+		var order = inOrder(rowsManager, model);
+		order.verify(rowsManager).setup(5);
+		order.verify(rowsManager).randomizeTurnOrder(allPlayers);
 		order.verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 
 		verify(p1).addFood(2);
@@ -108,9 +106,9 @@ public class SetupPhaseTest {
 
 		phase.onEnter();
 
-		var order = inOrder(board, model, p4, p2, p1, p3);
-		order.verify(board).setup(4);
-		order.verify(board).randomizeTurnOrder(originalPlayers);
+		var order = inOrder(rowsManager, model, p4, p2, p1, p3);
+		order.verify(rowsManager).setup(4);
+		order.verify(rowsManager).randomizeTurnOrder(originalPlayers);
 		order.verify(p4).addFood(2);
 		order.verify(p2).addFood(3);
 		order.verify(p1).addFood(3);

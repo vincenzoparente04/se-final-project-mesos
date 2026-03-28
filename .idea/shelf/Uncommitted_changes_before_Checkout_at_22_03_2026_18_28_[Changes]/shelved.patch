@@ -1,0 +1,19 @@
+Index: src/main/java/model/cards/eventCards/EventCard.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package model.cards.eventCards;\n\nimport model.GameModel;\nimport model.board.CardVisitor;\nimport model.cards.TribeCard;\nimport model.enums.Era;\nimport model.enums.EventType;\nimport model.player.Player;\n\nimport java.util.List;\n\npublic abstract class EventCard extends TribeCard {\n    // HUNT, SHAMANIC_RITUAL, CAVE_PAINTINGS, SUSTENANCE\n    // ###possiamo toglierlo?\n    private final EventType eventType;\n\n    public EventCard(int id, Era era, int playerCount) {\n        super(id, era, playerCount);\n    }\n\n    @Override\n    public boolean canBeAcquiredBy(Player player, GameModel model) {\n        return false;\n    }\n\n    // questo metodo non dovrebbe mai essere chiamato -> di può togliere?\n    @Override\n    public void acquiredBy(Player player, GameModel model) {\n        throw new IllegalStateException(\"Le carte Evento non possono mai essere acquisite!\");\n    }\n    }\n\n    // metodi\n    public abstract void resolve(List<Player> players);\n\n    @Override\n    public void accept(CardVisitor visitor) {\n        visitor.visit(this);\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/model/cards/eventCards/EventCard.java b/src/main/java/model/cards/eventCards/EventCard.java
+--- a/src/main/java/model/cards/eventCards/EventCard.java	(revision f37d1f0ad7d8da1c54c1465339055c1a725f1f87)
++++ b/src/main/java/model/cards/eventCards/EventCard.java	(date 1774200488852)
+@@ -28,7 +28,7 @@
+     public void acquiredBy(Player player, GameModel model) {
+         throw new IllegalStateException("Le carte Evento non possono mai essere acquisite!");
+     }
+-    }
++
+ 
+     // metodi
+     public abstract void resolve(List<Player> players);

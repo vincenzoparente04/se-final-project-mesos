@@ -4,6 +4,7 @@ import model.GameModel;
 import model.enums.Era;
 import model.enums.GamePhase;
 import model.player.Player;
+import model.rowsManager.RowsManager;
 
 public class EndOfRoundPhase extends GamePhaseHandler {
 
@@ -18,16 +19,17 @@ public class EndOfRoundPhase extends GamePhaseHandler {
      */
     @Override
     public void onEnter(){
-        model.getBoard().resolveEvents(model.getPlayers());
+        RowsManager rowsManager = model.getRowsManager();
+        rowsManager.resolveEvents(model.getPlayers());
         model.notifyChange("events_resolved");
 
         Era currentEra = model.getCurrentEra();
 
-        model.getBoard().endRound(model.getPlayerCount());
+        rowsManager.endRound(model.getPlayerCount());
 
         if (model.getCurrentEra().compareTo(currentEra) != 0) {
             model.notifyChange("era_changed:" + model.getCurrentEra());
-            model.getBoard().changeEra();
+            rowsManager.changeEra();
         }
 
         if (model.isGameOver()) {

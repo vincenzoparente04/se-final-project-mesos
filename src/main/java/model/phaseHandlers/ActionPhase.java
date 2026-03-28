@@ -1,7 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.Board;
+import model.board.RowsManager;
 import model.cards.Card;
 import model.enums.GamePhase;
 import model.board.OfferTileAction.OfferTileAction;
@@ -22,10 +22,10 @@ public class ActionPhase extends GamePhaseHandler {
     }
 
     private void startNextPlayerTurn() {
-        Board board = model.getBoard();
+        RowsManager rowsManager = model.getBoard();
 
         // Trova il prossimo giocatore da sinistra a destra sul tracciato offerte
-        currentPlayer = board.getNextPlayerOnOfferTrack();
+        currentPlayer = rowsManager.getNextPlayerOnOfferTrack();
 
         // Se non ci sono più giocatori, la fase Action è finita
         if (currentPlayer == null) {
@@ -34,7 +34,7 @@ public class ActionPhase extends GamePhaseHandler {
             return;
         }
 
-        currentAction = board.getOfferTrack()
+        currentAction = rowsManager.getOfferTrack()
                 .getOccupiedTileByPlayer(currentPlayer)
                 .getAction();
 
@@ -56,8 +56,8 @@ public class ActionPhase extends GamePhaseHandler {
     public void drawCard(int cardId) {
         ensureActiveTurn();
 
-        Board board = model.getBoard();
-        Card card = board.findCardById(cardId);
+        model.rowsManager.RowsManager rows = model.getRowsManager();
+        Card card = rows.findCardById(cardId);
 
         // ha senso?
         if (card == null) {
@@ -65,7 +65,7 @@ public class ActionPhase extends GamePhaseHandler {
         }
 
         // controlla che il player stia pescando dalla row giusta
-        if (!currentAction.canDraw(card, board)) {
+        if (!currentAction.canDraw(card, , model.getBoard())) {
             throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto).");
         }
 
@@ -76,14 +76,14 @@ public class ActionPhase extends GamePhaseHandler {
 
         // -- ESECUZIONE PESCA --
         // Rimuove la carta dal board
-        board.removeCard(cardId);
+        rows.removeCard(cardId);
 
         // La carta gestisce l'aggiunta alla tribù, il pagamento, effetti immediati
         // ###sistemare i metodi di pesca nelle carte
         card.acquiredBy(currentPlayer, model);
 
         // L'azione scala i suoi contatori interni
-        currentAction.performDraw(card, board);
+        currentAction.performDraw(card, rows);
 
         model.notifyChange("card_drawn:" + cardId);
 
@@ -103,11 +103,11 @@ public class ActionPhase extends GamePhaseHandler {
     }
 
     private boolean hasAnyLegalMove() {
-        Board board = model.getBoard();
+        model.rowsManager.RowsManager rows = model.getRowsManager();
 
-        for (Card card : board.getAllCardsOnBoard()) {
+        for (Card card : rows.getAllCardsOnBoard()) {
             // Se l'azione gli permette di guardare a questa riga...
-            if (currentAction.canDraw(card, board)) {
+            if (currentAction.canDraw(card, , model.getBoard())) {
                 // ... e la carta può essere fisicamente presa ...
                 if (card.canBeAcquiredBy(currentPlayer, model)) {
                     return true; // Ha ancora qualcosa che PUÒ e DEVE pescare

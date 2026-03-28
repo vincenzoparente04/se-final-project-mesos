@@ -1,10 +1,10 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.Board;
 import model.cards.Card;
 import model.enums.GamePhase;
 import model.player.Player;
+import model.rowsManager.RowsManager;
 
 public class PreEndOfRoundPhase extends GamePhaseHandler {
 
@@ -36,10 +36,10 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
     public void drawCard(int cardId) {
         if (activePlayer == null) return;
 
-        Board board = model.getBoard();
-        Card card = board.findCardById(cardId);
+        RowsManager rows = model.getRowsManager();
+        Card card = rows.findCardById(cardId);
 
-        if (card == null || !board.topRowContainsCard(cardId)) {
+        if (card == null || !rows.topRowContainsCard(cardId)) {
             // è necessario notificare l'erorre?
             return;
         }
@@ -48,7 +48,7 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
             return;
         }
 
-        board.removeCard(cardId);
+        rows.removeCard(cardId);
         card.acquiredBy(activePlayer, model);
 
         model.setPhase(new EndOfRoundPhase(model));

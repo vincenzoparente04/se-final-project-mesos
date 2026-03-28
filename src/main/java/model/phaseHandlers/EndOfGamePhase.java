@@ -39,7 +39,7 @@ public class EndOfGamePhase extends GamePhaseHandler {
      * Sustenance must be resolved last as usual.
      */
     private void resolveAllVisibleEvents() {
-        model.getBoard().resolveAllEvents(model.getPlayers());
+        model.getRowsManager().resolveAllEvents(model.getPlayers());
         model.notifyChange("final_events_resolved");
     }
 

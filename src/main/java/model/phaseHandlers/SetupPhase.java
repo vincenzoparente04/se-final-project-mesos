@@ -23,6 +23,7 @@ public class SetupPhase extends GamePhaseHandler {
     public void onEnter() {
         // Board owns the decks and knows how to set itself up
         model.getBoard().setup(model.getPlayerCount());
+        model.getRowsManager().setup(model.getPlayerCount());
 
         // Randomize turn order: board places totems on the TurnOrderTile
         randomizeTurnOrder(model.getPlayers());

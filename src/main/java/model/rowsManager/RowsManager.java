@@ -1,25 +1,22 @@
-package model.board;
+package model.rowsManager;
 
+import model.board.CardVisitor;
 import model.cards.Card;
 import model.cards.TribeCard;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
-import model.deck.BuildingDeck;
-import model.deck.TribeDeck;
-import model.enums.Era;
-import model.enums.TotemLocation;
 import model.player.Player;
+import model.rowsManager.deck.BuildingDeck;
+import model.rowsManager.deck.TribeDeck;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class Board implements CardVisitor {
-    private final OfferTrack offerTrack;
-    private final TurnOrderTile turnOrderTile;
-
+//TODO: da capire come viene costruito il rows manager
+public class RowsManager implements CardVisitor {
     private List<TribeCard> topRowTribe;
     private List<TribeCard> bottomRowTribe;
     private List<BuildingCard> topRowBuilding;
@@ -33,61 +30,17 @@ public class Board implements CardVisitor {
     private BuildingDeck buildingDeckEraII;
     private BuildingDeck buildingDeckEraIII;
 
-    public Board() {  // TODO: check how we want to construct the board
-        this.topRowTribe = new ArrayList<>();
-        this.bottomRowTribe = new ArrayList<>();
-        this.topRowBuilding = new ArrayList<>();
-        this.bottomRowBuilding = new ArrayList<>();
-        this.buildingDeckEraI = new BuildingDeck(Era.ERA_I);
-        this.buildingDeckEraII = new BuildingDeck(Era.ERA_II);
-        this.buildingDeckEraIII = new BuildingDeck(Era.ERA_III);
-        this.tribeDeck = new TribeDeck();
-        this.offerTrack = new OfferTrack();
-        this.turnOrderTile = new TurnOrderTile();
-    }
+    private CardVisitor cardVisitor;
 
-    public OfferTrack getOfferTrack() {
-        return offerTrack;
-    }
-
-    public TribeDeck getTribeDeck() {
-        return tribeDeck;
-    }
-
-    public TurnOrderTile getTurnOrderTile() {
-        return turnOrderTile;
-    }
-
-    public void setup(int playerCount){
+    public void setup(int playerCount) {
         tribeDeck.initializeDeck(playerCount);
         buildingDeckEraI.initializeDeck(playerCount);
         buildingDeckEraII.initializeDeck(playerCount);
         buildingDeckEraIII.initializeDeck(playerCount);
-        turnOrderTile.setup(playerCount);
-        offerTrack.setup(playerCount);
         bottomRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 1));
         topRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 4));
         topRowBuilding.addAll(buildingDeckEraI.drawAll());
     }
-
-    /**
-     * Delegate the placeTotem implementation to the offerTrack(which delegates to OfferTile)
-     * @param player
-     * @param offerTile
-     * @throws Exception
-     */
-    public void placeTotem(Player player, OfferTile offerTile) {
-        offerTrack.placeTotem(player, offerTile);
-    }
-
-    // helpers:
-    //private void populateBottomRow(TribeDeck tribeDeck, int playerCount){
-    //    tribeDeck.draw(); // in loop
-    //}
-    //private void populateTopRow(TribeDeck tribeDeck, BuildingDeck buildingDeckI, int playerCount){
-    //    tribeDeck.draw(); // in loop
-    //    buildingDeckI.drawAll();
-    //}
 
 
     /**
@@ -178,19 +131,7 @@ public class Board implements CardVisitor {
         }
     }
 
-    /**
-     * @implNote merges top row and bottom row tribe cards. The returned list has bottom row cards first, then top row cards.
-     * @return a list of all the tribe cards present on the board, both in the top and bottom row
-     */
-    public List<TribeCard> getAllCardsOnBoard() {
-        List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
-        allCards.addAll(topRowTribe);
-        return allCards;
-    }
 
-    public Player getNextPlayerOnOfferTrack() {
-        return offerTrack.getNextPlayer();
-    }
 
     /**
      * check if the card passed as argument is present in the top row
@@ -226,20 +167,26 @@ public class Board implements CardVisitor {
     }
 
     /**
-     * @implNote Find the correct tile corresponding to the char passed by the controller
-     * @param letter
-     * @return
-     */
-    public OfferTile findTileByLetter(char letter) {
-        return offerTrack.getTileByLetter(letter);
-    }
-
-    /**
      * @implNote search the card through all 4 lists and removes it
      * @param cardId
      */
     public void removeCard(int cardId) {
         Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
-              .forEach(list -> list.removeIf(card -> card.getId() == cardId));
+                .forEach(list -> list.removeIf(card -> card.getId() == cardId));
     }
+
+    /**
+     * @implNote merges top row and bottom row tribe cards. The returned list has bottom row cards first, then top row cards.
+     * @return a list of all the tribe cards present on the board, both in the top and bottom row
+     */
+    public List<TribeCard> getAllCardsOnBoard() {
+        List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
+        allCards.addAll(topRowTribe);
+        return allCards;
+    }
+
+    public TribeDeck getTribeDeck() {
+        return tribeDeck;
+    }
+
 }

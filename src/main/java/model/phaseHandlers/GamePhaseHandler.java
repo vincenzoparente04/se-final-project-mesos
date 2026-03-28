@@ -18,7 +18,7 @@ public abstract class GamePhaseHandler {
 
     public void chooseColor(Player player, TotemColor color) {}
 
-    public void placeTotem(Player player, OfferTile tile) {}
+    public void placeTotem(Player player, char tileId) {}
 
     public void drawCard(int cardId) {
         throw new IllegalStateException(

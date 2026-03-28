@@ -1,8 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.Board;
-import model.enums.GamePhase;
+import model.rowsManager.RowsManager;
 import model.player.Player;
 import model.player.Tribe;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,16 +22,16 @@ import static org.mockito.Mockito.when;
 public class EndOfGamePhaseTest {
 
 	private GameModel model;
-	private Board board;
+	private RowsManager rowsManager;
 	private EndOfGamePhase phase;
 
 	@BeforeEach
 	void setUp() {
 		model = mock(GameModel.class);
-		board = mock(Board.class);
+		rowsManager = mock(RowsManager.class);
 		phase = new EndOfGamePhase(model);
 
-		when(model.getBoard()).thenReturn(board);
+		when(model.getRowsManager()).thenReturn(rowsManager);
 	}
 
 	@Test
@@ -71,8 +70,8 @@ public class EndOfGamePhaseTest {
 		phase.onEnter();
 
         //verify (first the order of operations, then the points calculations, then the winner)
-		var order = inOrder(board, model);
-		order.verify(board, times(1)).resolveAllEvents(players);
+		var order = inOrder(rowsManager, model);
+		order.verify(rowsManager, times(1)).resolveAllEvents(players);
 		order.verify(model, times(1)).notifyChange("final_events_resolved");
 		order.verify(model, times(1)).notifyChange("endgame_scoring_complete");
 		order.verify(model, times(1)).notifyChange("game_over:p1");
@@ -118,7 +117,7 @@ public class EndOfGamePhaseTest {
 
 		phase.onEnter();
 
-		verify(board, times(1)).resolveAllEvents(players);
+		verify(rowsManager, times(1)).resolveAllEvents(players);
 		verify(model, times(1)).notifyChange("final_events_resolved");
 		verify(model, times(1)).notifyChange("endgame_scoring_complete");
 		verify(model, times(1)).notifyChange("game_over:p2");
@@ -151,7 +150,7 @@ public class EndOfGamePhaseTest {
 
 		phase.onEnter();
 
-		verify(board, times(1)).resolveAllEvents(players);
+		verify(rowsManager, times(1)).resolveAllEvents(players);
 		verify(model, times(1)).notifyChange("final_events_resolved");
 		verify(model, times(1)).notifyChange("endgame_scoring_complete");
 		verify(model, times(1)).notifyChange("game_over:p1, p2");

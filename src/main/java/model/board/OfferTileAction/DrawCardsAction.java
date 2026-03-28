@@ -1,11 +1,11 @@
 package model.board.OfferTileAction;
 
 import model.GameModel;
-import model.board.Board;
 import model.cards.Card;
 import model.player.Player;
+import model.rowsManager.RowsManager;
 
-public class DrawCardsAction {
+public class DrawCardsAction implements OfferTileAction {
     // --- DEFINIZIONE (Valori base immutabili della tessera) ---
     private final int maxTopRowDraws;
     private final int maxBottomRowDraws;
@@ -28,14 +28,14 @@ public class DrawCardsAction {
     }
 
     @Override
-    public boolean canDraw(Card card, Board board) {
+    public boolean canDraw(Card card, RowsManager rowsManager) {
         // La carta si trova nella riga superiore e non ho ancora raggiunto il limite
-        if (board.getTopRow().containsCard(card.getId())) {
+        if (rowsManager.topRowContainsCard(card.getId())) {
             return currentTopRowDraws < maxTopRowDraws;
         }
 
         // La carta si trova nella riga inferiore e non ho ancora raggiunto il limite
-        if (board.getBottomRow().containsCard(card.getId())) {
+        if (rowsManager.bottomRowContainsCard(card.getId())) {
             return currentBottomRowDraws < maxBottomRowDraws;
         }
 
@@ -43,11 +43,11 @@ public class DrawCardsAction {
     }
 
     @Override
-    public void performDraw(Card card, Board board) {
+    public void performDraw(Card card, RowsManager rowsManager) {
         // Aggiorna il contatore giusto in base a dove si trovava la carta
-        if (board.topRowContainsCard(card.getId())) {
+        if (rowsManager.topRowContainsCard(card.getId())) {
             currentTopRowDraws++;
-        } else if (board.bottomRowContainsCard(card.getId())) {
+        } else if (rowsManager.bottomRowContainsCard(card.getId())) {
             currentBottomRowDraws++;
         }
     }

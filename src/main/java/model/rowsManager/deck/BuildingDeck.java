@@ -1,4 +1,4 @@
-package model.deck;
+package model.rowsManager.deck;
 
 import model.cards.buildingCards.BuildingCard;
 import model.enums.Era;

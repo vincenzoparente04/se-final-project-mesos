@@ -1,10 +1,11 @@
 package model.board.OfferTileAction;
 
-import model.board.Board;
+import model.GameModel;
 import model.cards.Card;
 import model.player.Player;
+import model.rowsManager.RowsManager;
 
-public class TakeFoodAction {
+public class TakeFoodAction implements OfferTileAction {
     private final int foodAmount;
     private boolean finished; // Stato dell'esecuzione
 
@@ -22,12 +23,12 @@ public class TakeFoodAction {
     }
 
     @Override
-    public boolean canDraw(Card card, Board board) {
+    public boolean canDraw(Card card, RowsManager rowsManager) {
         return false; // Questa tessera non fa MAI pescare carte
     }
 
     @Override
-    public void performDraw(Card card, Board board) {
+    public void performDraw(Card card, RowsManager rowsManager) {
         // cancellare tanto non dovrebbe mai essere chiamato
         throw new UnsupportedOperationException("Questa azione non prevede pescate.");
     }
