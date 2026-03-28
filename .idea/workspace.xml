@@ -4,7 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="566c2575-d7ba-48da-b463-a00362bdb018" name="Changes" comment="" />
+    <list default="true" id="566c2575-d7ba-48da-b463-a00362bdb018" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/copilot.data.migration.ask2agent.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/model/board/CardVisitor.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/model/deck/BuildingDeck.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/model/deck/TribeDeck.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/model/factories/BuildingCardFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/model/factories/TribeCardFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/building_cards.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/images/BackCards/BackBuildingEra1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/images/BackCards/BackBuildingEra2.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/tribe_cards.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/model/enums/Era.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/enums/Era.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/model/enums/InventionIcon.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/enums/InventionIcon.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/model/phaseHandlers/EndOfRoundPhase.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/phaseHandlers/EndOfRoundPhase.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -29,6 +47,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="card-factory" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -62,23 +85,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;building-factory&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/vincenzoparente/Documents/PROJECTS/MESOS - Prova Finale Ing Software/Mesos-Project-SE/pom.xml&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "Merging building-factory",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/vincenzoparente/Documents/PROJECTS/MESOS - Prova Finale Ing Software/Mesos-Project-SE/pom.xml",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

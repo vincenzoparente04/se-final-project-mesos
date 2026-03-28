@@ -1,0 +1,25 @@
+{
+  "buildings": [
+    {"image": "FrontCard3",   "era": "I",   "minPlayers": 2, "foodCost": 5,  "endGamePoints": 2,  "effectId": "shamanic_immunity"},
+    {"image": "FrontCard4",   "era": "I",   "minPlayers": 2, "foodCost": 3,  "endGamePoints": 3,  "effectId": "extra_food_on_totem_return"},
+    {"image": "FrontCard122", "era": "I",   "minPlayers": 2, "foodCost": 5,  "endGamePoints": 3,  "effectId": "on_sustenance_artist"},
+    {"image": "FrontCard121", "era": "I",   "minPlayers": 2, "foodCost": 4,  "endGamePoints": 4,  "effectId": "on_sustenance_gatherer"},
+    {"image": "FrontCard120", "era": "I",   "minPlayers": 2, "foodCost": 4,  "endGamePoints": 3,  "effectId": "on_acquire_set"},
+    {"image": "FrontCard5",   "era": "I",   "minPlayers": 2, "foodCost": 3,  "endGamePoints": 4,  "effectId": "on_acquire_pair"},
+    {"image": "FrontCard6",   "era": "II",  "minPlayers": 2, "foodCost": 7,  "endGamePoints": 0,  "effectId": "shamanic_double_points"},
+    {"image": "FrontCard12",  "era": "II",  "minPlayers": 2, "foodCost": 5,  "endGamePoints": 6,  "effectId": "end_game_count_sets"},
+    {"image": "FrontCard10",  "era": "II",  "minPlayers": 2, "foodCost": 6,  "endGamePoints": 4,  "effectId": "end_game_double_builders"},
+    {"image": "FrontCard7",   "era": "II",  "minPlayers": 2, "foodCost": 6,  "endGamePoints": 4,  "effectId": "shamanic_extra_stars"},
+    {"image": "FrontCard8",   "era": "II",  "minPlayers": 2, "foodCost": 7,  "endGamePoints": 4,  "effectId": "on_sustenance_inventor"},
+    {"image": "FrontCard9",   "era": "II",  "minPlayers": 2, "foodCost": 7,  "endGamePoints": 2,  "effectId": "on_hunt_bonus"},
+    {"image": "FrontCard11",  "era": "II",  "minPlayers": 2, "foodCost": 5,  "endGamePoints": 6,  "effectId": "on_cave_paintings_bonus"},
+    {"image": "FrontCard16",  "era": "III", "minPlayers": 2, "foodCost": 7,  "endGamePoints": 4,  "effectId": "end_game_count_shamans"},
+    {"image": "FrontCard18",  "era": "III", "minPlayers": 2, "foodCost": 7,  "endGamePoints": 4,  "effectId": "end_game_count_artists"},
+    {"image": "FrontCard19",  "era": "III", "minPlayers": 2, "foodCost": 6,  "endGamePoints": 6,  "effectId": "end_game_count_inventors"},
+    {"image": "FrontCard17",  "era": "III", "minPlayers": 2, "foodCost": 6,  "endGamePoints": 3,  "effectId": "end_game_count_builders"},
+    {"image": "FrontCard14",  "era": "III", "minPlayers": 2, "foodCost": 8,  "endGamePoints": 8,  "effectId": "end_game_count_hunters"},
+    {"image": "FrontCard15",  "era": "III", "minPlayers": 2, "foodCost": 7,  "endGamePoints": 6,  "effectId": "end_game_count_gatherers"},
+    {"image": "FrontCard20",  "era": "III", "minPlayers": 2, "foodCost": 9,  "endGamePoints": 3,  "effectId": "extra_draw"},
+    {"image": "FrontCard21",  "era": "III", "minPlayers": 2, "foodCost": 10, "endGamePoints": 25, "effectId": "none"}
+  ]
+}
