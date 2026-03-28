@@ -41,7 +41,7 @@ public class GameModel {
 
     public void setPhase(GamePhaseHandler phase) {
         this.currentPhaseHandler = phase;
-        notifyChange("phase_changed:" + phase.getPhase());
+        //notifyChange("phase_changed:" + phase.getPhase());
         phase.onEnter();
     }
 

@@ -1,7 +1,6 @@
 package model.eventCards;
 
 import model.cards.eventCards.CavePaintingsEventCard;
-import model.enums.CharacterType;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;
@@ -25,7 +24,7 @@ class CavePaintingsEventCardTest {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
         when(player.getTribe()).thenReturn(tribe);
-        when(tribe.countByType(CharacterType.ARTIST)).thenReturn(1);
+        when(tribe.getArtistCount()).thenReturn(1);
 
         CavePaintingsEventCard card = new CavePaintingsEventCard(1, Era.ERA_III, 3);
 
@@ -41,7 +40,7 @@ class CavePaintingsEventCardTest {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
         when(player.getTribe()).thenReturn(tribe);
-        when(tribe.countByType(CharacterType.ARTIST)).thenReturn(2);
+        when(tribe.getArtistCount()).thenReturn(2);
 
         CavePaintingsEventCard card = new CavePaintingsEventCard(2, Era.ERA_II, 3);
 
@@ -58,19 +57,19 @@ class CavePaintingsEventCardTest {
         Player p1 = mock(Player.class);
         Tribe t1 = mock(Tribe.class);
         when(p1.getTribe()).thenReturn(t1);
-        when(t1.countByType(CharacterType.ARTIST)).thenReturn(2);
+        when(t1.getArtistCount()).thenReturn(2);
 
         //1 artist
         Player p2 = mock(Player.class);
         Tribe t2 = mock(Tribe.class);
         when(p2.getTribe()).thenReturn(t2);
-        when(t2.countByType(CharacterType.ARTIST)).thenReturn(1);
+        when(t2.getArtistCount()).thenReturn(1);
 
         //3 artists
         Player p3 = mock(Player.class);
         Tribe t3 = mock(Tribe.class);
         when(p3.getTribe()).thenReturn(t3);
-        when(t3.countByType(CharacterType.ARTIST)).thenReturn(3);
+        when(t3.getArtistCount()).thenReturn(3);
 
         CavePaintingsEventCard card = new CavePaintingsEventCard(3, Era.ERA_II, 3);
 

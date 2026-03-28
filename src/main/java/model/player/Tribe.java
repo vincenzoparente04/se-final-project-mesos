@@ -1,6 +1,5 @@
 package model.player;
 
-import impl.org.controlsfx.tools.rectangle.change.ToNorthChangeStrategy;
 import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
 import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
 import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
@@ -20,7 +19,7 @@ public class Tribe {
     private final Map<InventionIcon, List<InventorCard>> inventorsByIcon = new EnumMap<>(InventionIcon.class);
     private final List<ShamanCard> shamans = new ArrayList<>();
 
-    private List<BuildingCard> buildings = new ArrayList<>();
+    private final List<BuildingCard> buildings = new ArrayList<>();
 
     // 3 liste per effetti dei buildings
     private final List<EndGameBuildingEffect> endGameBuildingEffects = new ArrayList<>();
