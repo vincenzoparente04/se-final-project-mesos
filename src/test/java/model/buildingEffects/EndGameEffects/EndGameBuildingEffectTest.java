@@ -7,10 +7,21 @@ import model.player.Tribe;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EndGameBuildingEffectTest {
-    
-    //the register self test is done in the BuildingCardTest
+
+    @Test
+    void registerSelfRegistersEffectInTribeEndGameList() {
+        Player player = new Player("p1");
+        EndGameBuildingEffect effect = new EndGameBuildingEffect(3, Tribe::getHunterCount);
+
+        int before = player.getTribe().getEndGameBuildingEffects().size();
+        effect.registerSelf(player);
+
+        assertEquals(before + 1, player.getTribe().getEndGameBuildingEffects().size());
+        assertTrue(player.getTribe().getEndGameBuildingEffects().contains(effect));
+    }
 
     @Test
     void applyEffectAddsPrestigeUsingMultiplierAndGetter() {
