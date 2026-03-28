@@ -1,7 +1,7 @@
 package model.cards.eventCards;
 
 import model.GameModel;
-import model.board.CardVisitor;
+import model.rowsManager.CardVisitor;
 import model.cards.TribeCard;
 import model.enums.Era;
 import model.player.Player;

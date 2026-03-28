@@ -1,6 +1,6 @@
 package model.cards.eventCards;
 
-import model.board.CardVisitor;
+import model.rowsManager.CardVisitor;
 import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.enums.Era;
 import model.player.Player;

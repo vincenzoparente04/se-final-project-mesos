@@ -1,7 +1,7 @@
 package model.cards.charachterCards;
 
 import model.GameModel;
-import model.board.CardVisitor;
+import model.rowsManager.CardVisitor;
 import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
 import model.cards.TribeCard;
 import model.enums.Era;
