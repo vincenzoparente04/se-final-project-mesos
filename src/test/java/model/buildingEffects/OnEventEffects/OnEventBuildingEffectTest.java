@@ -4,10 +4,22 @@ import model.player.Player;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OnEventBuildingEffectTest {
 
-    //register self tested in buildingCardTest
+    @Test
+    void registerSelfRegistersEffectInTribeOnEventList() {
+        Player player = new Player("p1");
+        OnEventBuildingEffect effect = new OnEventBuildingEffect();
+
+        int before = player.getTribe().getOnEventBuildingEffects().size();
+        effect.registerSelf(player);
+
+        assertEquals(before + 1, player.getTribe().getOnEventBuildingEffects().size());
+        assertTrue(player.getTribe().getOnEventBuildingEffects().contains(effect));
+    }
+
 
     @Test
     void baseOnEventEffectIsNoOp() {
