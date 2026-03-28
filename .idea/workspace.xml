@@ -4,17 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="566c2575-d7ba-48da-b463-a00362bdb018" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/GameModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/GameModel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/board/OfferTileAction/TakeFoodAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/board/OfferTileAction/TakeFoodAction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/board/OfferTrack.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/board/OfferTrack.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/player/Tribe.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/player/Tribe.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/model/rowsManager/deck/BuildingDeck.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/model/rowsManager/deck/BuildingDeck.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/model/eventCards/CavePaintingsEventCardTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/model/eventCards/CavePaintingsEventCardTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/model/eventCards/HuntEventCardTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/model/eventCards/HuntEventCardTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/model/player/TribeTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/model/player/TribeTest.java" afterDir="false" />
-    </list>
+    <list default="true" id="566c2575-d7ba-48da-b463-a00362bdb018" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
