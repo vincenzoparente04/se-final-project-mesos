@@ -1,11 +1,12 @@
 package model.cards.charachterCards;
 
 import model.enums.Era;
+import model.enums.InventionIcon;
 import model.player.Player;
 
 public class ArtistCard extends CharacterCard {
-    public ArtistCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
+    public ArtistCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
     }
 
     /**

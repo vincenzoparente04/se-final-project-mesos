@@ -6,8 +6,8 @@ import model.enums.InventionIcon;
 public class InventorCard extends CharacterCard {
     private final InventionIcon inventionIcon;
 
-    public InventorCard(int id, Era era, int playerCount, InventionIcon inventionIcon) {
-        super(id, era, playerCount);
+    public InventorCard(int id, Era era, int playerCount, InventionIcon inventionIcon, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
         this.inventionIcon = inventionIcon;
     }
 

@@ -9,8 +9,8 @@ import java.util.List;
 
 public class SustenanceEventCard extends EventCard {
 
-    public SustenanceEventCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
+    public SustenanceEventCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
     }
 
     

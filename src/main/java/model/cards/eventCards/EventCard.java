@@ -9,8 +9,8 @@ import model.player.Player;
 import java.util.List;
 
 public abstract class EventCard extends TribeCard {
-    public EventCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
+    public EventCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
     }
 
     @Override

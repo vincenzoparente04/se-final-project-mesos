@@ -171,10 +171,10 @@ public class TribeCardFactory {
 
 
             TribeCard card = switch (eventType) {
-                case "Hunt"            -> new HuntEventCard(id, era, minPlayers, isFinal, image, backImage);
-                case "Sustenance"      -> new SustenanceEventCard(id, era, minPlayers, isFinal, image, backImage);
-                case "ShamanicRitual"  -> new ShamanicRitualEventCard(id, era, minPlayers, isFinal, image, backImage);
-                case "CavePaintings"   -> new CavePaintingsEventCard(id, era, minPlayers, isFinal, image, backImage);
+                case "Hunt"            -> new HuntEventCard(id, era, minPlayers, image, backImage);
+                case "Sustenance"      -> new SustenanceEventCard(id, era, minPlayers, image, backImage);
+                case "ShamanicRitual"  -> new ShamanicRitualEventCard(id, era, minPlayers, image, backImage);
+                case "CavePaintings"   -> new CavePaintingsEventCard(id, era, minPlayers, image, backImage);
                 default -> throw new IllegalArgumentException("Unknown event type: " + eventType);
             };
 

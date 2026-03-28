@@ -8,8 +8,8 @@ import model.enums.Era;
 import model.player.Player;
 
 public abstract class CharacterCard extends TribeCard {
-    public CharacterCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
+    public CharacterCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
     }
 
     @Override

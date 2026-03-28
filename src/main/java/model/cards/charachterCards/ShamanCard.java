@@ -3,8 +3,8 @@ package model.cards.charachterCards;
 public class ShamanCard extends CharacterCard {
     private final int starCount;  // number of stars
 
-    public ShamanCard(int id, model.enums.Era era, int playerCount, int starCount) {
-        super(id, era, playerCount);
+    public ShamanCard(int id, model.enums.Era era, int playerCount, int starCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
         this.starCount = starCount;
     }
 
