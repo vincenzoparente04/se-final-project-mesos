@@ -8,16 +8,11 @@ import java.util.Deque;
 import java.util.List;
 
 public class TribeDeck {
-    // Deque: always draw from the top
     private Deque<TribeCard> cards;
-
-    // keep track of the current Era based on the last card drawn
     private Era currentEra;
 
     // -- setup --
     public void initializeDeck(int playerCount) {}
-
-    // used during setup to add cards to the deck
     public void addCard(TribeCard card) {}
 
 
@@ -47,16 +42,13 @@ public class TribeDeck {
 
 
     // -- state --
-    public boolean isEmpty()
-    public int size()
+    public boolean isEmpty() {
+        return this.size() == 0;
+    }
 
-    // REFACTOR: BISOGNA CAMBIARE O DRAWMULTIPLE O ISNEWERAREVEALED PERCHE' BISOGNA CONTROLLARE OGNI CARTA CHE VIENE MESSA SUL TABELLONE
-    // PER CAPIRE SE SIAMO IN UNA NUOVA ERA.
-    // INOLTRE BISOGNERA' IMPLEMENTARE UN METODO CHE QUAND CAMBIA ERA SPOSTA GLI EDIFICI NELLA FILA INFERIORE
-
-    // returns true if the last drawn card belongs to a different Era than the currentEra,
-    // the Controller checks this after every draw to trigger the start of a new Era
-    public boolean isNewEraRevealed(){}
+    public int size() {
+        return cards.size();
+    }
 
     //TODO: da inizializzare a 1 la current era
     public Era getCurrentEra(){
