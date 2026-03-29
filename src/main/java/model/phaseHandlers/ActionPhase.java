@@ -53,13 +53,20 @@ public class ActionPhase extends GamePhaseHandler {
         checkActionCompletionOrAutoAdvance();
     }
 
+    /**
+     * @implNote delegates all the logic to CardDrawer which uses visitor pattern to check if the card can be drawn and if yes how to manage the drawing
+     * @param cardId
+     */
     @Override
     public void drawCard(int cardId) {
-        CardDrawer cardDrawer = new CardDrawer(currentPlayer, model.getRowsManager());
+        CardDrawer cardDrawer = new CardDrawer(currentPlayer, model.getRowsManager(), currentAction);
+
+        // Prima di ogni pescata, verifichiamo se il turno è finito o deve essere forzatamente terminato
+        checkActionCompletionOrAutoAdvance();
         ensureActiveTurn();
 
-        RowsManager rows = model.getRowsManager();
-        Card card = rows.findCardById(cardId);
+        RowsManager rowsManager = model.getRowsManager();
+        Card card = rowsManager.findCardById(cardId);
 
         // ha senso?
         if (card == null) {
@@ -67,20 +74,13 @@ public class ActionPhase extends GamePhaseHandler {
         }
 
         // controlla che il player stia pescando dalla row giusta
-        if (!currentAction.canDraw(card, rows)) {
-            throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto).");
+        if (!currentAction.canDraw(card, rowsManager)) {
+            throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto)."); // serve l'exception??
         }
 
-        // checks if the card can be acquired and performs the draw (removing the card from the board, adding it to the player's tribe, applying discounts and OnAcquire effects)
         cardDrawer.drawCard(card);
 
-        // L'azione scala i suoi contatori interni
-        currentAction.performDraw(card, rows);
-
         model.notifyChange("card_drawn:" + cardId);
-
-        // Dopo ogni pescata, verifichiamo se il turno è finito o deve essere forzatamente terminato
-        checkActionCompletionOrAutoAdvance();
     }
 
     /**

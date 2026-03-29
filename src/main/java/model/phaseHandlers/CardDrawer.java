@@ -1,5 +1,6 @@
 package model.phaseHandlers;
 
+import model.board.OfferTileAction.OfferTileAction;
 import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
 import model.cards.Card;
 import model.cards.buildingCards.BuildingCard;
@@ -13,10 +14,12 @@ import model.rowsManager.RowsManager;
 public class CardDrawer implements CardVisitor {
     private Player player;
     private RowsManager rowsManager;
+    private OfferTileAction currentAction;
 
-    CardDrawer(Player player, RowsManager rowsManager) {
+    CardDrawer(Player player, RowsManager rowsManager, OfferTileAction currentAction) {
         this.player = player;
         this.rowsManager = rowsManager;
+        this.currentAction = currentAction;
     }
 
     /**
@@ -33,6 +36,11 @@ public class CardDrawer implements CardVisitor {
 
     @Override
     public void visit(CharacterCard card) {
+        if (currentAction != null) { // the if statement is necessary because it doesn't have to perform draw when called by PreEndOfRoundPhase
+            // L'azione scala i suoi contatori interni
+            currentAction.performDraw(card, rowsManager);
+        }
+
         rowsManager.removeCard(card.getId());
 
         card.registerToTribe(player);
@@ -48,6 +56,11 @@ public class CardDrawer implements CardVisitor {
         if (player.getFood() < card.getDiscountedCost(player)) {
             throw new IllegalStateException("Non hai i requisiti per prendere questa carta (Cibo insufficiente o è un Evento).");
         }else {
+            if (currentAction != null) { // the if statement is necessary because it doesn't have to perform draw when called by PreEndOfRoundPhase
+                // L'azione scala i suoi contatori interni
+                currentAction.performDraw(card, rowsManager);
+            }
+
             rowsManager.removeCard(card.getId());
 
             player.removeFood(card.getDiscountedCost(player), 0);
