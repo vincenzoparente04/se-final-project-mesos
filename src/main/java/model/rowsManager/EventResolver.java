@@ -69,4 +69,3 @@ public class EventResolver implements CardVisitor {
         sustenanceToResolve.add(card);
     }
 }
-
