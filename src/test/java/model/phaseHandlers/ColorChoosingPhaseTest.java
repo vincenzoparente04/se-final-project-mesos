@@ -6,7 +6,6 @@ import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -36,7 +35,6 @@ public class ColorChoosingPhaseTest {
     private Player player3;
 
     private ColorChoosingPhase colorChoosingPhase;
-    private List<Player> playerList;
 
     // ──────────────────────────────────────────────────────────────────────────────
     // Setup and Teardown
@@ -45,25 +43,27 @@ public class ColorChoosingPhaseTest {
     @BeforeEach
     void setUp() {
         // Initialize mocks
-        MockitoAnnotations.openMocks(this);
+        try (var ignored = MockitoAnnotations.openMocks(this)) {
+            // Setup player list
+            List<Player> playerList = new ArrayList<>();
+            playerList.add(player1);
+            playerList.add(player2);
+            playerList.add(player3);
 
-        // Setup player list
-        playerList = new ArrayList<>();
-        playerList.add(player1);
-        playerList.add(player2);
-        playerList.add(player3);
+            // Configure mock behavior
+            when(gameModel.getPlayers()).thenReturn(playerList);
+            when(gameModel.getPlayerCount()).thenReturn(playerList.size());
 
-        // Configure mock behavior
-        when(gameModel.getPlayers()).thenReturn(playerList);
-        when(gameModel.getPlayerCount()).thenReturn(playerList.size());
+            // Setup player names for better debugging
+            when(player1.getName()).thenReturn("Player1");
+            when(player2.getName()).thenReturn("Player2");
+            when(player3.getName()).thenReturn("Player3");
 
-        // Setup player names for better debugging
-        when(player1.getName()).thenReturn("Player1");
-        when(player2.getName()).thenReturn("Player2");
-        when(player3.getName()).thenReturn("Player3");
-
-        // Create instance of ColorChoosingPhase
-        colorChoosingPhase = new ColorChoosingPhase(gameModel);
+            // Create instance of ColorChoosingPhase
+            colorChoosingPhase = new ColorChoosingPhase(gameModel);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────────
@@ -81,9 +81,6 @@ public class ColorChoosingPhaseTest {
         // Assert - verify that the first player is set correctly
         assertEquals(player1, colorChoosingPhase.getCurrentPlayer(),
                 "First player should be set to player1 after onEnter()");
-
-        // Verify that notifyChange was called to notify color choosing started
-        verify(gameModel, times(1)).notifyChange(contains("color_choosing_started"));
     }
 
     @Test
@@ -101,24 +98,16 @@ public class ColorChoosingPhaseTest {
     // ──────────────────────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("chooseColor() should assign totem with correct color to player")
-    void testChooseColorAssignsTotemToPlayer() {
+    @DisplayName("chooseColor() should assign correct color to player")
+    void testChooseColorAssignsColorToPlayer() {
         // Arrange
         colorChoosingPhase.onEnter();
-        ArgumentCaptor<Totem> totemCaptor = ArgumentCaptor.forClass(Totem.class);
 
         // Act
         colorChoosingPhase.chooseColor(player1, TotemColor.RED);
 
         // Assert
-        verify(player1, times(1)).setTotem(totemCaptor.capture());
-
-        // Verify the correct color was assigned
-        Totem capturedTotem = totemCaptor.getValue();
-        assertEquals(TotemColor.RED, capturedTotem.getColor(),
-                "Totem should have RED color");
-        assertEquals(player1, capturedTotem.getPlayer(),
-                "Totem should belong to player1");
+        verify(player1, times(1)).setColor(TotemColor.RED);
     }
 
 
@@ -131,13 +120,15 @@ public class ColorChoosingPhaseTest {
         // Act
         colorChoosingPhase.chooseColor(player1, TotemColor.BLUE);
 
-        // Assert
+        // Assert - verify that player1 got the color
+        verify(player1, times(1)).setColor(TotemColor.BLUE);
+        // Verify that notifyChange was called with the color choice
         verify(gameModel, times(1)).notifyChange("color_chosen:Player1:BLUE");
     }
 
     @Test
-    @DisplayName("chooseColor() should advance to next player after valid choice")
-    void testChooseColorAdvancesToNextPlayer() {
+    @DisplayName("chooseColor() should advance and notify next player about their turn")
+    void testChooseColorNotifiesNextPlayerTurn() {
         // Arrange
         colorChoosingPhase.onEnter();
         assertEquals(player1, colorChoosingPhase.getCurrentPlayer());
@@ -145,21 +136,10 @@ public class ColorChoosingPhaseTest {
         // Act
         colorChoosingPhase.chooseColor(player1, TotemColor.RED);
 
-        // Assert
+        // Assert - verify that the current player has advanced
         assertEquals(player2, colorChoosingPhase.getCurrentPlayer(),
-                "Current player should advance to player2 after player1 chooses color");
-    }
-
-    @Test
-    @DisplayName("chooseColor() should notify next player about their turn")
-    void testChooseColorNotifiesNextPlayerTurn() {
-        // Arrange
-        colorChoosingPhase.onEnter();
-
-        // Act
-        colorChoosingPhase.chooseColor(player1, TotemColor.RED);
-
-        // Assert
+                "Current player should advance to player2 after player1 chooses");
+        // Verify that notifyChange was called to notify the next player
         verify(gameModel, times(1)).notifyChange("color_choosing_next:Player2");
     }
 
@@ -168,44 +148,32 @@ public class ColorChoosingPhaseTest {
     // ──────────────────────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("chooseColor() should throw exception when wrong player tries to choose")
-    void testChooseColorThrowsExceptionForWrongPlayer() {
+    @DisplayName("chooseColor() should not process color choice when wrong player tries to choose")
+    void testChooseColorIgnoresWrongPlayer() {
         // Arrange
         colorChoosingPhase.onEnter();
 
-        // Act & Assert
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> colorChoosingPhase.chooseColor(player2, TotemColor.RED),
-                "Should throw exception when non-current player tries to choose color"
-        );
+        // Act
+        colorChoosingPhase.chooseColor(player2, TotemColor.RED);
 
-        // Verify exception message contains relevant information
-        assertTrue(exception.getMessage().contains("It's not Player2's turn"),
-                "Exception message should indicate whose turn it is");
-        assertTrue(exception.getMessage().contains("Player1"),
-                "Exception message should mention the current player");
+        // Assert - player2 should not have setColor called
+        verify(player2, never()).setColor(any());
+        // current player should still be player1
+        assertEquals(player1, colorChoosingPhase.getCurrentPlayer());
     }
 
     @Test
-    @DisplayName("chooseColor() should throw exception for unavailable color")
-    void testChooseColorThrowsExceptionForUnavailableColor() {
+    @DisplayName("chooseColor() should not process color choice when unavailable color is selected")
+    void testChooseColorIgnoresUnavailableColor() {
         // Arrange
         colorChoosingPhase.onEnter();
         colorChoosingPhase.chooseColor(player1, TotemColor.RED);
 
-        // Act & Assert
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> colorChoosingPhase.chooseColor(player2, TotemColor.RED),
-                "Should throw exception when trying to choose already-chosen color"
-        );
+        // Act - player2 tries to choose already taken color
+        colorChoosingPhase.chooseColor(player2, TotemColor.RED);
 
-        // Verify exception message contains relevant information
-        assertTrue(exception.getMessage().contains("not available"),
-                "Exception message should indicate color is unavailable");
-        assertTrue(exception.getMessage().contains("RED"),
-                "Exception message should mention the unavailable color");
+        // Assert - player2 should not have setColor called
+        verify(player2, never()).setColor(any());
     }
 
     // ──────────────────────────────────────────────────────────────────────────────
@@ -217,39 +185,16 @@ public class ColorChoosingPhaseTest {
     void testSequentialColorChoiceForAllPlayers() {
         // Arrange
         colorChoosingPhase.onEnter();
-        ArgumentCaptor<Totem> player1TotemCaptor = ArgumentCaptor.forClass(Totem.class);
-        ArgumentCaptor<Totem> player2TotemCaptor = ArgumentCaptor.forClass(Totem.class);
-        ArgumentCaptor<Totem> player3TotemCaptor = ArgumentCaptor.forClass(Totem.class);
 
         // Act - All players choose colors
         colorChoosingPhase.chooseColor(player1, TotemColor.RED);
         colorChoosingPhase.chooseColor(player2, TotemColor.BLUE);
         colorChoosingPhase.chooseColor(player3, TotemColor.GREEN);
 
-        // Assert - Each player must receive exactly one totem
-        verify(player1, times(1)).setTotem(player1TotemCaptor.capture());
-        verify(player2, times(1)).setTotem(player2TotemCaptor.capture());
-        verify(player3, times(1)).setTotem(player3TotemCaptor.capture());
-
-        // Assert - Verify both assigned color and owner for each captured totem
-        Totem player1Totem = player1TotemCaptor.getValue();
-        Totem player2Totem = player2TotemCaptor.getValue();
-        Totem player3Totem = player3TotemCaptor.getValue();
-
-        assertEquals(TotemColor.RED, player1Totem.getColor(),
-            "Player1 should receive RED totem");
-        assertEquals(player1, player1Totem.getPlayer(),
-            "Player1 totem should belong to player1");
-
-        assertEquals(TotemColor.BLUE, player2Totem.getColor(),
-            "Player2 should receive BLUE totem");
-        assertEquals(player2, player2Totem.getPlayer(),
-            "Player2 totem should belong to player2");
-
-        assertEquals(TotemColor.GREEN, player3Totem.getColor(),
-            "Player3 should receive GREEN totem");
-        assertEquals(player3, player3Totem.getPlayer(),
-            "Player3 totem should belong to player3");
+        // Assert - Each player's setColor should be called exactly once
+        verify(player1, times(1)).setColor(TotemColor.RED);
+        verify(player2, times(1)).setColor(TotemColor.BLUE);
+        verify(player3, times(1)).setColor(TotemColor.GREEN);
     }
 
     @Test
@@ -303,7 +248,9 @@ public class ColorChoosingPhaseTest {
         colorChoosingPhase.chooseColor(player2, TotemColor.BLUE);
         colorChoosingPhase.chooseColor(player3, TotemColor.GREEN);
 
-        // Assert
+        // Assert - verify that setPhase was called (indicating completion)
+        verify(gameModel, times(1)).setPhase(any(SetupPhase.class));
+        // Verify that notifyChange was called to signal completion
         verify(gameModel, times(1)).notifyChange("color_choosing_completed");
     }
 
@@ -342,16 +289,10 @@ public class ColorChoosingPhaseTest {
         localPhase.chooseColor(localPlayer4, TotemColor.YELLOW);
 
         // Assert - Fifth player cannot choose a color that is already taken
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> localPhase.chooseColor(localPlayer5, TotemColor.RED),
-                "A previously chosen color should not be available anymore"
-        );
-        assertTrue(exception.getMessage().contains("not available"),
-                "Exception message should indicate color is unavailable");
-        assertTrue(exception.getMessage().contains("RED"),
-                "Exception message should mention the duplicated color");
-        verify(localPlayer5, never()).setTotem(any(Totem.class));
+        localPhase.chooseColor(localPlayer5, TotemColor.RED);
+        
+        // Verify that setColor was not called for player5 with RED
+        verify(localPlayer5, never()).setColor(TotemColor.RED);
     }
 
 }

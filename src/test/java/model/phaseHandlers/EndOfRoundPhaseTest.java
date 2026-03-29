@@ -1,6 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.board.Board;
 import model.enums.Era;
 import model.enums.GamePhase;
 import model.player.Player;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -30,9 +31,11 @@ public class EndOfRoundPhaseTest {
 	void setUp() {
 		model = mock(GameModel.class);
 		rowsManager = mock(RowsManager.class);
+		Board board = mock(Board.class);
 		phase = new EndOfRoundPhase(model);
 
 		when(model.getRowsManager()).thenReturn(rowsManager);
+		when(model.getBoard()).thenReturn(board);
 	}
 
 	/**
@@ -115,30 +118,21 @@ public class EndOfRoundPhaseTest {
 	}
 
 	/**
-	 * Test that getPhase correctly delegates to the model's getCurrentPhase method.
+	 * Test that getPhase returns the fixed phase constant for this handler.
 	 */
 	@Test
-	@DisplayName("getPhase delegates to model")
-	void getPhaseDelegatesToModel() {
-		// Arrange: mock model to return END_OF_ROUND phase
-		when(model.getCurrentPhase()).thenReturn(GamePhase.END_OF_ROUND);
-
-		// Act & Assert: verify getPhase returns the same value
+	@DisplayName("getPhase returns END_OF_ROUND")
+	void getPhaseReturnsEndOfRound() {
 		assertEquals(GamePhase.END_OF_ROUND, phase.getPhase());
 	}
 
 	/**
-	 * Test that getCurrentPlayer correctly delegates to the model's getCurrentPlayer method.
+	 * Test that getCurrentPlayer is always null during EndOfRoundPhase.
 	 */
 	@Test
-	@DisplayName("getCurrentPlayer delegates to model")
-	void getCurrentPlayerDelegatesToModel() {
-		// Arrange: mock model to return a specific player
-		Player current = mock(Player.class);
-		when(model.getCurrentPlayer()).thenReturn(current);
-
-		// Act & Assert: verify getCurrentPlayer returns the same player instance
-		assertSame(current, phase.getCurrentPlayer());
+	@DisplayName("getCurrentPlayer returns null")
+	void getCurrentPlayerReturnsNull() {
+		assertNull(phase.getCurrentPlayer());
 	}
 
 }
