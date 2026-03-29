@@ -57,11 +57,13 @@ public class EndOfGamePhaseTest {
 		when(t1.calculateArtistEndGamePoints()).thenReturn(10);
 		when(t1.calculateInventorEndGamePoints()).thenReturn(4);
 		when(t1.calculateBuildingPrintedPoints()).thenReturn(8);
+		when(t1.getEndGameBuildingEffects()).thenReturn(List.of());
 
 		when(t2.calculateBuildersEndGamePoints()).thenReturn(2);
 		when(t2.calculateArtistEndGamePoints()).thenReturn(0);
 		when(t2.calculateInventorEndGamePoints()).thenReturn(2);
 		when(t2.calculateBuildingPrintedPoints()).thenReturn(5);
+		when(t2.getEndGameBuildingEffects()).thenReturn(List.of());
 
 		when(p1.getPrestigePoints()).thenReturn(30);
 		when(p2.getPrestigePoints()).thenReturn(24);
@@ -109,6 +111,8 @@ public class EndOfGamePhaseTest {
 
 		when(p1.getTribe()).thenReturn(t1);
 		when(p2.getTribe()).thenReturn(t2);
+		when(t1.getEndGameBuildingEffects()).thenReturn(List.of());
+		when(t2.getEndGameBuildingEffects()).thenReturn(List.of());
 
 		when(p1.getPrestigePoints()).thenReturn(25);
 		when(p2.getPrestigePoints()).thenReturn(25);
@@ -142,6 +146,8 @@ public class EndOfGamePhaseTest {
 
 		when(p1.getTribe()).thenReturn(t1);
 		when(p2.getTribe()).thenReturn(t2);
+		when(t1.getEndGameBuildingEffects()).thenReturn(List.of());
+		when(t2.getEndGameBuildingEffects()).thenReturn(List.of());
 
 		when(p1.getPrestigePoints()).thenReturn(40);
 		when(p2.getPrestigePoints()).thenReturn(40);
