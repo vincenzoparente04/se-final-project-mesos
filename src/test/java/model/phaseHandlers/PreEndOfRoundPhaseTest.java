@@ -2,7 +2,6 @@ package model.phaseHandlers;
 
 import model.GameModel;
 import model.cards.Card;
-import model.enums.GamePhase;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;

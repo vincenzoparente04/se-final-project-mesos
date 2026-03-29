@@ -92,4 +92,8 @@ public class GameModel {
     public void incrementRound() {
         currentRound++;
     }
+
+    public void notifyChange(String message) {
+        // TODO:
+    }
 }
