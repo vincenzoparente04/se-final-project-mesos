@@ -24,19 +24,19 @@ import static org.mockito.Mockito.when;
 public class SetupPhaseTest {
 
 	private GameModel model;
-	private Board rowsManager;
+	private Board board;
 	private TurnOrderTile turnOrderTile;
 	private SetupPhase phase;
 
 	@BeforeEach
 	void setUp() {
 		model = mock(GameModel.class);
-		rowsManager = mock(Board.class);
+		board = mock(Board.class);
 		turnOrderTile = mock(TurnOrderTile.class);
 		phase = new SetupPhase(model);
 
-		when(model.getBoard()).thenReturn(rowsManager);
-		when(rowsManager.getTurnOrderTile()).thenReturn(turnOrderTile);
+		when(model.getBoard()).thenReturn(board);
+		when(board.getTurnOrderTile()).thenReturn(turnOrderTile);
 	}
 
 	@Test
@@ -55,9 +55,9 @@ public class SetupPhaseTest {
 
 		phase.onEnter();
 
-		var order = inOrder(rowsManager, model);
-		order.verify(rowsManager).setup(5);
-		order.verify(rowsManager).randomizeTurnOrder(allPlayers);
+		var order = inOrder(board, model);
+		order.verify(board).setup(5);
+		order.verify(board).randomizeTurnOrder(allPlayers);
 		order.verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 
 		verify(p1).addFood(2);
@@ -106,9 +106,9 @@ public class SetupPhaseTest {
 
 		phase.onEnter();
 
-		var order = inOrder(rowsManager, model, p4, p2, p1, p3);
-		order.verify(rowsManager).setup(4);
-		order.verify(rowsManager).randomizeTurnOrder(originalPlayers);
+		var order = inOrder(board, model, p4, p2, p1, p3);
+		order.verify(board).setup(4);
+		order.verify(board).randomizeTurnOrder(originalPlayers);
 		order.verify(p4).addFood(2);
 		order.verify(p2).addFood(3);
 		order.verify(p1).addFood(3);

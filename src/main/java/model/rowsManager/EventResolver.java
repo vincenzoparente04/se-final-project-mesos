@@ -26,6 +26,8 @@ public class EventResolver implements CardVisitor {
     /**
      * Sorts events from a list of tribe cards by type and era, moving sustenance events to the end.
      * Uses the Visitor pattern to classify cards.
+     * @implNote EventResolver collects EventCard and SustenanceEventCard from a list of TribeCards, sorts them by type and era, and resolves them in the correct order.
+     * Sustenance events are resolved after all other events. It assumes that cards on the rows are already sorted by era (they keep the drawing order from tribe deck)
      *
      * @param tribeCards the cards to sort and filter for events
      */
