@@ -88,7 +88,7 @@ public class RowsManager {
      * @param players
      */
     public void resolveAllEvents(List<Player> players){
-        eventResolver.sortEvents(getAllCardsOnBoard());
+        eventResolver.sortEvents(getAllTribeCardsOnBoard());
         eventResolver.resolve(players);
     }
 
@@ -167,9 +167,17 @@ public class RowsManager {
      * @implNote merges top row and bottom row tribe cards. The returned list has bottom row cards first, then top row cards.
      * @return a list of all the tribe cards present on the board, both in the top and bottom row
      */
-    public List<TribeCard> getAllCardsOnBoard() {
+    public List<TribeCard> getAllTribeCardsOnBoard() {
         List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
         allCards.addAll(topRowTribe);
+        return allCards;
+    }
+
+    public List<Card> getAllCardsOnBoard() {
+        List<Card> allCards = new ArrayList<>(bottomRowTribe);
+        allCards.addAll(topRowTribe);
+        allCards.addAll(bottomRowBuilding);
+        allCards.addAll(topRowBuilding);
         return allCards;
     }
 

@@ -51,8 +51,12 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
         model.setPhase(new EndOfRoundPhase(model));
     }
 
-    // l 'effetto è facoltativo quindi il player potrebbe anche non pescare la carta extra
-    public void skipAction() {
+    /**
+     * @implNote End the turn without drawing a card, if the player decides not to use the extra draw.
+      * This will transition directly to the EndOfRoundPhase.
+     */
+    @Override
+    public void endTurn() {
         if (activePlayer != null) {
             // notificare che il player ha deciso di non pescare?
             model.setPhase(new EndOfRoundPhase(model));
