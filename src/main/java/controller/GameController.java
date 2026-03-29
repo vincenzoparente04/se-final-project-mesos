@@ -22,8 +22,6 @@ public class GameController {
 
     /**
      * @implNote Is called by the clients and forwards the request to the gameModel.
-     * @param player
-     * @param offerTile
      */
     public void placeTotem(Player player, char tileId) throws Exception {
         gameModel.placeTotem(player, tileId);
