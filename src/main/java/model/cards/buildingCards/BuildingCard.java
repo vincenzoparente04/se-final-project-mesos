@@ -5,6 +5,7 @@ import model.cards.Card;
 import model.buildingEffects.BuildingEffect;
 import model.enums.Era;
 import model.player.Player;
+import model.rowsManager.CardVisitor;
 
 
 public class BuildingCard extends Card {
@@ -45,26 +46,9 @@ public class BuildingCard extends Card {
         return Math.max(0, this.foodCost - buildersDiscount);
     }
 
-    /**
-     * @implNote Checks if the player has enough food to pay the building card given the builders discount.
-     * @param player
-     * @param model
-     * @return
-     */
     @Override
-    public boolean canBeAcquiredBy(Player player, GameModel model) {
-        return player.getFood() >= getDiscountedCost(player);
-    }
-
-    /**
-     * @implNote Remove the food from the player, and add the card to the player's tribe.
-     * @param player
-     * @param model
-     */
-    @Override
-    public void acquiredBy(Player player, GameModel model) {
-        player.removeFood(getDiscountedCost(player), 0);
-        registerToTribe(player);
+    public void accept(CardVisitor visitor) {
+        visitor.visit(this);
     }
 }
 

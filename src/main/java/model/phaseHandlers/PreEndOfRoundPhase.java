@@ -34,6 +34,8 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
      */
     @Override
     public void drawCard(int cardId) {
+        CardDrawer cardDrawer = new CardDrawer(activePlayer, model.getRowsManager());
+
         if (activePlayer == null) return;
 
         RowsManager rows = model.getRowsManager();
@@ -44,12 +46,8 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
             return;
         }
 
-        if (!card.canBeAcquiredBy(activePlayer, model)) {
-            return;
-        }
-
-        rows.removeCard(cardId);
-        card.acquiredBy(activePlayer, model);
+        // checks if the card can be acquired and performs the draw (removing the card from the board, adding it to the player's tribe, applying discounts and OnAcquire effects)
+        cardDrawer.drawCard(card);
 
         model.setPhase(new EndOfRoundPhase(model));
     }

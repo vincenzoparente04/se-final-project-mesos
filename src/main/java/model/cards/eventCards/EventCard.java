@@ -14,17 +14,6 @@ public abstract class EventCard extends TribeCard {
     }
 
     @Override
-    public boolean canBeAcquiredBy(Player player, GameModel model) {
-        return false;
-    }
-
-    // questo metodo non dovrebbe mai essere chiamato -> di può togliere?
-    @Override
-    public void acquiredBy(Player player, GameModel model) {
-        throw new IllegalStateException("Le carte Evento non possono mai essere acquisite!");
-    }
-
-    @Override
     public void registerToTribe(Player player) { return; }
 
     // metodi

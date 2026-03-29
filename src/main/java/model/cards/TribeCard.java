@@ -8,6 +8,4 @@ public abstract class TribeCard extends Card {
     public TribeCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
         super(id, era, playerCount, imagePath, backImagePath);
     }
-
-    public abstract void accept(CardVisitor visitor);
 }

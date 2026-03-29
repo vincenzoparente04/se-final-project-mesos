@@ -55,6 +55,7 @@ public class ActionPhase extends GamePhaseHandler {
 
     @Override
     public void drawCard(int cardId) {
+        CardDrawer cardDrawer = new CardDrawer(currentPlayer, model.getRowsManager());
         ensureActiveTurn();
 
         RowsManager rows = model.getRowsManager();
@@ -70,18 +71,8 @@ public class ActionPhase extends GamePhaseHandler {
             throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto).");
         }
 
-        // controlla che la carta non sia un evento o un building troppo costoso per il player
-        if (!card.canBeAcquiredBy(currentPlayer, model)) {
-            throw new IllegalStateException("Non hai i requisiti per prendere questa carta (Cibo insufficiente o è un Evento).");
-        }
-
-        // -- ESECUZIONE PESCA --
-        // Rimuove la carta dal board
-        rows.removeCard(cardId);
-
-        // La carta gestisce l'aggiunta alla tribù, il pagamento, effetti immediati
-        // ###sistemare i metodi di pesca nelle carte
-        card.acquiredBy(currentPlayer, model);
+        // checks if the card can be acquired and performs the draw (removing the card from the board, adding it to the player's tribe, applying discounts and OnAcquire effects)
+        cardDrawer.drawCard(card);
 
         // L'azione scala i suoi contatori interni
         currentAction.performDraw(card, rows);
