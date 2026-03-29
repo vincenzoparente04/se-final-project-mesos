@@ -14,27 +14,56 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TribeCardFactory {
 
     private static int nextId = 1;
 
-    public static List<TribeCard> createAll() {
+    /**
+     * Container returned by createAll().
+     * Keeps regular cards and final events separated without using shared static state.
+     */
+    public record TribeCardCollection(
+            List<TribeCard> regularCards,
+            List<TribeCard> finalEvents
+    ) {}
+
+    // Public API ────────────────────────────────────────────────────────────
+
+    public static List<TribeCard> createRegularCards() {
+        return createAll().regularCards();
+    }
+
+    public static List<TribeCard> createFinalEvents() {
+        return createAll().finalEvents();
+    }
+
+    /**
+     * Reads the full JSON and builds every TribeCard, returning them already
+     * split into regular cards and final events.
+     * isFinal is read here from JSON and used only to route each event card
+     * into the correct list — it never leaks into the card model itself.
+     */
+    public static TribeCardCollection createAll() {
         nextId = 1;
-        List<TribeCard> cards = new ArrayList<>();
+        List<TribeCard> regularCards = new ArrayList<>();
+        List<TribeCard> finalEvents  = new ArrayList<>();
 
         JsonObject root = loadJson("tribe_cards.json");
 
-        cards.addAll(createHunters(root.getAsJsonArray("hunters")));
-        cards.addAll(createShamans(root.getAsJsonArray("shamans")));
-        cards.addAll(createBuilders(root.getAsJsonArray("builders")));
-        cards.addAll(createInventors(root.getAsJsonArray("inventors")));
-        cards.addAll(createArtists(root.getAsJsonArray("artists")));
-        cards.addAll(createGatherers(root.getAsJsonArray("gatherers")));
-        cards.addAll(createEvents(root.getAsJsonArray("events")));
+        regularCards.addAll(createHunters(root.getAsJsonArray("hunters")));
+        regularCards.addAll(createShamans(root.getAsJsonArray("shamans")));
+        regularCards.addAll(createBuilders(root.getAsJsonArray("builders")));
+        regularCards.addAll(createInventors(root.getAsJsonArray("inventors")));
+        regularCards.addAll(createArtists(root.getAsJsonArray("artists")));
+        regularCards.addAll(createGatherers(root.getAsJsonArray("gatherers")));
+        createEvents(root.getAsJsonArray("events"), regularCards, finalEvents);
 
-        return cards;
+        return new TribeCardCollection(regularCards, finalEvents);
     }
+
+    // Internal ──────────────────────────────────────────────────────────────
 
     private static List<TribeCard> createHunters(JsonArray array) {
         List<TribeCard> cards = new ArrayList<>();
@@ -155,7 +184,7 @@ public class TribeCardFactory {
         return cards;
     }
 
-    private static List<TribeCard> createEvents(JsonArray array) {
+    private static List<TribeCard> createEvents(JsonArray array, List<TribeCard> regularCards, List<TribeCard> finalEvents) {
         List<TribeCard> cards = new ArrayList<>();
         for (JsonElement el : array) {
             JsonObject json = el.getAsJsonObject();
@@ -171,14 +200,15 @@ public class TribeCardFactory {
 
 
             TribeCard card = switch (eventType) {
-                case "Hunt"            -> new HuntEventCard(id, era, minPlayers, isFinal, image, backImage);
-                case "Sustenance"      -> new SustenanceEventCard(id, era, minPlayers, isFinal, image, backImage);
-                case "ShamanicRitual"  -> new ShamanicRitualEventCard(id, era, minPlayers, isFinal, image, backImage);
-                case "CavePaintings"   -> new CavePaintingsEventCard(id, era, minPlayers, isFinal, image, backImage);
+                case "Hunt"            -> new HuntEventCard(id, era, minPlayers, image, backImage);
+                case "Sustenance"      -> new SustenanceEventCard(id, era, minPlayers, image, backImage);
+                case "ShamanicRitual"  -> new ShamanicRitualEventCard(id, era, minPlayers, image, backImage);
+                case "CavePaintings"   -> new CavePaintingsEventCard(id, era, minPlayers, image, backImage);
                 default -> throw new IllegalArgumentException("Unknown event type: " + eventType);
             };
 
-            cards.add(card);
+            if (isFinal) finalEvents.add(card);
+            else         regularCards.add(card);
         }
         return cards;
     }

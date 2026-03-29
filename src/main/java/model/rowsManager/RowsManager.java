@@ -3,6 +3,9 @@ package model.rowsManager;
 import model.cards.Card;
 import model.cards.TribeCard;
 import model.cards.buildingCards.BuildingCard;
+import model.enums.Era;
+import model.factories.BuildingCardFactory;
+import model.factories.TribeCardFactory;
 import model.player.Player;
 import model.rowsManager.deck.BuildingDeck;
 import model.rowsManager.deck.TribeDeck;
@@ -13,27 +16,55 @@ import java.util.stream.Stream;
 
 //TODO: da capire come viene costruito il rows manager
 public class RowsManager {
-    private List<TribeCard> topRowTribe;
-    private List<TribeCard> bottomRowTribe;
-    private List<BuildingCard> topRowBuilding;
-    private List<BuildingCard> bottomRowBuilding;
+    private final List<TribeCard> topRowTribe;
+    private final List<TribeCard> bottomRowTribe;
+    private final List<BuildingCard> topRowBuilding;
+    private final List<BuildingCard> bottomRowBuilding;
 
-    private TribeDeck tribeDeck;
-    private BuildingDeck buildingDeckEraI;
-    private BuildingDeck buildingDeckEraII;
-    private BuildingDeck buildingDeckEraIII;
+    private final TribeDeck tribeDeck;
+    private final BuildingDeck buildingDeckEraI;
+    private final BuildingDeck buildingDeckEraII;
+    private final BuildingDeck buildingDeckEraIII;
 
-    private EventResolver eventResolver;
+    private final EventResolver eventResolver;
 
     public RowsManager() {
+        this.topRowTribe      = new ArrayList<>();
+        this.bottomRowTribe   = new ArrayList<>();
+        this.topRowBuilding   = new ArrayList<>();
+        this.bottomRowBuilding = new ArrayList<>();
+
+        this.tribeDeck        = new TribeDeck();
+        this.buildingDeckEraI   = new BuildingDeck(Era.ERA_I);
+        this.buildingDeckEraII  = new BuildingDeck(Era.ERA_II);
+        this.buildingDeckEraIII = new BuildingDeck(Era.ERA_III);
+
         this.eventResolver = new EventResolver();
     }
 
+    /**
+     * @implNote Initializes all decks and populates the starting rows (Setup, steps 3–6).
+     *
+     * 1. Creates all cards via the factories
+     * 2. Initializes each deck (filtering by playerCount, shuffling, selecting)
+     * 3. Draws the bottom row: playerCount + 1 tribe cards
+     * 4. Draws the top row:    playerCount + 4 tribe cards
+     * 5. Places all Era I building cards face up in the top row
+     *
+     * @param playerCount number of players in the game (2–5)
+     */
     public void setup(int playerCount) {
-        tribeDeck.initializeDeck(playerCount);
-        buildingDeckEraI.initializeDeck(playerCount);
-        buildingDeckEraII.initializeDeck(playerCount);
-        buildingDeckEraIII.initializeDeck(playerCount);
+        // create cards from JSON with factories
+        TribeCardFactory.TribeCardCollection tribeCards = TribeCardFactory.createAll();
+        List<BuildingCard> allBuildingCards = BuildingCardFactory.createAll();
+
+        // initialize decks --
+        tribeDeck.initializeDeck(tribeCards.regularCards(), tribeCards.finalEvents(), playerCount);
+        buildingDeckEraI.initializeDeck(allBuildingCards, playerCount);
+        buildingDeckEraII.initializeDeck(allBuildingCards, playerCount);
+        buildingDeckEraIII.initializeDeck(allBuildingCards, playerCount);
+
+        // populate starting rows --
         bottomRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 1));
         topRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 4));
         topRowBuilding.addAll(buildingDeckEraI.drawAll());
@@ -70,8 +101,8 @@ public class RowsManager {
     public void endRound(int playerCount) {
         bottomRowTribe.clear();
         bottomRowTribe.addAll(topRowTribe);
-        int cardsToDraw = playerCount + 4;
-        topRowTribe.addAll(tribeDeck.drawMultiple(cardsToDraw));
+        topRowTribe.clear();
+        topRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 4));
     }
 
     /**
@@ -82,6 +113,7 @@ public class RowsManager {
     public void changeEra() {
         bottomRowBuilding.clear();
         bottomRowBuilding.addAll(topRowBuilding);
+        topRowBuilding.clear();
         if (buildingDeckEraII.isEmpty()) {
             topRowBuilding.addAll(buildingDeckEraIII.drawAll());
         }else{

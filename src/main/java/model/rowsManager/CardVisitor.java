@@ -1,4 +1,4 @@
-package model.board;
+package model.rowsManager;
 
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;

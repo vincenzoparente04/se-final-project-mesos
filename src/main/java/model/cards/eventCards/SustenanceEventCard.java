@@ -1,6 +1,6 @@
 package model.cards.eventCards;
 
-import model.board.CardVisitor;
+import model.rowsManager.CardVisitor;
 import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.enums.Era;
 import model.player.Player;
@@ -9,8 +9,8 @@ import java.util.List;
 
 public class SustenanceEventCard extends EventCard {
 
-    public SustenanceEventCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
+    public SustenanceEventCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
     }
 
     

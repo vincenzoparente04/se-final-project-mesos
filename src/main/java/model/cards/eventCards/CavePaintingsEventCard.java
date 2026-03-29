@@ -8,8 +8,8 @@ import java.util.List;
 
 public class CavePaintingsEventCard extends EventCard {
 
-    public CavePaintingsEventCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
+    public CavePaintingsEventCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
     }
 
     /**

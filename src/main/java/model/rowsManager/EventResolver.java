@@ -1,6 +1,6 @@
 package model.rowsManager;
 
-import model.board.CardVisitor;
+import model.rowsManager.CardVisitor;
 import model.cards.TribeCard;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;

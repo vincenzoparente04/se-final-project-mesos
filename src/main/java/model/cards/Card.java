@@ -8,11 +8,15 @@ public abstract class Card implements Drawable {
     private final int id;
     private final Era era;           // ERA_I, ERA_II, ERA_III
     private final int playerCount;   // minimum number of players required to have this card in the game (some cards are only used in games with 3, 4 or 5 players)
+    private final String imagePath;
+    private final String backImagePath;
 
-    public Card(int id, Era era, int playerCount) {
+    public Card(int id, Era era, int playerCount, String imagePath, String backImagePath) {
         this.id = id;
         this.era = era;
         this.playerCount = playerCount;
+        this.imagePath = imagePath;
+        this.backImagePath = backImagePath;
     }
 
     public int getId() { return id; }

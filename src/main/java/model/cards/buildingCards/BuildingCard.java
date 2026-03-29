@@ -12,8 +12,8 @@ public class BuildingCard extends Card {
     private final int endGamePoints;
     private final BuildingEffect effect;
 
-    public BuildingCard(int id, Era era, int playercount, int foodCost, int endGamePoints, BuildingEffect effect, BuildingEffect effect1) {
-        super(id, era, playercount);
+    public BuildingCard(int id, Era era, int playercount, int foodCost, int endGamePoints, BuildingEffect effect, String imagePath, String backImagePath) {
+        super(id, era, playercount, imagePath, backImagePath);
         this.foodCost = foodCost;
         this.endGamePoints = endGamePoints;
         this.effect = effect;

@@ -33,6 +33,7 @@ public class EndOfRoundPhase extends GamePhaseHandler {
             rowsManager.changeEra();
         }
 
+        // TODO QUALCUNO DEVE CONTROLLA' CHE IL MAZZO NON SIA FINITO DAJE REGA SVEGLIA
         if (model.isGameOver()) {
             model.setPhase(new EndOfGamePhase(model));
         } else {
