@@ -34,28 +34,29 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
      */
     @Override
     public void drawCard(int cardId) {
+        CardDrawer cardDrawer = new CardDrawer(activePlayer, model.getRowsManager(), null);
+
         if (activePlayer == null) return;
 
-        RowsManager rows = model.getRowsManager();
-        Card card = rows.findCardById(cardId);
+        RowsManager rowsManager = model.getRowsManager();
+        Card card = rowsManager.findCardById(cardId);
 
-        if (card == null || !rows.topRowContainsCard(cardId)) {
+        if (card == null || !rowsManager.topRowContainsCard(card.getId())) {
             // è necessario notificare l'erorre?
             return;
         }
 
-        if (!card.canBeAcquiredBy(activePlayer, model)) {
-            return;
-        }
-
-        rows.removeCard(cardId);
-        card.acquiredBy(activePlayer, model);
+        cardDrawer.drawCard(card);
 
         model.setPhase(new EndOfRoundPhase(model));
     }
 
-    // l 'effetto è facoltativo quindi il player potrebbe anche non pescare la carta extra
-    public void skipAction() {
+    /**
+     * @implNote End the turn without drawing a card, if the player decides not to use the extra draw.
+      * This will transition directly to the EndOfRoundPhase.
+     */
+    @Override
+    public void endTurn() {
         if (activePlayer != null) {
             // notificare che il player ha deciso di non pescare?
             model.setPhase(new EndOfRoundPhase(model));

@@ -26,12 +26,14 @@ public class EndOfRoundPhase extends GamePhaseHandler {
         Era currentEra = model.getCurrentEra();
 
         rowsManager.endRound(model.getPlayerCount());
+        model.getBoard().endRound(model.getPlayerCount());
 
         if (model.getCurrentEra().compareTo(currentEra) != 0) {
             model.notifyChange("era_changed:" + model.getCurrentEra());
             rowsManager.changeEra();
         }
 
+        // TODO QUALCUNO DEVE CONTROLLA' CHE IL MAZZO NON SIA FINITO DAJE REGA SVEGLIA
         if (model.isGameOver()) {
             model.setPhase(new EndOfGamePhase(model));
         } else {

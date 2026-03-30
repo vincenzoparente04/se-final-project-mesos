@@ -1,7 +1,6 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.player.Player;
@@ -25,6 +24,8 @@ public abstract class GamePhaseHandler {
                 "Cannot draw card during " + getPhase()
         );
     }
+
+    public void endTurn() {}
 
     public abstract GamePhase getPhase();
     public abstract Player getCurrentPlayer();

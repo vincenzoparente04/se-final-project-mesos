@@ -3,8 +3,8 @@ package model.cards.charachterCards;
 import model.enums.Era;
 
 public class GathererCard extends CharacterCard {
-    public GathererCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
+    public GathererCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
     }
 
     /**

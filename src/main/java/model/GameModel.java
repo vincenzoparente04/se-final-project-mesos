@@ -39,6 +39,10 @@ public class GameModel {
         currentPhaseHandler.drawCard(cardId);
    }
 
+   public void endTurn() {
+        currentPhaseHandler.endTurn();
+   }
+
     public void setPhase(GamePhaseHandler phase) {
         this.currentPhaseHandler = phase;
         //notifyChange("phase_changed:" + phase.getPhase());
@@ -91,5 +95,9 @@ public class GameModel {
 
     public void incrementRound() {
         currentRound++;
+    }
+
+    public void notifyChange(String message) {
+        // TODO:
     }
 }

@@ -1,12 +1,15 @@
 package model.rowsManager;
 
-import model.board.CardVisitor;
+import model.cards.buildingCards.BuildingCard;
+import model.cards.charachterCards.BuilderCard;
+import model.rowsManager.CardVisitor;
 import model.cards.TribeCard;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
 import model.player.Player;
 
+import javax.swing.plaf.basic.BasicButtonUI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +29,8 @@ public class EventResolver implements CardVisitor {
     /**
      * Sorts events from a list of tribe cards by type and era, moving sustenance events to the end.
      * Uses the Visitor pattern to classify cards.
+     * @implNote EventResolver collects EventCard and SustenanceEventCard from a list of TribeCards, sorts them by type and era, and resolves them in the correct order.
+     * Sustenance events are resolved after all other events. It assumes that cards on the rows are already sorted by era (they keep the drawing order from tribe deck)
      *
      * @param tribeCards the cards to sort and filter for events
      */
@@ -65,6 +70,11 @@ public class EventResolver implements CardVisitor {
     @Override
     public void visit(SustenanceEventCard card) {
         sustenanceToResolve.add(card);
+    }
+
+    @Override
+    public void visit(BuildingCard card) {
+        // There are no building cards in tribe rows
     }
 }
 

@@ -1,6 +1,6 @@
 package model.eventCards;
 
-import model.board.CardVisitor;
+import model.rowsManager.CardVisitor;
 import model.cards.eventCards.EventCard;
 import model.enums.CardType;
 import model.enums.Era;

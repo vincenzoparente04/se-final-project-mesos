@@ -1,0 +1,154 @@
+package model.phaseHandlers;
+
+import model.GameModel;
+import model.board.Board;
+import model.board.OfferTile;
+import model.enums.TotemLocation;
+import model.player.Player;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@DisplayName("PlacementPhase Tests")
+class PlacementPhaseTest {
+
+    private GameModel model;
+    private Board board;
+    private OfferTile tileA;
+    private OfferTile tileB;
+    private OfferTile tileC;
+
+    private Player p1;
+    private Player p2;
+    private Player p3;
+
+    private PlacementPhase phase;
+
+    @BeforeEach
+    void setUp() {
+        model = mock(GameModel.class);
+        board = mock(Board.class);
+        tileA = mock(OfferTile.class);
+        tileB = mock(OfferTile.class);
+        tileC = mock(OfferTile.class);
+
+        p1 = mock(Player.class);
+        p2 = mock(Player.class);
+        p3 = mock(Player.class);
+
+        when(model.getBoard()).thenReturn(board);
+        when(model.getTurnOrder()).thenReturn(List.of(p1, p2, p3));
+
+        when(p1.getName()).thenReturn("Player1");
+        when(p2.getName()).thenReturn("Player2");
+        when(p3.getName()).thenReturn("Player3");
+
+        // By default, all players can place from turn-order tile unless overridden in a test.
+        when(p1.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
+        when(p2.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
+        when(p3.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
+
+        when(board.findTileByLetter('A')).thenReturn(tileA);
+        when(board.findTileByLetter('B')).thenReturn(tileB);
+        when(board.findTileByLetter('C')).thenReturn(tileC);
+        when(tileA.isOccupied()).thenReturn(false);
+        when(tileB.isOccupied()).thenReturn(false);
+        when(tileC.isOccupied()).thenReturn(false);
+
+        phase = new PlacementPhase(model);
+    }
+
+    @Test
+    @DisplayName("onEnter should set first player and notify placement start")
+    void onEnterSetsCurrentPlayerAndNotifies() {
+        phase.onEnter();
+
+        assertEquals(p1, phase.getCurrentPlayer());
+        verify(model, times(1)).notifyChange("placement_started:Player1");
+    }
+
+    @Test
+    @DisplayName("placeTotem should place totem for current player and advance turn")
+    void placeTotemValidMovePlacesAndAdvances() {
+        phase.onEnter();
+
+        phase.placeTotem(p1, 'A');
+
+        verify(board, times(1)).findTileByLetter('A');
+        verify(board, times(1)).placeTotem(p1, tileA);
+        verify(model, times(1)).notifyChange("totem_placed:Player1");
+        verify(model, times(1)).notifyChange("turn_changed:Player2");
+        assertEquals(p2, phase.getCurrentPlayer());
+    }
+
+    @Test
+    @DisplayName("placeTotem should ignore move when wrong player tries to place")
+    void placeTotemWrongPlayerDoesNothing() {
+        phase.onEnter();
+
+        phase.placeTotem(p2, 'A');
+
+        verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
+        verify(model, never()).notifyChange("totem_placed:Player2");
+        verify(model, never()).notifyChange("turn_changed:Player2");
+        verify(model, never()).setPhase(any());
+        assertEquals(p1, phase.getCurrentPlayer());
+    }
+
+    @Test
+    @DisplayName("placeTotem should ignore move when tile is already occupied")
+    void placeTotemOccupiedTileDoesNothing() {
+        phase.onEnter();
+        when(tileA.isOccupied()).thenReturn(true);
+
+        phase.placeTotem(p1, 'A');
+
+        verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
+        verify(model, never()).notifyChange("totem_placed:Player1");
+        verify(model, never()).notifyChange("turn_changed:Player2");
+        verify(model, never()).setPhase(any());
+        assertEquals(p1, phase.getCurrentPlayer());
+    }
+
+    @Test
+    @DisplayName("placeTotem should ignore move when current player is not on turn-order tile")
+    void placeTotemWrongLocationDoesNothing() {
+        phase.onEnter();
+        when(p1.getLocation()).thenReturn(TotemLocation.OFFER_TRACK);
+
+        phase.placeTotem(p1, 'A');
+
+        verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
+        verify(model, never()).notifyChange("totem_placed:Player1");
+        verify(model, never()).notifyChange("turn_changed:Player2");
+        verify(model, never()).setPhase(any());
+        assertEquals(p1, phase.getCurrentPlayer());
+    }
+
+    @Test
+    @DisplayName("placeTotem should transition to ActionPhase after last player places")
+    void placeTotemLastPlayerTransitionsToActionPhase() {
+        phase.onEnter();
+
+        phase.placeTotem(p1, 'A');
+        phase.placeTotem(p2, 'B');
+        phase.placeTotem(p3, 'C');
+
+        verify(model, times(1)).notifyChange("turn_changed:Player2");
+        verify(model, times(1)).notifyChange("turn_changed:Player3");
+        verify(model, never()).notifyChange("turn_changed:Player4");
+        verify(model, times(1)).setPhase(argThat(handler -> handler instanceof ActionPhase));
+    }
+}
+

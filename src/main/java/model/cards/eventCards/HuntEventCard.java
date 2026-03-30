@@ -8,8 +8,8 @@ import java.util.List;
 
 public class HuntEventCard extends EventCard {
 
-    public HuntEventCard(int id, Era era, int playerCount) {
-        super(id, era, playerCount);
+    public HuntEventCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
     }
 
     /**

@@ -22,8 +22,6 @@ public class GameController {
 
     /**
      * @implNote Is called by the clients and forwards the request to the gameModel.
-     * @param player
-     * @param offerTile
      */
     public void placeTotem(Player player, char tileId) throws Exception {
         gameModel.placeTotem(player, tileId);
@@ -41,11 +39,17 @@ public class GameController {
 
     /**
      * @implNote Is called by the client and forwards the card picked by the player the gameModel.
-     * The client sends his chosen card color during the action phase.
      * @param player The player making the card choice
      * @param cardId is selected card's ID.
      */
     public void drawCard(Player player, int cardId) throws Exception {
        gameModel.drawCard(cardId);
+    }
+
+    /**
+     * @implNote Is called by the client to end the turn and forwards the request to the gameModel.
+     */
+    public void endTurn() {
+        gameModel.endTurn();
     }
 }

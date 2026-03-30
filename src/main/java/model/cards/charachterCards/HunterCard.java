@@ -6,8 +6,8 @@ import model.enums.Era;
 public class HunterCard extends CharacterCard {
     private final boolean triggerIcon;
 
-    public HunterCard(int id, Era era, int playerCount, boolean hasTriggerIcon) {
-        super(id, era, playerCount);
+    public HunterCard(int id, Era era, int playerCount, boolean hasTriggerIcon, String imagePath, String backImagePath) {
+        super(id, era, playerCount, imagePath, backImagePath);
         this.triggerIcon = hasTriggerIcon;
     }
 
