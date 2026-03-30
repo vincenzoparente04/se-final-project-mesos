@@ -43,9 +43,7 @@ public class PlacementPhase extends GamePhaseHandler {
         if(player != currentPlayer) return false;
         //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
         if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE) return false;
-        if (tile.isOccupied()) return false;
-
-        return true;
+        return !tile.isOccupied();
     }
 
     private void advanceTurn() {
