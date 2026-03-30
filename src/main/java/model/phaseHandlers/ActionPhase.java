@@ -53,12 +53,17 @@ public class ActionPhase extends GamePhaseHandler {
         checkActionCompletionOrAutoAdvance();
     }
 
+    /**
+     * @implNote delegates all the logic to CardDrawer which uses visitor pattern to check if the card can be drawn and if yes how to manage the drawing
+     * @param cardId
+     */
     @Override
     public void drawCard(int cardId) {
+        CardDrawer cardDrawer = new CardDrawer(currentPlayer, model.getRowsManager(), currentAction);
         ensureActiveTurn();
 
-        RowsManager rows = model.getRowsManager();
-        Card card = rows.findCardById(cardId);
+        RowsManager rowsManager = model.getRowsManager();
+        Card card = rowsManager.findCardById(cardId);
 
         // ha senso?
         if (card == null) {
@@ -66,25 +71,11 @@ public class ActionPhase extends GamePhaseHandler {
         }
 
         // controlla che il player stia pescando dalla row giusta
-        if (!currentAction.canDraw(card, rows)) {
-            throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto).");
+        if (!currentAction.canDraw(card, rowsManager)) {
+            throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto)."); // serve l'exception??
         }
 
-        // controlla che la carta non sia un evento o un building troppo costoso per il player
-        if (!card.canBeAcquiredBy(currentPlayer, model)) {
-            throw new IllegalStateException("Non hai i requisiti per prendere questa carta (Cibo insufficiente o è un Evento).");
-        }
-
-        // -- ESECUZIONE PESCA --
-        // Rimuove la carta dal board
-        rows.removeCard(cardId);
-
-        // La carta gestisce l'aggiunta alla tribù, il pagamento, effetti immediati
-        // ###sistemare i metodi di pesca nelle carte
-        card.acquiredBy(currentPlayer, model);
-
-        // L'azione scala i suoi contatori interni
-        currentAction.performDraw(card, rows);
+        cardDrawer.drawCard(card);
 
         model.notifyChange("card_drawn:" + cardId);
 
@@ -92,30 +83,49 @@ public class ActionPhase extends GamePhaseHandler {
         checkActionCompletionOrAutoAdvance();
     }
 
+    public void endTurn() {
+        ensureActiveTurn();
+
+        if (hasAnyForcedMove()) {
+            throw new IllegalStateException("Devi completare tutte le pescate obbligatorie prima di terminare il turno."); // serve l'exception??
+        }
+
+        model.notifyChange("turn_ended:" + currentPlayer.getName());
+        advanceActionTurn();
+    }
+
     /**
-     * Controlla se l'azione è tecnicamente finita (contatori a 0)
-     * OPPURE se il giocatore è in una situazione di "stallo" (es. restano solo Eventi o Edifici inarrivabili).
-     * In Mesos, non c'è il pulsante "Passa", il gioco avanza se non hai mosse legali.
+     * checks if the action is completed (the player drawn all cards the tile action imposed to him)
+     * or if there are isn't any legal move (no character card or acquirable building card left)
+     * these are the only two cases when the turn advances automatically
      */
     private void checkActionCompletionOrAutoAdvance() {
+        RowsManager rowsManager = model.getRowsManager();
         if (currentAction.isFinished() || !hasAnyLegalMove()) {
             advanceActionTurn();
         }
     }
 
+    /**
+     * @implNote checks if there are no character card or acquirable building card left using legalMoveChecker which uses visitor pattern
+     * @return
+     */
     private boolean hasAnyLegalMove() {
-        model.rowsManager.RowsManager rows = model.getRowsManager();
+        RowsManager rowsManager = model.getRowsManager();
+        MoveChecker moveChecker = new MoveChecker(currentPlayer, currentAction,  rowsManager);
 
-        for (Card card : rows.getAllCardsOnBoard()) {
-            // Se l'azione gli permette di guardare a questa riga...
-            if (currentAction.canDraw(card, rows)) {
-                // ... e la carta può essere fisicamente presa ...
-                if (card.canBeAcquiredBy(currentPlayer, model)) {
-                    return true; // Ha ancora qualcosa che PUÒ e DEVE pescare
-                }
-            }
-        }
-        return false;
+        return moveChecker.checkLegalMoves(rowsManager.getAllCardsOnBoard());
+    }
+
+    /**
+     * @implNote checks if there are no character card left using legalMoveChecker which uses visitor pattern
+     * @return
+     */
+    private boolean hasAnyForcedMove() {
+        RowsManager rowsManager = model.getRowsManager();
+        MoveChecker moveChecker = new MoveChecker(currentPlayer, currentAction,  rowsManager);
+
+        return moveChecker.checkForcedMoves(rowsManager.getAllTribeCardsOnBoard());
     }
 
     private void advanceActionTurn() {

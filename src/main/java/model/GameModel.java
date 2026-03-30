@@ -39,6 +39,10 @@ public class GameModel {
         currentPhaseHandler.drawCard(cardId);
    }
 
+   public void endTurn() {
+        currentPhaseHandler.endTurn();
+   }
+
     public void setPhase(GamePhaseHandler phase) {
         this.currentPhaseHandler = phase;
         notifyChange("phase_changed:" + phase.getPhase());
