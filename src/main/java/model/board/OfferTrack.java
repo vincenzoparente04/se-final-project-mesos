@@ -55,5 +55,5 @@ public class OfferTrack {
 
 
     public OfferTile getTile(char letter) {}
-    public List<OfferTile> getAvailableTiles()     // with no Totem on top
+    public List<OfferTile> getAvailableTiles(){}     // with no Totem on top
 }

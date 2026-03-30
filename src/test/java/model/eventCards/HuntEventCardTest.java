@@ -1,7 +1,6 @@
 package model.eventCards;
 
 import model.cards.eventCards.HuntEventCard;
-import model.enums.CharacterType;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;
@@ -24,7 +23,7 @@ class HuntEventCardTest {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
         when(player.getTribe()).thenReturn(tribe);
-        when(tribe.countByType(CharacterType.HUNTER)).thenReturn(2);
+        when(tribe.getHunterCount()).thenReturn(2);
 
         HuntEventCard card = new HuntEventCard(10, Era.ERA_I, 4);
 
@@ -40,7 +39,7 @@ class HuntEventCardTest {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
         when(player.getTribe()).thenReturn(tribe);
-        when(tribe.countByType(CharacterType.HUNTER)).thenReturn(4);
+        when(tribe.getHunterCount()).thenReturn(4);
 
         HuntEventCard card = new HuntEventCard(10, Era.ERA_III, 4);
 
@@ -56,7 +55,7 @@ class HuntEventCardTest {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
         when(player.getTribe()).thenReturn(tribe);
-        when(tribe.countByType(CharacterType.HUNTER)).thenReturn(0);
+        when(tribe.getHunterCount()).thenReturn(0);
 
         HuntEventCard card = new HuntEventCard(11, Era.ERA_II, 4);
 
@@ -82,9 +81,9 @@ class HuntEventCardTest {
         when(p2.getTribe()).thenReturn(t2);
         when(p3.getTribe()).thenReturn(t3);
 
-        when(t1.countByType(CharacterType.HUNTER)).thenReturn(3);
-        when(t2.countByType(CharacterType.HUNTER)).thenReturn(1); 
-        when(t3.countByType(CharacterType.HUNTER)).thenReturn(0);
+        when(t1.getHunterCount()).thenReturn(3);
+        when(t2.getHunterCount()).thenReturn(1);
+        when(t3.getHunterCount()).thenReturn(0);
 
 
         HuntEventCard card = new HuntEventCard(12, Era.ERA_II, 4);

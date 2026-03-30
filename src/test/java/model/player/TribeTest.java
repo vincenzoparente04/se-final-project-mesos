@@ -1,5 +1,8 @@
 package model.player;
 
+import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
+import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
+import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.charachterCards.ArtistCard;
 import model.cards.charachterCards.BuilderCard;
@@ -13,6 +16,9 @@ import model.enums.InventionIcon;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -41,6 +47,17 @@ class TribeTest {
 		assertEquals(0, tribe.getShamanCount());
 		assertEquals(0, tribe.getTotalCharacterCount());
 		assertEquals(0, tribe.countCompleteSets());
+	}
+
+	@Test
+	@DisplayName("Getter lists are unmodifiable")
+	void listsAreTrulyUnmodifiable() {
+		tribe.addArtist(new ArtistCard(1, Era.ERA_I, 2));
+		List<ArtistCard> artists = tribe.getArtists();
+
+		assertThrows(UnsupportedOperationException.class, () -> {
+			artists.add(new ArtistCard(2, Era.ERA_I, 2));
+		}, "Should launch an exception if the getter tries to modify the list");
 	}
 
 	@Test
@@ -95,6 +112,25 @@ class TribeTest {
 		tribe.addInventor(new InventorCard(3, Era.ERA_II, 2, InventionIcon.ICON_1));
 
 		assertEquals(2, tribe.getDistinctInventionIcons());
+	}
+
+	@Test
+	@DisplayName("Inventor points with duplicate icons")
+	void inventorPointsWithDuplicateIcons() {
+		// 2 inventori, entrambi con ICON_1
+		tribe.addInventor(new InventorCard(1, Era.ERA_I, 2, InventionIcon.ICON_1));
+		tribe.addInventor(new InventorCard(2, Era.ERA_I, 2, InventionIcon.ICON_1));
+
+		// Count (2) * Distinct Icons (1) = 2
+		assertEquals(2, tribe.calculateInventorEndGamePoints());
+	}
+
+	@Test
+	@DisplayName("Inventors map is unmodifiable")
+	void inventorsMapIsUnmodifiable() {
+		assertThrows(UnsupportedOperationException.class, () -> {
+			tribe.getInventorsByIcon().put(InventionIcon.ICON_1, new ArrayList<>());
+		});
 	}
 
 	@Test
@@ -313,7 +349,7 @@ class TribeTest {
 	}
 
 	@Test
-	@DisplayName("Complete sets: three complete sets with four of each type")
+	@DisplayName("Complete sets: four complete sets with four of each type")
 	void completeSetsManyComplete() {
 		// Add 4 of each type
 		for (int i = 0; i < 4; i++) {
@@ -367,6 +403,23 @@ class TribeTest {
 		tribe.addArtist(new ArtistCard(1, Era.ERA_I, 2));
 
 		assertEquals(1, tribe.getTotalCharacterCount());
+	}
+
+	@Test
+	@DisplayName("Registration of building effects")
+	void registrationOfEffectsWorks() {
+		OnEventBuildingEffect mockEvent = mock(OnEventBuildingEffect.class);
+		OnAcquireBuildingEffect mockAcquire = mock(OnAcquireBuildingEffect.class);
+		EndGameBuildingEffect mockEndGame = mock(EndGameBuildingEffect.class);
+
+		tribe.registerOnEventEffect(mockEvent);
+		tribe.registerOnAcquireEffect(mockAcquire);
+		tribe.registerEndGameEffect(mockEndGame);
+
+		assertEquals(1, tribe.getOnEventBuildingEffects().size());
+		assertTrue(tribe.getOnEventBuildingEffects().contains(mockEvent));
+		assertEquals(1, tribe.getOnAcquireBuildingEffects().size());
+		assertEquals(1, tribe.getEndGameBuildingEffects().size());
 	}
 
 }
