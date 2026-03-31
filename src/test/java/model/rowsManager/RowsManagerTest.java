@@ -17,7 +17,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class RowsManagerTest {
+class  RowsManagerTest {
 
     private RowsManager rowsManager;
 
@@ -175,7 +175,8 @@ class RowsManagerTest {
         bottomRowTribe.add(bottom2);
         topRowTribe.add(top1);
 
-        List<TribeCard> result = rowsManager.getAllCardsOnBoard();
+        List<TribeCard> result = rowsManager.getAllTribeCardsOnBoard();
+        //TODO: what about the other cards (normal not tribe)? before it was called as getAllCardsOnBoard but list was <TribeCard>
 
         assertEquals(3, result.size());
         assertSame(bottom1, result.get(0));
@@ -189,7 +190,8 @@ class RowsManagerTest {
         TribeCard bottom = mock(TribeCard.class);
         bottomRowTribe.add(bottom);
 
-        List<TribeCard> result = rowsManager.getAllCardsOnBoard();
+        List<TribeCard> result = rowsManager.getAllTribeCardsOnBoard();
+        //TODO: what about the other cards (normal not tribe)?
         result.clear();
 
         assertEquals(1, bottomRowTribe.size());

@@ -25,7 +25,7 @@ class HuntEventCardTest {
         when(player.getTribe()).thenReturn(tribe);
         when(tribe.getHunterCount()).thenReturn(2);
 
-        HuntEventCard card = new HuntEventCard(10, Era.ERA_I, 4);
+        HuntEventCard card = new HuntEventCard(10, Era.ERA_I, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(player));
 
@@ -41,7 +41,7 @@ class HuntEventCardTest {
         when(player.getTribe()).thenReturn(tribe);
         when(tribe.getHunterCount()).thenReturn(4);
 
-        HuntEventCard card = new HuntEventCard(10, Era.ERA_III, 4);
+        HuntEventCard card = new HuntEventCard(10, Era.ERA_III, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(player));
 
@@ -57,7 +57,7 @@ class HuntEventCardTest {
         when(player.getTribe()).thenReturn(tribe);
         when(tribe.getHunterCount()).thenReturn(0);
 
-        HuntEventCard card = new HuntEventCard(11, Era.ERA_II, 4);
+        HuntEventCard card = new HuntEventCard(11, Era.ERA_II, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(player));
 
@@ -86,7 +86,7 @@ class HuntEventCardTest {
         when(t3.getHunterCount()).thenReturn(0);
 
 
-        HuntEventCard card = new HuntEventCard(12, Era.ERA_II, 4);
+        HuntEventCard card = new HuntEventCard(12, Era.ERA_II, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(p1, p2, p3));
 

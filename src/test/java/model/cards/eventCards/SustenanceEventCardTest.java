@@ -28,7 +28,7 @@ class SustenanceEventCardTest {
         when(tribe.getTotalCharacterCount()).thenReturn(10);
         when(tribe.getTotalGatherersDiscount()).thenReturn(3);
 
-        SustenanceEventCard card = new SustenanceEventCard(30, Era.ERA_III, 4);
+        SustenanceEventCard card = new SustenanceEventCard(30, Era.ERA_III, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(player));
 
@@ -45,7 +45,7 @@ class SustenanceEventCardTest {
         when(tribe.getTotalCharacterCount()).thenReturn(2);
         when(tribe.getTotalGatherersDiscount()).thenReturn(6);
 
-        SustenanceEventCard card = new SustenanceEventCard(31, Era.ERA_II, 4);
+        SustenanceEventCard card = new SustenanceEventCard(31, Era.ERA_II, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(player));
 
@@ -84,7 +84,7 @@ class SustenanceEventCardTest {
         when(t4.getTotalCharacterCount()).thenReturn(6);
         when(t4.getTotalGatherersDiscount()).thenReturn(0);
 
-        SustenanceEventCard card = new SustenanceEventCard(32, Era.ERA_III, 4);
+        SustenanceEventCard card = new SustenanceEventCard(32, Era.ERA_III, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(p1, p2, p3, p4));
 
@@ -106,7 +106,7 @@ class SustenanceEventCardTest {
         when(tribe.getTotalCharacterCount()).thenReturn(0);
         when(tribe.getTotalGatherersDiscount()).thenReturn(0);
 
-        SustenanceEventCard card = new SustenanceEventCard(33, Era.ERA_III, 4);
+        SustenanceEventCard card = new SustenanceEventCard(33, Era.ERA_III, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(player));
 

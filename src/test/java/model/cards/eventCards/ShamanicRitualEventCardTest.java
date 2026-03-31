@@ -37,7 +37,7 @@ class ShamanicRitualEventCardTest {
         when(highTribe.getTotalShamanStars()).thenReturn(3);
         when(middleTribe.getTotalShamanStars()).thenReturn(2);
 
-        ShamanicRitualEventCard card = new ShamanicRitualEventCard(20, Era.ERA_III, 3);
+        ShamanicRitualEventCard card = new ShamanicRitualEventCard(20, Era.ERA_III, 3, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(lowPlayer, highPlayer, middlePlayer));
 
@@ -73,7 +73,7 @@ class ShamanicRitualEventCardTest {
         when(t3.getTotalShamanStars()).thenReturn(2);
         when(t4.getTotalShamanStars()).thenReturn(2);
 
-        ShamanicRitualEventCard card = new ShamanicRitualEventCard(21, Era.ERA_II, 2);
+        ShamanicRitualEventCard card = new ShamanicRitualEventCard(21, Era.ERA_II, 2, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(p1, p2, p3, p4));
 
@@ -107,7 +107,7 @@ class ShamanicRitualEventCardTest {
         when(t2.getTotalShamanStars()).thenReturn(2);
         when(t3.getTotalShamanStars()).thenReturn(2);
 
-        ShamanicRitualEventCard card = new ShamanicRitualEventCard(21, Era.ERA_I, 2);
+        ShamanicRitualEventCard card = new ShamanicRitualEventCard(21, Era.ERA_I, 2, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(p1, p2, p3));
 
@@ -142,7 +142,7 @@ class ShamanicRitualEventCardTest {
         when(t3.getTotalShamanStars()).thenReturn(3);
         when(t4.getTotalShamanStars()).thenReturn(1);
 
-        ShamanicRitualEventCard card = new ShamanicRitualEventCard(22, Era.ERA_II, 4);
+        ShamanicRitualEventCard card = new ShamanicRitualEventCard(22, Era.ERA_II, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(p1, p2, p3, p4));
 
@@ -180,7 +180,7 @@ class ShamanicRitualEventCardTest {
         when(t3.getTotalShamanStars()).thenReturn(2);
         when(t4.getTotalShamanStars()).thenReturn(2);
 
-        ShamanicRitualEventCard card = new ShamanicRitualEventCard(23, Era.ERA_II, 4);
+        ShamanicRitualEventCard card = new ShamanicRitualEventCard(23, Era.ERA_II, 4, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(p1, p2, p3, p4));
 

@@ -26,7 +26,7 @@ class CavePaintingsEventCardTest {
         when(player.getTribe()).thenReturn(tribe);
         when(tribe.getArtistCount()).thenReturn(1);
 
-        CavePaintingsEventCard card = new CavePaintingsEventCard(1, Era.ERA_III, 3);
+        CavePaintingsEventCard card = new CavePaintingsEventCard(1, Era.ERA_III, 3, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(player));
 
@@ -42,7 +42,7 @@ class CavePaintingsEventCardTest {
         when(player.getTribe()).thenReturn(tribe);
         when(tribe.getArtistCount()).thenReturn(2);
 
-        CavePaintingsEventCard card = new CavePaintingsEventCard(2, Era.ERA_II, 3);
+        CavePaintingsEventCard card = new CavePaintingsEventCard(2, Era.ERA_II, 3, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(player));
 
@@ -71,7 +71,7 @@ class CavePaintingsEventCardTest {
         when(p3.getTribe()).thenReturn(t3);
         when(t3.getArtistCount()).thenReturn(3);
 
-        CavePaintingsEventCard card = new CavePaintingsEventCard(3, Era.ERA_II, 3);
+        CavePaintingsEventCard card = new CavePaintingsEventCard(3, Era.ERA_II, 3, "test/front.png" , "test/front.png");
 
         card.resolve(List.of(p1, p2, p3));
 
