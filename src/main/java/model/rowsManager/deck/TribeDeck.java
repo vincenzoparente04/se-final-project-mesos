@@ -25,9 +25,7 @@ public class TribeDeck {
      * @param finalEvents   the 2 Final Event cards, placed at the bottom in any order
      * @param playerCount   number of players in the game (2–5)
      */
-    public void initializeDeck(List<TribeCard> regularCards,
-                               List<TribeCard> finalEvents,
-                               int playerCount) {
+    public void initializeDeck(List<TribeCard> regularCards, List<TribeCard> finalEvents, int playerCount) {
 
         // Discard cards not eligible for this player count.
         // Final Events always have minPlayers == 2 so they are always included.

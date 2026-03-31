@@ -7,6 +7,12 @@ public class TurnOrderSlot {
     private final boolean isLast;  // fisso — true solo per l'ultimo slot
     private Player occupant;        // variabile — null se lo slot è libero
 
+    public TurnOrderSlot(int foodBonus, boolean isLast) {
+        this.foodBonus = foodBonus;
+        this.isLast = isLast;
+        this.occupant = null;
+    }
+
     public void applyEffect(){
         if (isLast) {
             this.occupant.removeFood(1, 2);

@@ -6,11 +6,11 @@ import model.player.Player;
 import java.util.List;
 
 public class OfferTrack {
-    private final List<OfferTile> tiles;  // listed from A to G
+    private List<OfferTile> tiles;  // listed from A to G
 
-    public void setup(int playerCount){
+    public void setup(List<OfferTile> tiles) {
+        this.tiles = tiles; // lista già filtrata e ordinata dalla factory
     }
-    // configura le caselle corrette per il numero di giocatori
 
     /**
      * @implNote Checks if the tile is occupied, if so throws an exception. It places the totem on the tile and set its location.

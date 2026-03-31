@@ -1,21 +1,21 @@
 package model.board;
 
+import model.factories.BoardFactory;
 import model.player.Player;
 
 public class Board {
     private final OfferTrack offerTrack;
     private final TurnOrderTile turnOrderTile;
 
-
-
     public Board() {  // TODO: check how we want to construct the board
         this.offerTrack = new OfferTrack();
         this.turnOrderTile = new TurnOrderTile();
     }
 
-    public void setup(int playerCount){
-        turnOrderTile.setup(playerCount);
-        offerTrack.setup(playerCount);
+    public void setup(int playerCount) {
+        BoardFactory.BoardComponents components = BoardFactory.createComponents(playerCount);
+        offerTrack.setup(components.offerTiles());
+        turnOrderTile.setup(components.turnOrderSlots(), components.turnOrderTileImage());
     }
 
     /**
