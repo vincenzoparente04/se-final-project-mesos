@@ -1,4 +1,4 @@
-package model.eventCards;
+package model.cards.eventCards;
 
 import model.cards.eventCards.SustenanceEventCard;
 import model.enums.Era;

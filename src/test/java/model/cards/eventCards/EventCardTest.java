@@ -1,4 +1,4 @@
-package model.eventCards;
+package model.cards.eventCards;
 
 import model.rowsManager.CardVisitor;
 import model.cards.eventCards.EventCard;
@@ -20,18 +20,13 @@ class EventCardTest {
     // A simple concrete subclass of EventCard for testing purposes.
     private static class TestEventCard extends EventCard {
 
-        TestEventCard(int id, Era era, int playerCount) {
-            super(id, era, playerCount);
+        TestEventCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
+            super(id, era, playerCount, imagePath, backImagePath);
         }
 
         @Override
         public void resolve(List<Player> players) {
             // No-op test implementation.
-        }
-
-        @Override
-        public CardType getCardType() {
-            return null;
         }
     }
 
@@ -39,7 +34,7 @@ class EventCardTest {
     @DisplayName("Accept delegates to CardVisitor.visit(EventCard)")
     void acceptDelegatesToVisitor() {
         CardVisitor visitor = mock(CardVisitor.class);
-        EventCard card = new TestEventCard(42, Era.ERA_II, 4);
+        EventCard card = new TestEventCard(42, Era.ERA_II, 4, "front.png", "back.png");
 
         card.accept(visitor);
 
@@ -50,7 +45,7 @@ class EventCardTest {
     @Test
     @DisplayName("Constructor stores id, era and minimum player count")
     void constructorStoresBaseFields() {
-        EventCard card = new TestEventCard(7, Era.ERA_III, 5);
+        EventCard card = new TestEventCard(7, Era.ERA_III, 5, "front.png", "back.png");
 
         assertEquals(7, card.getId());
         assertEquals(Era.ERA_III, card.getEra());

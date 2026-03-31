@@ -1,4 +1,4 @@
-package model.eventCards;
+package model.cards.eventCards;
 
 import model.cards.eventCards.CavePaintingsEventCard;
 import model.enums.Era;
