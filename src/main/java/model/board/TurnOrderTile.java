@@ -6,9 +6,13 @@ import model.player.Player;
 import java.util.List;
 
 public class TurnOrderTile {
-    private final int playerCount;
-    private final List<TurnOrderSlot> slots;
-    // gli slot vengono costruiti nel costruttori in base al numero di giocatori
+    private List<TurnOrderSlot> slots;
+    private String imagePath;
+
+    public void setup(List<TurnOrderSlot> slots, String image) {
+        this.slots = slots;
+        this.imagePath = image;
+    }
 
     /**
      * @implNote Places the player's totem on the first free slot of the TurnOrderTile and applies the effect of that slot.

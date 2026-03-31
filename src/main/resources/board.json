@@ -1,0 +1,86 @@
+{
+  "offerTiles": [
+    {
+      "letter": "A",
+      "minPlayers": 5,
+      "frontImage": "OfferTrail_A_FRONT.png",
+      "backImage":  "OfferTrail_A_BACK.png",
+      "action": { "type": "food", "amount": 3 }
+    },
+    {
+      "letter": "B",
+      "minPlayers": 2,
+      "frontImage": "OfferTrail_B_FRONT.png",
+      "backImage":  "OfferTrail_B_BACK.png",
+      "action": { "type": "draw", "topRow": 0, "bottomRow": 1 }
+    },
+    {
+      "letter": "C",
+      "minPlayers": 2,
+      "frontImage": "OfferTrail_C_FRONT.png",
+      "backImage":  "OfferTrail_C_BACK.png",
+      "action": { "type": "draw", "topRow": 1, "bottomRow": 0 }
+    },
+    {
+      "letter": "D",
+      "minPlayers": 3,
+      "frontImage": "OfferTrail_D_FRONT.png",
+      "backImage":  "OfferTrail_D_BACK.png",
+      "action": { "type": "draw", "topRow": 0, "bottomRow": 2 }
+    },
+    {
+      "letter": "E",
+      "minPlayers": 2,
+      "frontImage": "OfferTrail_E_FRONT.png",
+      "backImage":  "OfferTrail_E_BACK.png",
+      "action": { "type": "draw", "topRow": 1, "bottomRow": 1 }
+    },
+    {
+      "letter": "F",
+      "minPlayers": 2,
+      "frontImage": "OfferTrail_F_FRONT.png",
+      "backImage":  "OfferTrail_F_BACK.png",
+      "action": { "type": "draw", "topRow": 2, "bottomRow": 0 }
+    },
+    {
+      "letter": "G",
+      "minPlayers": 4,
+      "frontImage": "OfferTrail_G_FRONT.png",
+      "backImage":  "OfferTrail_G_BACK.png",
+      "action": { "type": "draw", "topRow": 2, "bottomRow": 1 }
+    }
+
+  ],
+  "turnOrderSlots": [
+    { "minPlayers": 2,
+      "frontImage": "Order_2_Players_BACK.png",
+      "slots": [
+      { "foodBonus": 1, "isLast": false },
+      { "foodBonus": 0, "isLast": true  }
+    ]},
+    { "minPlayers": 3,
+      "frontImage": "Order_3_Players_FRONT.png",
+      "slots": [
+      { "foodBonus": 2, "isLast": false },
+      { "foodBonus": 0, "isLast": false },
+      { "foodBonus": 0, "isLast": true  }
+    ]},
+    { "minPlayers": 4,
+      "frontImage": "Order_4_Players_BACK.png",
+      "slots": [
+      { "foodBonus": 2, "isLast": false },
+      { "foodBonus": 1, "isLast": false },
+      { "foodBonus": 0, "isLast": false },
+      { "foodBonus": 0, "isLast": true  }
+    ]},
+    { "minPlayers": 5,
+      "frontImage": "Order_5_Players_FRONT.png",
+      "slots": [
+      { "foodBonus": 3, "isLast": false },
+      { "foodBonus": 1, "isLast": false },
+      { "foodBonus": 0, "isLast": false },
+      { "foodBonus": 0, "isLast": false },
+      { "foodBonus": 0, "isLast": true  }
+    ]}
+  ]
+}
