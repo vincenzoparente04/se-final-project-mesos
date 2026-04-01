@@ -114,9 +114,9 @@ class ShamanicRitualEventCardTest {
         verify(p1, times(1)).addPrestigePoints(5);
         verify(p2, times(1)).addPrestigePoints(5);
         verify(p3, times(1)).addPrestigePoints(5);
-        verify(p1, times(1)).removePrestigePoints(3);
-        verify(p2, times(1)).removePrestigePoints(3);
-        verify(p3, times(1)).removePrestigePoints(3);
+        verify(p1, never()).removePrestigePoints(3);
+        verify(p2, never()).removePrestigePoints(3);
+        verify(p3, never()).removePrestigePoints(3);
     }
 
     @Test

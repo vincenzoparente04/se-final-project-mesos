@@ -10,6 +10,7 @@ import model.cards.Card;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.player.Player;
+import model.player.Tribe;
 import model.rowsManager.CardVisitor;
 import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,7 @@ class ActionPhaseTest {
     private TurnOrderTile turnOrderTile;
 
     private Player p1;
+    private Tribe t1;
 
     private ActionPhase phase;
 
@@ -54,7 +56,9 @@ class ActionPhaseTest {
         turnOrderTile = mock(TurnOrderTile.class);
 
         p1 = mock(Player.class);
+        t1 = mock(Tribe.class);
         when(p1.getName()).thenReturn("Player1");
+        when(p1.getTribe()).thenReturn(t1);
 
         when(model.getBoard()).thenReturn(board);
         when(model.getRowsManager()).thenReturn(rowsManager);

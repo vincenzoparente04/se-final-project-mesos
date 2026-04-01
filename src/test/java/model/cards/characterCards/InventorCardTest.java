@@ -5,6 +5,7 @@ import model.enums.Era;
 import model.enums.InventionIcon;
 import model.player.Player;
 import model.player.Tribe;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -17,6 +18,12 @@ import static org.mockito.Mockito.when;
 public class InventorCardTest {
     @Mock private Player player;
     @Mock private Tribe tribe;
+
+    @BeforeEach
+    public void setUp() {
+        player = org.mockito.Mockito.mock(Player.class);
+        tribe = org.mockito.Mockito.mock(Tribe.class);
+    }
 
     @Test
     @DisplayName("getInventionIcon returns the correct icon")

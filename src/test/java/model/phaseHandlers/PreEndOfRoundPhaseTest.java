@@ -4,6 +4,7 @@ import model.GameModel;
 import model.cards.charachterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.player.Player;
+import model.player.Tribe;
 import model.rowsManager.CardVisitor;
 import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,10 @@ class PreEndOfRoundPhaseTest {
     private Player p2;
     private Player p3;
 
+    private Tribe t1;
+    private Tribe t2;
+    private Tribe t3;
+
     private CharacterCard card;
 
     private PreEndOfRoundPhase phase;
@@ -44,6 +49,14 @@ class PreEndOfRoundPhaseTest {
         p1 = mock(Player.class);
         p2 = mock(Player.class);
         p3 = mock(Player.class);
+
+        t1 = mock(Tribe.class);
+        t2 = mock(Tribe.class);
+        t3 = mock(Tribe.class);
+
+        when(p1.getTribe()).thenReturn(t1);
+        when(p2.getTribe()).thenReturn(t2);
+        when(p3.getTribe()).thenReturn(t3);
 
         card = mock(CharacterCard.class);
         when(card.getId()).thenReturn(10);

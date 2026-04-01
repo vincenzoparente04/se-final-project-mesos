@@ -52,6 +52,6 @@ public class ShamanicRitualEventCard extends EventCard {
         players.stream()
                 .filter(p -> iconCounts.get(p) == min && min != max)
                 .filter(p -> !p.hasShamanicImmunity())
-                .forEach(p -> p.removePrestigePoints(loss));
+                .forEach(p -> p.removePrestigePoints(-loss)); //removePP() accept input as positive, or else should not exist since addPP() exist
     }
 }

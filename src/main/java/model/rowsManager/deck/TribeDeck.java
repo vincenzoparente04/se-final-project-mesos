@@ -7,7 +7,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TribeDeck {
-    private Deque<TribeCard> cards;
+    private Deque<TribeCard> cards = new ArrayDeque<>();
+    //private Deque<TribeCard> cards;
+
     private Era currentEra;
 
     // -- setup --
@@ -43,11 +45,14 @@ public class TribeDeck {
         Collections.shuffle(eraI);
         Collections.shuffle(eraII);
         Collections.shuffle(eraIII);
-        Collections.shuffle(finalEvents);
+        List<TribeCard> shuffledFinalEvents = new ArrayList<>(finalEvents);
+        Collections.shuffle(shuffledFinalEvents);
+        //Collections.shuffle(finalEvents);
 
         // Assemble: Era I on top, Final Events at the very bottom
         cards = new ArrayDeque<>();
-        for (TribeCard c : finalEvents)               cards.addLast(c);
+        for (TribeCard c : shuffledFinalEvents)       cards.addLast(c);
+        //for (TribeCard c : finalEvents)       cards.addLast(c);
         for (int i = eraIII.size() - 1; i >= 0; i--) cards.addFirst(eraIII.get(i));
         for (int i = eraII.size()  - 1; i >= 0; i--) cards.addFirst(eraII.get(i));
         for (int i = eraI.size()   - 1; i >= 0; i--) cards.addFirst(eraI.get(i));

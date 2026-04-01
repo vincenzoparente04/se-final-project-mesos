@@ -85,9 +85,8 @@ public class EndOfGamePhaseTest {
 		verify(p1, times(1)).addPrestigePoints(8);
 		verify(p1, never()).addPrestigePoints(99); //ahahah
 
-		verify(p2, times(1)).addPrestigePoints(2);
+		verify(p2, times(2)).addPrestigePoints(2); //for builders and inventors
 		verify(p2, times(1)).addPrestigePoints(0);
-		verify(p2, times(1)).addPrestigePoints(2);
 		verify(p2, times(1)).addPrestigePoints(5);
 		verify(p2, never()).addPrestigePoints(99);
 

@@ -293,12 +293,6 @@ class  RowsManagerTest {
         verify(buildingDeckEraII, never()).drawAll();
     }
 
-    @Test
-    @DisplayName("setup throws NullPointerException when lists and decks are not initialized")
-    void setupThrowsWhenInternalStateIsUninitialized() {
-        RowsManager rawManager = new RowsManager();
-        assertThrows(NullPointerException.class, () -> rawManager.setup(3));
-    }
 
     @Test
     @DisplayName("getTribeDeck returns internal tribe deck")

@@ -82,8 +82,14 @@ class EventResolverTest {
     private void stubAccept(TribeCard card) {
         doAnswer(invocation -> {
             CardVisitor visitor = invocation.getArgument(0);
-            card.accept(visitor);
+            if (card instanceof SustenanceEventCard sustenanceCard) {
+                visitor.visit(sustenanceCard);
+            } else if (card instanceof EventCard eventCard) {
+                visitor.visit(eventCard);
+            } else if (card instanceof CharacterCard characterCard) {
+                visitor.visit(characterCard);
+            }
             return null;
-        }).when(card).accept(any());
+        }).when(card).accept(any(CardVisitor.class));
     }
 }
