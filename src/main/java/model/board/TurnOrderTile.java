@@ -56,11 +56,12 @@ public class TurnOrderTile {
         return slots;
     }
 
-    public void setup(int playerCount) {
+    //non dovrebbe servire
+    //public void setup(int playerCount) {
         // costruisce gli slot con i bonus corretti per playerCount
         // es. per 3 giocatori:
         // slot 0 → foodBonus=3, isLast=false
         // slot 1 → foodBonus=1, isLast=false
         // slot 2 → foodBonus=0, isLast=true
-    }
+    //}
 }
