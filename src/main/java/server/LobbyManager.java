@@ -28,22 +28,30 @@ public class LobbyManager {
         this.expectedPlayers = expectedPlayers;
     }
 
-    public synchronized void addClient(Socket socket) {
-        // TODO: controlla che non si connettano più players
-        
+    public void addClient(Socket socket) {
         PlayerConnection conn = openConnection(socket);
         if (conn == null) return;
 
-        if (nameAlreadyTaken(conn.name())) {
-            reject(conn, "name_already_taken:" + conn.name());
-            return;
-        }
+        // synchronized only on player joining and update of the state
+        synchronized (this) {
+            if (connections.size() >= expectedPlayers) {
+                reject(conn, "lobby_full");
+                return;
+            }
 
-        connections.add(conn);
-        broadcastWaiting();
 
-        if (connections.size() == expectedPlayers) {
-            new GameSession(connections).start();
+            if (nameAlreadyTaken(conn.name())) {
+                reject(conn, "name_already_taken:" + conn.name());
+                return;
+            }
+
+            connections.add(conn);
+            broadcastWaiting();
+
+            if (connections.size() == expectedPlayers) {
+                //Important to pass a copy of the list and not the list to avoid conflicts
+                new GameSession(new ArrayList<>(connections)).start();
+            }
         }
     }
 
