@@ -4,9 +4,7 @@ import model.player.Player;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("TurnOrderSlot Tests")
 class TurnOrderSlotTest {
@@ -73,4 +71,21 @@ class TurnOrderSlotTest {
         assertThrows(NullPointerException.class, slot::applyEffect,
                 "Current implementation requires an occupant before applying effect");
     }
+
+    @Test
+    @DisplayName("placeTotem should not override existing occupant")
+    void placeTotemShouldNotOverrideExistingOccupant() {
+        TurnOrderSlot slot = new TurnOrderSlot(1, false);
+        Player player1 = new Player("Player1");
+        Player player2 = new Player("Player2");
+
+        slot.placeTotem(player1);
+        slot.placeTotem(player2);
+
+        assertAll(
+                ()-> assertEquals(player1, slot.getOccupant(), "First player should remain the occupant"),
+                ()-> assertNotEquals(player2, slot.getOccupant(), "Second player should not override the first occupant")
+        );
+    }
+
 }
