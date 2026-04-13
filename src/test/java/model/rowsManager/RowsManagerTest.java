@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -109,21 +110,22 @@ class  RowsManagerTest {
     }
 
     @Test
-    @DisplayName("findCardById finds card in top row tribe first")
+    @DisplayName("findCardById finds card in top row tribe")
     void findCardByIdFindsCardInTopRowTribe() {
         TribeCard tribeCard = mock(TribeCard.class);
         when(tribeCard.getId()).thenReturn(1);
         topRowTribe.add(tribeCard);
 
-        Card result = rowsManager.findCardById(1);
+        Optional<Card> result = rowsManager.findCardById(1);
 
-        assertSame(tribeCard, result);
+        assertTrue(result.isPresent());
+        assertSame(tribeCard, result.get());
     }
 
     @Test
-    @DisplayName("findCardById returns null when card does not exist")
-    void findCardByIdReturnsNullWhenMissing() {
-        assertNull(rowsManager.findCardById(404));
+    @DisplayName("findCardById returns empty when card does not exist")
+    void findCardByIdReturnsEmptyWhenMissing() {
+        assertTrue(rowsManager.findCardById(404).isEmpty());
     }
 
     @Test
@@ -161,7 +163,7 @@ class  RowsManagerTest {
 
         assertFalse(rowsManager.topRowContainsCard(77));
         assertFalse(rowsManager.bottomRowContainsCard(77));
-        assertNull(rowsManager.findCardById(77));
+        assertTrue(rowsManager.findCardById(77).isEmpty());
     }
 
     @Test
@@ -220,8 +222,6 @@ class  RowsManagerTest {
         rowsManager.endRound(2);
 
         assertEquals(List.of(top1, top2), bottomRowTribe);
-
-        // ###assert modificata poichè la classe rows manager è staat modificata
         assertEquals(List.of(drawn1, drawn2, drawn3, drawn4, drawn5, drawn6), topRowTribe);
 
         verify(tribeDeck).drawMultiple(6);
@@ -262,8 +262,6 @@ class  RowsManagerTest {
         rowsManager.changeEra();
 
         assertEquals(List.of(top1), bottomRowBuilding);
-
-        // ###rowsManager ora svuota le carte
         assertEquals(List.of(era2a, era2b), topRowBuilding);
 
         verify(buildingDeckEraII).isEmpty();

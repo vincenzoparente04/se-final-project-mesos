@@ -4,7 +4,7 @@ import model.board.OfferTileAction.OfferTileAction;
 import model.cards.Card;
 import model.cards.TribeCard;
 import model.cards.buildingCards.BuildingCard;
-import model.cards.charachterCards.CharacterCard;
+import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
 import model.player.Player;

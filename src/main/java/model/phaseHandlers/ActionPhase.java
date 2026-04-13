@@ -8,6 +8,7 @@ import model.board.OfferTileAction.OfferTileAction;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 
+
 public class ActionPhase extends GamePhaseHandler {
 
     private Player currentPlayer;
@@ -25,7 +26,6 @@ public class ActionPhase extends GamePhaseHandler {
     private void startNextPlayerTurn() {
         Board board = model.getBoard();
 
-        // Trova il prossimo giocatore da sinistra a destra sul tracciato offerte
         currentPlayer = board.getNextPlayerOnOfferTrack();
 
         // Se non ci sono più giocatori, la fase Action è finita
@@ -39,17 +39,14 @@ public class ActionPhase extends GamePhaseHandler {
                 .getOccupiedTileByPlayer(currentPlayer)
                 .getAction();
 
-        // ###questo controllo è sensato?
         if (currentAction == null) {
-            throw new IllegalStateException("Nessuna azione associata alla tessera Offerta.");
+            throw new IllegalStateException("No action associated with the offer tile.");
         }
 
         model.notifyChange("action_started:" + currentPlayer.getName());
 
-        // Inizializza l'azione (es. la tessera "A" darà subito i 3 Cibo qui)
         currentAction.onEnterAction(currentPlayer, model);
 
-        // controlla che effettivamente un player abbia completato l'azione
         checkActionCompletionOrAutoAdvance();
     }
 
@@ -59,22 +56,17 @@ public class ActionPhase extends GamePhaseHandler {
      */
     @Override
     public void drawCard(int cardId) {
-        CardDrawer cardDrawer = new CardDrawer(currentPlayer, model.getRowsManager(), currentAction);
         ensureActiveTurn();
 
         RowsManager rowsManager = model.getRowsManager();
-        Card card = rowsManager.findCardById(cardId);
+        Card card = rowsManager.findCardById(cardId)
+                .orElseThrow(() -> new IllegalArgumentException("Card not found on board: " + cardId));
 
-        // ha senso?
-        if (card == null) {
-            throw new IllegalArgumentException("Carta non trovata sul tabellone.");
-        }
-
-        // controlla che il player stia pescando dalla row giusta
         if (!currentAction.canDraw(card, rowsManager)) {
-            throw new IllegalStateException("La tessera Offerta non ti permette di pescare questa carta (riga errata o limite raggiunto)."); // serve l'exception??
+            throw new IllegalStateException("The offer tile does not allow drawing this card (wrong row or draw limit reached).");
         }
 
+        CardDrawer cardDrawer = new CardDrawer(currentPlayer, rowsManager, currentAction);
         cardDrawer.drawCard(card);
 
         model.notifyChange("card_drawn:" + cardId);
@@ -87,7 +79,7 @@ public class ActionPhase extends GamePhaseHandler {
         ensureActiveTurn();
 
         if (hasAnyForcedMove()) {
-            throw new IllegalStateException("Devi completare tutte le pescate obbligatorie prima di terminare il turno."); // serve l'exception??
+            throw new IllegalStateException("All mandatory draws must be completed before ending the turn.");
         }
 
         model.notifyChange("turn_ended:" + currentPlayer.getName());
@@ -100,7 +92,6 @@ public class ActionPhase extends GamePhaseHandler {
      * these are the only two cases when the turn advances automatically
      */
     private void checkActionCompletionOrAutoAdvance() {
-        RowsManager rowsManager = model.getRowsManager();
         if (currentAction.isFinished() || !hasAnyLegalMove()) {
             advanceActionTurn();
         }
@@ -131,11 +122,7 @@ public class ActionPhase extends GamePhaseHandler {
     private void advanceActionTurn() {
         ensureActiveTurn();
 
-        // Riporta il totem sulla prima tile
-        // La logica del pagamento di 1 cibo per l'ultimo posto va gestita dentro questo metodo!
-        model.getBoard()
-                .getTurnOrderTile()
-                .returnTotemAndResolveEffects(currentPlayer);
+        model.getBoard().returnTotemToTurnOrder(currentPlayer);
 
         currentPlayer = null;
         currentAction = null;
@@ -146,7 +133,7 @@ public class ActionPhase extends GamePhaseHandler {
 
     private void ensureActiveTurn() {
         if (currentPlayer == null || currentAction == null) {
-            throw new IllegalStateException("Nessun turno di azione attivo.");
+            throw new IllegalStateException("No active action turn.");
         }
     }
 

@@ -58,4 +58,12 @@ public class DrawCardsAction implements OfferTileAction {
         return (currentTopRowDraws >= maxTopRowDraws) &&
                 (currentBottomRowDraws >= maxBottomRowDraws);
     }
+
+    public int getMaxTopRowDraws()        { return maxTopRowDraws; }
+    public int getMaxBottomRowDraws()     { return maxBottomRowDraws; }
+    public int getCurrentTopRowDraws()    { return currentTopRowDraws; }
+    public int getCurrentBottomRowDraws() { return currentBottomRowDraws; }
+
+    @Override
+    public void accept(OfferTileActionVisitor visitor) { visitor.visitDrawCards(this); }
 }

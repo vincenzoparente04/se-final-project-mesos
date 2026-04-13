@@ -28,16 +28,14 @@ public class SustenanceEventCard extends EventCard {
             int characterCount = p.getTribe().getTotalCharacterCount();
             int discount = p.getTribe().getTotalGatherersDiscount();
 
-            // building effects: accumula sconto extra
             for (OnEventBuildingEffect effect : p.getTribe().getOnEventBuildingEffects()) {
                 discount += effect.applyOnSustenance(p);
             }
 
-            //int foodToPay = Math.max(0, characterCount - discount);
-            if(characterCount <= discount) {
+            if (characterCount <= discount) {
                 return; // no penalty if discount covers all characters
             }
-            p.removeFood(characterCount - discount, (this.getEra().ordinal() + 1));
+            p.removeFoodWithPrestigePenalty(characterCount - discount, this.getEra().ordinal() + 1);
         });
     }
 

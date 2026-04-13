@@ -15,17 +15,21 @@ public abstract class GamePhaseHandler {
 
     public void onEnter() {}
 
-    public void chooseColor(Player player, TotemColor color) {}
-
-    public void placeTotem(Player player, char tileId) {}
-
-    public void drawCard(int cardId) {
-        throw new IllegalStateException(
-                "Cannot draw card during " + getPhase()
-        );
+    public void chooseColor(Player player, TotemColor color) {
+        throw new IllegalStateException("Cannot choose color during " + getPhase());
     }
 
-    public void endTurn() {}
+    public void placeTotem(Player player, char tileId) {
+        throw new IllegalStateException("Cannot place totem during " + getPhase());
+    }
+
+    public void drawCard(int cardId) {
+        throw new IllegalStateException("Cannot draw card during " + getPhase());
+    }
+
+    public void endTurn() {
+        throw new IllegalStateException("Cannot end turn during " + getPhase());
+    }
 
     public abstract GamePhase getPhase();
     public abstract Player getCurrentPlayer();

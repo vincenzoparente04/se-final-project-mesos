@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import model.cards.TribeCard;
-import model.cards.charachterCards.*;
+import model.cards.characterCards.*;
 import model.cards.eventCards.*;
 import model.enums.Era;
 import model.enums.InventionIcon;

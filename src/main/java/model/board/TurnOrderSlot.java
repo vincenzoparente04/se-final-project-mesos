@@ -3,9 +3,9 @@ package model.board;
 import model.player.Player;
 
 public class TurnOrderSlot {
-    private final int foodBonus;   // fisso — 0 se nessun bonus
-    private final boolean isLast;  // fisso — true solo per l'ultimo slot
-    private Player occupant;        // variabile — null se lo slot è libero
+    private final int foodBonus;
+    private final boolean isLast;
+    private Player occupant;
 
     public TurnOrderSlot(int foodBonus, boolean isLast) {
         this.foodBonus = foodBonus;
@@ -15,7 +15,7 @@ public class TurnOrderSlot {
 
     public void applyEffect(){
         if (isLast) {
-            this.occupant.removeFood(1, 2);
+            this.occupant.removeFoodWithPrestigePenalty(1, 2);
         }
 
         if (foodBonus > 0) {
@@ -29,4 +29,5 @@ public class TurnOrderSlot {
     public boolean isLast()         { return isLast; }
     public Player getOccupant()      { return occupant; }
     public void placeTotem(Player player) { this.occupant = player; }
+    public void removeTotem()            { this.occupant = null; }
 }

@@ -1,6 +1,6 @@
 package model.cards.characterCards;
 
-import model.cards.charachterCards.InventorCard;
+import model.cards.characterCards.InventorCard;
 import model.enums.Era;
 import model.enums.InventionIcon;
 import model.player.Player;

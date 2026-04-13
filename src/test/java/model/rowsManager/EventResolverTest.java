@@ -1,7 +1,7 @@
 package model.rowsManager;
 
 import model.cards.TribeCard;
-import model.cards.charachterCards.CharacterCard;
+import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
 import model.player.Player;

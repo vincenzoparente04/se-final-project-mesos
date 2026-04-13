@@ -1,6 +1,5 @@
 package model.cards.eventCards;
 
-import model.enums.EventType;
 import model.rowsManager.CardVisitor;
 import model.cards.eventCards.EventCard;
 import model.enums.CardType;
@@ -28,11 +27,6 @@ class EventCardTest {
         @Override
         public void resolve(List<Player> players) {
             // No-op test implementation.
-        }
-
-        @Override
-        public EventType getEventType() {
-            return null; // Not relevant for this test.
         }
     }
 

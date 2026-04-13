@@ -16,7 +16,6 @@ public abstract class EventCard extends TribeCard {
     @Override
     public void registerToTribe(Player player) { return; }
 
-    // metodi
     public abstract void resolve(List<Player> players);
 
     @Override

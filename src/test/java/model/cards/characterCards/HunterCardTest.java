@@ -1,6 +1,6 @@
 package model.cards.characterCards;
 
-import model.cards.charachterCards.HunterCard;
+import model.cards.characterCards.HunterCard;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;

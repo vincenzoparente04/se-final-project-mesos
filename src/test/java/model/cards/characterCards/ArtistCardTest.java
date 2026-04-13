@@ -1,6 +1,6 @@
 package model.cards.characterCards;
 
-import model.cards.charachterCards.ArtistCard;
+import model.cards.characterCards.ArtistCard;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;

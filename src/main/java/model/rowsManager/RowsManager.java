@@ -12,6 +12,7 @@ import model.rowsManager.deck.TribeDeck;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 //TODO: da capire come viene costruito il rows manager
@@ -114,11 +115,12 @@ public class RowsManager {
         bottomRowBuilding.clear();
         bottomRowBuilding.addAll(topRowBuilding);
         topRowBuilding.clear();
-        if (buildingDeckEraII.isEmpty()) {
-            topRowBuilding.addAll(buildingDeckEraIII.drawAll());
-        }else{
+        if (!buildingDeckEraII.isEmpty()) {
             topRowBuilding.addAll(buildingDeckEraII.drawAll());
+        } else if (!buildingDeckEraIII.isEmpty()) {
+            topRowBuilding.addAll(buildingDeckEraIII.drawAll());
         }
+        // If all era decks are exhausted the top building row stays empty (end-game state)
     }
 
     /**
@@ -142,16 +144,14 @@ public class RowsManager {
     }
 
     /**
-     * finds a card by its id between all 4 list (top row tribe, bottom row tribe, top row building, bottom row building)
-     * @param cardId
-     * @return the card object
+     * Finds a card by its ID across all four board rows.
+     * @param cardId the card ID to search for
+     * @return an Optional containing the card if found, or empty if not present on the board
      */
-    public Card findCardById(int cardId) {
-        return Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
-                .flatMap(List::stream)
+    public Optional<Card> findCardById(int cardId) {
+        return getAllCardsOnBoard().stream()
                 .filter(c -> c.getId() == cardId)
-                .findFirst()
-                .orElse(null); // restituisce null se non trova nessuna carta con quell'ID
+                .findFirst();
     }
 
     /**
@@ -181,7 +181,16 @@ public class RowsManager {
         return allCards;
     }
 
+    public List<TribeCard>    getTopRowTribe()      { return topRowTribe; }
+    public List<TribeCard>    getBottomRowTribe()   { return bottomRowTribe; }
+    public List<BuildingCard> getTopRowBuilding()   { return topRowBuilding; }
+    public List<BuildingCard> getBottomRowBuilding(){ return bottomRowBuilding; }
+
     public TribeDeck getTribeDeck() {
         return tribeDeck;
+    }
+
+    public Era getCurrentEra() {
+        return tribeDeck.getCurrentEra();
     }
 }

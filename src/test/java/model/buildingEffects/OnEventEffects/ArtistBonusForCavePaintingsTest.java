@@ -1,6 +1,6 @@
 package model.buildingEffects.OnEventEffects;
 
-import model.cards.charachterCards.ArtistCard;
+import model.cards.characterCards.ArtistCard;
 import model.enums.Era;
 import model.player.Player;
 import org.junit.jupiter.api.Test;

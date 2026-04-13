@@ -30,6 +30,8 @@ public class EndOfGamePhase extends GamePhaseHandler {
         calculateEndGameScoring();
         determineWinner();
 
+        List<String> winnerNames = winners.stream().map(Player::getName).toList();
+        model.setWinners(winnerNames);
         model.notifyChange("game_over:" + formatWinners());
     }
 

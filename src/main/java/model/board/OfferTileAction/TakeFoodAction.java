@@ -1,7 +1,6 @@
 package model.board.OfferTileAction;
 
 import model.GameModel;
-import model.board.Board;
 import model.cards.Card;
 import model.player.Player;
 import model.rowsManager.RowsManager;
@@ -38,4 +37,7 @@ public class TakeFoodAction implements OfferTileAction {
     public boolean isFinished() {
         return finished;
     }
+
+    @Override
+    public void accept(OfferTileActionVisitor visitor) { visitor.visitTakeFood(this); }
 }

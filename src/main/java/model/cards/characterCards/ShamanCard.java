@@ -1,4 +1,4 @@
-package model.cards.charachterCards;
+package model.cards.characterCards;
 
 public class ShamanCard extends CharacterCard {
     private final int starCount;  // number of stars

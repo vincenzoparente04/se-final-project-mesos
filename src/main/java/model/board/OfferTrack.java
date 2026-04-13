@@ -3,10 +3,11 @@ package model.board;
 import model.enums.TotemLocation;
 import model.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OfferTrack {
-    private List<OfferTile> tiles;  // listed from A to G
+    private List<OfferTile> tiles = new ArrayList<>();  // listed from A to G
 
     public void setup(List<OfferTile> tiles) {
         this.tiles = tiles; // lista già filtrata e ordinata dalla factory
@@ -31,6 +32,10 @@ public class OfferTrack {
                 .orElse(null);
     }
 
+    public List<OfferTile> getTiles() {
+        return tiles;
+    }
+
     public Player getNextPlayer() {
         return tiles.stream().filter(OfferTile::isOccupied).findFirst().map(OfferTile::getOccupant).orElse(null);
     }
@@ -45,5 +50,16 @@ public class OfferTrack {
                 .filter(tile -> player.equals(tile.getOccupant()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * Removes the player's totem from whichever offer tile they occupy.
+     * Called at the end of each action turn before moving to the turn order tile.
+     */
+    public void removeTotem(Player player) {
+        OfferTile tile = getOccupiedTileByPlayer(player);
+        if (tile != null) {
+            tile.removeTotem();
+        }
     }
 }

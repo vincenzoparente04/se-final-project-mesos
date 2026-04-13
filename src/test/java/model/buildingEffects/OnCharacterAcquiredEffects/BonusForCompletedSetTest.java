@@ -1,11 +1,11 @@
 package model.buildingEffects.OnCharacterAcquiredEffects;
 
-import model.cards.charachterCards.ArtistCard;
-import model.cards.charachterCards.BuilderCard;
-import model.cards.charachterCards.GathererCard;
-import model.cards.charachterCards.HunterCard;
-import model.cards.charachterCards.InventorCard;
-import model.cards.charachterCards.ShamanCard;
+import model.cards.characterCards.ArtistCard;
+import model.cards.characterCards.BuilderCard;
+import model.cards.characterCards.GathererCard;
+import model.cards.characterCards.HunterCard;
+import model.cards.characterCards.InventorCard;
+import model.cards.characterCards.ShamanCard;
 import model.enums.Era;
 import model.enums.InventionIcon;
 import model.player.Player;

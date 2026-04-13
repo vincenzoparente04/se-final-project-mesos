@@ -7,7 +7,7 @@ import model.board.OfferTileAction.OfferTileAction;
 import model.board.OfferTrack;
 import model.board.TurnOrderTile;
 import model.cards.Card;
-import model.cards.charachterCards.CharacterCard;
+import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.player.Player;
 import model.player.Tribe;
@@ -18,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -141,7 +142,7 @@ class ActionPhaseTest {
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
 
-        when(rowsManager.findCardById(10)).thenReturn(selectedCard);
+        when(rowsManager.findCardById(10)).thenReturn(Optional.of(selectedCard));
         when(action.canDraw(selectedCard, rowsManager)).thenReturn(true);
 
         phase.onEnter();
@@ -172,7 +173,7 @@ class ActionPhaseTest {
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
 
-        when(rowsManager.findCardById(999)).thenReturn(null);
+        when(rowsManager.findCardById(999)).thenReturn(Optional.empty());
 
         phase.onEnter();
 
@@ -199,7 +200,7 @@ class ActionPhaseTest {
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
 
-        when(rowsManager.findCardById(50)).thenReturn(selectedCard);
+        when(rowsManager.findCardById(50)).thenReturn(Optional.of(selectedCard));
         when(action.canDraw(selectedCard, rowsManager)).thenReturn(false);
 
         phase.onEnter();
@@ -237,7 +238,7 @@ class ActionPhaseTest {
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
 
-        when(rowsManager.findCardById(60)).thenReturn(selectedCard);
+        when(rowsManager.findCardById(60)).thenReturn(Optional.of(selectedCard));
         when(action.canDraw(selectedCard, rowsManager)).thenReturn(true);
 
         phase.onEnter();

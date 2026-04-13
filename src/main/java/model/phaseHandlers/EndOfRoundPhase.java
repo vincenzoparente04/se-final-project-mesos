@@ -23,23 +23,22 @@ public class EndOfRoundPhase extends GamePhaseHandler {
         rowsManager.resolveEvents(model.getPlayers());
         model.notifyChange("events_resolved");
 
-        Era currentEra = model.getCurrentEra();
+        model.incrementRound();
 
+        if (model.isGameOver()) {
+            model.setPhase(new EndOfGamePhase(model));
+            return;
+        }
+
+        Era currentEra = model.getCurrentEra();
         rowsManager.endRound(model.getPlayerCount());
-        model.getRowsManager().endRound(model.getPlayerCount());
 
         if (model.getCurrentEra().compareTo(currentEra) != 0) {
             model.notifyChange("era_changed:" + model.getCurrentEra());
             rowsManager.changeEra();
         }
 
-        // TODO QUALCUNO DEVE CONTROLLA' CHE IL MAZZO NON SIA FINITO DAJE REGA SVEGLIA
-        if (model.isGameOver()) {
-            model.setPhase(new EndOfGamePhase(model));
-        } else {
-            model.incrementRound();
-            model.setPhase(new PlacementPhase(model));
-        }
+        model.setPhase(new PlacementPhase(model));
     }
 
     @Override

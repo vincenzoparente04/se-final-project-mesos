@@ -35,7 +35,7 @@ public class ShamanicRitualEventCard extends EventCard {
 
         // 3. funzioni ricavate dai valori delle carte
         int gain = (this.getEra().ordinal() + 1) * 5;
-        int loss = -3 - (2 * ((this.getEra().ordinal() + 1) - 1));
+        int loss = 3 + (2 * ((this.getEra().ordinal() + 1) - 1));
 
         // 4. assegna punti al massimo
         players.stream()
@@ -52,6 +52,6 @@ public class ShamanicRitualEventCard extends EventCard {
         players.stream()
                 .filter(p -> iconCounts.get(p) == min && min != max)
                 .filter(p -> !p.hasShamanicImmunity())
-                .forEach(p -> p.removePrestigePoints(-loss)); //removePP() accept input as positive, or else should not exist since addPP() exist
+                .forEach(p -> p.removePrestigePoints(loss));
     }
 }

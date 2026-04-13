@@ -18,8 +18,6 @@ public class Player {
     private boolean extraFoodOnTotemReturn = false;
     private boolean extraDraw = false;
 
-// setters e getters per tutti e tre
-
     public Player(String name) {
         this.name = name;
         this.prestigePoints = 0;
@@ -33,18 +31,25 @@ public class Player {
     public int getFood(){ return food; }
     public void addFood(int amount){ food += amount; }
 
-    // viene passato il cibo e il moltiplicatore di aura da pagare (se non ho abbastanza cibo), il metodo
-    // controlla se ho abbastanza cibo -> false allora toglie tutto il cibo disponibile e chiama remove aura
-    // usando il moltiplicatore per le restanti risorse da togliere
-    // quando devo pagare solo cibo il multiplier = 0
-    public void removeFood(int amount, int prestigePointsMultiplier) {
-        int temp = getFood();
-        if(amount <= temp) { food -= amount; }
-        else {
-            food -= temp;
-            removePrestigePoints((amount - temp) * prestigePointsMultiplier);
-        }
+    /**
+     * Removes food from the player, clamped at 0. Use when no prestige penalty applies.
+     */
+    public void removeFood(int amount) {
+        food = Math.max(0, food - amount);
+    }
 
+    /**
+     * Removes food from the player. If food is insufficient, the deficit is converted
+     * to prestige point loss using the given multiplier.
+     */
+    public void removeFoodWithPrestigePenalty(int amount, int prestigeMultiplier) {
+        int available = food;
+        if (amount <= available) {
+            food -= amount;
+        } else {
+            food = 0;
+            removePrestigePoints((amount - available) * prestigeMultiplier);
+        }
     }
 
     // -- prestige points --

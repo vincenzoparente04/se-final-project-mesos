@@ -1,7 +1,7 @@
 package model.buildingEffects.OnEventEffects;
 
-import model.cards.charachterCards.ArtistCard;
-import model.cards.charachterCards.HunterCard;
+import model.cards.characterCards.ArtistCard;
+import model.cards.characterCards.HunterCard;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;

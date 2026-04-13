@@ -1,7 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.cards.charachterCards.CharacterCard;
+import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.player.Player;
 import model.player.Tribe;
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -113,7 +114,7 @@ class PreEndOfRoundPhaseTest {
     void drawCardMissingCardDoesNothing() {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
-        when(rowsManager.findCardById(10)).thenReturn(null);
+        when(rowsManager.findCardById(10)).thenReturn(Optional.empty());
 
         phase.onEnter();
         phase.drawCard(10);
@@ -128,7 +129,7 @@ class PreEndOfRoundPhaseTest {
     void drawCardCardNotInTopRowDoesNothing() {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
-        when(rowsManager.findCardById(10)).thenReturn(card);
+        when(rowsManager.findCardById(10)).thenReturn(Optional.of(card));
         when(rowsManager.topRowContainsCard(10)).thenReturn(false);
 
         phase.onEnter();
@@ -154,7 +155,7 @@ class PreEndOfRoundPhaseTest {
 
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
-        when(rowsManager.findCardById(10)).thenReturn(eventCard);
+        when(rowsManager.findCardById(10)).thenReturn(Optional.of(eventCard));
         when(rowsManager.topRowContainsCard(10)).thenReturn(true);
 
         phase.onEnter();
@@ -169,7 +170,7 @@ class PreEndOfRoundPhaseTest {
     void drawCardValidFlowTransitionsToEndOfRound() {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
-        when(rowsManager.findCardById(10)).thenReturn(card);
+        when(rowsManager.findCardById(10)).thenReturn(Optional.of(card));
         when(rowsManager.topRowContainsCard(10)).thenReturn(true);
 
         phase.onEnter();

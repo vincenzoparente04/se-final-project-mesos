@@ -3,6 +3,8 @@ package model.board;
 import model.factories.BoardFactory;
 import model.player.Player;
 
+import java.util.List;
+
 public class Board {
     private final OfferTrack offerTrack;
     private final TurnOrderTile turnOrderTile;
@@ -25,6 +27,7 @@ public class Board {
      * @throws Exception
      */
     public void placeTotem(Player player, OfferTile offerTile) {
+        turnOrderTile.freeSlot(player);
         offerTrack.placeTotem(player, offerTile);
     }
 
@@ -57,5 +60,27 @@ public class Board {
 
     public Player getNextPlayerOnOfferTrack() {
         return offerTrack.getNextPlayer();
+    }
+
+    /**
+     * Removes the player's totem from the offer track and places it on the
+     * first free turn-order slot, applying that slot's food/prestige effect.
+     * This is the single call that ends an action turn atomically.
+     */
+    public void returnTotemToTurnOrder(Player player) {
+        offerTrack.removeTotem(player);
+        turnOrderTile.returnTotemAndResolveEffects(player);
+    }
+
+    public List<Player> getTurnOrder() {
+        return turnOrderTile.getTurnOrder();
+    }
+
+    public List<OfferTile> getOfferTiles() {
+        return offerTrack.getTiles();
+    }
+
+    public List<TurnOrderSlot> getTurnOrderSlots() {
+        return turnOrderTile.getSlots();
     }
 }

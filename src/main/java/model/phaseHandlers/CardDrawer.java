@@ -4,7 +4,7 @@ import model.board.OfferTileAction.OfferTileAction;
 import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
 import model.cards.Card;
 import model.cards.buildingCards.BuildingCard;
-import model.cards.charachterCards.CharacterCard;
+import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
 import model.player.Player;
@@ -36,8 +36,7 @@ public class CardDrawer implements CardVisitor {
 
     @Override
     public void visit(CharacterCard card) {
-        if (currentAction != null) { // the if statement is necessary because it doesn't have to perform draw when called by PreEndOfRoundPhase
-            // L'azione scala i suoi contatori interni
+        if (currentAction != null) { // null when called by PreEndOfRoundPhase (no tile action involved)
             currentAction.performDraw(card, rowsManager);
         }
 
@@ -54,28 +53,27 @@ public class CardDrawer implements CardVisitor {
     @Override
     public void visit(BuildingCard card) {
         if (player.getFood() < card.getDiscountedCost(player)) {
-            throw new IllegalStateException("Non hai i requisiti per prendere questa carta (Cibo insufficiente o è un Evento).");
-        }else {
-            if (currentAction != null) { // the if statement is necessary because it doesn't have to perform draw when called by PreEndOfRoundPhase
-                // L'azione scala i suoi contatori interni
+            throw new IllegalStateException("Insufficient food to acquire building card.");
+        } else {
+            if (currentAction != null) { // null when called by PreEndOfRoundPhase (no tile action involved)
                 currentAction.performDraw(card, rowsManager);
             }
 
             rowsManager.removeCard(card.getId());
 
-            player.removeFood(card.getDiscountedCost(player), 0);
+            player.removeFood(card.getDiscountedCost(player));
             card.registerToTribe(player);
         }
     }
 
-    // Event cards can't be drawn
+    // Event cards cannot be drawn by players
     @Override
     public void visit(EventCard card) {
-        throw new IllegalStateException("Non hai i requisiti per prendere questa carta (Cibo insufficiente o è un Evento).");
+        throw new IllegalStateException("Event cards cannot be drawn.");
     }
 
     @Override
     public void visit(SustenanceEventCard card) {
-        throw new IllegalStateException("Non hai i requisiti per prendere questa carta (Cibo insufficiente o è un Evento).");
+        throw new IllegalStateException("Event cards cannot be drawn.");
     }
 }

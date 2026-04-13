@@ -1,6 +1,5 @@
 package model.cards.eventCards;
 
-import model.cards.eventCards.SustenanceEventCard;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;
@@ -28,16 +27,16 @@ class SustenanceEventCardTest {
         when(tribe.getTotalCharacterCount()).thenReturn(10);
         when(tribe.getTotalGatherersDiscount()).thenReturn(3);
 
-        SustenanceEventCard card = new SustenanceEventCard(30, Era.ERA_III, 4, "test/front.png" , "test/front.png");
+        SustenanceEventCard card = new SustenanceEventCard(30, Era.ERA_III, 4, "test/front.png", "test/front.png");
 
         card.resolve(List.of(player));
 
-        verify(player, times(1)).removeFood(7 , 3); //10-3 
+        verify(player, times(1)).removeFoodWithPrestigePenalty(7, 3); // 10 - 3 = 7, era III multiplier = 3
     }
 
     @Test
     @DisplayName("resolve does nothing when gatherer discount exceeds characters")
-    void resolveForwardsNegativeFoodToPay() {
+    void resolveSkipsPlayerWhenDiscountCoversAllCharacters() {
         Player player = mock(Player.class);
         Tribe tribe = mock(Tribe.class);
 
@@ -45,13 +44,13 @@ class SustenanceEventCardTest {
         when(tribe.getTotalCharacterCount()).thenReturn(2);
         when(tribe.getTotalGatherersDiscount()).thenReturn(6);
 
-        SustenanceEventCard card = new SustenanceEventCard(31, Era.ERA_II, 4, "test/front.png" , "test/front.png");
+        SustenanceEventCard card = new SustenanceEventCard(31, Era.ERA_II, 4, "test/front.png", "test/front.png");
 
         card.resolve(List.of(player));
 
-        verify(player, never()).removeFood(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt());
-        //the removeFood method should not be called at all, since the event card has no effect on the player if the food to pay is negative
-        //while i'm writing this comment the removeFood method can't handle negative food to pay, in fact it adds it up with the current food
+        verify(player, never()).removeFoodWithPrestigePenalty(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt());
     }
 
     @Test
@@ -84,19 +83,19 @@ class SustenanceEventCardTest {
         when(t4.getTotalCharacterCount()).thenReturn(6);
         when(t4.getTotalGatherersDiscount()).thenReturn(0);
 
-        SustenanceEventCard card = new SustenanceEventCard(32, Era.ERA_III, 4, "test/front.png" , "test/front.png");
+        SustenanceEventCard card = new SustenanceEventCard(32, Era.ERA_III, 4, "test/front.png", "test/front.png");
 
         card.resolve(List.of(p1, p2, p3, p4));
 
-        verify(p1, times(1)).removeFood(2 , 3); //5-3
-        verify(p2, times(1)).removeFood(2 , 3); //8-6
-        verify(p3, never()).removeFood(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt()); //3-6 negative, so no food removed
-        verify(p4, times(1)).removeFood(6 , 3); //6-0
+        verify(p1, times(1)).removeFoodWithPrestigePenalty(2, 3); // 5-3
+        verify(p2, times(1)).removeFoodWithPrestigePenalty(2, 3); // 8-6
+        verify(p3, never()).removeFoodWithPrestigePenalty(           // 3-6 negative, no food removed
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt());
+        verify(p4, times(1)).removeFoodWithPrestigePenalty(6, 3); // 6-0
     }
 
-    // EDGE CASES
-
-    @Test 
+    @Test
     @DisplayName("resolve does nothing for zero characters and zero gatherer discount")
     void resolvePlayerWithZeroCharactersAndZeroGathererDiscount() {
         Player player = mock(Player.class);
@@ -106,10 +105,12 @@ class SustenanceEventCardTest {
         when(tribe.getTotalCharacterCount()).thenReturn(0);
         when(tribe.getTotalGatherersDiscount()).thenReturn(0);
 
-        SustenanceEventCard card = new SustenanceEventCard(33, Era.ERA_III, 4, "test/front.png" , "test/front.png");
+        SustenanceEventCard card = new SustenanceEventCard(33, Era.ERA_III, 4, "test/front.png", "test/front.png");
 
         card.resolve(List.of(player));
 
-        verify(player, never()).removeFood(org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt());
+        verify(player, never()).removeFoodWithPrestigePenalty(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt());
     }
 }

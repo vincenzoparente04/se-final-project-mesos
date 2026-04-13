@@ -1,15 +1,12 @@
 package model.rowsManager;
 
 import model.cards.buildingCards.BuildingCard;
-import model.cards.charachterCards.BuilderCard;
-import model.rowsManager.CardVisitor;
 import model.cards.TribeCard;
-import model.cards.charachterCards.CharacterCard;
+import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
 import model.player.Player;
 
-import javax.swing.plaf.basic.BasicButtonUI;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package model.buildingEffects.OnCharacterAcquiredEffects;
 
-import model.cards.charachterCards.InventorCard;
+import model.cards.characterCards.InventorCard;
 import model.enums.InventionIcon;
 import model.player.Player;
 

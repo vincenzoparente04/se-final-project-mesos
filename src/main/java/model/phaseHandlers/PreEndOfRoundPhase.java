@@ -6,6 +6,8 @@ import model.enums.GamePhase;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 
+import java.util.Optional;
+
 public class PreEndOfRoundPhase extends GamePhaseHandler {
 
     private Player activePlayer;
@@ -34,19 +36,17 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
      */
     @Override
     public void drawCard(int cardId) {
-        CardDrawer cardDrawer = new CardDrawer(activePlayer, model.getRowsManager(), null);
-
         if (activePlayer == null) return;
 
         RowsManager rowsManager = model.getRowsManager();
-        Card card = rowsManager.findCardById(cardId);
+        Optional<Card> found = rowsManager.findCardById(cardId);
 
-        if (card == null || !rowsManager.topRowContainsCard(card.getId())) {
-            // è necessario notificare l'erorre?
+        if (found.isEmpty() || !rowsManager.topRowContainsCard(cardId)) {
             return;
         }
 
-        cardDrawer.drawCard(card);
+        CardDrawer cardDrawer = new CardDrawer(activePlayer, rowsManager, null);
+        cardDrawer.drawCard(found.get());
 
         model.setPhase(new EndOfRoundPhase(model));
     }

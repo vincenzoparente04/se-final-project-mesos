@@ -9,18 +9,23 @@ import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GameModel {
-    private Board board;
-    private RowsManager rowsManager;
-    private List<Player> players;
+    private static final int MAX_ROUNDS = 10;
+
+    private Board board = new Board();
+    private RowsManager rowsManager = new RowsManager();
+    private List<Player> players = new ArrayList<>();
     private int playerCount;
-    private int currentRound;
-    private Era currentEra;
+    private int currentRound = 1;
+    private List<String> winners = new ArrayList<>();
 
     private GamePhaseHandler currentPhaseHandler;
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public void startGame(List<String> playerNames) {
         createPlayers(playerNames);
@@ -45,7 +50,6 @@ public class GameModel {
 
     public void setPhase(GamePhaseHandler phase) {
         this.currentPhaseHandler = phase;
-        //notifyChange("phase_changed:" + phase.getPhase());
         phase.onEnter();
     }
 
@@ -65,6 +69,16 @@ public class GameModel {
     public int getCurrentRound()                { return currentRound; }
     public GamePhaseHandler getPhaseHandler()   { return currentPhaseHandler; }
 
+    /**
+     * Resolves a Player by name. Throws if no player with that name exists.
+     */
+    public Player getPlayerByName(String name) {
+        return players.stream()
+                .filter(p -> p.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No player named: " + name));
+    }
+
     public GamePhase getCurrentPhase() {
         return currentPhaseHandler != null ? currentPhaseHandler.getPhase() : null;
     }
@@ -74,30 +88,36 @@ public class GameModel {
     }
 
     public List<Player> getTurnOrder() {
-        return board.getTurnOrderTile().getTurnOrder();
+        return board.getTurnOrder();
     }
 
-    /**
-     * @implNote the current era is determined by the current era of the tribe deck, which is updated at each tribe deck draw.<br>
-     * <p><b>NOTE: </b><br><u>this.currentEra</u> is updated only when this method is called. So the real updated current era is stored in the tribe dech</p>
-     * @return the current era
-     */
     public Era getCurrentEra() {
-        currentEra = rowsManager.getTribeDeck().getCurrentEra();
-        return currentEra;
+        return rowsManager.getCurrentEra();
     }
 
 
     // helpers:
     public boolean isGameOver() {
-        return currentRound > 10;
+        return currentRound > MAX_ROUNDS;
     }
 
     public void incrementRound() {
         currentRound++;
     }
 
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
+
+    public void setWinners(List<String> winnerNames) {
+        this.winners = winnerNames;
+    }
+
+    public List<String> getWinners() {
+        return winners;
+    }
+
     public void notifyChange(String message) {
-        // TODO:
+        pcs.firePropertyChange("gameState", null, message);
     }
 }

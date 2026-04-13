@@ -4,7 +4,7 @@ import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
 import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
 import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.cards.buildingCards.BuildingCard;
-import model.cards.charachterCards.*;
+import model.cards.characterCards.*;
 import model.enums.InventionIcon;
 
 import java.util.*;
@@ -64,6 +64,21 @@ public class Tribe {
     public List<OnEventBuildingEffect> getOnEventBuildingEffects() { return onEventBuildingEffects; }
     public List<OnAcquireBuildingEffect> getOnAcquireBuildingEffects() { return onAcquireBuildingEffects; }
     public List<EndGameBuildingEffect> getEndGameBuildingEffects() { return endGameBuildingEffects; }
+
+    /**
+     * Returns a flat list of all character cards in this tribe, regardless of type.
+     * Used by the server layer to serialize tribe state without type-specific access.
+     */
+    public List<CharacterCard> getAllCharacters() {
+        List<CharacterCard> all = new ArrayList<>();
+        all.addAll(artists);
+        all.addAll(builders);
+        all.addAll(gatherers);
+        all.addAll(hunters);
+        all.addAll(shamans);
+        inventorsByIcon.values().forEach(all::addAll);
+        return Collections.unmodifiableList(all);
+    }
 
     // query methods — tutta la logica di conteggio vive qui
     public int getHunterCount()         { return hunters.size(); }

@@ -3,10 +3,11 @@ package model.board;
 import model.enums.TotemLocation;
 import model.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TurnOrderTile {
-    private List<TurnOrderSlot> slots;
+    private List<TurnOrderSlot> slots = new ArrayList<>();
     private String imagePath;
 
     public void setup(List<TurnOrderSlot> slots, String image) {
@@ -21,6 +22,17 @@ public class TurnOrderTile {
      * of the slot, which may involve granting food bonuses or other benefits based on the specific implementation of the TurnOrderSlot class.
      * @param player
      */
+    /**
+     * Clears the slot currently occupied by the given player, making it available
+     * for future use. Called when the player moves their totem to the offer track.
+     */
+    public void freeSlot(Player player) {
+        slots.stream()
+                .filter(s -> player.equals(s.getOccupant()))
+                .findFirst()
+                .ifPresent(TurnOrderSlot::removeTotem);
+    }
+
     public void returnTotemAndResolveEffects(Player player){
         TurnOrderSlot slot = getFirstFreeSlot();
         slot.placeTotem(player);
