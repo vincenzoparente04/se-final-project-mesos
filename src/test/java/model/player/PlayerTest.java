@@ -220,9 +220,9 @@ class PlayerTest {
     @DisplayName("setLocation and getLocation - sets and gets location")
     void setAndGetLocation() {
         // Act
-        player.setLocation(TotemLocation.FIRST_PLAYER_TILE);
+        player.setLocation(TotemLocation.TURN_ORDER_TILE);
 
         // Assert
-        assertEquals(TotemLocation.FIRST_PLAYER_TILE, player.getLocation(), "Should set and get location correctly");
+        assertEquals(TotemLocation.TURN_ORDER_TILE, player.getLocation(), "Should set and get location correctly");
     }
 }

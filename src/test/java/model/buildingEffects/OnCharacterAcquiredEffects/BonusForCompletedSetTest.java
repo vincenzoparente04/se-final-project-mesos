@@ -39,12 +39,12 @@ class BonusForCompletedSetTest {
     }
 
     private void addCompleteSet(Player player, int baseId) {
-        player.getTribe().addArtist(new ArtistCard(baseId + 1, Era.ERA_I, 2));
-        player.getTribe().addBuilder(new BuilderCard(baseId + 2, Era.ERA_I, 2, 1, 1));
-        player.getTribe().addGatherer(new GathererCard(baseId + 3, Era.ERA_I, 2));
-        player.getTribe().addHunter(new HunterCard(baseId + 4, Era.ERA_I, 2, false));
-        player.getTribe().addInventor(new InventorCard(baseId + 5, Era.ERA_I, 2, InventionIcon.ICON_1));
-        player.getTribe().addShaman(new ShamanCard(baseId + 6, Era.ERA_I, 2, 1));
+        player.getTribe().addArtist(new ArtistCard(baseId + 1, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
+        player.getTribe().addBuilder(new BuilderCard(baseId + 2, Era.ERA_I, 2, 1, 1, "test/front.png" , "test/front.png"));
+        player.getTribe().addGatherer(new GathererCard(baseId + 3, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
+        player.getTribe().addHunter(new HunterCard(baseId + 4, Era.ERA_I, 2, false, "test/front.png" , "test/front.png"));
+        player.getTribe().addInventor(new InventorCard(baseId + 5, Era.ERA_I, 2, InventionIcon.ICON_1, "test/front.png" , "test/front.png"));
+        player.getTribe().addShaman(new ShamanCard(baseId + 6, Era.ERA_I, 2, 1, "test/front.png" , "test/front.png"));
     }
 }
 

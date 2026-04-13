@@ -1,6 +1,5 @@
 package model.cards.buildingCards;
 
-import model.GameModel;
 import model.cards.Card;
 import model.buildingEffects.BuildingEffect;
 import model.enums.Era;

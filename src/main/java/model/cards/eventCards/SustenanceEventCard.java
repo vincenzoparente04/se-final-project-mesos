@@ -33,8 +33,11 @@ public class SustenanceEventCard extends EventCard {
                 discount += effect.applyOnSustenance(p);
             }
 
-            int foodToPay = Math.max(0, characterCount - discount);
-            p.removeFood(foodToPay, (this.getEra().ordinal() + 1));
+            //int foodToPay = Math.max(0, characterCount - discount);
+            if(characterCount <= discount) {
+                return; // no penalty if discount covers all characters
+            }
+            p.removeFood(characterCount - discount, (this.getEra().ordinal() + 1));
         });
     }
 

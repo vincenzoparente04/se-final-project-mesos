@@ -7,8 +7,11 @@ import model.board.OfferTileAction.OfferTileAction;
 import model.board.OfferTrack;
 import model.board.TurnOrderTile;
 import model.cards.Card;
-import model.cards.TribeCard;
+import model.cards.charachterCards.CharacterCard;
+import model.cards.eventCards.EventCard;
 import model.player.Player;
+import model.player.Tribe;
+import model.rowsManager.CardVisitor;
 import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +22,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -37,6 +41,7 @@ class ActionPhaseTest {
     private TurnOrderTile turnOrderTile;
 
     private Player p1;
+    private Tribe t1;
 
     private ActionPhase phase;
 
@@ -51,7 +56,9 @@ class ActionPhaseTest {
         turnOrderTile = mock(TurnOrderTile.class);
 
         p1 = mock(Player.class);
+        t1 = mock(Tribe.class);
         when(p1.getName()).thenReturn("Player1");
+        when(p1.getTribe()).thenReturn(t1);
 
         when(model.getBoard()).thenReturn(board);
         when(model.getRowsManager()).thenReturn(rowsManager);
@@ -74,7 +81,13 @@ class ActionPhaseTest {
     @Test
     @DisplayName("onEnter should start active player turn and initialize action")
     void onEnterStartsTurnAndInitializesAction() {
-        TribeCard legalCard = mock(TribeCard.class);
+        CharacterCard legalCard = mock(CharacterCard.class);
+        when(legalCard.getId()).thenReturn(1);
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(legalCard);
+            return null;
+        }).when(legalCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
 
         when(board.getNextPlayerOnOfferTrack()).thenReturn(p1);
         when(offerTrack.getOccupiedTileByPlayer(p1)).thenReturn(occupiedTile);
@@ -83,7 +96,6 @@ class ActionPhaseTest {
         when(action.isFinished()).thenReturn(false);
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
-        when(legalCard.canBeAcquiredBy(p1, model)).thenReturn(true);
 
         phase.onEnter();
 
@@ -102,8 +114,23 @@ class ActionPhaseTest {
     @Test
     @DisplayName("drawCard should execute card acquisition flow for a legal draw")
     void drawCardLegalFlowExecutesSuccessfully() {
-        Card selectedCard = mock(Card.class);
-        TribeCard legalCard = mock(TribeCard.class);
+        CharacterCard legalCard = mock(CharacterCard.class);
+        CharacterCard selectedCard = mock(CharacterCard.class);
+
+        when(legalCard.getId()).thenReturn(1);
+        when(selectedCard.getId()).thenReturn(10);
+
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(legalCard);
+            return null;
+        }).when(legalCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
+
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(selectedCard);
+            return null;
+        }).when(selectedCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
 
         when(board.getNextPlayerOnOfferTrack()).thenReturn(p1);
         when(offerTrack.getOccupiedTileByPlayer(p1)).thenReturn(occupiedTile);
@@ -113,17 +140,15 @@ class ActionPhaseTest {
         when(action.isFinished()).thenReturn(false);
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
-        when(legalCard.canBeAcquiredBy(p1, model)).thenReturn(true);
 
         when(rowsManager.findCardById(10)).thenReturn(selectedCard);
         when(action.canDraw(selectedCard, rowsManager)).thenReturn(true);
-        when(selectedCard.canBeAcquiredBy(p1, model)).thenReturn(true);
 
         phase.onEnter();
         phase.drawCard(10);
 
         verify(rowsManager, times(1)).removeCard(10);
-        verify(selectedCard, times(1)).acquiredBy(p1, model);
+        verify(selectedCard, times(1)).registerToTribe(p1);
         verify(action, times(1)).performDraw(selectedCard, rowsManager);
         verify(model, times(1)).notifyChange("card_drawn:10");
     }
@@ -131,7 +156,13 @@ class ActionPhaseTest {
     @Test
     @DisplayName("drawCard should throw when card is not found")
     void drawCardMissingCardThrows() {
-        TribeCard legalCard = mock(TribeCard.class);
+        CharacterCard legalCard = mock(CharacterCard.class);
+        when(legalCard.getId()).thenReturn(1);
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(legalCard);
+            return null;
+        }).when(legalCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
 
         when(board.getNextPlayerOnOfferTrack()).thenReturn(p1);
         when(offerTrack.getOccupiedTileByPlayer(p1)).thenReturn(occupiedTile);
@@ -140,7 +171,6 @@ class ActionPhaseTest {
         when(action.isFinished()).thenReturn(false);
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
-        when(legalCard.canBeAcquiredBy(p1, model)).thenReturn(true);
 
         when(rowsManager.findCardById(999)).thenReturn(null);
 
@@ -153,7 +183,13 @@ class ActionPhaseTest {
     @DisplayName("drawCard should throw when selected card cannot be drawn by current action")
     void drawCardCannotDrawThrows() {
         Card selectedCard = mock(Card.class);
-        TribeCard legalCard = mock(TribeCard.class);
+        CharacterCard legalCard = mock(CharacterCard.class);
+        when(legalCard.getId()).thenReturn(1);
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(legalCard);
+            return null;
+        }).when(legalCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
 
         when(board.getNextPlayerOnOfferTrack()).thenReturn(p1);
         when(offerTrack.getOccupiedTileByPlayer(p1)).thenReturn(occupiedTile);
@@ -162,7 +198,6 @@ class ActionPhaseTest {
         when(action.isFinished()).thenReturn(false);
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
-        when(legalCard.canBeAcquiredBy(p1, model)).thenReturn(true);
 
         when(rowsManager.findCardById(50)).thenReturn(selectedCard);
         when(action.canDraw(selectedCard, rowsManager)).thenReturn(false);
@@ -175,10 +210,24 @@ class ActionPhaseTest {
     }
 
     @Test
-    @DisplayName("drawCard should throw when current player cannot acquire selected card")
-    void drawCardCannotAcquireThrows() {
-        Card selectedCard = mock(Card.class);
-        TribeCard legalCard = mock(TribeCard.class);
+    @DisplayName("drawCard should throw when selected card is an event")
+    void drawCardEventCardThrows() {
+        EventCard selectedCard = mock(EventCard.class);
+        CharacterCard legalCard = mock(CharacterCard.class);
+
+        when(legalCard.getId()).thenReturn(1);
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(legalCard);
+            return null;
+        }).when(legalCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
+
+        when(selectedCard.getId()).thenReturn(60);
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(selectedCard);
+            return null;
+        }).when(selectedCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
 
         when(board.getNextPlayerOnOfferTrack()).thenReturn(p1);
         when(offerTrack.getOccupiedTileByPlayer(p1)).thenReturn(occupiedTile);
@@ -187,23 +236,27 @@ class ActionPhaseTest {
         when(action.isFinished()).thenReturn(false);
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(legalCard));
         when(action.canDraw(legalCard, rowsManager)).thenReturn(true);
-        when(legalCard.canBeAcquiredBy(p1, model)).thenReturn(true);
 
         when(rowsManager.findCardById(60)).thenReturn(selectedCard);
         when(action.canDraw(selectedCard, rowsManager)).thenReturn(true);
-        when(selectedCard.canBeAcquiredBy(p1, model)).thenReturn(false);
 
         phase.onEnter();
 
         assertThrows(IllegalStateException.class, () -> phase.drawCard(60));
         verify(rowsManager, never()).removeCard(60);
-        verify(selectedCard, never()).acquiredBy(p1, model);
+        verify(selectedCard, never()).registerToTribe(p1);
+        verify(model, never()).notifyChange("card_drawn:60");
     }
 
     @Test
     @DisplayName("onEnter should auto-advance when action is not finished but no legal move exists")
     void onEnterNoLegalMoveAutoAdvances() {
-        TribeCard blockedCard = mock(TribeCard.class);
+        EventCard blockedCard = mock(EventCard.class);
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(blockedCard);
+            return null;
+        }).when(blockedCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
 
         when(board.getNextPlayerOnOfferTrack()).thenReturn(p1).thenReturn(null);
         when(offerTrack.getOccupiedTileByPlayer(p1)).thenReturn(occupiedTile);
@@ -212,7 +265,6 @@ class ActionPhaseTest {
         when(action.isFinished()).thenReturn(false);
         when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(blockedCard));
         when(action.canDraw(blockedCard, rowsManager)).thenReturn(true);
-        when(blockedCard.canBeAcquiredBy(p1, model)).thenReturn(false);
 
         phase.onEnter();
 

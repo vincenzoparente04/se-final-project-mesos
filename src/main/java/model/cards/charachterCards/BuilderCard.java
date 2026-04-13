@@ -25,4 +25,3 @@ public class BuilderCard extends CharacterCard {
         player.getTribe().addBuilder(this);
     }
 }
-

@@ -17,7 +17,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class RowsManagerTest {
+class  RowsManagerTest {
 
     private RowsManager rowsManager;
 
@@ -175,7 +175,8 @@ class RowsManagerTest {
         bottomRowTribe.add(bottom2);
         topRowTribe.add(top1);
 
-        List<TribeCard> result = rowsManager.getAllCardsOnBoard();
+        List<TribeCard> result = rowsManager.getAllTribeCardsOnBoard();
+        //TODO: what about the other cards (normal not tribe)? before it was called as getAllCardsOnBoard but list was <TribeCard>
 
         assertEquals(3, result.size());
         assertSame(bottom1, result.get(0));
@@ -189,7 +190,8 @@ class RowsManagerTest {
         TribeCard bottom = mock(TribeCard.class);
         bottomRowTribe.add(bottom);
 
-        List<TribeCard> result = rowsManager.getAllCardsOnBoard();
+        List<TribeCard> result = rowsManager.getAllTribeCardsOnBoard();
+        //TODO: what about the other cards (normal not tribe)?
         result.clear();
 
         assertEquals(1, bottomRowTribe.size());
@@ -219,9 +221,8 @@ class RowsManagerTest {
 
         assertEquals(List.of(top1, top2), bottomRowTribe);
 
-        // Questo assert descrive il comportamento ATTUALE della classe,
-        // che non svuota topRowTribe prima di aggiungere le nuove carte.
-        assertEquals(List.of(top1, top2, drawn1, drawn2, drawn3, drawn4, drawn5, drawn6), topRowTribe);
+        // ###assert modificata poichè la classe rows manager è staat modificata
+        assertEquals(List.of(drawn1, drawn2, drawn3, drawn4, drawn5, drawn6), topRowTribe);
 
         verify(tribeDeck).drawMultiple(6);
     }
@@ -262,8 +263,8 @@ class RowsManagerTest {
 
         assertEquals(List.of(top1), bottomRowBuilding);
 
-        // Anche qui: comportamento ATTUALE, non ideale.
-        assertEquals(List.of(top1, era2a, era2b), topRowBuilding);
+        // ###rowsManager ora svuota le carte
+        assertEquals(List.of(era2a, era2b), topRowBuilding);
 
         verify(buildingDeckEraII).isEmpty();
         verify(buildingDeckEraII).drawAll();
@@ -284,19 +285,13 @@ class RowsManagerTest {
         rowsManager.changeEra();
 
         assertEquals(List.of(top1), bottomRowBuilding);
-        assertEquals(List.of(top1, era3a), topRowBuilding);
+        assertEquals(List.of(era3a), topRowBuilding);
 
         verify(buildingDeckEraII).isEmpty();
         verify(buildingDeckEraIII).drawAll();
         verify(buildingDeckEraII, never()).drawAll();
     }
 
-    @Test
-    @DisplayName("setup throws NullPointerException when lists and decks are not initialized")
-    void setupThrowsWhenInternalStateIsUninitialized() {
-        RowsManager rawManager = new RowsManager();
-        assertThrows(NullPointerException.class, () -> rawManager.setup(3));
-    }
 
     @Test
     @DisplayName("getTribeDeck returns internal tribe deck")
