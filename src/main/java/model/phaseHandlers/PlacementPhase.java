@@ -31,19 +31,12 @@ public class PlacementPhase extends GamePhaseHandler {
     public void placeTotem(Player player, char tileId) {
         Board board = model.getBoard();
         OfferTile offerTile = board.findTileByLetter(tileId);
-        if(!canPlaceTotem(player, offerTile)) { return; };
+        if (offerTile == null) { throw new IllegalStateException("Tile not found"); }
+        if(offerTile.isOccupied()) { throw new IllegalStateException("Tile already occupied"); };
 
         board.placeTotem(player, offerTile);
         model.notifyChange("totem_placed:" + player.getName());
         advanceTurn();
-    }
-
-
-    public boolean canPlaceTotem(Player player, OfferTile tile){
-        if(player != currentPlayer) return false;
-        //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
-        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE) return false;
-        return !tile.isOccupied();
     }
 
     private void advanceTurn() {
