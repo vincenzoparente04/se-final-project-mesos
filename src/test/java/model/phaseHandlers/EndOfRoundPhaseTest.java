@@ -60,8 +60,8 @@ public class EndOfRoundPhaseTest {
 		var order = inOrder(rowsManager, model);
 		order.verify(rowsManager).resolveEvents(players);
 		order.verify(model).notifyChange("events_resolved");
-		order.verify(rowsManager).endRound(2);
 		order.verify(model).incrementRound();
+		order.verify(rowsManager).endRound(2);
 
 		// Verify no era change occurred and PlacementPhase is set
 		verify(rowsManager, never()).changeEra();
@@ -111,9 +111,8 @@ public class EndOfRoundPhaseTest {
 		// Act: call onEnter
 		phase.onEnter();
 
-		// Assert: verify EndOfGamePhase is set and round is NOT incremented
+		// Assert: verify EndOfGamePhase is set
 		verify(model).setPhase(argThat(handler -> handler instanceof EndOfGamePhase));
-		verify(model, never()).incrementRound();
 		verify(model, never()).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 	}
 

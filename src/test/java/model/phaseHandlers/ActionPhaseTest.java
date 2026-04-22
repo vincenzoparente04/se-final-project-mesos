@@ -269,7 +269,7 @@ class ActionPhaseTest {
 
         phase.onEnter();
 
-        verify(turnOrderTile, times(1)).returnTotemAndResolveEffects(p1);
+        verify(board, times(1)).returnTotemToTurnOrder(p1);
         verify(model, times(1)).setPhase(argThat(handler -> handler instanceof PreEndOfRoundPhase));
     }
 
@@ -283,7 +283,7 @@ class ActionPhaseTest {
 
         phase.onEnter();
 
-        verify(turnOrderTile, times(1)).returnTotemAndResolveEffects(p1);
+        verify(board, times(1)).returnTotemToTurnOrder(p1);
         verify(model, times(1)).setPhase(argThat(handler -> handler instanceof PreEndOfRoundPhase));
     }
 }
