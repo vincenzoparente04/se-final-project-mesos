@@ -4,11 +4,6 @@ import client.ClientStateListener;
 import client.LocalGameState;
 import client.VirtualServer;
 import com.google.gson.Gson;
-import shared.command.ChooseColorCommand;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
-import shared.command.PlaceTotemCommand;
-import shared.command.SocketCommandCodec;
 import shared.dto.GameStateDto;
 
 import java.io.BufferedReader;
@@ -70,25 +65,25 @@ public class SocketVirtualServer implements VirtualServer {
     @Override
     public void sendChooseColor(String color) {
         if (closed.get()) return;
-        out.println(SocketCommandCodec.encode(new ChooseColorCommand(playerName, color)));
+        out.println("CHOOSE_COLOR:" + playerName + ":" + color);
     }
 
     @Override
     public void sendPlaceTotem(char tile) {
         if (closed.get()) return;
-        out.println(SocketCommandCodec.encode(new PlaceTotemCommand(playerName, tile)));
+        out.println("PLACE_TOTEM:" + playerName + ":" + tile);
     }
 
     @Override
     public void sendDrawCard(int cardId) {
         if (closed.get()) return;
-        out.println(SocketCommandCodec.encode(new DrawCardCommand(playerName, cardId)));
+        out.println("DRAW_CARD:" + playerName + ":" + cardId);
     }
 
     @Override
     public void sendEndTurn() {
         if (closed.get()) return;
-        out.println(SocketCommandCodec.encode(new EndTurnCommand(playerName)));
+        out.println("END_TURN:" + playerName);
     }
 
     @Override

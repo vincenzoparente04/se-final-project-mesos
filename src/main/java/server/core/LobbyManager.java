@@ -2,7 +2,6 @@ package server.core;
 
 import server.rmi.RmiPlayerEntry;
 import server.socket.PlayerConnection;
-import server.socket.SocketCommandParser;
 import server.socket.SocketPlayerEntry;
 import server.socket.SocketVirtualView;
 import shared.command.GameCommand;
@@ -32,7 +31,6 @@ public class LobbyManager {
 
     private final int expectedPlayers;
     private final BlockingQueue<GameCommand> commandQueue;
-    private final SocketCommandParser commandParser = new SocketCommandParser();
 
     // @GuardedBy("this")
     private final List<PlayerEntry> players = new ArrayList<>();
@@ -102,7 +100,7 @@ public class LobbyManager {
             view.close();
             return;
         }
-        registerPlayer(new SocketPlayerEntry(conn, view, commandParser));
+        registerPlayer(new SocketPlayerEntry(conn, view));
     }
 
     private void registerPlayer(PlayerEntry entry) {
