@@ -62,31 +62,25 @@ public class RmiVirtualServer implements VirtualServer {
         serverStub.join(playerName, callback);
     }
 
-
     @Override
-    public void send(GameCommand command){
-            submitAsync(command);
+    public void sendChooseColor(String color) {
+        submitAsync(new ChooseColorCommand(playerName, color));
     }
 
-//    @Override
-//    public void sendChooseColor(String color) {
-//        submitAsync(new ChooseColorCommand(playerName, color));
-//    }
-//
-//    @Override
-//    public void sendPlaceTotem(char tile) {
-//        submitAsync(new PlaceTotemCommand(playerName, tile));
-//    }
-//
-//    @Override
-//    public void sendDrawCard(int cardId) {
-//        submitAsync(new DrawCardCommand(playerName, cardId));
-//    }
-//
-//    @Override
-//    public void sendEndTurn() {
-//        submitAsync(new EndTurnCommand(playerName));
-//    }
+    @Override
+    public void sendPlaceTotem(char tile) {
+        submitAsync(new PlaceTotemCommand(playerName, tile));
+    }
+
+    @Override
+    public void sendDrawCard(int cardId) {
+        submitAsync(new DrawCardCommand(playerName, cardId));
+    }
+
+    @Override
+    public void sendEndTurn() {
+        submitAsync(new EndTurnCommand(playerName));
+    }
 
     /**
      * Shuts down the command executor (waiting up to 1 s for in-flight commands)

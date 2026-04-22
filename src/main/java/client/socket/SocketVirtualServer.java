@@ -4,12 +4,18 @@ import client.ClientStateListener;
 import client.LocalGameState;
 import client.VirtualServer;
 import com.google.gson.Gson;
-import shared.command.*;
+import shared.command.ChooseColorCommand;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
+import shared.command.PlaceTotemCommand;
+import shared.command.SocketCommandCodec;
 import shared.dto.GameStateDto;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -62,43 +68,28 @@ public class SocketVirtualServer implements VirtualServer {
     // ─────────────────────────────────────────────────────────
 
     @Override
-    public void send(GameCommand command) {
+    public void sendChooseColor(String color) {
         if (closed.get()) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(command);
-            oos.close();
-            String encoded = Base64.getEncoder().encodeToString(baos.toByteArray());
-            out.println(encoded);
-        } catch (IOException e) {
-            System.err.println("Failed to send command: " + e.getMessage());
-        }
+        out.println(SocketCommandCodec.encode(new ChooseColorCommand(playerName, color)));
     }
 
-//    @Override
-//    public void sendChooseColor(String color) {
-//        if (closed.get()) return;
-//        out.println("CHOOSE_COLOR:" + playerName + ":" + color);
-//    }
-//
-//    @Override
-//    public void sendPlaceTotem(char tile) {
-//        if (closed.get()) return;
-//        out.println("PLACE_TOTEM:" + playerName + ":" + tile);
-//    }
-//
-//    @Override
-//    public void sendDrawCard(int cardId) {
-//        if (closed.get()) return;
-//        out.println("DRAW_CARD:" + playerName + ":" + cardId);
-//    }
-//
-//    @Override
-//    public void sendEndTurn() {
-//        if (closed.get()) return;
-//        out.println("END_TURN:" + playerName);
-//    }
+    @Override
+    public void sendPlaceTotem(char tile) {
+        if (closed.get()) return;
+        out.println(SocketCommandCodec.encode(new PlaceTotemCommand(playerName, tile)));
+    }
+
+    @Override
+    public void sendDrawCard(int cardId) {
+        if (closed.get()) return;
+        out.println(SocketCommandCodec.encode(new DrawCardCommand(playerName, cardId)));
+    }
+
+    @Override
+    public void sendEndTurn() {
+        if (closed.get()) return;
+        out.println(SocketCommandCodec.encode(new EndTurnCommand(playerName)));
+    }
 
     @Override
     public void close() {

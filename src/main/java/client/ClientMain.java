@@ -96,10 +96,13 @@ public class ClientMain extends Application {
             VirtualServer proxy = VirtualServerFactory.create(
                     transport, host, port, playerName, localState, listener);
 
+            @SuppressWarnings("unused")
+            ClientController controller = new ClientController(proxy);
+
             Platform.runLater(() ->
                     primaryStage.setTitle("Mesos — " + playerName));
 
-            // TODO: attach proxy and localState to the real View scene graph
+            // TODO: attach controller and localState to the real View scene graph
 
         } catch (Exception e) {
             Platform.runLater(() -> {

@@ -1,6 +1,8 @@
 package shared.dto;
 
-public class OfferTileDto {
+import java.io.Serializable;
+
+public class OfferTileDto implements Serializable {
     public final char letter;
     public final String actionType;       // "DRAW_CARDS" or "TAKE_FOOD"
     public final String occupantName;     // null if the tile is free

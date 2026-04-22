@@ -1,7 +1,6 @@
 package client;
 
-import shared.command.*;
-
+import client.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
@@ -49,8 +48,13 @@ public class ClientMainCli {
         System.out.println("Connecting via " + transport + " to " + host + ":" + port
                 + " as \"" + playerName + "\"...");
 
+        // Utilizzo del Factory Pattern: deleghiamo la creazione del proxy di rete
+        // a una factory centralizzata. Il client non conosce i dettagli implementativi.
         VirtualServer proxy = VirtualServerFactory.create(
                 transport, host, port, playerName, localState, listener);
+
+        // Pattern Decorator / Wrapper: Il controller astrae l'interfaccia di rete
+        ClientController controller = new ClientController(proxy);
 
         System.out.println("Connected. Waiting for other players...");
         printHelp();
@@ -70,7 +74,7 @@ public class ClientMainCli {
 
             if (trimmed.equalsIgnoreCase("state")) {
                 ClientStateListenerCli.printState(localState);
-            } else if (!dispatch(proxy, trimmed, playerName)) {
+            } else if (!dispatch(controller, trimmed)) {
                 System.out.println("[?] Unknown command. " + helpLine());
             }
             System.out.print("> ");
@@ -84,48 +88,32 @@ public class ClientMainCli {
     // Command dispatch
     // ─────────────────────────────────────────────────────────
 
-    private static boolean dispatch(VirtualServer proxy, String input, String playerName) {
+    private static boolean dispatch(ClientController controller, String input) {
         String[] parts = input.split("\\s+", 2);
         String verb = parts[0].toLowerCase();
         String arg  = parts.length > 1 ? parts[1].trim() : "";
 
         switch (verb) {
-//            case "color" -> {
-//                if (arg.isEmpty()) { System.out.println("[ERROR] color requires a colour name"); return true; }
-//                proxy.sendCommand(new ChooseColorCommand(parts[1], parts[2]));
-//            }
-//            case "totem" -> {
-//                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; }
-//                proxy.sendPlaceTotem(arg.toUpperCase().charAt(0));
-//            }
-//            case "draw" -> {
-//                try {
-//                    proxy.sendDrawCard(Integer.parseInt(arg));
-//                } catch (NumberFormatException e) {
-//                    System.out.println("[ERROR] Invalid card ID: \"" + arg + "\"");
-//                }
-//            }
-//            case "end" -> proxy.sendEndTurn();
             case "color" -> {
-                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; };
-                proxy.send(new ChooseColorCommand(playerName, parts[1]));
+                if (arg.isEmpty()) { System.out.println("[ERROR] color requires a colour name"); return true; }
+                controller.onColorChosen(arg.toUpperCase());
             }
             case "totem" -> {
-                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; };
-                proxy.send(new PlaceTotemCommand(playerName, parts[1].charAt(0)));
+                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; }
+                controller.onTotemPlaced(arg.toUpperCase().charAt(0));
             }
             case "draw" -> {
-                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; };
-                proxy.send(new DrawCardCommand(playerName, Integer.parseInt(parts[1])));
+                try {
+                    controller.onCardDrawn(Integer.parseInt(arg));
+                } catch (NumberFormatException e) {
+                    System.out.println("[ERROR] Invalid card ID: \"" + arg + "\"");
+                }
             }
-            case "end" -> {
-                proxy.send(new EndTurnCommand(playerName));
-            }
+            case "end" -> controller.onTurnEnded();
             default    -> { return false; }
         }
         return true;
     }
-    
 
     // ─────────────────────────────────────────────────────────
     // Helpers

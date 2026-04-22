@@ -1,6 +1,8 @@
 package shared.dto;
 
-public class CardDto {
+import java.io.Serializable;
+
+public class CardDto implements Serializable {
     public final int id;
     public final String type;         // "CHARACTER", "EVENT", or "BUILDING"
     public final String era;          // Era.name()

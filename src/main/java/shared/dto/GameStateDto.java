@@ -1,8 +1,9 @@
 package shared.dto;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class GameStateDto {
+public class GameStateDto implements Serializable {
     public final String phase;              // GamePhase.name()
     public final String currentPlayerName;  // null when no active player
     public final int currentRound;

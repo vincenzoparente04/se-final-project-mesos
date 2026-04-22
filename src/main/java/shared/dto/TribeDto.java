@@ -1,12 +1,13 @@
 package shared.dto;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * DTO snapshot of a player's tribe (acquired cards).
  * Character cards and buildings are serialised separately.
  */
-public class TribeDto {
+public class TribeDto implements Serializable {
     public final List<CardDto> characterCards;
     public final List<CardDto> buildings;
 

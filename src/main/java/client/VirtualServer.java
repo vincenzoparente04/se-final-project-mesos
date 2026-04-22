@@ -1,7 +1,5 @@
 package client;
 
-import shared.command.GameCommand;
-
 /**
  * Protocol-agnostic API for sending game commands to the server.
  * <p>
@@ -14,19 +12,18 @@ import shared.command.GameCommand;
  */
 public interface VirtualServer {
 
-//    /** Sends a totem-colour choice to the server. */
-//    void sendChooseColor(String color);
-//
-//    /** Sends a totem placement on the given offer-tile letter. */
-//    void sendPlaceTotem(char tile);
-//
-//    /** Sends a card-draw request for the given card ID. */
-//    void sendDrawCard(int cardId);
-//
-//    /** Signals that the current player's turn is over. */
-//    void sendEndTurn();
+    /** Sends a totem-colour choice to the server. */
+    void sendChooseColor(String color);
 
-      /** Closes the underlying connection. */
-      void close();
-      void send(GameCommand command);
+    /** Sends a totem placement on the given offer-tile letter. */
+    void sendPlaceTotem(char tile);
+
+    /** Sends a card-draw request for the given card ID. */
+    void sendDrawCard(int cardId);
+
+    /** Signals that the current player's turn is over. */
+    void sendEndTurn();
+
+    /** Closes the underlying connection. */
+    void close();
 }

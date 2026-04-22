@@ -1,17 +1,18 @@
 package server.socket;
 
 import server.core.VirtualView;
-import shared.command.*;
+import shared.command.GameCommand;
 
-import java.io.*;
-import java.util.Base64;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.function.Consumer;
 
 /**
  * Dedicated reading thread for one TCP-connected client.
  * <p>
- * Reads lines from the socket in a blocking loop, and places the resulting {@link GameCommand}
+ * Reads lines from the socket in a blocking loop, delegates parsing to
+ * {@link SocketCommandParser}, and places the resulting {@link GameCommand}
  * on the shared {@link BlockingQueue} for sequential processing by
  * {@link server.core.GameThread}.
  * <p>
@@ -26,15 +27,18 @@ public class SocketClientHandler implements Runnable {
     private final VirtualView virtualView;
     private final BufferedReader in;
     private final BlockingQueue<GameCommand> commandQueue;
+    private final SocketCommandParser commandParser;
     private final Consumer<String> onDisconnect;
 
     public SocketClientHandler(VirtualView virtualView,
                                BufferedReader in,
                                BlockingQueue<GameCommand> commandQueue,
+                               SocketCommandParser commandParser,
                                Consumer<String> onDisconnect) {
         this.virtualView = virtualView;
         this.in = in;
         this.commandQueue = commandQueue;
+        this.commandParser = commandParser;
         this.onDisconnect = onDisconnect;
     }
 
@@ -54,41 +58,12 @@ public class SocketClientHandler implements Runnable {
 
     private void handleLine(String line) {
         try {
-            deserialize(line);
+            GameCommand command = commandParser.parse(line);
+            commandQueue.put(command);
         } catch (IllegalArgumentException e) {
             virtualView.sendError(e.getMessage());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
-
-
-// ─────────────────────────────────────────────────────────
-// Command dispatch
-// ─────────────────────────────────────────────────────────
-
-    /**
-     * Deserializes the Base64-encoded command and adds it to the queue.
-     */
-    public void deserialize(String rawMessage) throws InterruptedException {
-        try {
-            // Decode from Base64
-            byte[] decoded = Base64.getDecoder().decode(rawMessage);
-            
-            // Deserialize to GameCommand
-            ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(decoded));
-            GameCommand command = (GameCommand) ois.readObject();
-            ois.close();
-            
-            // Add to queue for processing
-            commandQueue.put(command);
-        } catch (IllegalArgumentException e) {
-            virtualView.sendError("DECODE_ERROR:" + e.getMessage());
-        } catch (ClassNotFoundException | ClassCastException e) {
-            virtualView.sendError("INVALID_COMMAND:" + e.getMessage());
-        } catch (IOException e) {
-            virtualView.sendError("SERIALIZATION_ERROR:" + e.getMessage());
-        }
-    }
-
 }
