@@ -1,190 +1,147 @@
 package client;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import shared.command.*;
+
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
 
 /**
- * Minimal command-line client for playing Mesos without JavaFX.
+ * Entry point unificato per il client a riga di comando (CLI).
  * <p>
- * Usage: {@code java client.ClientMainCli <host> <port> <playerName>}
- * <p>
- * The player types commands (without the playerName prefix) and the client
- * prepends it automatically. State updates are printed as compact JSON to stdout.
- * <p>
- * Supported input commands:
+ * <b>Usage</b>:
  * <pre>
- *   color RED          →  CHOOSE_COLOR:name:RED
- *   totem A            →  PLACE_TOTEM:name:A
- *   draw 42            →  DRAW_CARD:name:42
- *   end                →  END_TURN:name
- *   quit               →  closes the connection
+ * ClientMainCli socket &lt;host&gt; &lt;port&gt;    &lt;playerName&gt;
+ * ClientMainCli rmi    &lt;host&gt; &lt;rmiPort&gt; &lt;playerName&gt;
  * </pre>
+ * Se il protocollo viene omesso, il client utilizza di default SOCKET.
  */
 public class ClientMainCli {
 
-    /** Objects/arrays whose compact form fits within this limit stay on one line. */
-    private static final int COMPACT_THRESHOLD = 100;
-    private static final String INDENT = "  ";
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         if (args.length < 3) {
-            System.err.println("Usage: ClientMainCli <host> <port> <playerName>");
+            printUsage();
             return;
         }
-        String host       = args[0];
-        int port          = Integer.parseInt(args[1]);
-        String playerName = args[2];
 
-        Socket socket = new Socket(host, port);
-        PrintWriter out   = new PrintWriter(socket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        // Parsing degli argomenti riutilizzando la logica della GUI
+        String firstArg = args[0].toLowerCase();
+        ConnectionProtocol transport;
+        int port;
+        String host;
+        String playerName;
+        if (firstArg.equals("socket") || firstArg.equals("rmi")) {
+            if (args.length < 4) { printUsage(); return; }
+            transport = ConnectionProtocol.from(args[0]);
+            host = args[1];
+            port = Integer.parseInt(args[2]);
+            playerName = args[3];
+        } else {
+            // Comportamento legacy/default (Socket)
+            transport = ConnectionProtocol.SOCKET;
+            host = args[0];
+            port = Integer.parseInt(args[1]);
+            playerName = args[2];
+        }
 
-        out.println("CONNECT:" + playerName);
-        System.out.println("Connected as " + playerName + ". Waiting for other players...");
-        System.out.println("Commands: color <COLOR> | totem <LETTER> | draw <ID> | end | quit");
+        LocalGameState localState = new LocalGameState();
+        ClientStateListener listener = new ClientStateListenerCli();
 
-        // Background thread — prints everything received from the server
-        Thread reader = new Thread(() -> {
-            try {
-                String line;
-                while ((line = in.readLine()) != null) {
-                    System.out.println("\n" + format(line));
-                    System.out.print("> ");
-                }
-            } catch (IOException ignored) {}
-        });
-        reader.setDaemon(true);
-        reader.start();
+        System.out.println("Connecting via " + transport + " to " + host + ":" + port
+                + " as \"" + playerName + "\"...");
 
-        // Main thread — reads stdin commands and sends them to the server
+        VirtualServer proxy = VirtualServerFactory.create(
+                transport, host, port, playerName, localState, listener);
+
+        System.out.println("Connected. Waiting for other players...");
+        printHelp();
+        System.out.print("> ");
+
+        // Loop principale di I/O
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         String input;
         while ((input = stdin.readLine()) != null) {
             String trimmed = input.trim();
-            if (trimmed.isEmpty()) continue;
+            if (trimmed.isEmpty()) {
+                System.out.print("> ");
+                continue;
+            }
 
             if (trimmed.equalsIgnoreCase("quit")) break;
 
-            String command = translate(playerName, trimmed);
-            if (command != null) {
-                out.println(command);
-            } else {
-                System.out.println("Unknown command. Use: color <COLOR> | totem <LETTER> | draw <ID> | end");
+            if (trimmed.equalsIgnoreCase("state")) {
+                ClientStateListenerCli.printState(localState);
+            } else if (!dispatch(proxy, trimmed, playerName)) {
+                System.out.println("[?] Unknown command. " + helpLine());
             }
             System.out.print("> ");
         }
 
-        socket.close();
+        proxy.close();
+        System.out.println("Disconnected.");
     }
 
     // ─────────────────────────────────────────────────────────
-    // Formatting
+    // Command dispatch
     // ─────────────────────────────────────────────────────────
 
-    private static String format(String line) {
-        if (line.startsWith("STATE:")) {
-            try {
-                JsonElement el = JsonParser.parseString(line.substring(6));
-                return "[STATE]\n" + formatJson(el, 0);
-            } catch (Exception ignored) {}
-        }
-        if (line.startsWith("GAME_OVER:")) {
-            String winners = line.substring(10);
-            return "═══════════════════════════════\n" +
-                   "  GAME OVER — Winner(s): " + winners + "\n" +
-                   "═══════════════════════════════";
-        }
-        return "[SERVER] " + line;
-    }
-
-    /**
-     * Formats a JsonElement with adaptive indentation:
-     * if the compact representation fits within COMPACT_THRESHOLD characters
-     * it stays on one line; otherwise it expands with indentation.
-     */
-    private static String formatJson(JsonElement el, int depth) {
-        if (el.isJsonNull() || el.isJsonPrimitive()) {
-            return el.toString();
-        }
-        String compact = compact(el);
-        if (compact.length() <= COMPACT_THRESHOLD) {
-            return compact;
-        }
-        String pad = INDENT.repeat(depth + 1);
-        if (el.isJsonArray()) {
-            JsonArray arr = el.getAsJsonArray();
-            StringBuilder sb = new StringBuilder("[\n");
-            var list = arr.asList();
-            for (int i = 0; i < list.size(); i++) {
-                sb.append(pad).append(formatJson(list.get(i), depth + 1));
-                if (i < list.size() - 1) sb.append(",");
-                sb.append("\n");
-            }
-            return sb.append(INDENT.repeat(depth)).append("]").toString();
-        }
-        // JsonObject
-        JsonObject obj = el.getAsJsonObject();
-        StringBuilder sb = new StringBuilder("{\n");
-        var entries = obj.entrySet().stream().toList();
-        for (int i = 0; i < entries.size(); i++) {
-            var entry = entries.get(i);
-            sb.append(pad)
-              .append("\"").append(entry.getKey()).append("\": ")
-              .append(formatJson(entry.getValue(), depth + 1));
-            if (i < entries.size() - 1) sb.append(",");
-            sb.append("\n");
-        }
-        return sb.append(INDENT.repeat(depth)).append("}").toString();
-    }
-
-    /** Renders a JsonElement as a single-line string (no whitespace added). */
-    private static String compact(JsonElement el) {
-        if (el.isJsonNull() || el.isJsonPrimitive()) return el.toString();
-        if (el.isJsonArray()) {
-            JsonArray arr = el.getAsJsonArray();
-            if (arr.isEmpty()) return "[]";
-            StringBuilder sb = new StringBuilder("[");
-            var list = arr.asList();
-            for (int i = 0; i < list.size(); i++) {
-                sb.append(compact(list.get(i)));
-                if (i < list.size() - 1) sb.append(", ");
-            }
-            return sb.append("]").toString();
-        }
-        JsonObject obj = el.getAsJsonObject();
-        if (obj.isEmpty()) return "{}";
-        StringBuilder sb = new StringBuilder("{");
-        var entries = obj.entrySet().stream().toList();
-        for (int i = 0; i < entries.size(); i++) {
-            var e = entries.get(i);
-            sb.append("\"").append(e.getKey()).append("\": ").append(compact(e.getValue()));
-            if (i < entries.size() - 1) sb.append(", ");
-        }
-        return sb.append("}").toString();
-    }
-
-    // ─────────────────────────────────────────────────────────
-    // Command translation
-    // ─────────────────────────────────────────────────────────
-
-    private static String translate(String playerName, String input) {
+    private static boolean dispatch(VirtualServer proxy, String input, String playerName) {
         String[] parts = input.split("\\s+", 2);
         String verb = parts[0].toLowerCase();
         String arg  = parts.length > 1 ? parts[1].trim() : "";
 
-        return switch (verb) {
-            case "color" -> "CHOOSE_COLOR:" + playerName + ":" + arg.toUpperCase();
-            case "totem" -> "PLACE_TOTEM:"  + playerName + ":" + arg.toUpperCase();
-            case "draw"  -> "DRAW_CARD:"    + playerName + ":" + arg;
-            case "end"   -> "END_TURN:"     + playerName;
-            default      -> null;
-        };
+        switch (verb) {
+//            case "color" -> {
+//                if (arg.isEmpty()) { System.out.println("[ERROR] color requires a colour name"); return true; }
+//                proxy.sendCommand(new ChooseColorCommand(parts[1], parts[2]));
+//            }
+//            case "totem" -> {
+//                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; }
+//                proxy.sendPlaceTotem(arg.toUpperCase().charAt(0));
+//            }
+//            case "draw" -> {
+//                try {
+//                    proxy.sendDrawCard(Integer.parseInt(arg));
+//                } catch (NumberFormatException e) {
+//                    System.out.println("[ERROR] Invalid card ID: \"" + arg + "\"");
+//                }
+//            }
+//            case "end" -> proxy.sendEndTurn();
+            case "color" -> {
+                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; };
+                proxy.send(new ChooseColorCommand(playerName, parts[1]));
+            }
+            case "totem" -> {
+                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; };
+                proxy.send(new PlaceTotemCommand(playerName, parts[1].charAt(0)));
+            }
+            case "draw" -> {
+                if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; };
+                proxy.send(new DrawCardCommand(playerName, Integer.parseInt(parts[1])));
+            }
+            case "end" -> {
+                proxy.send(new EndTurnCommand(playerName));
+            }
+            default    -> { return false; }
+        }
+        return true;
+    }
+    
+
+    // ─────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────
+
+    private static void printUsage() {
+        System.err.println("Usage:");
+        System.err.println("  ClientMainCli socket <host> <port>    <playerName>");
+        System.err.println("  ClientMainCli rmi    <host> <rmiPort> <playerName>");
+    }
+
+    private static void printHelp() {
+        System.out.println("Commands: " + helpLine());
+    }
+
+    private static String helpLine() {
+        return "color <COLOR> | totem <LETTER> | draw <ID> | end | state | quit";
     }
 }

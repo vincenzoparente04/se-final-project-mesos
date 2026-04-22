@@ -8,58 +8,94 @@ import shared.dto.TurnOrderSlotDto;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Client-side view of the game state.
  * Populated by deserialising {@link GameStateDto} snapshots received from the server.
  * <p>
- * The client never imports model domain classes (except enums) —
- * all game data arrives pre-serialised from the server.
+ * Thread-safe: {@link #update(GameStateDto)} is called from the {@link SocketClientThread}
+ * (network thread) while getters are called from the UI thread. The internal
+ * {@link AtomicReference} guarantees that every getter always reads a consistent,
+ * fully-written snapshot with no synchronisation overhead on reads.
  */
 public class LocalGameState {
 
-    private String phase;
-    private String currentPlayerName;
-    private int currentRound;
-    private String currentEra;
-    private List<PlayerDto> players = Collections.emptyList();
-    private List<OfferTileDto> offerTiles = Collections.emptyList();
-    private List<TurnOrderSlotDto> turnOrderSlots = Collections.emptyList();
-    private List<CardDto> topRowTribe = Collections.emptyList();
-    private List<CardDto> bottomRowTribe = Collections.emptyList();
-    private List<CardDto> topRowBuilding = Collections.emptyList();
-    private List<CardDto> bottomRowBuilding = Collections.emptyList();
-    private List<String> winners = Collections.emptyList();
+    private final AtomicReference<GameStateDto> latest = new AtomicReference<>();
 
     public void update(GameStateDto dto) {
-        this.phase             = dto.phase;
-        this.currentPlayerName = dto.currentPlayerName;
-        this.currentRound      = dto.currentRound;
-        this.currentEra        = dto.currentEra;
-        this.players           = dto.players           != null ? dto.players           : Collections.emptyList();
-        this.offerTiles        = dto.offerTiles        != null ? dto.offerTiles        : Collections.emptyList();
-        this.turnOrderSlots    = dto.turnOrderSlots    != null ? dto.turnOrderSlots    : Collections.emptyList();
-        this.topRowTribe       = dto.topRowTribe       != null ? dto.topRowTribe       : Collections.emptyList();
-        this.bottomRowTribe    = dto.bottomRowTribe    != null ? dto.bottomRowTribe    : Collections.emptyList();
-        this.topRowBuilding    = dto.topRowBuilding    != null ? dto.topRowBuilding    : Collections.emptyList();
-        this.bottomRowBuilding = dto.bottomRowBuilding != null ? dto.bottomRowBuilding : Collections.emptyList();
-        this.winners           = dto.winners           != null ? dto.winners           : Collections.emptyList();
+        latest.set(dto);
     }
 
-    public String getPhase()             { return phase; }
-    public String getCurrentPlayerName() { return currentPlayerName; }
-    public int getCurrentRound()         { return currentRound; }
-    public String getCurrentEra()        { return currentEra; }
-    public List<PlayerDto> getPlayers()  { return players; }
-    public List<OfferTileDto> getOfferTiles()       { return offerTiles; }
-    public List<TurnOrderSlotDto> getTurnOrderSlots(){ return turnOrderSlots; }
-    public List<CardDto> getTopRowTribe()            { return topRowTribe; }
-    public List<CardDto> getBottomRowTribe()         { return bottomRowTribe; }
-    public List<CardDto> getTopRowBuilding()         { return topRowBuilding; }
-    public List<CardDto> getBottomRowBuilding()      { return bottomRowBuilding; }
-    public List<String> getWinners()                 { return winners; }
+    /**
+     * Returns the latest complete snapshot received from the server,
+     * or {@code null} if no state has been received yet.
+     */
+    public GameStateDto snapshot() {
+        return latest.get();
+    }
+
+    public String getPhase() {
+        GameStateDto s = snapshot();
+        return s != null ? s.phase : null;
+    }
+
+    public String getCurrentPlayerName() {
+        GameStateDto s = snapshot();
+        return s != null ? s.currentPlayerName : null;
+    }
+
+    public int getCurrentRound() {
+        GameStateDto s = snapshot();
+        return s != null ? s.currentRound : 0;
+    }
+
+    public String getCurrentEra() {
+        GameStateDto s = snapshot();
+        return s != null ? s.currentEra : null;
+    }
+
+    public List<PlayerDto> getPlayers() {
+        GameStateDto s = snapshot();
+        return s != null && s.players != null ? s.players : Collections.emptyList();
+    }
+
+    public List<OfferTileDto> getOfferTiles() {
+        GameStateDto s = snapshot();
+        return s != null && s.offerTiles != null ? s.offerTiles : Collections.emptyList();
+    }
+
+    public List<TurnOrderSlotDto> getTurnOrderSlots() {
+        GameStateDto s = snapshot();
+        return s != null && s.turnOrderSlots != null ? s.turnOrderSlots : Collections.emptyList();
+    }
+
+    public List<CardDto> getTopRowTribe() {
+        GameStateDto s = snapshot();
+        return s != null && s.topRowTribe != null ? s.topRowTribe : Collections.emptyList();
+    }
+
+    public List<CardDto> getBottomRowTribe() {
+        GameStateDto s = snapshot();
+        return s != null && s.bottomRowTribe != null ? s.bottomRowTribe : Collections.emptyList();
+    }
+
+    public List<CardDto> getTopRowBuilding() {
+        GameStateDto s = snapshot();
+        return s != null && s.topRowBuilding != null ? s.topRowBuilding : Collections.emptyList();
+    }
+
+    public List<CardDto> getBottomRowBuilding() {
+        GameStateDto s = snapshot();
+        return s != null && s.bottomRowBuilding != null ? s.bottomRowBuilding : Collections.emptyList();
+    }
+
+    public List<String> getWinners() {
+        GameStateDto s = snapshot();
+        return s != null && s.winners != null ? s.winners : Collections.emptyList();
+    }
 
     public boolean isGameOver() {
-        return "END_OF_GAME".equals(phase);
+        return "END_OF_GAME".equals(getPhase());
     }
 }
