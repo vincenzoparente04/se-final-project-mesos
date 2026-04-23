@@ -72,6 +72,20 @@ class TribeCardFactoryTest {
     }
 
     @Test
+    void createRegularCardsMatchesCreateAllRegularCards() {
+        List<TribeCard> regular = TribeCardFactory.createRegularCards();
+        TribeCardFactory.TribeCardCollection all = TribeCardFactory.createAll();
+        assertEquals(all.regularCards().size(), regular.size());
+    }
+
+    @Test
+    void createFinalEventsMatchesCreateAllFinalEvents() {
+        List<TribeCard> finals = TribeCardFactory.createFinalEvents();
+        TribeCardFactory.TribeCardCollection all = TribeCardFactory.createAll();
+        assertEquals(all.finalEvents().size(), finals.size());
+    }
+
+    @Test
     void createEventsThrowsOnUnknownEventType() {
         JsonArray events = new JsonArray();
         JsonObject invalid = new JsonObject();
