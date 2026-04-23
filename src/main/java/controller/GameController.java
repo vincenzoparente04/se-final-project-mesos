@@ -32,22 +32,8 @@ public class GameController {
 
     public GameController(GameModel gameModel) {
         this.gameModel = gameModel;
-        gameModel.addPropertyChangeListener(evt -> broadcastDto());
     }
 
-    // ─────────────────────────────────────────────────────────
-    // DTO listener registration
-    // ─────────────────────────────────────────────────────────
-
-    /**
-     * Registers a listener that receives a freshly built {@link GameStateDto}
-     * every time the model state changes.
-     * The listener is invoked on the dedicated broadcaster thread,
-     * decoupled from the controller lock.
-     */
-    public void addDtoListener(Consumer<GameStateDto> listener) {
-        dtoListeners.add(listener);
-    }
 
     // ─────────────────────────────────────────────────────────
     // Public API — all parameters are primitives or strings
@@ -113,12 +99,5 @@ public class GameController {
             throw new IllegalStateException("It is not " + playerName + "'s turn.");
         }
         return requested;
-    }
-
-    private void broadcastDto() {
-        // Build the snapshot while still inside the caller's lock (safe read of model).
-        // Dispatch to the broadcaster executor so socket I/O never blocks the lock.
-        GameStateDto dto = GameStateDtoBuilder.build(gameModel);
-        broadcaster.execute(() -> dtoListeners.forEach(l -> l.accept(dto)));
     }
 }

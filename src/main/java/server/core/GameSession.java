@@ -42,6 +42,7 @@ public class GameSession {
     private final List<VirtualView> views;
     private final BlockingQueue<GameCommand> commandQueue;
     private final GameController controller;
+    private final GameModel model;
     private final ExecutorService broadcastExecutor;
     private volatile boolean gameOver = false;
     private Thread gameThread;
@@ -51,7 +52,8 @@ public class GameSession {
         this.players = List.copyOf(players);
         this.views = players.stream().map(PlayerEntry::getView).toList();
         this.commandQueue = commandQueue;
-        this.controller = new GameController(new GameModel());
+        this.model = new GameModel();
+        this.controller = new GameController(model);
         this.broadcastExecutor = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r, "broadcast");
             t.setDaemon(true);
@@ -74,6 +76,11 @@ public class GameSession {
 
         players.forEach(p -> p.activate(commandQueue, this::onPlayerDisconnected));
 
+        for(PlayerEntry player: players) {
+            model.addViewListener(player.getView());
+        }
+
+        /*
         controller.addDtoListener(dto -> {
             boolean isFinal = dto.winners != null && !dto.winners.isEmpty();
             if (isFinal) {
@@ -85,7 +92,7 @@ public class GameSession {
                 // schedule shutdown AFTER in-flight broadcasts
                 new Thread(this::shutdownBroadcastExecutor, "broadcast-shutdown").start();
             }
-        });
+        });*/
 
         controller.startGame(playerNames);
 
