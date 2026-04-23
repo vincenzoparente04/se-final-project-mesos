@@ -7,6 +7,7 @@ import model.board.OfferTileAction.OfferTileAction;
 import model.board.OfferTrack;
 import model.board.TurnOrderTile;
 import model.cards.Card;
+import model.cards.buildingCards.BuildingCard;
 import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.player.Player;
@@ -247,6 +248,64 @@ class ActionPhaseTest {
         verify(rowsManager, never()).removeCard(60);
         verify(selectedCard, never()).registerToTribe(p1);
         verify(model, never()).notifyChange("card_drawn:60");
+    }
+
+    @Test
+    @DisplayName("endTurn should throw when no active turn")
+    void endTurnWithoutActiveTurnThrows() {
+        assertThrows(IllegalStateException.class, () -> phase.endTurn());
+    }
+
+    @Test
+    @DisplayName("endTurn should throw when there are forced moves remaining")
+    void endTurnWithForcedMovesThrows() {
+        CharacterCard forcedCard = mock(CharacterCard.class);
+        when(forcedCard.getId()).thenReturn(1);
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(forcedCard);
+            return null;
+        }).when(forcedCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
+
+        when(board.getNextPlayerOnOfferTrack()).thenReturn(p1);
+        when(offerTrack.getOccupiedTileByPlayer(p1)).thenReturn(occupiedTile);
+        when(occupiedTile.getAction()).thenReturn(action);
+        when(action.isFinished()).thenReturn(false);
+        when(action.canDraw(forcedCard, rowsManager)).thenReturn(true);
+        when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(forcedCard));
+        when(rowsManager.getAllTribeCardsOnBoard()).thenReturn(List.of(forcedCard));
+
+        phase.onEnter();
+
+        assertThrows(IllegalStateException.class, () -> phase.endTurn());
+    }
+
+    @Test
+    @DisplayName("endTurn with no forced moves notifies, returns totem and advances to next player")
+    void endTurnWithNoForcedMovesAdvancesToNextPlayer() {
+        BuildingCard buildingCard = mock(BuildingCard.class);
+        when(buildingCard.getId()).thenReturn(5);
+        when(buildingCard.getDiscountedCost(p1)).thenReturn(2);
+        doAnswer(invocation -> {
+            CardVisitor visitor = invocation.getArgument(0);
+            visitor.visit(buildingCard);
+            return null;
+        }).when(buildingCard).accept(org.mockito.ArgumentMatchers.any(CardVisitor.class));
+
+        when(board.getNextPlayerOnOfferTrack()).thenReturn(p1).thenReturn(null);
+        when(offerTrack.getOccupiedTileByPlayer(p1)).thenReturn(occupiedTile);
+        when(occupiedTile.getAction()).thenReturn(action);
+        when(action.isFinished()).thenReturn(false);
+        when(action.canDraw(buildingCard, rowsManager)).thenReturn(true);
+        when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(buildingCard));
+        when(rowsManager.getAllTribeCardsOnBoard()).thenReturn(List.of()); // no forced moves
+        when(p1.getFood()).thenReturn(10);
+
+        phase.onEnter();
+        phase.endTurn();
+
+        verify(model).notifyChange("turn_ended:Player1");
+        verify(board).returnTotemToTurnOrder(p1);
     }
 
     @Test
