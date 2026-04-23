@@ -1,5 +1,6 @@
 package model;
 
+import controller.GameStateDtoBuilder;
 import model.board.Board;
 import model.enums.Era;
 import model.enums.GamePhase;
@@ -8,6 +9,8 @@ import model.phaseHandlers.ColorChoosingPhase;
 import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
 import model.rowsManager.RowsManager;
+import server.core.VirtualView;
+import shared.dto.GameStateDto;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -23,6 +26,8 @@ public class GameModel {
     private int playerCount;
     private int currentRound = 1;
     private List<String> winners = new ArrayList<>();
+    private List<VirtualView> viewListeners = new ArrayList<>();
+
 
     private GamePhaseHandler currentPhaseHandler;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -117,7 +122,12 @@ public class GameModel {
         return winners;
     }
 
+    public void addViewListener(VirtualView view) {
+        viewListeners.add(view);
+    }
+
     public void notifyChange(String message) {
-        pcs.firePropertyChange("gameState", null, message);
+        GameStateDto dto = GameStateDtoBuilder.build(this);
+        viewListeners.forEach(v -> v.sendState(dto));
     }
 }
