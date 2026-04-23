@@ -45,6 +45,8 @@ public class ActionPhase extends GamePhaseHandler {
 
         currentAction.onEnterAction(currentPlayer, model);
 
+        model.notifyChange("action_started:" + currentPlayer.getName());
+
         checkActionCompletionOrAutoAdvance();
     }
 
