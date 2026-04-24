@@ -43,9 +43,9 @@ public class ActionPhase extends GamePhaseHandler {
             throw new IllegalStateException("No action associated with the offer tile.");
         }
 
-        currentAction.onEnterAction(currentPlayer, model);
-
         model.notifyChange("action_started:" + currentPlayer.getName());
+
+        currentAction.onEnterAction(currentPlayer, model);
 
         checkActionCompletionOrAutoAdvance();
     }
