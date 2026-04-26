@@ -34,33 +34,24 @@ public class PlacementPhase extends GamePhaseHandler {
         if (offerTile == null) {
             throw new IllegalArgumentException("tileId " + tileId + " is invalid");
         }
-        if(!canPlaceTotem(player, offerTile)) { return; };
+
+        if(player != currentPlayer) {
+            //checked also in gameController
+            throw new IllegalArgumentException("It's not " + player.getName() + "'s turn to place a totem");
+        }
+        //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
+        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE){
+            throw new IllegalArgumentException("Player " + player.getName() + " cannot place a totem because he is not on the turn order tile");
+        }
+        if(offerTile.isOccupied()) {
+            throw new IllegalArgumentException("Tile " + offerTile.getLetter() + " is already occupied");
+        }
+
 
         board.placeTotem(player, offerTile);
         advanceTurn();
     }
 
-
-    public boolean canPlaceTotem(Player player, OfferTile tile){
-        if(player != currentPlayer) {
-            //model.notifyChange("It's not " + player.getName() + "'s turn to place a totem");
-            //return false;
-            throw new IllegalArgumentException("It's not " + player.getName() + "'s turn to place a totem");
-        }
-        //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
-        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE){
-           // model.notifyChange("Player " + player.getName() + " cannot place a totem because he is not on the turn order tile");
-            //return false;
-            throw new IllegalArgumentException("Player " + player.getName() + " cannot place a totem because he is not on the turn order tile");
-        }
-        if(tile.isOccupied()) {
-            //model.notifyChange("Tile " + tile.getLetter() + " is already occupied.");
-            //return false;
-            throw new IllegalArgumentException("Tile " + tile.getLetter() + " is already occupied.");
-        }
-
-        return true;
-    }
 
     private void advanceTurn() {
         currentIndex++;
