@@ -34,7 +34,6 @@ public class ColorChoosingPhase extends GamePhaseHandler {
 
         player.setColor(color);
         availableColors.remove(color);
-        model.notifyChange("color_chosen:" + player.getName() + ":" + color);
 
         advanceTurn();
     }

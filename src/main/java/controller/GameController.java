@@ -5,8 +5,10 @@ import model.enums.TotemColor;
 import model.player.Player;
 import shared.dto.GameStateDto;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
@@ -24,25 +26,14 @@ import java.util.function.Consumer;
 public class GameController {
 
     private final GameModel gameModel;
-    private final List<Consumer<GameStateDto>> dtoListeners = new ArrayList<>();
+    private final List<Consumer<GameStateDto>> dtoListeners = new CopyOnWriteArrayList<>();
+    private final ExecutorService broadcaster = Executors.newSingleThreadExecutor(
+            r -> { Thread t = new Thread(r, "dto-broadcaster"); t.setDaemon(true); return t; });
 
     public GameController(GameModel gameModel) {
         this.gameModel = gameModel;
-        gameModel.addPropertyChangeListener(evt -> broadcastDto());
     }
 
-    // ─────────────────────────────────────────────────────────
-    // DTO listener registration
-    // ─────────────────────────────────────────────────────────
-
-    /**
-     * Registers a listener that receives a freshly built {@link GameStateDto}
-     * every time the model state changes.
-     * The listener is invoked on the same thread that triggered the model change.
-     */
-    public void addDtoListener(Consumer<GameStateDto> listener) {
-        dtoListeners.add(listener);
-    }
 
     // ─────────────────────────────────────────────────────────
     // Public API — all parameters are primitives or strings
@@ -108,10 +99,5 @@ public class GameController {
             throw new IllegalStateException("It is not " + playerName + "'s turn.");
         }
         return requested;
-    }
-
-    private void broadcastDto() {
-        GameStateDto dto = GameStateDtoBuilder.build(gameModel);
-        dtoListeners.forEach(l -> l.accept(dto));
     }
 }

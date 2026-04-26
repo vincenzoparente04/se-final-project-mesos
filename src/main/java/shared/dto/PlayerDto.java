@@ -1,6 +1,8 @@
 package shared.dto;
 
-public class PlayerDto {
+import java.io.Serializable;
+
+public class PlayerDto implements Serializable {
     public final String name;
     public final int food;
     public final int prestigePoints;

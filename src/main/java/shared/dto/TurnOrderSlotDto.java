@@ -1,6 +1,8 @@
 package shared.dto;
 
-public class TurnOrderSlotDto {
+import java.io.Serializable;
+
+public class TurnOrderSlotDto implements Serializable {
     public final int position;        // 0-based index
     public final String occupantName; // null if the slot is free
 
