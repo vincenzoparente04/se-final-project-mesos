@@ -29,7 +29,14 @@ public class ColorChoosingPhase extends GamePhaseHandler {
 
     @Override
     public void chooseColor(Player player,  TotemColor color) {
-        if (player != currentPlayer || !availableColors.contains(color)) {return;}
+        if (player != currentPlayer) {
+            //will never get here because the gameController.resolveCurrentPlayer already checks this, better to maintain double check for safety
+            throw new IllegalArgumentException("It's not " + player.getName() + "'s turn to choose a color");
+        }
+        if(!availableColors.contains(color)) {
+            //only throws color is already taken because in gameController.chooseColor() totemColor.valueOf(colorName.toUpperCase()) we check that the color is one of the enum
+            throw new IllegalArgumentException("color " + color + " is already taken");
+        }
 
 
         player.setColor(color);

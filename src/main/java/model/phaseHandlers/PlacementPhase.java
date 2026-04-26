@@ -31,6 +31,9 @@ public class PlacementPhase extends GamePhaseHandler {
     public void placeTotem(Player player, char tileId) {
         Board board = model.getBoard();
         OfferTile offerTile = board.findTileByLetter(tileId);
+        if (offerTile == null) {
+            throw new IllegalArgumentException("tileId " + tileId + " is invalid");
+        }
         if(!canPlaceTotem(player, offerTile)) { return; };
 
         board.placeTotem(player, offerTile);
@@ -39,10 +42,24 @@ public class PlacementPhase extends GamePhaseHandler {
 
 
     public boolean canPlaceTotem(Player player, OfferTile tile){
-        if(player != currentPlayer) return false;
+        if(player != currentPlayer) {
+            //model.notifyChange("It's not " + player.getName() + "'s turn to place a totem");
+            //return false;
+            throw new IllegalArgumentException("It's not " + player.getName() + "'s turn to place a totem");
+        }
         //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
-        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE) return false;
-        return !tile.isOccupied();
+        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE){
+           // model.notifyChange("Player " + player.getName() + " cannot place a totem because he is not on the turn order tile");
+            //return false;
+            throw new IllegalArgumentException("Player " + player.getName() + " cannot place a totem because he is not on the turn order tile");
+        }
+        if(tile.isOccupied()) {
+            //model.notifyChange("Tile " + tile.getLetter() + " is already occupied.");
+            //return false;
+            throw new IllegalArgumentException("Tile " + tile.getLetter() + " is already occupied.");
+        }
+
+        return true;
     }
 
     private void advanceTurn() {
