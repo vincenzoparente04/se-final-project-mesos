@@ -31,18 +31,24 @@ public class PlacementPhase extends GamePhaseHandler {
     public void placeTotem(Player player, char tileId) {
         Board board = model.getBoard();
         OfferTile offerTile = board.findTileByLetter(tileId);
-        if(!canPlaceTotem(player, offerTile)) { return; };
+        if (offerTile == null) {
+            throw new IllegalArgumentException("tileId " + tileId + " is invalid");
+        }
+
+        if(player != currentPlayer) {
+            //checked also in gameController
+            throw new IllegalArgumentException("It's not " + player.getName() + "'s turn to place a totem");
+        }
+        //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
+        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE){
+            throw new IllegalArgumentException("Player " + player.getName() + " cannot place a totem because he is not on the turn order tile");
+        }
+        if(offerTile.isOccupied()) {
+            throw new IllegalArgumentException("Tile " + offerTile.getLetter() + " is already occupied");
+        }
 
         board.placeTotem(player, offerTile);
         advanceTurn();
-    }
-
-
-    public boolean canPlaceTotem(Player player, OfferTile tile){
-        if(player != currentPlayer) return false;
-        //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
-        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE) return false;
-        return !tile.isOccupied();
     }
 
     private void advanceTurn() {
