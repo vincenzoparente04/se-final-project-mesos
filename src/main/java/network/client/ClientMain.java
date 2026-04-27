@@ -1,8 +1,10 @@
-package client;
+package network.client;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import network.client.clientStateListener.ClientStateListener;
+import network.client.clientStateListener.ClientStateListenerGui;
 
 import java.util.List;
 
@@ -16,8 +18,8 @@ import java.util.List;
  * </pre>
  * The first argument selects the transport:
  * <ul>
- *   <li>{@code socket} — TCP connection via {@link client.socket.SocketVirtualServer}</li>
- *   <li>{@code rmi}    — RMI connection via {@link client.rmi.RmiVirtualServer}</li>
+ *   <li>{@code socket} — TCP connection via {@link network.client.socket.SocketVirtualServer}</li>
+ *   <li>{@code rmi}    — RMI connection via {@link network.client.rmi.RmiVirtualServer}</li>
  * </ul>
  * For backwards compatibility, if the first argument is not a transport keyword
  * (i.e. it looks like a hostname) the client defaults to {@link ConnectionProtocol#SOCKET}
@@ -87,20 +89,15 @@ public class ClientMain extends Application {
     // Connection logic (runs on background thread)
     // ─────────────────────────────────────────────────────────
 
-    private static void connect(ConnectionProtocol transport,
-                                String host, int port, String playerName,
-                                LocalGameState localState,
-                                ClientStateListener listener,
-                                Stage primaryStage) {
+    private static void connect(ConnectionProtocol transport, String host, int port, String playerName,
+                                LocalGameState localState, ClientStateListener listener, Stage primaryStage) {
         try {
-            VirtualServer proxy = VirtualServerFactory.create(
-                    transport, host, port, playerName, localState, listener);
+            VirtualServer proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
 
             @SuppressWarnings("unused")
             ClientController controller = new ClientController(proxy);
 
-            Platform.runLater(() ->
-                    primaryStage.setTitle("Mesos — " + playerName));
+            Platform.runLater(() -> primaryStage.setTitle("Mesos — " + playerName));
 
             // TODO: attach controller and localState to the real View scene graph
 

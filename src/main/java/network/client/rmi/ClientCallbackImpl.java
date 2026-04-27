@@ -1,26 +1,16 @@
-package client.rmi;
+package network.client.rmi;
 
-import client.ClientStateListener;
-import client.LocalGameState;
 import shared.dto.GameStateDto;
-import shared.rmi.ClientCallbackRemote;
+import shared.dto.LobbyDto;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * RMI implementation of {@link ClientCallbackRemote}.
- * <p>
- * Exported as a remote object so the server can call back into this JVM.
- * Each method updates the {@link LocalGameState} snapshot and notifies the
- * {@link ClientStateListener} (typically the View).
- * <p>
- * All callback methods are invoked on the RMI dispatch thread. If a JavaFX
- * UI needs to update after the callback, the {@link ClientStateListener}
- * implementation should wrap its body in {@code Platform.runLater()}.
- */
+import network.client.LocalGameState;
+import network.client.clientStateListener.ClientStateListener;
+
 public class ClientCallbackImpl extends UnicastRemoteObject implements ClientCallbackRemote {
 
     private final LocalGameState localState;
@@ -45,8 +35,18 @@ public class ClientCallbackImpl extends UnicastRemoteObject implements ClientCal
     }
 
     @Override
-    public void onWaiting(String raw) throws RemoteException {
-        listener.onWaiting(raw);
+    public void onLobbyList(List<LobbyDto> lobbies) throws RemoteException {
+        listener.onLobbyList(lobbies);
+    }
+
+    @Override
+    public void onLobbyState(LobbyDto lobby) throws RemoteException {
+        listener.onLobbyState(lobby);
+    }
+
+    @Override
+    public void onGameStarting() throws RemoteException {
+        listener.onGameStarting();
     }
 
     @Override

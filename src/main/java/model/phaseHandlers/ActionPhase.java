@@ -43,7 +43,7 @@ public class ActionPhase extends GamePhaseHandler {
             throw new IllegalStateException("No action associated with the offer tile.");
         }
 
-        model.notifyChange("action_started:" + currentPlayer.getName());
+        model.notifyChange();
 
         currentAction.onEnterAction(currentPlayer, model);
 
@@ -69,7 +69,7 @@ public class ActionPhase extends GamePhaseHandler {
         CardDrawer cardDrawer = new CardDrawer(currentPlayer, rowsManager, currentAction);
         cardDrawer.drawCard(card);
 
-        model.notifyChange("card_drawn:" + cardId);
+        model.notifyChange();
 
         // Dopo ogni pescata, verifichiamo se il turno è finito o deve essere forzatamente terminato
         checkActionCompletionOrAutoAdvance();
@@ -82,7 +82,7 @@ public class ActionPhase extends GamePhaseHandler {
             throw new IllegalStateException("All mandatory draws must be completed before ending the turn.");
         }
 
-        model.notifyChange("turn_ended:" + currentPlayer.getName());
+        model.notifyChange();
         advanceActionTurn();
     }
 

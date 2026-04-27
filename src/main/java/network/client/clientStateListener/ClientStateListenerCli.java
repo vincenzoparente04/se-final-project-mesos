@@ -1,0 +1,134 @@
+package network.client.clientStateListener;
+
+import shared.dto.CardDto;
+import shared.dto.GameStateDto;
+import shared.dto.LobbyDto;
+import shared.dto.OfferTileDto;
+import shared.dto.PlayerDto;
+
+import java.util.List;
+
+import network.client.LocalGameState;
+
+public class ClientStateListenerCli implements ClientStateListener {
+
+    @Override
+    public synchronized void onGameStateUpdated(LocalGameState state) {
+        System.out.println();
+        printState(state);
+        System.out.print("> ");
+    }
+
+    @Override
+    public synchronized void onLobbyList(List<LobbyDto> lobbies) {
+        System.out.println("\n[LOBBIES]");
+        if (lobbies.isEmpty()) {
+            System.out.println("  No open lobbies. Use 'create <maxPlayers>' to create one.");
+        } else {
+            for (LobbyDto l : lobbies) {
+                System.out.printf("  %-36s  %-20s  %d/%d players%n",
+                        l.id(), l.name(), l.currentPlayers(), l.maxPlayers());
+            }
+        }
+        System.out.print("> ");
+    }
+
+    @Override
+    public synchronized void onLobbyState(LobbyDto lobby) {
+        System.out.printf("\n[LOBBY] %s — %d/%d players%n",
+                lobby.name(), lobby.currentPlayers(), lobby.maxPlayers());
+        System.out.print("> ");
+    }
+
+    @Override
+    public synchronized void onGameStarting() {
+        System.out.println("\n[GAME] All players joined — game starting!");
+        System.out.print("> ");
+    }
+
+    @Override
+    public synchronized void onError(String message) {
+        System.out.println("\n[ERROR] " + message);
+        System.out.print("> ");
+    }
+
+    @Override
+    public synchronized void onGameOver(List<String> winners) {
+        System.out.println("\n" + "═".repeat(48));
+        if (winners.isEmpty()) {
+            System.out.println("  GAME OVER — no winners.");
+        } else {
+            System.out.println("  GAME OVER — Winner(s): " + String.join(", ", winners));
+        }
+        System.out.println("═".repeat(48));
+    }
+
+    @Override
+    public synchronized void onDisconnected() {
+        System.out.println("\n[DISCONNECTED] Connection to server lost.");
+    }
+
+    public static void printState(LocalGameState state) {
+        GameStateDto dto = state.snapshot();
+        if (dto == null) {
+            System.out.println("[STATE] No state received yet.");
+            return;
+        }
+
+        System.out.println("┌─ STATE ─────────────────────────────────────");
+        System.out.printf("│ Phase: %-16s Round: %d   Era: %s%n",
+                dto.phase, dto.currentRound,
+                dto.currentEra != null ? dto.currentEra : "—");
+        System.out.println("│ Current player: " +
+                (dto.currentPlayerName != null ? dto.currentPlayerName : "—"));
+
+        if (dto.players != null && !dto.players.isEmpty()) {
+            System.out.println("├─ Players ───────────────────────────────────");
+            for (PlayerDto p : dto.players) {
+                System.out.printf("│  %-12s  food=%-3d  prestige=%-3d  color=%-6s  location=%s%n",
+                        p.name, p.food, p.prestigePoints,
+                        p.color != null ? p.color : "—",
+                        p.totemLocation != null ? p.totemLocation : "—");
+            }
+        }
+
+        if (dto.offerTiles != null && !dto.offerTiles.isEmpty()) {
+            System.out.println("├─ Offer tiles ───────────────────────────────");
+            for (OfferTileDto t : dto.offerTiles) {
+                String occupant = t.occupantName != null ? "[" + t.occupantName + "]" : "[free]";
+                String draws = "DRAW_CARDS".equals(t.actionType)
+                        ? String.format(" top=%d/%s bot=%d/%s",
+                        t.topRowUsed, t.topRowLimit,
+                        t.bottomRowUsed, t.bottomRowLimit)
+                        : "";
+                System.out.printf("│  %c  %-12s %-10s%s%n",
+                        t.letter, t.actionType, occupant, draws);
+            }
+        }
+
+        if (dto.topRowTribe != null && !dto.topRowTribe.isEmpty()) {
+            System.out.println("├─ Cards (top tribe) ─────────────────────────");
+            printCards(dto.topRowTribe);
+        }
+        if (dto.bottomRowTribe != null && !dto.bottomRowTribe.isEmpty()) {
+            System.out.println("├─ Cards (bottom tribe) ──────────────────────");
+            printCards(dto.bottomRowTribe);
+        }
+        if (dto.topRowBuilding != null && !dto.topRowBuilding.isEmpty()) {
+            System.out.println("├─ Cards (top building) ──────────────────────");
+            printCards(dto.topRowBuilding);
+        }
+        if (dto.bottomRowBuilding != null && !dto.bottomRowBuilding.isEmpty()) {
+            System.out.println("├─ Cards (bottom building) ───────────────────");
+            printCards(dto.bottomRowBuilding);
+        }
+        System.out.println("└─────────────────────────────────────────────");
+    }
+
+    public static void printCards(List<CardDto> cards) {
+        for (CardDto c : cards) {
+            System.out.printf("│  id=%-4d  %-12s  era=%-5s  food=%-2d  pts=%d%n",
+                    c.id, c.type, c.era, c.foodCost, c.endGamePoints);
+        }
+    }
+}

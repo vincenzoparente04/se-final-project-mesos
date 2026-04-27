@@ -1,64 +1,47 @@
-package server.rmi;
+package network.server.rmi;
 
-import server.core.Game;
-import server.core.VirtualView;
 import shared.dto.GameStateDto;
-import shared.rmi.ClientCallbackRemote;
+import shared.dto.LobbyDto;
 
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
-/**
- * {@link VirtualView} implementation for RMI connections.
- * <p>
- * Sends state and error messages to the client by invoking the
- * {@link ClientCallbackRemote} stub asynchronously via a thread pool,
- * so a slow or disconnected RMI client never blocks the broadcast to
- * the other players.
- * <p>
- * The disconnect callback is initially a no-op and is replaced at game
- * start by {@link #setOnDisconnect(Consumer)} so that
- * {@link Game} can be notified when a
- * {@link RemoteException} signals a lost connection.
- * <p>
- * {@link #close()} and {@link #handleDisconnect()} are idempotent: the
- * disconnect callback fires at most once, guaranteed by the
- * {@link AtomicBoolean} {@code closed}.
- */
+import network.client.rmi.ClientCallbackRemote;
+import network.server.core.DisconnectListener;
+import network.server.core.VirtualView;
+
 public class RmiVirtualView implements VirtualView {
 
     private final String playerName;
     private final ClientCallbackRemote callback;
-    private final ExecutorService callbackExecutor;
-    private final AtomicReference<Consumer<String>> onDisconnect =
+    private final ExecutorService senderExecutor;
+    private final AtomicReference<DisconnectListener> onDisconnect =
             new AtomicReference<>(ignored -> {});
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     public RmiVirtualView(String playerName,
-                          ClientCallbackRemote callback,
-                          ExecutorService callbackExecutor) {
+                          ClientCallbackRemote callback) {
         this.playerName = playerName;
         this.callback = callback;
-        this.callbackExecutor = callbackExecutor;
-    }
+        this.senderExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "rmi-sender-" + playerName);
+            t.setDaemon(true);
+            return t;
+        });    }
 
-    /**
-     * Sets the handler invoked when a {@link RemoteException} indicates
-     * that this client has disconnected.  Called by
-     * {@link Game} during start-up, before any commands
-     * are processed.
-     */
-    public void setOnDisconnect(Consumer<String> handler) {
+    public void setOnDisconnect(DisconnectListener handler) {
         onDisconnect.set(handler);
     }
 
     @Override
     public void sendState(GameStateDto dto) {
         if (closed.get()) return;
-        callbackExecutor.submit(() -> {
+
+        senderExecutor.submit(() -> {
             try {
                 callback.onState(dto);
                 if (dto.winners != null && !dto.winners.isEmpty()) {
@@ -73,7 +56,8 @@ public class RmiVirtualView implements VirtualView {
     @Override
     public void sendError(String message) {
         if (closed.get()) return;
-        callbackExecutor.submit(() -> {
+
+        senderExecutor.submit(() -> {
             try {
                 callback.onError(message);
             } catch (RemoteException e) {
@@ -83,11 +67,38 @@ public class RmiVirtualView implements VirtualView {
     }
 
     @Override
-    public void sendWaiting(int current, int expected) {
+    public void sendLobbyList(List<LobbyDto> lobbies) {
         if (closed.get()) return;
-        callbackExecutor.submit(() -> {
+
+        senderExecutor.submit(() -> {
             try {
-                callback.onWaiting(current + ":" + expected);
+                callback.onLobbyList(lobbies);
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
+    public void sendLobbyState(LobbyDto lobby) {
+        if (closed.get()) return;
+
+        senderExecutor.submit(() -> {
+            try {
+                callback.onLobbyState(lobby);
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
+    public void sendGameStarting() {
+        if (closed.get()) return;
+
+        senderExecutor.submit(() -> {
+            try {
+                callback.onGameStarting();
             } catch (RemoteException e) {
                 handleDisconnect();
             }
@@ -106,7 +117,7 @@ public class RmiVirtualView implements VirtualView {
 
     private void handleDisconnect() {
         if (closed.compareAndSet(false, true)) {
-            onDisconnect.get().accept(playerName);
+            onDisconnect.get().onDisconnected(playerName);
         }
     }
 }

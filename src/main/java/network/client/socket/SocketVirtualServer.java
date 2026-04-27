@@ -1,89 +1,104 @@
-package client.socket;
+package network.client.socket;
 
-import client.ClientStateListener;
-import client.LocalGameState;
-import client.VirtualServer;
-import com.google.gson.Gson;
+import network.client.LocalGameState;
+import network.client.VirtualServer;
+import network.client.clientStateListener.ClientStateListener;
+import shared.command.ChooseColorCommand;
+import shared.command.ClientCommand;
+import shared.command.CreateLobbyCommand;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
+import shared.command.JoinLobbyCommand;
+import shared.command.ListLobbiesCommand;
+import shared.command.PlaceTotemCommand;
 import shared.dto.GameStateDto;
+import shared.dto.LobbyDto;
+import shared.message.ConnectMessage;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * {@link VirtualServer} implementation that communicates with the server over TCP.
- * <p>
- * Responsibilities:
- * <ul>
- *   <li>Sends commands to the server as single text lines over TCP.</li>
- *   <li>Owns the {@link SocketClientThread} that reads server responses in the
- *       background and calls {@link #onStateReceived} / {@link #onErrorReceived}.</li>
- * </ul>
- * The client never holds a copy of the model: all state comes from
- * the server as {@link GameStateDto} snapshots.
- * <p>
- * {@link #close()} is idempotent and safe to call from any thread.
- */
 public class SocketVirtualServer implements VirtualServer {
-
-    private static final Gson GSON = new Gson();
 
     private final String playerName;
     private final Socket socket;
-    private final PrintWriter out;
+    private final ObjectOutputStream out;
     private final LocalGameState localState;
     private final ClientStateListener listener;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     public SocketVirtualServer(String host, int port, String playerName,
-                             LocalGameState localState, ClientStateListener listener)
+                               LocalGameState localState, ClientStateListener listener)
             throws IOException {
         this.playerName = playerName;
         this.localState = localState;
         this.listener = listener;
 
         this.socket = new Socket(host, port);
-        this.out = new PrintWriter(socket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        ObjectOutputStream objectOut = new ObjectOutputStream(socket.getOutputStream());
+        objectOut.flush();
+        ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+        objectOut.writeObject(new ConnectMessage(playerName));
+        objectOut.flush();
+        this.out = objectOut;
 
-        // Announce ourselves to the lobby
-        out.println("CONNECT:" + playerName);
-
-        // Start the background reading thread
         new Thread(new SocketClientThread(in, this), "socket-reader-" + playerName).start();
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Commands (GUI → server)
-    // ─────────────────────────────────────────────────────────
+    // ─── Game commands ────────────────────────────────────────
 
     @Override
     public void sendChooseColor(String color) {
-        if (closed.get()) return;
-        out.println("CHOOSE_COLOR:" + playerName + ":" + color);
+        send(new ChooseColorCommand(playerName, color));
     }
 
     @Override
     public void sendPlaceTotem(char tile) {
-        if (closed.get()) return;
-        out.println("PLACE_TOTEM:" + playerName + ":" + tile);
+        send(new PlaceTotemCommand(playerName, tile));
     }
 
     @Override
     public void sendDrawCard(int cardId) {
-        if (closed.get()) return;
-        out.println("DRAW_CARD:" + playerName + ":" + cardId);
+        send(new DrawCardCommand(playerName, cardId));
     }
 
     @Override
     public void sendEndTurn() {
+        send(new EndTurnCommand(playerName));
+    }
+
+    // ─── Lobby commands ───────────────────────────────────────
+
+    @Override
+    public void sendCreateLobby(int maxPlayers) {
+        send(new CreateLobbyCommand(playerName, maxPlayers));
+    }
+
+    @Override
+    public void sendJoinLobby(String lobbyId) {
+        send(new JoinLobbyCommand(playerName, lobbyId));
+    }
+
+    @Override
+    public void sendListLobbies() {
+        send(new ListLobbiesCommand(playerName));
+    }
+
+    private void send(ClientCommand cmd) {
         if (closed.get()) return;
-        out.println("END_TURN:" + playerName);
+        try {
+            synchronized (out) {
+                out.reset();
+                out.writeObject(cmd);
+                out.flush();
+            }
+        } catch (IOException e) {
+            onDisconnected();
+        }
     }
 
     @Override
@@ -93,29 +108,31 @@ public class SocketVirtualServer implements VirtualServer {
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Callbacks from ClientThread (server → client)
-    // ─────────────────────────────────────────────────────────
+    // ─── Callbacks from SocketClientThread ───────────────────
 
-    void onStateReceived(String json) {
-        GameStateDto dto = GSON.fromJson(json, GameStateDto.class);
+    void onStateReceived(GameStateDto dto) {
         localState.update(dto);
         listener.onGameStateUpdated(localState);
     }
 
-    void onGameOverReceived(String raw) {
-        List<String> winners = raw.isBlank()
-                ? Collections.emptyList()
-                : List.of(raw.split(","));
+    void onGameOverReceived(List<String> winners) {
         listener.onGameOver(winners);
-    }
-
-    void onWaitingReceived(String raw) {
-        listener.onWaiting(raw);
     }
 
     void onErrorReceived(String message) {
         listener.onError(message);
+    }
+
+    void onLobbyListReceived(List<LobbyDto> lobbies) {
+        listener.onLobbyList(lobbies);
+    }
+
+    void onLobbyStateReceived(LobbyDto lobby) {
+        listener.onLobbyState(lobby);
+    }
+
+    void onGameStartingReceived() {
+        listener.onGameStarting();
     }
 
     void onDisconnected() {

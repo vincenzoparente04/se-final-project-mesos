@@ -1,31 +1,28 @@
-package server.socket;
+package network.server.socket;
 
-import com.google.gson.Gson;
-import server.core.Game;
-import server.core.VirtualView;
+import network.server.core.VirtualView;
 import shared.dto.GameStateDto;
+import shared.dto.LobbyDto;
+import shared.message.ErrorMessage;
+import shared.message.GameOverMessage;
+import shared.message.GameStartingMessage;
+import shared.message.LobbyListMessage;
+import shared.message.LobbyStateMessage;
+import shared.message.ServerMessage;
+import shared.message.StateMessage;
 
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 
-/**
- * {@link VirtualView} implementation for TCP socket connections.
- * <p>
- * Serialises {@link GameStateDto} to JSON and writes it to the client's
- * {@link PrintWriter} as text lines.  All sends are synchronous — the
- * {@link Game} broadcast executor ensures that one slow
- * socket never stalls the rest.
- */
 public class SocketVirtualView implements VirtualView {
-
-    private static final Gson GSON = new Gson();
 
     private final String playerName;
     private final Socket socket;
-    private final PrintWriter out;
+    private final ObjectOutputStream out;
 
-    public SocketVirtualView(String playerName, Socket socket, PrintWriter out) {
+    public SocketVirtualView(String playerName, Socket socket, ObjectOutputStream out) {
         this.playerName = playerName;
         this.socket = socket;
         this.out = out;
@@ -33,20 +30,32 @@ public class SocketVirtualView implements VirtualView {
 
     @Override
     public void sendState(GameStateDto dto) {
-        out.println("STATE:" + GSON.toJson(dto));
-        if (dto.winners != null && !dto.winners.isEmpty()) {
-            out.println("GAME_OVER:" + String.join(",", dto.winners));
+        synchronized (out) {
+            send(new StateMessage(dto));
+            if (dto.winners != null && !dto.winners.isEmpty()) {
+                send(new GameOverMessage(dto.winners));
+            }
         }
     }
 
     @Override
     public void sendError(String message) {
-        out.println("ERROR:" + message);
+        send(new ErrorMessage(message));
     }
 
     @Override
-    public void sendWaiting(int current, int expected) {
-        out.println("WAITING:" + current + ":" + expected);
+    public void sendLobbyList(List<LobbyDto> lobbies) {
+        send(new LobbyListMessage(lobbies));
+    }
+
+    @Override
+    public void sendLobbyState(LobbyDto lobby) {
+        send(new LobbyStateMessage(lobby));
+    }
+
+    @Override
+    public void sendGameStarting() {
+        send(new GameStartingMessage());
     }
 
     @Override
@@ -57,5 +66,15 @@ public class SocketVirtualView implements VirtualView {
     @Override
     public void close() {
         try { socket.close(); } catch (IOException ignored) {}
+    }
+
+    private void send(ServerMessage msg) {
+        try {
+            synchronized (out) {
+                out.reset();
+                out.writeObject(msg);
+                out.flush();
+            }
+        } catch (IOException ignored) {}
     }
 }

@@ -15,7 +15,7 @@ public class Game {
     private final BlockingQueue<GameCommand> commandQueue;
     private final GameController controller;
     private volatile boolean gameOver = false;
-    private Thread QueueDrainerThread;
+    private Thread gameThread;
 
     public Game(List<PlayerEntry> players, BlockingQueue<GameCommand> commandQueue) {
         this.players = List.copyOf(players);
@@ -29,7 +29,6 @@ public class Game {
     public void start() {
         players.forEach(p -> p.setGameQueue(commandQueue));
         QueueDrainerThread qdt = new QueueDrainerThread(commandQueue, new ControllerCommandExecutor(controller),
-                // TODO cos'è sta roba strana?
                 (playerName, errorMsg) -> findView(playerName).ifPresent(v -> v.sendError(errorMsg)));
         gameThread = new Thread(qdt, "game-thread");
         gameThread.setDaemon(true);

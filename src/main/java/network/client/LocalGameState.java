@@ -1,4 +1,4 @@
-package client;
+package network.client;
 
 import shared.dto.CardDto;
 import shared.dto.GameStateDto;
