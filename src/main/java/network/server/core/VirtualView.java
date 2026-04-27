@@ -5,7 +5,7 @@ import shared.dto.GameStateDto;
 /**
  * Protocol-agnostic view of one connected player.
  * <p>
- * {@link GameSession} holds a list of these and never knows whether the
+ * {@link Game} holds a list of these and never knows whether the
  * underlying transport is a TCP socket or RMI.  Concrete implementations
  * ({@link server.socket.SocketVirtualView}, {@link server.rmi.RmiVirtualView})
  * handle the transport-specific details of sending and closing.

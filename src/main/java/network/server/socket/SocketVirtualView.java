@@ -1,6 +1,7 @@
 package server.socket;
 
 import com.google.gson.Gson;
+import server.core.Game;
 import server.core.VirtualView;
 import shared.dto.GameStateDto;
 
@@ -13,7 +14,7 @@ import java.net.Socket;
  * <p>
  * Serialises {@link GameStateDto} to JSON and writes it to the client's
  * {@link PrintWriter} as text lines.  All sends are synchronous — the
- * {@link server.core.GameSession} broadcast executor ensures that one slow
+ * {@link Game} broadcast executor ensures that one slow
  * socket never stalls the rest.
  */
 public class SocketVirtualView implements VirtualView {

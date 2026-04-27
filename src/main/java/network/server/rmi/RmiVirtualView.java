@@ -1,5 +1,6 @@
 package server.rmi;
 
+import server.core.Game;
 import server.core.VirtualView;
 import shared.dto.GameStateDto;
 import shared.rmi.ClientCallbackRemote;
@@ -20,7 +21,7 @@ import java.util.function.Consumer;
  * <p>
  * The disconnect callback is initially a no-op and is replaced at game
  * start by {@link #setOnDisconnect(Consumer)} so that
- * {@link server.core.GameSession} can be notified when a
+ * {@link Game} can be notified when a
  * {@link RemoteException} signals a lost connection.
  * <p>
  * {@link #close()} and {@link #handleDisconnect()} are idempotent: the
@@ -47,7 +48,7 @@ public class RmiVirtualView implements VirtualView {
     /**
      * Sets the handler invoked when a {@link RemoteException} indicates
      * that this client has disconnected.  Called by
-     * {@link server.core.GameSession} during start-up, before any commands
+     * {@link Game} during start-up, before any commands
      * are processed.
      */
     public void setOnDisconnect(Consumer<String> handler) {

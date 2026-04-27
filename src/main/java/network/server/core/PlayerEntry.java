@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  *   <li>{@link #getView()} — the {@link VirtualView} used to send state and
  *       errors to this player at any phase.</li>
  *   <li>{@link #activate(BlockingQueue, Consumer)} — called once by
- *       {@link GameSession#start()} to begin consuming incoming commands;
+ *       {@link Game#start()} to begin consuming incoming commands;
  *       for socket: starts the reading thread;
  *       for RMI: installs the disconnect handler.</li>
  * </ul>
@@ -37,7 +37,7 @@ public interface PlayerEntry {
      * Activates this player entry for the game phase.
      * For socket connections, starts the reading thread.
      * For RMI connections, installs the disconnect handler.
-     * Called exactly once by {@link GameSession} at game start.
+     * Called exactly once by {@link Game} at game start.
      *
      * @param commandQueue the shared queue into which parsed commands are placed
      * @param onDisconnect callback invoked with the player name on disconnect

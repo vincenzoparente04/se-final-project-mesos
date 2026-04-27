@@ -1,5 +1,6 @@
 package server.socket;
 
+import server.core.Game;
 import server.core.VirtualView;
 import shared.command.ChooseColorCommand;
 import shared.command.DrawCardCommand;
@@ -22,7 +23,7 @@ import java.util.function.Consumer;
  * Parse errors (unknown command, malformed arguments) are returned to the
  * client as {@code ERROR:} messages via the player's {@link VirtualView}.
  * On disconnect or I/O error the {@code onDisconnect} callback is invoked
- * with the player's name so that {@link server.core.GameSession} can notify
+ * with the player's name so that {@link Game} can notify
  * the remaining players.
  */
 public class SocketClientHandler implements Runnable {
