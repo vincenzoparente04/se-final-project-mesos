@@ -41,8 +41,11 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
         RowsManager rowsManager = model.getRowsManager();
         Optional<Card> found = rowsManager.findCardById(cardId);
 
-        if (found.isEmpty() || !rowsManager.topRowContainsCard(cardId)) {
-            return;
+        if (found.isEmpty()) {
+            throw new IllegalStateException("Card "+cardId+" not found");
+        }
+        if(!rowsManager.topRowContainsCard(cardId)) {
+            throw new IllegalStateException("Card "+cardId+" is not in the top row and cannot be drawn");
         }
 
         CardDrawer cardDrawer = new CardDrawer(activePlayer, rowsManager, null);
