@@ -7,40 +7,34 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
-import shared.rmi.ClientCallbackRemote;
-import network.server.core.DisconnectListener;
+import network.client.rmi.ClientCallbackRemote;
+import network.server.core.LobbyManager;
 import network.server.core.VirtualView;
 
 public class RmiVirtualView implements VirtualView {
 
     private final String playerName;
     private final ClientCallbackRemote callback;
+    private final LobbyManager lobbyManager;
     private final ExecutorService senderExecutor;
-    private final AtomicReference<DisconnectListener> onDisconnect =
-            new AtomicReference<>(ignored -> {});
-    private final AtomicBoolean closed = new AtomicBoolean(false);
+    private volatile boolean closed = false;
 
-    public RmiVirtualView(String playerName,
-                          ClientCallbackRemote callback) {
+    public RmiVirtualView(String playerName, ClientCallbackRemote callback,
+                          LobbyManager lobbyManager) {
         this.playerName = playerName;
         this.callback = callback;
+        this.lobbyManager = lobbyManager;
         this.senderExecutor = Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "rmi-sender-" + playerName);
             t.setDaemon(true);
             return t;
-        });    }
-
-    public void setOnDisconnect(DisconnectListener handler) {
-        onDisconnect.set(handler);
+        });
     }
 
     @Override
     public void sendState(GameStateDto dto) {
-        if (closed.get()) return;
-
+        if (closed) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onState(dto);
@@ -55,8 +49,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendError(String message) {
-        if (closed.get()) return;
-
+        if (closed) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onError(message);
@@ -68,8 +61,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendLobbyList(List<LobbyDto> lobbies) {
-        if (closed.get()) return;
-
+        if (closed) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onLobbyList(lobbies);
@@ -81,8 +73,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendLobbyState(LobbyDto lobby) {
-        if (closed.get()) return;
-
+        if (closed) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onLobbyState(lobby);
@@ -94,8 +85,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendGameStarting() {
-        if (closed.get()) return;
-
+        if (closed) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onGameStarting();
@@ -111,13 +101,14 @@ public class RmiVirtualView implements VirtualView {
     }
 
     @Override
-    public void close() {
-        closed.set(true);
+    public synchronized void close() {
+        closed = true;
     }
 
-    private void handleDisconnect() {
-        if (closed.compareAndSet(false, true)) {
-            onDisconnect.get().onDisconnected(playerName);
+    private synchronized void handleDisconnect() {
+        if (!closed) {
+            closed = true;
+            lobbyManager.onDisconnected(playerName);
         }
     }
 }

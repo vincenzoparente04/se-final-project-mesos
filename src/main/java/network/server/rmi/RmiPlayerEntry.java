@@ -1,9 +1,7 @@
 package network.server.rmi;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.function.Consumer;
 
-import network.server.core.DisconnectListener;
 import network.server.core.PlayerEntry;
 import network.server.core.VirtualView;
 import shared.command.GameCommand;
@@ -11,13 +9,11 @@ import shared.command.GameCommand;
 public class RmiPlayerEntry implements PlayerEntry {
 
     private final RmiVirtualView view;
-    private final Consumer<BlockingQueue<GameCommand>> onQueue;
+    private final GameServerRemoteImpl server;
 
-    public RmiPlayerEntry(RmiVirtualView view, Consumer<BlockingQueue<GameCommand>> onQueue,
-                          DisconnectListener disconnectListener) {
+    public RmiPlayerEntry(RmiVirtualView view, GameServerRemoteImpl server) {
         this.view = view;
-        this.onQueue = onQueue;
-        view.setOnDisconnect(disconnectListener);
+        this.server = server;
     }
 
     @Override
@@ -32,6 +28,6 @@ public class RmiPlayerEntry implements PlayerEntry {
 
     @Override
     public void setGameQueue(BlockingQueue<GameCommand> queue) {
-        onQueue.accept(queue);
+        server.registerQueue(getName(), queue);
     }
 }

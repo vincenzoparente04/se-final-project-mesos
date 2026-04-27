@@ -10,14 +10,14 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
-import shared.rmi.ClientCallbackRemote;
+import network.client.rmi.ClientCallbackRemote;
 import network.server.core.LobbyManager;
-import shared.rmi.GameServerRemote;
 
 public class GameServerRemoteImpl extends UnicastRemoteObject implements GameServerRemote {
 
     private final LobbyManager lobbyManager;
-    private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues =
+            new ConcurrentHashMap<>();
 
     private final CommandDispatcher dispatcher = new CommandDispatcher() {
         @Override
@@ -46,8 +46,8 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
 
     @Override
     public void join(String playerName, ClientCallbackRemote callback) throws RemoteException {
-        RmiVirtualView view = new RmiVirtualView(playerName, callback);
-        lobbyManager.addRmiPlayer(new RmiPlayerEntry(view, q -> registerQueue(playerName, q), lobbyManager));
+        RmiVirtualView view = new RmiVirtualView(playerName, callback, lobbyManager);
+        lobbyManager.addRmiPlayer(new RmiPlayerEntry(view, this));
     }
 
     @Override

@@ -25,11 +25,11 @@ import network.server.socket.SocketPlayerEntry;
 import network.server.socket.SocketVirtualView;
 import shared.message.ConnectMessage;
 
-public class LobbyManager implements LobbyCommandVisitor, DisconnectListener {
+public class LobbyManager implements LobbyCommandVisitor {
 
     private static final int CONNECT_TIMEOUT_MS = 5_000;
 
-    // @GuardedBy("this")
+    // @GuardedBy("this") // TODO controlla che tutti i metodi che accedono a queste siano synchronized
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>();
     // @GuardedBy("this")
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>();
@@ -50,9 +50,7 @@ public class LobbyManager implements LobbyCommandVisitor, DisconnectListener {
 
             String playerName = connect.playerName();
             SocketVirtualView view = new SocketVirtualView(playerName, socket, out);
-
             SocketClientHandler handler = new SocketClientHandler(view, in, this);
-
             SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
 
             synchronized (this) {
@@ -75,8 +73,6 @@ public class LobbyManager implements LobbyCommandVisitor, DisconnectListener {
         }
     }
 
-    // ─── RMI entry point ─────────────────────────────────────
-
     public synchronized void addRmiPlayer(RmiPlayerEntry entry) {
         if (nameAlreadyTaken(entry.getName())) {
             entry.getView().sendError("name_already_taken:" + entry.getName());
@@ -86,13 +82,12 @@ public class LobbyManager implements LobbyCommandVisitor, DisconnectListener {
         entry.getView().sendLobbyList(currentLobbyList());
     }
 
-    // ─── Public command entry point ──────────────────────────
-
+    // Entry point for lobbies commands
     public synchronized void handle(LobbyCommand cmd) throws Exception {
         cmd.accept(this);
     }
 
-    // ─── LobbyCommandVisitor ─────────────────────────────────
+    // LobbyCommandVisitor
 
     @Override
     public synchronized void visit(ListLobbiesCommand cmd) {
@@ -104,6 +99,7 @@ public class LobbyManager implements LobbyCommandVisitor, DisconnectListener {
     public synchronized void visit(CreateLobbyCommand cmd) {
         PlayerEntry entry = connectedPlayers.get(cmd.playerName());
         if (entry == null) return;
+        // TODO forse controllo inutile
         if (playerAlreadyInLobby(cmd.playerName())) {
             entry.getView().sendError("already_in_lobby");
             return;
@@ -136,7 +132,7 @@ public class LobbyManager implements LobbyCommandVisitor, DisconnectListener {
         checkAndStartIfFull(lobby);
     }
 
-    // ─── Game start ──────────────────────────────────────────
+    // Game start
 
     private void checkAndStartIfFull(Lobby lobby) {
         if (!lobby.isFull()) return;
@@ -153,9 +149,7 @@ public class LobbyManager implements LobbyCommandVisitor, DisconnectListener {
         players.forEach(p -> activeGames.put(p.getName(), gameSession));
     }
 
-    // ─── Disconnect ───────────────────────────────────────────
-
-    @Override
+    // Disconnect
     public synchronized void onDisconnected(String playerName) {
         connectedPlayers.remove(playerName);
         Game gameSession = activeGames.remove(playerName);
@@ -167,7 +161,7 @@ public class LobbyManager implements LobbyCommandVisitor, DisconnectListener {
         }
     }
 
-    // ─── Helpers ─────────────────────────────────────────────
+    // Helpers
 
     private void broadcastLobbyState(Lobby lobby) {
         LobbyDto dto = lobby.toDto();

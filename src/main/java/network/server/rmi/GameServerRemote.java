@@ -1,5 +1,6 @@
-package shared.rmi;
+package network.server.rmi;
 
+import network.client.rmi.ClientCallbackRemote;
 import shared.command.ClientCommand;
 
 import java.rmi.Remote;

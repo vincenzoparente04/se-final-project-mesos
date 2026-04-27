@@ -1,4 +1,4 @@
-package shared.rmi;
+package network.client.rmi;
 
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
