@@ -1,4 +1,4 @@
-package client;
+package network.client;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;

@@ -1,55 +1,49 @@
-package client.socket;
+package network.client.socket;
 
-import java.io.BufferedReader;
+import shared.message.ErrorMessage;
+import shared.message.GameOverMessage;
+import shared.message.GameStartingMessage;
+import shared.message.LobbyListMessage;
+import shared.message.LobbyStateMessage;
+import shared.message.ServerMessage;
+import shared.message.ServerMessageHandler;
+import shared.message.StateMessage;
+
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.SocketException;
 
-/**
- * Background thread that reads lines from the server socket and
- * forwards them to {@link SocketVirtualServer}.
- * <p>
- * This class has no dependency on JavaFX: callbacks are invoked directly
- * on the reading thread.  If a JavaFX UI needs to update after the callback,
- * the {@link client.ClientStateListener} implementation should wrap its code
- * in {@code Platform.runLater()} — not this class.
- */
 public class SocketClientThread implements Runnable {
 
-    private static final String STATE_PREFIX     = "STATE:";
-    private static final String ERROR_PREFIX     = "ERROR:";
-    private static final String WAITING_PREFIX   = "WAITING:";
-    private static final String GAME_OVER_PREFIX = "GAME_OVER:";
+    private final ObjectInputStream in;
+    private final SocketVirtualServer socketVirtualServer;
 
-    private final BufferedReader in;
-    private final SocketVirtualServer owner;
+    private final ServerMessageHandler handler = new ServerMessageHandler() {
+        @Override public void handle(StateMessage m)       { socketVirtualServer.onStateReceived(m.state()); }
+        @Override public void handle(ErrorMessage m)       { socketVirtualServer.onErrorReceived(m.message()); }
+        @Override public void handle(GameOverMessage m)    { socketVirtualServer.onGameOverReceived(m.winners()); }
+        @Override public void handle(LobbyListMessage m)   { socketVirtualServer.onLobbyListReceived(m.lobbies()); }
+        @Override public void handle(LobbyStateMessage m)  { socketVirtualServer.onLobbyStateReceived(m.lobby()); }
+        @Override public void handle(GameStartingMessage m){ socketVirtualServer.onGameStartingReceived(); }
+    };
 
-    public SocketClientThread(BufferedReader in, SocketVirtualServer owner) {
+    public SocketClientThread(ObjectInputStream in, SocketVirtualServer socketVirtualServer) {
         this.in = in;
-        this.owner = owner;
+        this.socketVirtualServer = socketVirtualServer;
     }
 
     @Override
     public void run() {
         try {
-            String line;
-            while ((line = in.readLine()) != null) {
-                dispatch(line);
+            while (true) {
+                ServerMessage msg = (ServerMessage) in.readObject();
+                msg.accept(handler);
             }
-        } catch (IOException ignored) {
-            // connection closed abruptly
+        } catch (EOFException | SocketException ignored) {
+        } catch (IOException | ClassNotFoundException ignored) {
         } finally {
-            owner.onDisconnected();
-        }
-    }
-
-    private void dispatch(String line) {
-        if (line.startsWith(STATE_PREFIX)) {
-            owner.onStateReceived(line.substring(STATE_PREFIX.length()));
-        } else if (line.startsWith(GAME_OVER_PREFIX)) {
-            owner.onGameOverReceived(line.substring(GAME_OVER_PREFIX.length()));
-        } else if (line.startsWith(ERROR_PREFIX)) {
-            owner.onErrorReceived(line.substring(ERROR_PREFIX.length()));
-        } else if (line.startsWith(WAITING_PREFIX)) {
-            owner.onWaitingReceived(line.substring(WAITING_PREFIX.length()));
+            socketVirtualServer.onDisconnected();
         }
     }
 }

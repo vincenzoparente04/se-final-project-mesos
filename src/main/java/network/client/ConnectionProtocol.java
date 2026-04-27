@@ -1,4 +1,4 @@
-package client;
+package network.client;
 
 /**
  * Selects the network transport protocol for the client connection.

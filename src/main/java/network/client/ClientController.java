@@ -1,31 +1,38 @@
-package client;
+package network.client;
 
-/**
- * Translates GUI events into commands sent to the server via {@link VirtualServer}.
- * The View calls these methods; this class knows nothing about the View's
- * internal structure or the underlying transport protocol.
- */
 public class ClientController {
 
-    private final VirtualServer serverProxy;
+    private final VirtualServer virtualServer;
 
-    public ClientController(VirtualServer serverProxy) {
-        this.serverProxy = serverProxy;
+    public ClientController(VirtualServer virtualServer) {
+        this.virtualServer = virtualServer;
     }
 
     public void onColorChosen(String color) {
-        serverProxy.sendChooseColor(color);
+        virtualServer.sendChooseColor(color);
     }
 
     public void onTotemPlaced(char tile) {
-        serverProxy.sendPlaceTotem(tile);
+        virtualServer.sendPlaceTotem(tile);
     }
 
     public void onCardDrawn(int cardId) {
-        serverProxy.sendDrawCard(cardId);
+        virtualServer.sendDrawCard(cardId);
     }
 
     public void onTurnEnded() {
-        serverProxy.sendEndTurn();
+        virtualServer.sendEndTurn();
+    }
+
+    public void onCreateLobby(int maxPlayers) {
+        virtualServer.sendCreateLobby(maxPlayers);
+    }
+
+    public void onJoinLobby(String lobbyId) {
+        virtualServer.sendJoinLobby(lobbyId);
+    }
+
+    public void onListLobbies() {
+        virtualServer.sendListLobbies();
     }
 }

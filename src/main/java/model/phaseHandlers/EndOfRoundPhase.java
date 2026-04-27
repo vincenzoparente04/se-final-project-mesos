@@ -21,7 +21,7 @@ public class EndOfRoundPhase extends GamePhaseHandler {
     public void onEnter(){
         RowsManager rowsManager = model.getRowsManager();
         rowsManager.resolveEvents(model.getPlayers());
-        model.notifyChange("events_resolved");
+        model.notifyChange();
 
         model.incrementRound();
 
@@ -34,7 +34,7 @@ public class EndOfRoundPhase extends GamePhaseHandler {
         rowsManager.endRound(model.getPlayerCount());
 
         if (model.getCurrentEra().compareTo(currentEra) != 0) {
-            model.notifyChange("era_changed:" + model.getCurrentEra());
+            model.notifyChange();
             rowsManager.changeEra();
         }
 

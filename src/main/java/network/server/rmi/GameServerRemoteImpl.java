@@ -1,70 +1,60 @@
-package server.rmi;
+package network.server.rmi;
 
-import server.core.LobbyManager;
+import shared.command.ClientCommand;
+import shared.command.CommandDispatcher;
 import shared.command.GameCommand;
-import shared.rmi.ClientCallbackRemote;
-import shared.rmi.GameServerRemote;
+import shared.command.LobbyCommand;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * RMI server implementation of {@link GameServerRemote}.
- * <p>
- * Registered in the RMI registry by {@link server.core.ServerMain}.
- * <ul>
- *   <li>{@link #join} creates an {@link RmiVirtualView} (backed by the
- *       caller's callback stub), wraps it in an {@link RmiPlayerEntry}, and
- *       forwards it to the {@link LobbyManager}.</li>
- *   <li>{@link #submitCommand} places the command on the shared
- *       {@link BlockingQueue} and returns immediately, keeping the client
- *       unblocked.  The {@link server.core.GameThread} processes commands
- *       sequentially from the other end of the queue.</li>
- * </ul>
- * One instance serves all connections; the shared queue and lobby are
- * injected via the constructor.
- */
+import network.client.rmi.ClientCallbackRemote;
+import network.server.core.LobbyManager;
+
 public class GameServerRemoteImpl extends UnicastRemoteObject implements GameServerRemote {
 
     private final LobbyManager lobbyManager;
-    private final BlockingQueue<GameCommand> commandQueue;
-    private final ExecutorService callbackExecutor;
+    private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues = new ConcurrentHashMap<>();
 
-    public GameServerRemoteImpl(LobbyManager lobbyManager,
-                                BlockingQueue<GameCommand> commandQueue)
-            throws RemoteException {
+    private final CommandDispatcher dispatcher = new CommandDispatcher() {
+        @Override
+        public void onLobbyCommand(LobbyCommand cmd) throws Exception {
+            lobbyManager.handle(cmd);
+        }
+
+        @Override
+        public void onGameCommand(GameCommand cmd) throws InterruptedException {
+            BlockingQueue<GameCommand> queue = gameQueues.get(cmd.getPlayerName());
+            if (queue == null) {
+                return;
+            }
+            queue.put(cmd);
+        }
+    };
+
+    public GameServerRemoteImpl(LobbyManager lobbyManager) throws RemoteException {
         super();
         this.lobbyManager = lobbyManager;
-        this.commandQueue = commandQueue;
-        this.callbackExecutor = Executors.newCachedThreadPool(r -> {
-            Thread t = new Thread(r, "rmi-callback");
-            t.setDaemon(true);
-            return t;
-        });
+    }
+
+    public void registerQueue(String playerName, BlockingQueue<GameCommand> queue) {
+        gameQueues.put(playerName, queue);
     }
 
     @Override
-    public void join(String playerName, ClientCallbackRemote callback)
-            throws RemoteException {
-        RmiVirtualView view = new RmiVirtualView(playerName, callback, callbackExecutor);
-        lobbyManager.addRmiPlayer(new RmiPlayerEntry(view));
+    public void join(String playerName, ClientCallbackRemote callback) throws RemoteException {
+        RmiVirtualView view = new RmiVirtualView(playerName, callback);
+        lobbyManager.addRmiPlayer(new RmiPlayerEntry(view, q -> registerQueue(playerName, q), lobbyManager));
     }
 
-    /**
-     * Enqueues the command and returns immediately.
-     * The client is unblocked within 1-2 ms regardless of how long the
-     * server takes to process the command.
-     */
     @Override
-    public void submitCommand(GameCommand command) throws RemoteException {
+    public void submitClientCommand(ClientCommand command) throws RemoteException {
         try {
-            commandQueue.put(command);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RemoteException("Server interrupted while accepting command.", e);
+            command.accept(dispatcher);
+        } catch (Exception e) {
+            throw new RemoteException("Command routing failed: " + e.getMessage(), e);
         }
     }
 }

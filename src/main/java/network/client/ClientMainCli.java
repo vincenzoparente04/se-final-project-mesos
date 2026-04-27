@@ -1,19 +1,11 @@
-package client;
+package network.client;
 
-import client.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-/**
- * Entry point unificato per il client a riga di comando (CLI).
- * <p>
- * <b>Usage</b>:
- * <pre>
- * ClientMainCli socket &lt;host&gt; &lt;port&gt;    &lt;playerName&gt;
- * ClientMainCli rmi    &lt;host&gt; &lt;rmiPort&gt; &lt;playerName&gt;
- * </pre>
- * Se il protocollo viene omesso, il client utilizza di default SOCKET.
- */
+import network.client.clientStateListener.ClientStateListener;
+import network.client.clientStateListener.ClientStateListenerCli;
+
 public class ClientMainCli {
 
     public static void main(String[] args) throws Exception {
@@ -22,7 +14,6 @@ public class ClientMainCli {
             return;
         }
 
-        // Parsing degli argomenti riutilizzando la logica della GUI
         String firstArg = args[0].toLowerCase();
         ConnectionProtocol transport;
         int port;
@@ -35,7 +26,6 @@ public class ClientMainCli {
             port = Integer.parseInt(args[2]);
             playerName = args[3];
         } else {
-            // Comportamento legacy/default (Socket)
             transport = ConnectionProtocol.SOCKET;
             host = args[0];
             port = Integer.parseInt(args[1]);
@@ -45,22 +35,16 @@ public class ClientMainCli {
         LocalGameState localState = new LocalGameState();
         ClientStateListener listener = new ClientStateListenerCli();
 
-        System.out.println("Connecting via " + transport + " to " + host + ":" + port
-                + " as \"" + playerName + "\"...");
+        System.out.println("Connecting via " + transport + " to " + host + ":" + port + " as \"" + playerName + "\"...");
 
-        // Utilizzo del Factory Pattern: deleghiamo la creazione del proxy di rete
-        // a una factory centralizzata. Il client non conosce i dettagli implementativi.
-        VirtualServer proxy = VirtualServerFactory.create(
-                transport, host, port, playerName, localState, listener);
+        VirtualServer proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
 
-        // Pattern Decorator / Wrapper: Il controller astrae l'interfaccia di rete
         ClientController controller = new ClientController(proxy);
 
-        System.out.println("Connected. Waiting for other players...");
+        System.out.println("Connected. Use 'lobbies' to list lobbies, 'create <n>' or 'join <id>'.");
         printHelp();
         System.out.print("> ");
 
-        // Loop principale di I/O
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         String input;
         while ((input = stdin.readLine()) != null) {
@@ -84,16 +68,24 @@ public class ClientMainCli {
         System.out.println("Disconnected.");
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Command dispatch
-    // ─────────────────────────────────────────────────────────
-
     private static boolean dispatch(ClientController controller, String input) {
         String[] parts = input.split("\\s+", 2);
         String verb = parts[0].toLowerCase();
         String arg  = parts.length > 1 ? parts[1].trim() : "";
 
         switch (verb) {
+            case "lobbies" -> controller.onListLobbies();
+            case "create" -> {
+                try {
+                    controller.onCreateLobby(Integer.parseInt(arg));
+                } catch (NumberFormatException e) {
+                    System.out.println("[ERROR] create requires a number of players");
+                }
+            }
+            case "join" -> {
+                if (arg.isEmpty()) { System.out.println("[ERROR] join requires a lobby id"); return true; }
+                controller.onJoinLobby(arg);
+            }
             case "color" -> {
                 if (arg.isEmpty()) { System.out.println("[ERROR] color requires a colour name"); return true; }
                 controller.onColorChosen(arg.toUpperCase());
@@ -115,10 +107,6 @@ public class ClientMainCli {
         return true;
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────
-
     private static void printUsage() {
         System.err.println("Usage:");
         System.err.println("  ClientMainCli socket <host> <port>    <playerName>");
@@ -130,6 +118,6 @@ public class ClientMainCli {
     }
 
     private static String helpLine() {
-        return "color <COLOR> | totem <LETTER> | draw <ID> | end | state | quit";
+        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | quit";
     }
 }

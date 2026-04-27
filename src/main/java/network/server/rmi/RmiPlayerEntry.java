@@ -1,29 +1,23 @@
-package server.rmi;
-
-import server.core.PlayerEntry;
-import server.core.VirtualView;
-import shared.command.GameCommand;
+package network.server.rmi;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.function.Consumer;
 
-/**
- * {@link PlayerEntry} for an RMI connection.
- * <p>
- * The {@link RmiVirtualView} is created when the player joins the lobby and
- * is immediately available for sending {@code WAITING} notifications.
- * <p>
- * {@link #activate} installs the real disconnect handler on the view
- * (until game start the view uses a no-op) and returns immediately — no
- * read thread is needed because the RMI framework routes incoming
- * {@code submitCommand} calls from the client to the server directly.
- */
+import network.server.core.DisconnectListener;
+import network.server.core.PlayerEntry;
+import network.server.core.VirtualView;
+import shared.command.GameCommand;
+
 public class RmiPlayerEntry implements PlayerEntry {
 
     private final RmiVirtualView view;
+    private final Consumer<BlockingQueue<GameCommand>> onQueue;
 
-    public RmiPlayerEntry(RmiVirtualView view) {
+    public RmiPlayerEntry(RmiVirtualView view, Consumer<BlockingQueue<GameCommand>> onQueue,
+                          DisconnectListener disconnectListener) {
         this.view = view;
+        this.onQueue = onQueue;
+        view.setOnDisconnect(disconnectListener);
     }
 
     @Override
@@ -37,8 +31,7 @@ public class RmiPlayerEntry implements PlayerEntry {
     }
 
     @Override
-    public void activate(BlockingQueue<GameCommand> commandQueue,
-                         Consumer<String> onDisconnect) {
-        view.setOnDisconnect(onDisconnect);
+    public void setGameQueue(BlockingQueue<GameCommand> queue) {
+        onQueue.accept(queue);
     }
 }

@@ -1,7 +1,8 @@
-package client;
+package network.client;
 
-import client.rmi.RmiVirtualServer;
-import client.socket.SocketVirtualServer;
+import network.client.clientStateListener.ClientStateListener;
+import network.client.rmi.RmiVirtualServer;
+import network.client.socket.SocketVirtualServer;
 
 /**
  * Creates a {@link VirtualServer} for the chosen {@link ConnectionProtocol}.

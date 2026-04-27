@@ -1,4 +1,4 @@
-package server.core;
+package network.server.core;
 
 import controller.GameController;
 import shared.command.ChooseColorCommand;

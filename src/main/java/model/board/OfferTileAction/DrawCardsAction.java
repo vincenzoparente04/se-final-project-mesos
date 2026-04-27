@@ -54,11 +54,9 @@ public class DrawCardsAction implements OfferTileAction {
 
     @Override
     public boolean isFinished() {
-        if ((currentTopRowDraws >= maxTopRowDraws) && (currentBottomRowDraws >= maxBottomRowDraws)) {
-            onEnterAction(null, null); // Resetta i contatori per il prossimo turno
-            return true;
-        }
-        return false;
+        // L'azione si conlude quando i contatori hanno raggiunto il limite
+        return (currentTopRowDraws >= maxTopRowDraws) &&
+                (currentBottomRowDraws >= maxBottomRowDraws);
     }
 
     public int getMaxTopRowDraws()        { return maxTopRowDraws; }

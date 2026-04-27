@@ -1,14 +1,13 @@
-package client.rmi;
+package network.client.rmi;
 
-import client.ClientStateListener;
-import client.LocalGameState;
-import client.VirtualServer;
 import shared.command.ChooseColorCommand;
+import shared.command.ClientCommand;
+import shared.command.CreateLobbyCommand;
 import shared.command.DrawCardCommand;
 import shared.command.EndTurnCommand;
-import shared.command.GameCommand;
+import shared.command.JoinLobbyCommand;
+import shared.command.ListLobbiesCommand;
 import shared.command.PlaceTotemCommand;
-import shared.rmi.GameServerRemote;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -18,22 +17,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-/**
- * {@link VirtualServer} implementation that communicates with the server via RMI.
- * <p>
- * On construction (blocking — must be called off the UI thread):
- * <ol>
- *   <li>Looks up {@code "MesosGameServer"} in the RMI registry.</li>
- *   <li>Creates and exports a {@link ClientCallbackImpl} so the server can
- *       push state updates back.</li>
- *   <li>Calls {@link GameServerRemote#join} to register in the lobby.</li>
- * </ol>
- * Each {@code send*} method submits the corresponding {@link GameCommand} to
- * a single-threaded executor, keeping the UI thread unblocked.
- * <p>
- * {@link #close()} shuts down the command executor <em>and</em> un-exports
- * the callback stub so the JVM can exit cleanly.
- */
+import network.client.LocalGameState;
+import network.client.VirtualServer;
+import network.client.clientStateListener.ClientStateListener;
+import network.server.rmi.GameServerRemote;
+
 public class RmiVirtualServer implements VirtualServer {
 
     private static final String SERVICE_NAME = "MesosGameServer";
@@ -44,7 +32,7 @@ public class RmiVirtualServer implements VirtualServer {
     private final ExecutorService commandExecutor;
 
     public RmiVirtualServer(String host, int rmiPort, String playerName,
-                          LocalGameState localState, ClientStateListener listener)
+                            LocalGameState localState, ClientStateListener listener)
             throws Exception {
         this.playerName = playerName;
 
@@ -61,6 +49,8 @@ public class RmiVirtualServer implements VirtualServer {
 
         serverStub.join(playerName, callback);
     }
+
+    // ─── Game commands ────────────────────────────────────────
 
     @Override
     public void sendChooseColor(String color) {
@@ -82,10 +72,23 @@ public class RmiVirtualServer implements VirtualServer {
         submitAsync(new EndTurnCommand(playerName));
     }
 
-    /**
-     * Shuts down the command executor (waiting up to 1 s for in-flight commands)
-     * and un-exports the callback stub so the JVM can exit cleanly.
-     */
+    // ─── Lobby commands ───────────────────────────────────────
+
+    @Override
+    public void sendCreateLobby(int maxPlayers) {
+        submitAsync(new CreateLobbyCommand(playerName, maxPlayers));
+    }
+
+    @Override
+    public void sendJoinLobby(String lobbyId) {
+        submitAsync(new JoinLobbyCommand(playerName, lobbyId));
+    }
+
+    @Override
+    public void sendListLobbies() {
+        submitAsync(new ListLobbiesCommand(playerName));
+    }
+
     @Override
     public void close() {
         commandExecutor.shutdown();
@@ -102,14 +105,10 @@ public class RmiVirtualServer implements VirtualServer {
         } catch (RemoteException ignored) {}
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────
-
-    private void submitAsync(GameCommand command) {
+    private void submitAsync(ClientCommand command) {
         commandExecutor.submit(() -> {
             try {
-                serverStub.submitCommand(command);
+                serverStub.submitClientCommand(command);
             } catch (RemoteException e) {
                 System.err.println("RMI command failed: " + e.getMessage());
             }
