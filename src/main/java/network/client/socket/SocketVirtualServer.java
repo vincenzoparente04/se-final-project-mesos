@@ -2,7 +2,7 @@ package network.client.socket;
 
 import network.client.LocalGameState;
 import network.client.VirtualServer;
-import network.client.clientStateListener.ClientStateListener;
+import network.client.ClientStateListener;
 import shared.command.ChooseColorCommand;
 import shared.command.ClientCommand;
 import shared.command.CreateLobbyCommand;

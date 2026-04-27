@@ -9,7 +9,8 @@ import java.util.Collections;
 import java.util.List;
 
 import network.client.LocalGameState;
-import network.client.clientStateListener.ClientStateListener;
+import network.client.ClientStateListener;
+import shared.rmi.ClientCallbackRemote;
 
 public class ClientCallbackImpl extends UnicastRemoteObject implements ClientCallbackRemote {
 

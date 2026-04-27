@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 
 import network.client.LocalGameState;
 import network.client.VirtualServer;
-import network.client.clientStateListener.ClientStateListener;
-import network.server.rmi.GameServerRemote;
+import network.client.ClientStateListener;
+import shared.rmi.GameServerRemote;
 
 public class RmiVirtualServer implements VirtualServer {
 

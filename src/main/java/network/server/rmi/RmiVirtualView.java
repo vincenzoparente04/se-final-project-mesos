@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import network.client.rmi.ClientCallbackRemote;
+import shared.rmi.ClientCallbackRemote;
 import network.server.core.DisconnectListener;
 import network.server.core.VirtualView;
 

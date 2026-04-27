@@ -3,8 +3,6 @@ package network.client;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-import network.client.clientStateListener.ClientStateListener;
-import network.client.clientStateListener.ClientStateListenerCli;
 
 public class ClientMainCli {
 

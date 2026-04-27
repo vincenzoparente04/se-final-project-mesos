@@ -10,8 +10,9 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
-import network.client.rmi.ClientCallbackRemote;
+import shared.rmi.ClientCallbackRemote;
 import network.server.core.LobbyManager;
+import shared.rmi.GameServerRemote;
 
 public class GameServerRemoteImpl extends UnicastRemoteObject implements GameServerRemote {
 

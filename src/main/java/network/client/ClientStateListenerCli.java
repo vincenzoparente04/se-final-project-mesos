@@ -1,9 +1,6 @@
 package network.client;
 
-import shared.dto.CardDto;
-import shared.dto.GameStateDto;
-import shared.dto.OfferTileDto;
-import shared.dto.PlayerDto;
+import shared.dto.*;
 
 import java.util.List;
 
@@ -28,8 +25,35 @@ public class ClientStateListenerCli implements ClientStateListener{
     }
 
     @Override
+    public synchronized void onLobbyList(List<LobbyDto> lobbies) {
+        System.out.println("\n[LOBBIES]");
+        if (lobbies.isEmpty()) {
+            System.out.println("  No open lobbies. Use 'create <maxPlayers>' to create one.");
+        } else {
+            for (LobbyDto l : lobbies) {
+                System.out.printf("  %-36s  %-20s  %d/%d players%n",
+                        l.id(), l.name(), l.currentPlayers(), l.maxPlayers());
+            }
+        }
+        System.out.print("> ");
+    }
+
+    @Override
     public synchronized void onError(String message) {
         System.out.println("\n[ERROR] " + message);
+        System.out.print("> ");
+    }
+
+    @Override
+    public synchronized void onLobbyState(LobbyDto lobby) {
+        System.out.printf("\n[LOBBY] %s — %d/%d players%n",
+                lobby.name(), lobby.currentPlayers(), lobby.maxPlayers());
+        System.out.print("> ");
+    }
+
+    @Override
+    public synchronized void onGameStarting() {
+        System.out.println("\n[GAME] All players joined — game starting!");
         System.out.print("> ");
     }
 

@@ -1,6 +1,5 @@
 package network.client;
 
-import network.client.clientStateListener.ClientStateListener;
 import network.client.rmi.RmiVirtualServer;
 import network.client.socket.SocketVirtualServer;
 
