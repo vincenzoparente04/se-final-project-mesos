@@ -47,6 +47,7 @@ public class PlacementPhase extends GamePhaseHandler {
             throw new IllegalArgumentException("Tile " + offerTile.getLetter() + " is already occupied");
         }
 
+
         board.placeTotem(player, offerTile);
         advanceTurn();
     }

@@ -35,9 +35,8 @@ public class ColorChoosingPhase extends GamePhaseHandler {
         }
         if(!availableColors.contains(color)) {
             //only throws color is already taken because in gameController.chooseColor() totemColor.valueOf(colorName.toUpperCase()) we check that the color is one of the enum
-            throw new IllegalArgumentException("color " + color + " is already taken");
+            throw new IllegalArgumentException("Color " + color + " is already taken");
         }
-
 
 
         player.setColor(color);
