@@ -43,7 +43,7 @@ public class ActionPhase extends GamePhaseHandler {
             throw new IllegalStateException("No action associated with the offer tile.");
         }
 
-        model.notifyChange("action_started:" + currentPlayer.getName());
+        model.notifyChange();
 
         currentAction.onEnterAction(currentPlayer, model);
 
@@ -60,16 +60,16 @@ public class ActionPhase extends GamePhaseHandler {
 
         RowsManager rowsManager = model.getRowsManager();
         Card card = rowsManager.findCardById(cardId)
-                .orElseThrow(() -> new IllegalArgumentException("Card not found on board: " + cardId));
+                .orElseThrow(() -> new IllegalArgumentException("Card " + cardId +" not found on board"));
 
         if (!currentAction.canDraw(card, rowsManager)) {
-            throw new IllegalStateException("The offer tile does not allow drawing this card (wrong row or draw limit reached).");
+            throw new IllegalStateException("The offer tile does not allow drawing this card (wrong row or draw limit reached)");
         }
 
         CardDrawer cardDrawer = new CardDrawer(currentPlayer, rowsManager, currentAction);
         cardDrawer.drawCard(card);
 
-        model.notifyChange("card_drawn:" + cardId);
+        model.notifyChange();
 
         // Dopo ogni pescata, verifichiamo se il turno è finito o deve essere forzatamente terminato
         checkActionCompletionOrAutoAdvance();
@@ -79,10 +79,10 @@ public class ActionPhase extends GamePhaseHandler {
         ensureActiveTurn();
 
         if (hasAnyForcedMove()) {
-            throw new IllegalStateException("All mandatory draws must be completed before ending the turn.");
+            throw new IllegalStateException("All mandatory draws must be completed before ending the turn");
         }
 
-        model.notifyChange("turn_ended:" + currentPlayer.getName());
+        model.notifyChange();
         advanceActionTurn();
     }
 

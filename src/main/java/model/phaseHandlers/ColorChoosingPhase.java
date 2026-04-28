@@ -24,7 +24,7 @@ public class ColorChoosingPhase extends GamePhaseHandler {
         currentIndex = 0;
         currentPlayer = model.getPlayers().get(currentIndex);
 
-        model.notifyChange("color_choosing_started:" + currentPlayer.getName());
+        model.notifyChange();
     }
 
     @Override
@@ -50,10 +50,10 @@ public class ColorChoosingPhase extends GamePhaseHandler {
 
         if (currentIndex < model.getPlayerCount()) {
             currentPlayer = model.getPlayers().get(currentIndex);
-            model.notifyChange("color_choosing_next:" + currentPlayer.getName());
+            model.notifyChange();
         } else {
             // all players have chosen → proceed to setup
-            model.notifyChange("color_choosing_completed");
+            model.notifyChange();
             model.setPhase(new SetupPhase(model));
         }
     }

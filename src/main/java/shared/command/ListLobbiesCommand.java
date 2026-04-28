@@ -1,9 +1,9 @@
 package shared.command;
 
-public record PlaceTotemCommand(String playerName, char tileId) implements GameCommand {
+public record ListLobbiesCommand(String playerName) implements LobbyCommand {
 
     @Override
-    public void accept(CommandVisitor visitor) throws Exception {
+    public void accept(LobbyCommandVisitor visitor) throws Exception {
         visitor.visit(this);
     }
 

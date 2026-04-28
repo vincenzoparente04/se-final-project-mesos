@@ -24,7 +24,7 @@ public class PlacementPhase extends GamePhaseHandler {
         currentIndex = 0;
         currentPlayer = turnOrder.get(currentIndex);
 
-        model.notifyChange("placement_started:" + currentPlayer.getName());
+        model.notifyChange();
     }
 
     @Override
@@ -52,25 +52,17 @@ public class PlacementPhase extends GamePhaseHandler {
         advanceTurn();
     }
 
-
-    public boolean canPlaceTotem(Player player, OfferTile tile){
-        if(player != currentPlayer) return false;
-        //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
-        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE) return false;
-        return !tile.isOccupied();
-    }
-
     private void advanceTurn() {
         currentIndex++;
 
         if (currentIndex < turnOrder.size()) {
             // next player's turn to place
             currentPlayer = turnOrder.get(currentIndex);
-            model.notifyChange("turn_changed:" + currentPlayer.getName());
+            model.notifyChange();
         } else {
             // all totems placed → move to action phase
             model.setPhase(new ActionPhase(model));
-            model.notifyChange("pahse_changed.");
+            model.notifyChange();
         }
     }
 
