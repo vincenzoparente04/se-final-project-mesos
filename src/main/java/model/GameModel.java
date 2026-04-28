@@ -49,7 +49,7 @@ public class GameModel {
    }
 
    public void drawCard(int cardId) throws Exception {
-        currentPhaseHandler.drawCard(cardId);
+        currentPhaseHandler.drawCard(cardId); //todo
    }
 
    public void endTurn() {
