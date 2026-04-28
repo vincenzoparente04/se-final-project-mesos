@@ -19,7 +19,7 @@ public class ServerMain {
             return;
         }
 
-        int port    = Integer.parseInt(args[0]);
+        int port = Integer.parseInt(args[0]);
         int rmiPort = args.length >= 2 ? Integer.parseInt(args[1]) : 1099;
 
         LobbyManager lobby = new LobbyManager();
@@ -33,8 +33,7 @@ public class ServerMain {
             Registry registry = LocateRegistry.createRegistry(rmiPort);
             GameServerRemote stub = new GameServerRemoteImpl(lobby);
             registry.rebind(RMI_SERVICE_NAME, stub);
-            System.out.println("RMI registry on port " + rmiPort
-                    + " — service name: " + RMI_SERVICE_NAME);
+            System.out.println("RMI registry on port " + rmiPort + " — service name: " + RMI_SERVICE_NAME);
         } catch (Exception e) {
             System.err.println("Failed to start RMI registry: " + e.getMessage());
         }

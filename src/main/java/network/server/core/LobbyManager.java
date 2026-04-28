@@ -29,7 +29,7 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     private static final int CONNECT_TIMEOUT_MS = 5_000;
 
-    // @GuardedBy("this") // TODO controlla che tutti i metodi che accedono a queste siano synchronized
+//TODO controlla che tutti i metodi che accedono a queste siano synchronized
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>();
     // @GuardedBy("this")
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>();
@@ -162,7 +162,6 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     // Helpers
-
     private void broadcastLobbyState(Lobby lobby) {
         LobbyDto dto = lobby.toDto();
         lobby.getViews().forEach(v -> v.sendLobbyState(dto));
