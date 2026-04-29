@@ -24,7 +24,7 @@ public class ColorChoosingPhase extends GamePhaseHandler {
         currentIndex = 0;
         currentPlayer = model.getPlayers().get(currentIndex);
 
-        model.notifyChange("color_choosing_started:" + currentPlayer.getName());
+        model.notifyChange();
     }
 
     @Override
@@ -35,7 +35,7 @@ public class ColorChoosingPhase extends GamePhaseHandler {
         }
         if(!availableColors.contains(color)) {
             //only throws color is already taken because in gameController.chooseColor() totemColor.valueOf(colorName.toUpperCase()) we check that the color is one of the enum
-            throw new IllegalArgumentException("color " + color + " is already taken");
+            throw new IllegalArgumentException("Color " + color + " is already taken");
         }
 
 
@@ -50,10 +50,10 @@ public class ColorChoosingPhase extends GamePhaseHandler {
 
         if (currentIndex < model.getPlayerCount()) {
             currentPlayer = model.getPlayers().get(currentIndex);
-            model.notifyChange("color_choosing_next:" + currentPlayer.getName());
+            model.notifyChange();
         } else {
             // all players have chosen → proceed to setup
-            model.notifyChange("color_choosing_completed");
+            model.notifyChange();
             model.setPhase(new SetupPhase(model));
         }
     }

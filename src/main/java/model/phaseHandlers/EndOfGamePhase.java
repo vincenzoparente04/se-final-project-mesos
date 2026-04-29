@@ -32,7 +32,7 @@ public class EndOfGamePhase extends GamePhaseHandler {
 
         List<String> winnerNames = winners.stream().map(Player::getName).toList();
         model.setWinners(winnerNames);
-        model.notifyChange("game_over:" + formatWinners());
+        model.notifyChange();
     }
 
     /**
@@ -42,7 +42,7 @@ public class EndOfGamePhase extends GamePhaseHandler {
      */
     private void resolveAllVisibleEvents() {
         model.getRowsManager().resolveAllEvents(model.getPlayers());
-        model.notifyChange("final_events_resolved");
+        model.notifyChange();
     }
 
     /**
@@ -72,7 +72,7 @@ public class EndOfGamePhase extends GamePhaseHandler {
             }
         }
 
-        model.notifyChange("endgame_scoring_complete");
+        model.notifyChange();
     }
 
     /**

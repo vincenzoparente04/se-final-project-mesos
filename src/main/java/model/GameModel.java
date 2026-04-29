@@ -1,6 +1,5 @@
 package model;
 
-import controller.GameStateDtoBuilder;
 import model.board.Board;
 import model.enums.Era;
 import model.enums.GamePhase;
@@ -9,11 +8,9 @@ import model.phaseHandlers.ColorChoosingPhase;
 import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
 import model.rowsManager.RowsManager;
-import server.core.VirtualView;
+import network.server.core.VirtualView;
 import shared.dto.GameStateDto;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,11 +23,17 @@ public class GameModel {
     private int playerCount;
     private int currentRound = 1;
     private List<String> winners = new ArrayList<>();
-    private List<VirtualView> viewListeners = new ArrayList<>();
-
 
     private GamePhaseHandler currentPhaseHandler;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private final List<VirtualView> views;
+
+    public GameModel(List<VirtualView> views) {
+        this.views = List.copyOf(views);
+    }
+
+    public GameModel() {
+        this.views = List.of();
+    }
 
     public void startGame(List<String> playerNames) {
         createPlayers(playerNames);
@@ -46,7 +49,7 @@ public class GameModel {
    }
 
    public void drawCard(int cardId) throws Exception {
-        currentPhaseHandler.drawCard(cardId);
+        currentPhaseHandler.drawCard(cardId); //todo
    }
 
    public void endTurn() {
@@ -74,9 +77,6 @@ public class GameModel {
     public int getCurrentRound()                { return currentRound; }
     public GamePhaseHandler getPhaseHandler()   { return currentPhaseHandler; }
 
-    /**
-     * Resolves a Player by name. Throws if no player with that name exists.
-     */
     public Player getPlayerByName(String name) {
         return players.stream()
                 .filter(p -> p.getName().equals(name))
@@ -100,18 +100,12 @@ public class GameModel {
         return rowsManager.getCurrentEra();
     }
 
-
-    // helpers:
     public boolean isGameOver() {
         return currentRound > MAX_ROUNDS;
     }
 
     public void incrementRound() {
         currentRound++;
-    }
-
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        pcs.addPropertyChangeListener(listener);
     }
 
     public void setWinners(List<String> winnerNames) {
@@ -122,12 +116,8 @@ public class GameModel {
         return winners;
     }
 
-    public void addViewListener(VirtualView view) {
-        viewListeners.add(view);
-    }
-
-    public void notifyChange(String message) {
+    public void notifyChange() {
         GameStateDto dto = GameStateDtoBuilder.build(this);
-        viewListeners.forEach(v -> v.sendState(dto));
+        views.forEach(v -> v.sendState(dto));
     }
 }

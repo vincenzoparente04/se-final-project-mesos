@@ -24,7 +24,7 @@ public class PlacementPhase extends GamePhaseHandler {
         currentIndex = 0;
         currentPlayer = turnOrder.get(currentIndex);
 
-        model.notifyChange("placement_started:" + currentPlayer.getName());
+        model.notifyChange();
     }
 
     @Override
@@ -52,18 +52,17 @@ public class PlacementPhase extends GamePhaseHandler {
         advanceTurn();
     }
 
-
     private void advanceTurn() {
         currentIndex++;
 
         if (currentIndex < turnOrder.size()) {
             // next player's turn to place
             currentPlayer = turnOrder.get(currentIndex);
-            model.notifyChange("turn_changed:" + currentPlayer.getName());
+            model.notifyChange();
         } else {
             // all totems placed → move to action phase
             model.setPhase(new ActionPhase(model));
-            model.notifyChange("pahse_changed.");
+            model.notifyChange();
         }
     }
 
