@@ -25,6 +25,30 @@ import network.server.socket.SocketPlayerEntry;
 import network.server.socket.SocketVirtualView;
 import shared.message.ConnectMessage;
 
+/**
+ * Central registry for all client sessions on the server. This class manages three orthogonal concerns:
+ * <ul>
+ *   <li>handshake for socket connections and registry of the ({@link #connectedPlayers});</li>
+ *   <li>lobbies waiting to fill up ({@link #lobbies});</li>
+ *   <li>games currently being played ({@link #activeGames}).</li>
+ * </ul>
+ * It is the single entry point for both transports: socket clients arrive via
+ * {@link #openSocketConnection(Socket)}, RMI clients via {@link #addRmiPlayer(RmiPlayerEntry)}.
+ * It dispatches the lobby-menu commands ({@code LIST}, {@code CREATE}, {@code JOIN}) using the visitor
+ * pattern over {@link LobbyCommand}.
+ *
+ * <h2>Threading model</h2>
+ * One instance is shared by every transport thread (socket acceptor workers,
+ * RMI dispatcher threads, individual client handler threads). Every public method
+ * that touches the three maps is {@code synchronized}, and the few private helpers
+ * ({@code nameAlreadyTaken}, {@code playerAlreadyInLobby}, {@code checkAndStartIfFull})
+ * are only ever called from inside synchronized blocks.
+ *
+ * <h2>I/O outside the lock</h2>
+ * Network I/O performed during the socket handshake is deliberately kept
+ * outside the synchronized block so that a slow or hostile client cannot block
+ * other clients from joining. Only the final registration step takes the lock.
+ */
 public class LobbyManager implements LobbyCommandVisitor {
 
     private static final int CONNECT_TIMEOUT_MS = 5_000;
@@ -34,33 +58,13 @@ public class LobbyManager implements LobbyCommandVisitor {
     private final Map<String, Game> activeGames = new HashMap<>(); // <PlayerName, Game>
 
     /**
-     * Central registry for all client sessions on the server. This class manages three orthogonal concerns:
-     * <ul>
-     *   <li>connected players that have completed the handshake but are not yet
-     *       in any lobby or game ({@link #connectedPlayers});</li>
-     *   <li>lobbies waiting to fill up ({@link #lobbies});</li>
-     *   <li>games currently being played ({@link #activeGames}).</li>
-     * </ul>
-     * It is the single entry point for both transports — socket clients arrive
-     * via {@link #openSocketConnection(Socket)}, RMI clients via
-     * {@link #addRmiPlayer(RmiPlayerEntry)} — and dispatches the lobby-menu
-     * commands ({@code LIST}, {@code CREATE}, {@code JOIN}) using the visitor
-     * pattern over {@link LobbyCommand}.
-     *
-     * <h2>Threading model</h2>
-     * One instance is shared by every transport thread (socket acceptor workers,
-     * RMI dispatcher threads, individual client handler threads). All access to
-     * the three maps is serialised on the instance monitor: every public method
-     * that touches them is {@code synchronized}, and the few private helpers
-     * ({@code nameAlreadyTaken}, {@code playerAlreadyInLobby},
-     * {@code checkAndStartIfFull}) are only ever called from inside a
-     * synchronized region.
-     *
-     * <h2>I/O outside the lock</h2>
-     * Network I/O performed during the socket handshake is deliberately kept
-     * outside the synchronized block so that a slow or hostile client cannot
-     * block other clients from joining. Only the final registration step takes
-     * the lock.
+     * Performs the full socket handshake for an incoming client and, on
+     * success, starts the read loop. Called by the server's accept loop on
+     * a worker thread; this method blocks during the handshake (subject to {@value #CONNECT_TIMEOUT_MS} ms timeout)
+     * but holds the instance lock only for the brief registration step.
+     * <p>
+     * On any I/O failure or protocol violation the socket is silently
+     * closed.
      */
     public void openSocketConnection(Socket socket) {
         try {
@@ -69,7 +73,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
             socket.setSoTimeout(CONNECT_TIMEOUT_MS);
-            // vedi se questo cast è necessario
+            // vedi se questo cast è necessario; in caso forse è meglio instanceOf
             ConnectMessage connect = (ConnectMessage) in.readObject();
             socket.setSoTimeout(0);
 
@@ -87,8 +91,7 @@ public class LobbyManager implements LobbyCommandVisitor {
 
                 // if the just added player has the same name of a player in an active game it reactivates it
                 if (activeGames.containsKey(playerName)) { // search between activeGames
-                    Game game = activeGames.get(playerName);
-                    game.onPlayerReconnected(playerName, entry);
+                    activeGames.get(playerName).onPlayerReconnected(playerName, entry);
                 }
                 connectedPlayers.put(playerName, entry);
             }
@@ -104,13 +107,17 @@ public class LobbyManager implements LobbyCommandVisitor {
         }
     }
 
+    /**
+     * Registers a new joined RMI player. Symmetric to {@link #openSocketConnection(Socket)}:
+     * rejects duplicate names, triggers reconnection if the name belongs to an active game,
+     * otherwise adds the player to {@link #connectedPlayers} and primes their lobby
+     * list.
+     */
     public synchronized void addRmiPlayer(RmiPlayerEntry entry) {
         // if the just added player has the same name of a connected player it returns
         if (nameAlreadyTaken(entry.getName())) {  // search between connectedPlayers
             entry.getView().sendError("name_already_taken:" + entry.getName());
-
-        // TODO: controlla che se il nome è gia preso tutto viene chiuso correttamente
-
+            entry.getView().close();
             return;
         }
 
@@ -120,10 +127,13 @@ public class LobbyManager implements LobbyCommandVisitor {
             game.onPlayerReconnected(entry.getName(), entry);
         }
         connectedPlayers.put(entry.getName(), entry);
-            //entry.getView().sendLobbyList(currentLobbyList());
+        entry.getView().sendLobbyList(currentLobbyList());
     }
 
-    // Entry point for lobbies commands
+    /**
+     * Entry point for lobby-menu commands. Dispatches via the visitor
+     * pattern to one of the {@code visit(...)} overloads.
+     */
     public synchronized void handle(LobbyCommand cmd) throws Exception {
         cmd.accept(this);
     }
