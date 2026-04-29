@@ -91,6 +91,13 @@ public class RmiVirtualServer implements VirtualServer {
 
     @Override
     public void close() {
+        // 1. Notifica il server della disconnessione
+        try {
+            serverStub.disconnect(playerName);
+        } catch (RemoteException e) {
+            // Ignorata: se il server è già caduto non è un problema
+        }
+
         commandExecutor.shutdown();
         try {
             if (!commandExecutor.awaitTermination(1, TimeUnit.SECONDS)) {

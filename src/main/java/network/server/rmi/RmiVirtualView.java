@@ -103,11 +103,13 @@ public class RmiVirtualView implements VirtualView {
     @Override
     public synchronized void close() {
         closed = true;
+        handleDisconnect();
+
+        senderExecutor.shutdownNow();
     }
 
     private synchronized void handleDisconnect() {
-        if (!closed) {
-            closed = true;
+        if (closed) {
             lobbyManager.onDisconnected(playerName);
         }
     }

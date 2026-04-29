@@ -58,4 +58,9 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
             throw new RemoteException("Command routing failed: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public void disconnect(String playerName) throws RemoteException {
+        lobbyManager.onDisconnected(playerName);
+    }
 }

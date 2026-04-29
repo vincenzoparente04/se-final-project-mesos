@@ -11,4 +11,7 @@ public interface GameServerRemote extends Remote {
     void join(String playerName, ClientCallbackRemote callback) throws RemoteException;
 
     void submitClientCommand(ClientCommand command) throws RemoteException;
+
+    // per disconnettersi
+    void disconnect(String playerName) throws RemoteException;
 }
