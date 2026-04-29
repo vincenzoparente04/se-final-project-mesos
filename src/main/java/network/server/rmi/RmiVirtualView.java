@@ -103,7 +103,7 @@ public class RmiVirtualView implements VirtualView {
     @Override
     public synchronized void close() {
         closed = true;
-        handleDisconnect();
+        //handleDisconnect();
 
         senderExecutor.shutdownNow();
     }

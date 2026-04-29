@@ -38,15 +38,18 @@ public class Game {
 
     public synchronized void onPlayerDisconnected(String playerName) {
         if (gameOver) return;
-        views.forEach(v -> v.sendError("player_disconnected:" + playerName));
-        views.forEach(VirtualView::close);
-        stopGameThread();
+        views.forEach(v -> v.sendError("Player_disconnected:" + playerName));
+        findView(playerName).ifPresent(VirtualView::close);
         this.model.getPlayerByName(playerName).setDisconnected();
     }
 
-    public synchronized void onPlayerReconnected(String playerName) {
+    public synchronized void onPlayerReconnected(String playerName, PlayerEntry entry) {
         if (gameOver) return;
         views.forEach(v -> v.sendError("player_reconnected:" + playerName));
+
+        // TODO: rivedere la riconnessione
+        this.players.add(entry);
+        entry.setGameQueue(commandQueue);
         this.model.getPlayerByName(playerName).setConnected();
     }
 

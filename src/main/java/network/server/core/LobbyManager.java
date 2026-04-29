@@ -63,7 +63,7 @@ public class LobbyManager implements LobbyCommandVisitor {
                 // if the just added player has the same name of a player in an active game it reactivates it
                 if (activeGames.containsKey(playerName)) { // search between activeGames
                     Game game = activeGames.get(playerName);
-                    game.onPlayerReconnected(playerName);
+                    game.onPlayerReconnected(playerName, entry);
                 }
                 connectedPlayers.put(playerName, entry);
             }
@@ -89,7 +89,7 @@ public class LobbyManager implements LobbyCommandVisitor {
         // if the just added player has the same name of a player in an active game it reactivates it
         if (activeGames.containsKey(entry.getName())) { // search between activeGames
             Game game = activeGames.get(entry.getName());
-            game.onPlayerReconnected(entry.getName());
+            game.onPlayerReconnected(entry.getName(), entry);
         }
         connectedPlayers.put(entry.getName(), entry);
             //entry.getView().sendLobbyList(currentLobbyList());
@@ -165,7 +165,7 @@ public class LobbyManager implements LobbyCommandVisitor {
     // Disconnect
     public synchronized void onDisconnected(String playerName) {
         connectedPlayers.remove(playerName);
-        Game gameSession = activeGames.remove(playerName); // returns the Game the player was in, or null if not in any
+        Game gameSession = activeGames.get(playerName); // returns the Game the player was in, or null if not in any
         if (gameSession != null) {
             gameSession.onPlayerDisconnected(playerName);
         } else { // if the game was not started yet (player was in a lobby)
