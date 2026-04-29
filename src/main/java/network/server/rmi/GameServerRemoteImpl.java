@@ -1,9 +1,6 @@
 package network.server.rmi;
 
-import shared.command.ClientCommand;
-import shared.command.CommandDispatcher;
-import shared.command.GameCommand;
-import shared.command.LobbyCommand;
+import shared.command.*;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -32,6 +29,11 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
                 return;
             }
             queue.put(cmd);
+        }
+
+        @Override
+        public void onHeartbeatCommand(HeartbeatCommand cmd) {
+            lobbyManager.onHeartbeatReceived(cmd.playerName());
         }
     };
 

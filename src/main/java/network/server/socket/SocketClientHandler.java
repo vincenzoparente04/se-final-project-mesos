@@ -4,6 +4,7 @@ import shared.command.ClientCommand;
 import shared.command.CommandDispatcher;
 import shared.command.GameCommand;
 import shared.command.LobbyCommand;
+import shared.command.HeartbeatCommand;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -35,6 +36,11 @@ public class SocketClientHandler implements Runnable {
                 return;
             }
             queue.put(cmd);
+        }
+
+        @Override
+        public void onHeartbeatCommand(HeartbeatCommand cmd) {
+            lobbyManager.onHeartbeatReceived(cmd.playerName());
         }
     };
 
