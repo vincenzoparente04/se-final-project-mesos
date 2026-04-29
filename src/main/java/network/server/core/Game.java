@@ -49,6 +49,7 @@ public class Game {
 
         // TODO: rivedere la riconnessione
         this.players.add(entry);
+        this.views.add(entry.getView());
         entry.setGameQueue(commandQueue);
         this.model.getPlayerByName(playerName).setConnected();
     }
