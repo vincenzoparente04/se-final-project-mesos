@@ -26,7 +26,10 @@ public class ActionPhase extends GamePhaseHandler {
     private void startNextPlayerTurn() {
         Board board = model.getBoard();
 
-        currentPlayer = board.getNextPlayerOnOfferTrack();
+        // get the next player; if it's a disconnected one it skips him
+        do {
+            currentPlayer = board.getNextPlayerOnOfferTrack();
+        }while (currentPlayer != null && !currentPlayer.getState());
 
         // Se non ci sono più giocatori, la fase Action è finita
         if (currentPlayer == null) {

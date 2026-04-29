@@ -30,11 +30,11 @@ public class LobbyManager implements LobbyCommandVisitor {
     private static final int CONNECT_TIMEOUT_MS = 5_000;
 
     // @GuardedBy("this") // TODO controlla che tutti i metodi che accedono a queste siano synchronized
-    private final Map<String, Lobby> lobbies = new LinkedHashMap<>();
+    private final Map<String, Lobby> lobbies = new LinkedHashMap<>(); // <id, lobby>
     // @GuardedBy("this")
-    private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>();
+    private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
     // @GuardedBy("this")
-    private final Map<String, Game> activeGames = new HashMap<>();
+    private final Map<String, Game> activeGames = new HashMap<>(); // <PlayerName, Game>
 
     // ─── Socket entry point ───────────────────────────────────
 
@@ -59,6 +59,12 @@ public class LobbyManager implements LobbyCommandVisitor {
                     view.close();
                     return;
                 }
+
+                // if the just added player has the same name of a player in an active game it reactivates it
+                if (activeGames.containsKey(playerName)) { // search between activeGames
+                    Game game = activeGames.get(playerName);
+                    game.onPlayerReconnected(playerName);
+                }
                 connectedPlayers.put(playerName, entry);
             }
 
@@ -74,12 +80,19 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     public synchronized void addRmiPlayer(RmiPlayerEntry entry) {
-        if (nameAlreadyTaken(entry.getName())) {
+        // if the just added player has the same name of a connected player it returns
+        if (nameAlreadyTaken(entry.getName())) {  // search between connectedPlayers
             entry.getView().sendError("name_already_taken:" + entry.getName());
             return;
         }
+
+        // if the just added player has the same name of a player in an active game it reactivates it
+        if (activeGames.containsKey(entry.getName())) { // search between activeGames
+            Game game = activeGames.get(entry.getName());
+            game.onPlayerReconnected(entry.getName());
+        }
         connectedPlayers.put(entry.getName(), entry);
-        entry.getView().sendLobbyList(currentLobbyList());
+            //entry.getView().sendLobbyList(currentLobbyList());
     }
 
     // Entry point for lobbies commands
@@ -152,10 +165,11 @@ public class LobbyManager implements LobbyCommandVisitor {
     // Disconnect
     public synchronized void onDisconnected(String playerName) {
         connectedPlayers.remove(playerName);
-        Game gameSession = activeGames.remove(playerName);
+        Game gameSession = activeGames.remove(playerName); // returns the Game the player was in, or null if not in any
         if (gameSession != null) {
             gameSession.onPlayerDisconnected(playerName);
-        } else {
+        } else { // if the game was not started yet (player was in a lobby)
+            lobbies.values().removeIf(lobby -> lobby.getPlayers().stream().anyMatch(p -> p.getName().equals(playerName))); // delete player from the lobby
             lobbies.values().forEach(lobby ->
                     lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
         }

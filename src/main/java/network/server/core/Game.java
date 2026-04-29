@@ -13,6 +13,7 @@ public class Game {
     private final List<PlayerEntry> players;
     private final List<VirtualView> views;
     private final BlockingQueue<GameCommand> commandQueue;
+    private final GameModel model;
     private final GameController controller;
     private volatile boolean gameOver = false;
     private Thread gameThread;
@@ -21,7 +22,7 @@ public class Game {
         this.players = List.copyOf(players);
         this.views = players.stream().map(PlayerEntry::getView).toList();
         this.commandQueue = commandQueue;
-        GameModel model = new GameModel(List.copyOf(views));
+        this.model = new GameModel(List.copyOf(views));
         this.controller = new GameController(model);
         controller.startGame(players.stream().map(PlayerEntry::getName).toList());
     }
@@ -40,6 +41,13 @@ public class Game {
         views.forEach(v -> v.sendError("player_disconnected:" + playerName));
         views.forEach(VirtualView::close);
         stopGameThread();
+        this.model.getPlayerByName(playerName).setDisconnected();
+    }
+
+    public synchronized void onPlayerReconnected(String playerName) {
+        if (gameOver) return;
+        views.forEach(v -> v.sendError("player_reconnected:" + playerName));
+        this.model.getPlayerByName(playerName).setConnected();
     }
 
     public boolean isGameOver() {

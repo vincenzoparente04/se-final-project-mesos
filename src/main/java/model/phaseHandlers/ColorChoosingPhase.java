@@ -46,7 +46,10 @@ public class ColorChoosingPhase extends GamePhaseHandler {
     }
 
     private void advanceTurn() {
-        currentIndex++;
+        // get the next player; if it's a disconnected one it skips him
+        do {
+            currentIndex++;
+        }while (currentIndex < model.getPlayerCount() && !model.getPlayers().get(currentIndex).getState());
 
         if (currentIndex < model.getPlayerCount()) {
             currentPlayer = model.getPlayers().get(currentIndex);

@@ -53,7 +53,11 @@ public class PlacementPhase extends GamePhaseHandler {
     }
 
     private void advanceTurn() {
-        currentIndex++;
+        // get the next player; if it's a disconnected one it skips him
+        do {
+            currentIndex++;
+        }while (currentIndex < model.getPlayerCount() && !model.getPlayers().get(currentIndex).getState());
+
 
         if (currentIndex < turnOrder.size()) {
             // next player's turn to place
