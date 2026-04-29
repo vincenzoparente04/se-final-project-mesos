@@ -28,11 +28,11 @@ public class GameModel {
     private final List<VirtualView> views;
 
     public GameModel(List<VirtualView> views) {
-        this.views = List.copyOf(views);
+        this.views = new ArrayList<>(views);
     }
 
     public GameModel() {
-        this.views = List.of();
+        this.views = new ArrayList<>();
     }
 
     public void startGame(List<String> playerNames) {
@@ -115,6 +115,10 @@ public class GameModel {
     public List<String> getWinners() {
         return winners;
     }
+
+    public void addView(VirtualView view) {views.add(view);}
+
+    //public void removeView(VirtualView view) {views.remove(view);}
 
     public void notifyChange() {
         GameStateDto dto = GameStateDtoBuilder.build(this);

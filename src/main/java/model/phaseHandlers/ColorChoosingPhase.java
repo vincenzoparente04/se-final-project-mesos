@@ -47,9 +47,16 @@ public class ColorChoosingPhase extends GamePhaseHandler {
 
     private void advanceTurn() {
         // get the next player; if it's a disconnected one it skips him
-        do {
-            currentIndex++;
-        }while (currentIndex < model.getPlayerCount() && !model.getPlayers().get(currentIndex).getState());
+
+        currentIndex++;
+        if (currentIndex < model.getPlayerCount() && !model.getPlayers().get(currentIndex).getState()) {
+            currentPlayer = model.getPlayers().get(currentIndex);
+            TotemColor randomizedChoice = availableColors.iterator().next();
+            chooseColor(currentPlayer, randomizedChoice);
+            model.notifyChange();
+            advanceTurn();
+            return;
+        }
 
         if (currentIndex < model.getPlayerCount()) {
             currentPlayer = model.getPlayers().get(currentIndex);
@@ -59,6 +66,21 @@ public class ColorChoosingPhase extends GamePhaseHandler {
             model.notifyChange();
             model.setPhase(new SetupPhase(model));
         }
+    }
+    
+    @Override
+    /**
+     * @implNote if a player disconnects during the color choosing phase, 
+     * we will assign him a random available color and move on to the next player. 
+     * This is to ensure that the game can proceed even if a player disconnects at the very beginning of the game. 
+     * The random assignment is done by simply taking the next available color from the set of available colors, 
+     * which is sufficient for our purposes since the order of color assignment does not matter in this phase.
+     */
+    public void skipCurrentPlayerTurn() {
+        currentPlayer = model.getPlayers().get(currentIndex);
+        TotemColor randomizedChoice = availableColors.iterator().next();
+        chooseColor(currentPlayer, randomizedChoice);
+        model.notifyChange();
     }
 
     @Override

@@ -141,6 +141,14 @@ public class ActionPhase extends GamePhaseHandler {
     }
 
     @Override
+    public void skipCurrentPlayerTurn() {
+        model.getBoard().returnTotemToTurnOrder(currentPlayer);
+        currentPlayer = null;
+        currentAction = null;
+        startNextPlayerTurn();
+    }
+
+    @Override
     public GamePhase getPhase() {
         return GamePhase.ACTION;
     }

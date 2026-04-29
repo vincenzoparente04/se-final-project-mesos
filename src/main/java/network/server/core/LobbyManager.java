@@ -169,9 +169,14 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (gameSession != null) {
             gameSession.onPlayerDisconnected(playerName);
         } else { // if the game was not started yet (player was in a lobby)
-            lobbies.values().removeIf(lobby -> lobby.getPlayers().stream().anyMatch(p -> p.getName().equals(playerName))); // delete player from the lobby
+            // Remove the single player from all lobbies
+            lobbies.values().forEach(lobby -> 
+                    lobby.getPlayers().stream().filter(p -> p.getName().equals(playerName)).forEach(lobby::removePlayer));
+            // Notify remaining players in all lobbies
             lobbies.values().forEach(lobby ->
                     lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
+            // empty lobbies deleted
+            lobbies.values().removeIf(lobby -> lobby.getPlayers().isEmpty());
         }
     }
 
