@@ -29,15 +29,12 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     private static final int CONNECT_TIMEOUT_MS = 5_000;
 
-//TODO controlla che tutti i metodi che accedono a queste siano synchronized
+    //TODO controlla che tutti i metodi che accedono a queste siano synchronized
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>();
-    // @GuardedBy("this")
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>();
-    // @GuardedBy("this")
     private final Map<String, Game> activeGames = new HashMap<>();
 
-    // ─── Socket entry point ───────────────────────────────────
-
+    // Socket entry point
     public void openSocketConnection(Socket socket) {
         try {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
@@ -45,6 +42,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
             socket.setSoTimeout(CONNECT_TIMEOUT_MS);
+            // vediamo se si può evitare questo cast ma credo di no
             ConnectMessage connect = (ConnectMessage) in.readObject();
             socket.setSoTimeout(0);
 
@@ -88,7 +86,6 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     // LobbyCommandVisitor
-
     @Override
     public synchronized void visit(ListLobbiesCommand cmd) {
         VirtualView view = getView(cmd.playerName());
@@ -133,8 +130,8 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     // Game start
-
-    private void checkAndStartIfFull(Lobby lobby) {
+    // vedi se synchronized da problemi
+    private synchronized void checkAndStartIfFull(Lobby lobby) {
         if (!lobby.isFull()) return;
 
         lobby.getViews().forEach(VirtualView::sendGameStarting);
@@ -143,21 +140,20 @@ public class LobbyManager implements LobbyCommandVisitor {
         BlockingQueue<GameCommand> queue = new LinkedBlockingQueue<>();
         List<PlayerEntry> players = lobby.getPlayers();
 
-        Game gameSession = new Game(players, queue);
-        gameSession.start();
+        Game game = new Game(players, queue);
+        game.start();
 
-        players.forEach(p -> activeGames.put(p.getName(), gameSession));
+        players.forEach(p -> activeGames.put(p.getName(), game));
     }
 
-    // Disconnect
+    // Disconnect TODO: tutta la disconnessione è da vedere / rifare, tenendo connto anche della funzionalità extra
     public synchronized void onDisconnected(String playerName) {
         connectedPlayers.remove(playerName);
         Game gameSession = activeGames.remove(playerName);
         if (gameSession != null) {
             gameSession.onPlayerDisconnected(playerName);
         } else {
-            lobbies.values().forEach(lobby ->
-                    lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
+            lobbies.values().forEach(lobby -> lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
         }
     }
 
@@ -179,11 +175,13 @@ public class LobbyManager implements LobbyCommandVisitor {
         return entry != null ? entry.getView() : null;
     }
 
-    private boolean nameAlreadyTaken(String name) {
+    // vedi se synchronized da problemi
+    private synchronized boolean nameAlreadyTaken(String name) {
         return connectedPlayers.containsKey(name);
     }
 
-    private boolean playerAlreadyInLobby(String playerName) {
+    // vedi se synchronized da problemi
+    private synchronized boolean playerAlreadyInLobby(String playerName) {
         return lobbies.values().stream()
                 .flatMap(l -> l.getPlayers().stream())
                 .anyMatch(p -> p.getName().equals(playerName));
@@ -192,4 +190,6 @@ public class LobbyManager implements LobbyCommandVisitor {
     private void closeSocket(Socket socket) {
         try { socket.close(); } catch (IOException ignored) {}
     }
+
+    // TODO da fixare tanti bug relativi a player che si disconnettono e lobby che restano attive anche se vuote
 }
