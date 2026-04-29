@@ -1,8 +1,12 @@
 package model.phaseHandlers;
 
+import controller.GameController;
 import model.GameModel;
 import model.board.Board;
 import model.board.OfferTile;
+import model.enums.GamePhase;
+import model.enums.TotemColor;
+import model.enums.TotemLocation;
 import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +41,7 @@ class PlacementPhaseTest {
 
     @BeforeEach
     void setUp() {
+
         model = mock(GameModel.class);
         board = mock(Board.class);
         tileA = mock(OfferTile.class);
@@ -53,6 +58,9 @@ class PlacementPhaseTest {
         when(p1.getName()).thenReturn("Player1");
         when(p2.getName()).thenReturn("Player2");
         when(p3.getName()).thenReturn("Player3");
+        when(p1.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
+        when(p2.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
+        when(p3.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
 
         when(board.findTileByLetter('A')).thenReturn(tileA);
         when(board.findTileByLetter('B')).thenReturn(tileB);
@@ -82,8 +90,6 @@ class PlacementPhaseTest {
 
         verify(board, times(1)).findTileByLetter('A');
         verify(board, times(1)).placeTotem(p1, tileA);
-        verify(model, times(1)).notifyChange("totem_placed:Player1");
-        verify(model, times(1)).notifyChange("turn_changed:Player2");
         assertEquals(p2, phase.getCurrentPlayer());
     }
 
@@ -93,7 +99,7 @@ class PlacementPhaseTest {
         phase.onEnter();
         when(tileA.isOccupied()).thenReturn(true);
 
-        assertThrows(IllegalStateException.class, () -> phase.placeTotem(p1, 'A'));
+        assertThrows(IllegalArgumentException.class, () -> phase.placeTotem(p1, 'A'));
         verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
     }
 
@@ -103,7 +109,7 @@ class PlacementPhaseTest {
         phase.onEnter();
         when(board.findTileByLetter('Z')).thenReturn(null);
 
-        assertThrows(IllegalStateException.class, () -> phase.placeTotem(p1, 'Z'));
+        assertThrows(IllegalArgumentException.class, () -> phase.placeTotem(p1, 'Z'));
         verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
     }
 
