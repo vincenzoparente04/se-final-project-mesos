@@ -29,7 +29,8 @@ public class ActionPhase extends GamePhaseHandler {
         // get the next player; if it's a disconnected one it skips him
         do {
             currentPlayer = board.getNextPlayerOnOfferTrack();
-        }while (currentPlayer != null && !currentPlayer.getState());
+            if (currentPlayer == null) break;  // No more players
+        } while (!currentPlayer.getState());
 
         // Se non ci sono più giocatori, la fase Action è finita
         if (currentPlayer == null) {

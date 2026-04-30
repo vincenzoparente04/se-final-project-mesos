@@ -24,6 +24,11 @@ public class ColorChoosingPhase extends GamePhaseHandler {
         currentIndex = 0;
         currentPlayer = model.getPlayers().get(currentIndex);
 
+        if (!currentPlayer.getState()) {
+            advanceTurn();
+            return;
+        }
+
         model.notifyChange();
     }
 
@@ -46,26 +51,29 @@ public class ColorChoosingPhase extends GamePhaseHandler {
     }
 
     private void advanceTurn() {
-        // get the next player; if it's a disconnected one it skips him
-
-        currentIndex++;
-        if (currentIndex < model.getPlayerCount() && !model.getPlayers().get(currentIndex).getState()) {
+        // get the next player; if it's a disconnected one it skips him and assign random color
+        do {
+            currentIndex++;
+            
+            if (currentIndex >= model.getPlayerCount()) {
+                // all players have chosen → proceed to setup
+                model.notifyChange();
+                model.setPhase(new SetupPhase(model));
+                return;
+            }
+            
             currentPlayer = model.getPlayers().get(currentIndex);
-            TotemColor randomizedChoice = availableColors.iterator().next();
-            chooseColor(currentPlayer, randomizedChoice);
-            model.notifyChange();
-            advanceTurn();
-            return;
-        }
+            
+            if (!currentPlayer.getState()) {
+                // Player is disconnected → assign random color and continue loop
+                TotemColor randomizedChoice = availableColors.iterator().next();
+                currentPlayer.setColor(randomizedChoice);
+                availableColors.remove(randomizedChoice);
+                // Loop continues to next player
+            }
+        } while (!currentPlayer.getState());  // Exit loop when we find a connected player
 
-        if (currentIndex < model.getPlayerCount()) {
-            currentPlayer = model.getPlayers().get(currentIndex);
-            model.notifyChange();
-        } else {
-            // all players have chosen → proceed to setup
-            model.notifyChange();
-            model.setPhase(new SetupPhase(model));
-        }
+        model.notifyChange();
     }
     
     @Override
