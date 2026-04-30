@@ -62,6 +62,7 @@ public class ActionPhase extends GamePhaseHandler {
     public void drawCard(int cardId) {
         ensureActiveTurn();
 
+
         RowsManager rowsManager = model.getRowsManager();
         Card card = rowsManager.findCardById(cardId)
                 .orElseThrow(() -> new IllegalArgumentException("Card " + cardId +" not found on board"));

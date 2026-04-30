@@ -92,7 +92,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             game.onPlayerReconnected(entry.getName(), entry);
         }
         connectedPlayers.put(entry.getName(), entry);
-            //entry.getView().sendLobbyList(currentLobbyList());
+        entry.getView().sendLobbyList(currentLobbyList());
     }
 
     // Entry point for lobbies commands
