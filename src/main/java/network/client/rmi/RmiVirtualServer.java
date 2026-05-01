@@ -44,7 +44,6 @@ public class RmiVirtualServer implements VirtualServer {
 
         Registry registry = LocateRegistry.getRegistry(host, rmiPort);
         this.serverStub = (GameServerRemote) registry.lookup(SERVICE_NAME);
-
         this.callback = new ClientCallbackImpl(localState, listener);
 
         this.commandExecutor = Executors.newSingleThreadExecutor(r -> {
@@ -53,15 +52,12 @@ public class RmiVirtualServer implements VirtualServer {
             return t;
         });
 
-        serverStub.join(playerName, callback);
-
         this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "heartbeat-sender-" + playerName);
             t.setDaemon(true);
             return t;
         });
 
-        // (la serverStub.join già esistente rimane qui)
         serverStub.join(playerName, callback);
 
         this.heartbeatScheduler.scheduleAtFixedRate(

@@ -2,6 +2,7 @@ package network.server.core;
 
 import controller.GameController;
 import model.GameModel;
+import model.GameStateDtoBuilder;
 import shared.command.GameCommand;
 
 import java.util.List;
@@ -23,7 +24,10 @@ public class Game {
         this.views = new java.util.concurrent.CopyOnWriteArrayList<>(
                 players.stream().map(PlayerEntry::getView).toList());
         this.commandQueue = commandQueue;
-        this.model = new GameModel(List.copyOf(views));
+        // Passiamo il RIFERIMENTO alla stessa CopyOnWriteArrayList, non una copia:
+        // così il modello vede sempre la lista di view aggiornata, anche dopo una
+        // riconnessione (vedi onPlayerReconnected).
+        this.model = new GameModel(this.views);
         this.controller = new GameController(model);
         controller.startGame(players.stream().map(PlayerEntry::getName).toList());
     }
@@ -47,26 +51,20 @@ public class Game {
     public synchronized void onPlayerReconnected(String playerName, PlayerEntry entry) {
         if (gameOver) return;
 
-        // 1. Rimuovi le entry vecchie del player riconnesso (entry stale + view morta)
+        // toglie le vecchie entry e view
         players.removeIf(p -> p.getName().equals(playerName));
         views.removeIf(v -> v.getPlayerName().equals(playerName));
 
-        // 2. Inserisci la nuova entry e la nuova view (vive)
+        // aggiunge nuove entry e view
         players.add(entry);
         views.add(entry.getView());
 
-        // 3. Aggancia la queue del Game a questo handler/RMI dispatcher,
-        //    altrimenti i comandi del player non arriverebbero mai al QueueDrainer.
         entry.setGameQueue(commandQueue);
-
-        // 4. Sblocca il modello
         this.model.getPlayerByName(playerName).setConnected();
 
-        // 5. Notifica gli altri E manda lo stato corrente al riconnesso,
-        //    così non resta in attesa di un evento che potrebbe non arrivare a breve.
+        // notifica gli altri e manda lo stato al riconnesso
         views.forEach(v -> v.sendError("player_reconnected:" + playerName));
-        // facoltativo ma molto utile: rimanda subito lo stato corrente al riconnesso
-        // entry.getView().sendState(model.toDto());   // se hai un metodo equivalente
+        entry.getView().sendState(GameStateDtoBuilder.build(model));
     }
 
     public boolean isGameOver() {

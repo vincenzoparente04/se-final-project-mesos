@@ -28,8 +28,11 @@ public class GameModel {
     private final List<VirtualView> views;
 
     public GameModel(List<VirtualView> views) {
-        this.views = List.copyOf(views);
-    }
+        // NB: NON copiare. Manteniamo il riferimento alla stessa lista che Game possiede,
+        // così quando Game.onPlayerReconnected sostituisce la VirtualView del player
+        // (rimosso V_old, aggiunto V_new), notifyChange() vede automaticamente la nuova view.
+        // È responsabilità del chiamante passare una lista thread-safe (CopyOnWriteArrayList).
+        this.views = views;    }
 
     public GameModel() {
         this.views = List.of();
