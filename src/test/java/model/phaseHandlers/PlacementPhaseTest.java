@@ -78,7 +78,7 @@ class PlacementPhaseTest {
         phase.onEnter();
 
         assertEquals(p1, phase.getCurrentPlayer());
-        verify(model, times(1)).notifyChange("placement_started:Player1");
+        verify(model, times(1)).notifyChange();
     }
 
     @Test
@@ -122,9 +122,7 @@ class PlacementPhaseTest {
         phase.placeTotem(p2, 'B');
         phase.placeTotem(p3, 'C');
 
-        verify(model, times(1)).notifyChange("turn_changed:Player2");
-        verify(model, times(1)).notifyChange("turn_changed:Player3");
-        verify(model, never()).notifyChange("turn_changed:Player4");
+        verify(model, times(4)).notifyChange();
         verify(model, times(1)).setPhase(argThat(handler -> handler instanceof ActionPhase));
     }
 }

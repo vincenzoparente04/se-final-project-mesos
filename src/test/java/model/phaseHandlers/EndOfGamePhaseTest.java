@@ -74,10 +74,9 @@ public class EndOfGamePhaseTest {
         //verify (first the order of operations, then the points calculations, then the winner)
 		var order = inOrder(rowsManager, model);
 		order.verify(rowsManager, times(1)).resolveAllEvents(players);
-		order.verify(model, times(1)).notifyChange("final_events_resolved");
-		order.verify(model, times(1)).notifyChange("endgame_scoring_complete");
-		order.verify(model, times(1)).notifyChange("game_over:p1");
-		verify(model, never()).notifyChange("game_over:p2");
+		order.verify(model, times(1)).notifyChange();
+		order.verify(model, times(1)).notifyChange();
+		order.verify(model, times(1)).notifyChange();
 
 		verify(p1, times(1)).addPrestigePoints(3);
 		verify(p1, times(1)).addPrestigePoints(10);
@@ -121,10 +120,7 @@ public class EndOfGamePhaseTest {
 		phase.onEnter();
 
 		verify(rowsManager, times(1)).resolveAllEvents(players);
-		verify(model, times(1)).notifyChange("final_events_resolved");
-		verify(model, times(1)).notifyChange("endgame_scoring_complete");
-		verify(model, times(1)).notifyChange("game_over:p2");
-		verify(model, never()).notifyChange("game_over:p1");
+		verify(model, times(3)).notifyChange();
 		assertEquals(1, phase.getWinners().size());
 		assertSame(p2, phase.getWinners().getFirst());
 	}
@@ -156,11 +152,7 @@ public class EndOfGamePhaseTest {
 		phase.onEnter();
 
 		verify(rowsManager, times(1)).resolveAllEvents(players);
-		verify(model, times(1)).notifyChange("final_events_resolved");
-		verify(model, times(1)).notifyChange("endgame_scoring_complete");
-		verify(model, times(1)).notifyChange("game_over:p1, p2");
-		verify(model, never()).notifyChange("game_over:p1");
-		verify(model, never()).notifyChange("game_over:p2");
+		verify(model, times(3)).notifyChange();
 		assertEquals(2, phase.getWinners().size());
 		assertSame(p1, phase.getWinners().get(0));
 		assertSame(p2, phase.getWinners().get(1));

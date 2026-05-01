@@ -43,14 +43,16 @@ public class FullGameTest {
 
         gameController.chooseColor("Homer", "RED");
 
+        assertEquals(homer.getColor(), RED, "Color should be RED");
+
         assertEquals(model.getCurrentPlayer(), bart, "Current player should be bart");
 
         //color already taken case
         IllegalArgumentException errorColorTaken = assertThrows(
                 IllegalArgumentException.class,
-                () -> gameController.chooseColor("Bart", "RED")
+                () -> gameController.chooseColor("Bart", "red")
         );
-        assertTrue(errorColorTaken.getMessage().contains("color RED is already taken"));
+        assertTrue(errorColorTaken.getMessage().contains("Color RED is already taken"));
 
         //instruction for wrong phase
         IllegalStateException errorWrongPhaseCOLOR_CHOOSING = assertThrows(

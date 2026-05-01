@@ -15,11 +15,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class EndOfRoundPhaseTest {
 
@@ -59,7 +55,7 @@ public class EndOfRoundPhaseTest {
 		// Assert: verify correct sequence of operations
 		var order = inOrder(rowsManager, model);
 		order.verify(rowsManager).resolveEvents(players);
-		order.verify(model).notifyChange("events_resolved");
+		order.verify(model).notifyChange();
 		order.verify(model).incrementRound();
 		order.verify(rowsManager).endRound(2);
 
@@ -88,7 +84,7 @@ public class EndOfRoundPhaseTest {
 		phase.onEnter();
 
 		// Assert: verify era change notification and board update
-		verify(model).notifyChange("era_changed:" + Era.ERA_II);
+		verify(model, times(2)).notifyChange();
 		verify(rowsManager).changeEra();
 		verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 	}

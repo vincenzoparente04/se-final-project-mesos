@@ -90,7 +90,7 @@ public class ColorChoosingPhaseTest {
         colorChoosingPhase.onEnter();
 
         // Assert
-        verify(gameModel, times(1)).notifyChange("color_choosing_started:Player1");
+        verify(gameModel, times(1)).notifyChange();
     }
 
     // ──────────────────────────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ public class ColorChoosingPhaseTest {
     void testChooseColorNotifiesObserversAboutChoice() {
         // Arrange
         colorChoosingPhase.onEnter();
-        //verify(gameModel, times(1)).notifyChange("color_choosing_started:" + player1.getName());
+        //verify(gameModel, times(1)).notifyChange();
 
         // Act
         colorChoosingPhase.chooseColor(player1, TotemColor.BLUE);
@@ -124,7 +124,7 @@ public class ColorChoosingPhaseTest {
         // Assert - verify that player1 got the color
         verify(player1, times(1)).setColor(TotemColor.BLUE);
         // Verify that notifyChange was called with the color choice
-        verify(gameModel, times(1)).notifyChange("color_choosing_next:"+player2.getName());
+        verify(gameModel, times(1)).notifyChange();
     }
     */
 
@@ -142,7 +142,7 @@ public class ColorChoosingPhaseTest {
         assertEquals(player2, colorChoosingPhase.getCurrentPlayer(),
                 "Current player should advance to player2 after player1 chooses");
         // Verify that notifyChange was called to notify the next player
-        verify(gameModel, times(1)).notifyChange("color_choosing_next:Player2");
+        verify(gameModel, times(2)).notifyChange();
     }
 
     // ──────────────────────────────────────────────────────────────────────────────
@@ -253,7 +253,7 @@ public class ColorChoosingPhaseTest {
         // Assert - verify that setPhase was called (indicating completion)
         verify(gameModel, times(1)).setPhase(any(SetupPhase.class));
         // Verify that notifyChange was called to signal completion
-        verify(gameModel, times(1)).notifyChange("color_choosing_completed");
+        verify(gameModel, times(4)).notifyChange();
     }
 
     // ──────────────────────────────────────────────────────────────────────────────

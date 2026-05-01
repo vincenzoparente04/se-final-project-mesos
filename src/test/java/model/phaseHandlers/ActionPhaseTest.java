@@ -102,7 +102,7 @@ class ActionPhaseTest {
         phase.onEnter();
 
         assertEquals(p1, phase.getCurrentPlayer());
-        verify(model, times(1)).notifyChange("action_started:Player1");
+        verify(model, times(1)).notifyChange();
         verify(action, times(1)).onEnterAction(p1, model);
         verify(turnOrderTile, never()).returnTotemAndResolveEffects(p1);
     }
@@ -152,7 +152,7 @@ class ActionPhaseTest {
         verify(rowsManager, times(1)).removeCard(10);
         verify(selectedCard, times(1)).registerToTribe(p1);
         verify(action, times(1)).performDraw(selectedCard, rowsManager);
-        verify(model, times(1)).notifyChange("card_drawn:10");
+        verify(model, times(2)).notifyChange();
     }
 
     @Test
@@ -247,7 +247,6 @@ class ActionPhaseTest {
         assertThrows(IllegalStateException.class, () -> phase.drawCard(60));
         verify(rowsManager, never()).removeCard(60);
         verify(selectedCard, never()).registerToTribe(p1);
-        verify(model, never()).notifyChange("card_drawn:60");
     }
 
     @Test
@@ -304,7 +303,7 @@ class ActionPhaseTest {
         phase.onEnter();
         phase.endTurn();
 
-        verify(model).notifyChange("turn_ended:Player1");
+        verify(model, times(2)).notifyChange();
         verify(board).returnTotemToTurnOrder(p1);
     }
 
