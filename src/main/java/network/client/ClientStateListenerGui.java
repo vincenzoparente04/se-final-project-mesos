@@ -1,76 +1,122 @@
 package network.client;
 
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 import shared.dto.LobbyDto;
+import view.GameViewController;
+import view.LobbyViewController;
 
+import java.io.IOException;
 import java.util.List;
 
-public class ClientStateListenerGui implements ClientStateListener{
-    private Stage primaryStage;
-    private String playerName;
+/**
+ * Connects network callbacks to JavaFX UI controllers.
+ *
+ * Every method is invoked from a background thread (socket reader or RMI thread), so all UI mutations are wrapped in Platform.runLater().
+ *
+ * Lifecycle:
+ *   1. Created in ClientMain.start() together with the lobby scene.
+ *   2. setClientController() is called once the network connection is up.
+ *   3. onGameStarting() switches the scene and creates the GameViewController.
+ */
+public class ClientStateListenerGui implements ClientStateListener {
 
-    public ClientStateListenerGui(Stage primaryStage,  String playerName) {
-        this.primaryStage = primaryStage;
+    private final Stage stage;
+    private final String playerName;
+    private final LobbyViewController lobbyCtrl;
+
+    private ClientController clientController;
+    private GameViewController gameCtrl;
+
+    public ClientStateListenerGui(Stage stage, String playerName, LobbyViewController lobbyCtrl) {
+        this.stage = stage;
         this.playerName = playerName;
+        this.lobbyCtrl = lobbyCtrl;
     }
+
+    /**
+     * Called from the connect-thread once the VirtualServer and ClientController are ready.
+     * Propagates the controller to the lobby screen so buttons work.
+     */
+    public void setClientController(ClientController cc) {
+        this.clientController = cc;
+        Platform.runLater(() -> lobbyCtrl.setClientController(cc));
+    }
+
+    // ─── ClientStateListener callbacks ───────────────────────────────────────
 
     @Override
     public void onGameStateUpdated(LocalGameState state) {
-        Platform.runLater(() ->
-                System.out.println("[STATE] phase=" + state.getPhase()
-                        + " round=" + state.getCurrentRound()
-                        + " currentPlayer=" + state.getCurrentPlayerName()));
+        Platform.runLater(() -> {
+            if (gameCtrl != null) gameCtrl.update(state);
+        });
     }
 
     @Override
     public void onWaiting(String rawWaitingMessage) {
-        Platform.runLater(() -> {
-            primaryStage.setTitle("Mesos — " + playerName + " [waiting " + rawWaitingMessage + "]");
-            System.out.println("[WAITING] " + rawWaitingMessage);
-        });
+        Platform.runLater(() ->
+                stage.setTitle("Mesos — " + playerName + "  [attesa: " + rawWaitingMessage + "]"));
     }
 
     @Override
     public void onError(String message) {
-        Platform.runLater(() -> System.out.println("[ERROR] " + message));
+        Platform.runLater(() -> {
+            if (gameCtrl == null) {
+                lobbyCtrl.showError(message);
+            } else {
+                // In-game errors: show in the title bar for now
+                //TODO: maybe add an error label in the game scene?
+                stage.setTitle("Mesos — errore: " + message);
+            }
+        });
     }
 
     @Override
     public void onLobbyList(List<LobbyDto> lobbies) {
-        Platform.runLater(() -> System.out.println("[LOBBIES] " + lobbies.size() + " open"));
+        Platform.runLater(() -> lobbyCtrl.showLobbies(lobbies));
     }
 
     @Override
     public void onLobbyState(LobbyDto lobby) {
-        Platform.runLater(() -> {
-            primaryStage.setTitle("Mesos — " + playerName
-                    + " [lobby: " + lobby.currentPlayers() + "/" + lobby.maxPlayers() + "]");
-            System.out.println("[LOBBY] " + lobby.name()
-                    + " — " + lobby.currentPlayers() + "/" + lobby.maxPlayers());
-        });
+        Platform.runLater(() -> lobbyCtrl.showLobbyState(lobby));
     }
 
     @Override
     public void onGameStarting() {
-        Platform.runLater(() -> {
-            primaryStage.setTitle("Mesos — " + playerName + " [game starting]");
-            System.out.println("[GAME] Starting!");
-        });
+        Platform.runLater(this::switchToGameScene);
     }
 
     @Override
     public void onGameOver(List<String> winners) {
-        Platform.runLater(() -> System.out.println("[GAME OVER] Winner(s): " + winners));
+        Platform.runLater(() -> {
+            if (gameCtrl != null) gameCtrl.showGameOver(winners);
+        });
     }
 
     @Override
     public void onDisconnected() {
-        Platform.runLater(() -> {
-            primaryStage.setTitle("Mesos — disconnected");
-            System.out.println("[DISCONNECTED] Connection to server lost.");
-        });
+        Platform.runLater(() -> stage.setTitle("Mesos — disconnected"));
     }
 
+    // ─── Scene switch ─────────────────────────────────────────────────────────
 
+    private void switchToGameScene() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/org/example/mesos/game-view.fxml"));
+            Parent root = loader.load();
+
+            gameCtrl = loader.getController();
+            gameCtrl.setClientController(clientController);
+            gameCtrl.setMyPlayerName(playerName);
+
+            stage.setScene(new Scene(root, 1200, 800));
+            stage.setTitle("Mesos — " + playerName);
+        } catch (IOException e) {
+            System.err.println("Could not load game-view.fxml: " + e.getMessage());
+        }
+    }
 }
