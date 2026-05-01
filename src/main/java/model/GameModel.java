@@ -13,6 +13,7 @@ import shared.dto.GameStateDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameModel {
     private static final int MAX_ROUNDS = 10;
@@ -28,14 +29,11 @@ public class GameModel {
     private final List<VirtualView> views;
 
     public GameModel(List<VirtualView> views) {
-        // NB: NON copiare. Manteniamo il riferimento alla stessa lista che Game possiede,
-        // così quando Game.onPlayerReconnected sostituisce la VirtualView del player
-        // (rimosso V_old, aggiunto V_new), notifyChange() vede automaticamente la nuova view.
-        // È responsabilità del chiamante passare una lista thread-safe (CopyOnWriteArrayList).
-        this.views = views;    }
+        this.views = new CopyOnWriteArrayList<>(views);
+    }
 
     public GameModel() {
-        this.views = List.of();
+        this.views = new CopyOnWriteArrayList<>();
     }
 
     public void startGame(List<String> playerNames) {
@@ -122,5 +120,10 @@ public class GameModel {
     public void notifyChange() {
         GameStateDto dto = GameStateDtoBuilder.build(this);
         views.forEach(v -> v.sendState(dto));
+    }
+
+    public synchronized void swapView(String playerName, VirtualView newView) {
+        views.removeIf(v -> v.getPlayerName().equals(playerName));
+        views.add(newView);
     }
 }

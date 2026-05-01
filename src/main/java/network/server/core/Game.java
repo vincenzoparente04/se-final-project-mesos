@@ -24,9 +24,6 @@ public class Game {
         this.views = new java.util.concurrent.CopyOnWriteArrayList<>(
                 players.stream().map(PlayerEntry::getView).toList());
         this.commandQueue = commandQueue;
-        // Passiamo il RIFERIMENTO alla stessa CopyOnWriteArrayList, non una copia:
-        // così il modello vede sempre la lista di view aggiornata, anche dopo una
-        // riconnessione (vedi onPlayerReconnected).
         this.model = new GameModel(this.views);
         this.controller = new GameController(model);
         controller.startGame(players.stream().map(PlayerEntry::getName).toList());
@@ -51,13 +48,16 @@ public class Game {
     public synchronized void onPlayerReconnected(String playerName, PlayerEntry entry) {
         if (gameOver) return;
 
-        // toglie le vecchie entry e view
+        // 1) Aggiorna le strutture di Game (per findView, sendError mirati, ecc.)
         players.removeIf(p -> p.getName().equals(playerName));
         views.removeIf(v -> v.getPlayerName().equals(playerName));
-
-        // aggiunge nuove entry e view
         players.add(entry);
         views.add(entry.getView());
+
+        // 2) Aggiorna ESPLICITAMENTE anche la lista delle view del modello,
+        //    altrimenti notifyChange() continuerebbe a fare broadcast verso
+        //    la VirtualView vecchia (chiusa). È il fix del bug.
+        this.model.swapView(playerName, entry.getView());
 
         entry.setGameQueue(commandQueue);
         this.model.getPlayerByName(playerName).setConnected();
