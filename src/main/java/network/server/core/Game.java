@@ -19,8 +19,9 @@ public class Game {
     private Thread gameThread;
 
     public Game(List<PlayerEntry> players, BlockingQueue<GameCommand> commandQueue) {
-        this.players = List.copyOf(players);
-        this.views = players.stream().map(PlayerEntry::getView).toList();
+        this.players = new java.util.concurrent.CopyOnWriteArrayList<>(players);
+        this.views = new java.util.concurrent.CopyOnWriteArrayList<>(
+                players.stream().map(PlayerEntry::getView).toList());
         this.commandQueue = commandQueue;
         this.model = new GameModel(List.copyOf(views));
         this.controller = new GameController(model);
@@ -45,13 +46,27 @@ public class Game {
 
     public synchronized void onPlayerReconnected(String playerName, PlayerEntry entry) {
         if (gameOver) return;
-        views.forEach(v -> v.sendError("player_reconnected:" + playerName));
 
-        // TODO: rivedere la riconnessione
-        this.players.add(entry);
-        this.views.add(entry.getView());
+        // 1. Rimuovi le entry vecchie del player riconnesso (entry stale + view morta)
+        players.removeIf(p -> p.getName().equals(playerName));
+        views.removeIf(v -> v.getPlayerName().equals(playerName));
+
+        // 2. Inserisci la nuova entry e la nuova view (vive)
+        players.add(entry);
+        views.add(entry.getView());
+
+        // 3. Aggancia la queue del Game a questo handler/RMI dispatcher,
+        //    altrimenti i comandi del player non arriverebbero mai al QueueDrainer.
         entry.setGameQueue(commandQueue);
+
+        // 4. Sblocca il modello
         this.model.getPlayerByName(playerName).setConnected();
+
+        // 5. Notifica gli altri E manda lo stato corrente al riconnesso,
+        //    così non resta in attesa di un evento che potrebbe non arrivare a breve.
+        views.forEach(v -> v.sendError("player_reconnected:" + playerName));
+        // facoltativo ma molto utile: rimanda subito lo stato corrente al riconnesso
+        // entry.getView().sendState(model.toDto());   // se hai un metodo equivalente
     }
 
     public boolean isGameOver() {

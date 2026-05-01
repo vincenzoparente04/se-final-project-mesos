@@ -197,14 +197,28 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     // Disconnect
     public synchronized void onDisconnected(String playerName) {
-        connectedPlayers.remove(playerName);
+        // rivedere chiamate a onDisconncted, nel frarttempo faccio questo controllo
+        if (!connectedPlayers.containsKey(playerName)
+                && !lastHeartbeat.containsKey(playerName)) {
+            return;
+        }
+
+        PlayerEntry entry = connectedPlayers.remove(playerName);
         lastHeartbeat.remove(playerName);
 
-        Game gameSession = activeGames.get(playerName); // returns the Game the player was in, or null if not in any
+        Game gameSession = activeGames.get(playerName);
         if (gameSession != null) {
+            // Game.onPlayerDisconnected chiude già la view di questo player
+            // e notifica gli altri.
             gameSession.onPlayerDisconnected(playerName);
-        } else { // if the game was not started yet (player was in a lobby)
-            lobbies.values().removeIf(lobby -> lobby.getPlayers().stream().anyMatch(p -> p.getName().equals(playerName))); // delete player from the lobby
+        } else {
+            // Player era in lobby (o appena connesso, senza lobby): chiudi
+            // esplicitamente la view per liberare socket / executor.
+            if (entry != null) {
+                entry.getView().close();
+            }
+            lobbies.values().removeIf(lobby -> lobby.getPlayers().stream()
+                    .anyMatch(p -> p.getName().equals(playerName)));
             lobbies.values().forEach(lobby ->
                     lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
         }
