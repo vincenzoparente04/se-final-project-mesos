@@ -42,11 +42,16 @@ public class Game {
     public synchronized void onPlayerDisconnected(String playerName) {
         if (gameOver) return;
         views.forEach(v -> v.sendError("Player_disconnected:" + playerName));
-        findView(playerName).ifPresent(VirtualView::close);
+        // close and remove the old view
+        Optional<VirtualView> oldView = findView(playerName);
+        if (oldView.isPresent()) {
+            oldView.get().close();
+            this.views.remove(oldView.get());
+        }
         findPlayerEntry(playerName).ifPresent(this.players::remove);
 
         this.model.getPlayerByName(playerName).setDisconnected();
-        //findView(playerName).ifPresent(this.model::removeView);
+
         GamePhaseHandler currentPhase = model.getPhaseHandler();
         if (currentPhase.getCurrentPlayer() != null && currentPhase.getCurrentPlayer().getName().equals(playerName)) {
             currentPhase.skipCurrentPlayerTurn(); // forces turn advance
@@ -59,9 +64,10 @@ public class Game {
 
         this.players.add(entry);
         this.views.add(entry.getView());
-        entry.setGameQueue(commandQueue);
+        this.players.getLast().setGameQueue(commandQueue);
         this.model.getPlayerByName(playerName).setConnected();
         this.model.addView(entry.getView());
+        this.model.notifyChange();
     }
 
     public boolean isGameOver() {

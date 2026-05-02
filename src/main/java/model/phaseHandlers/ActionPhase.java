@@ -30,6 +30,10 @@ public class ActionPhase extends GamePhaseHandler {
         do {
             currentPlayer = board.getNextPlayerOnOfferTrack();
             if (currentPlayer == null) break;  // No more players
+            if (!currentPlayer.getState()) {
+                // Skip disconnected player and return their totem to the turn order
+                board.returnTotemToTurnOrder(currentPlayer);
+            }
         } while (!currentPlayer.getState());
 
         // Se non ci sono più giocatori, la fase Action è finita

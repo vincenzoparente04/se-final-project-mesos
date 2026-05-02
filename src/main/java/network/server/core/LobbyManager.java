@@ -64,15 +64,17 @@ public class LobbyManager implements LobbyCommandVisitor {
                 if (activeGames.containsKey(playerName)) { // search between activeGames
                     Game game = activeGames.get(playerName);
                     game.onPlayerReconnected(playerName, entry);
+                    connectedPlayers.put(playerName, entry);
+                }else {
+                    connectedPlayers.put(playerName, entry);
+                    view.sendLobbyList(currentLobbyList());
                 }
-                connectedPlayers.put(playerName, entry);
             }
 
             Thread t = new Thread(handler, "client-" + playerName);
             t.setDaemon(true);
             t.start();
 
-            view.sendLobbyList(currentLobbyList());
 
         } catch (IOException | ClassNotFoundException e) {
             closeSocket(socket);
@@ -90,9 +92,11 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (activeGames.containsKey(entry.getName())) { // search between activeGames
             Game game = activeGames.get(entry.getName());
             game.onPlayerReconnected(entry.getName(), entry);
+            connectedPlayers.put(entry.getName(), entry);
+        }else {
+            connectedPlayers.put(entry.getName(), entry);
+            entry.getView().sendLobbyList(currentLobbyList());
         }
-        connectedPlayers.put(entry.getName(), entry);
-        entry.getView().sendLobbyList(currentLobbyList());
     }
 
     // Entry point for lobbies commands
