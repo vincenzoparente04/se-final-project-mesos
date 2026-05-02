@@ -25,6 +25,30 @@ import network.server.socket.SocketPlayerEntry;
 import network.server.socket.SocketVirtualView;
 import shared.message.ConnectMessage;
 
+/**
+ * Central registry for all client sessions on the server. This class manages three orthogonal concerns:
+ * <ul>
+ *   <li>handshake for socket connections and registry of the ({@link #connectedPlayers});</li>
+ *   <li>lobbies waiting to fill up ({@link #lobbies});</li>
+ *   <li>games currently being played ({@link #activeGames}).</li>
+ * </ul>
+ * It is the single entry point for both transports: socket clients arrive via
+ * {@link #openSocketConnection(Socket)}, RMI clients via {@link #addRmiPlayer(RmiPlayerEntry)}.
+ * It dispatches the lobby-menu commands ({@code LIST}, {@code CREATE}, {@code JOIN}) using the visitor
+ * pattern over {@link LobbyCommand}.
+ *
+ * <h2>Threading model</h2>
+ * One instance is shared by every transport thread (socket acceptor workers,
+ * RMI dispatcher threads, individual client handler threads). Every public method
+ * that touches the three maps is {@code synchronized}, and the few private helpers
+ * ({@code nameAlreadyTaken}, {@code playerAlreadyInLobby}, {@code checkAndStartIfFull})
+ * are only ever called from inside synchronized blocks.
+ *
+ * <h2>I/O outside the lock</h2>
+ * Network I/O performed during the socket handshake is deliberately kept
+ * outside the synchronized block so that a slow or hostile client cannot block
+ * other clients from joining. Only the final registration step takes the lock.
+ */
 public class LobbyManager implements LobbyCommandVisitor {
 
     private static final int CONNECT_TIMEOUT_MS = 5_000;
@@ -36,9 +60,7 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     // @GuardedBy("this") // TODO controlla che tutti i metodi che accedono a queste siano synchronized
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>(); // <id, lobby>
-    // @GuardedBy("this")
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
-    // @GuardedBy("this")
     private final Map<String, Game> activeGames = new HashMap<>(); // <PlayerName, Game>
 
 
@@ -75,6 +97,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
             socket.setSoTimeout(CONNECT_TIMEOUT_MS);
+            // vedi se questo cast è necessario; in caso forse è meglio instanceOf
             ConnectMessage connect = (ConnectMessage) in.readObject();
             socket.setSoTimeout(0);
 
@@ -111,10 +134,17 @@ public class LobbyManager implements LobbyCommandVisitor {
         }
     }
 
+    /**
+     * Registers a new joined RMI player. Symmetric to {@link #openSocketConnection(Socket)}:
+     * rejects duplicate names, triggers reconnection if the name belongs to an active game,
+     * otherwise adds the player to {@link #connectedPlayers} and primes their lobby
+     * list.
+     */
     public synchronized void addRmiPlayer(RmiPlayerEntry entry) {
         // if the just added player has the same name of a connected player it returns
         if (nameAlreadyTaken(entry.getName())) {  // search between connectedPlayers
             entry.getView().sendError("name_already_taken:" + entry.getName());
+            entry.getView().close();
             return;
         }
 
@@ -129,7 +159,10 @@ public class LobbyManager implements LobbyCommandVisitor {
         }
     }
 
-    // Entry point for lobbies commands
+    /**
+     * Entry point for lobby-menu commands. Dispatches via the visitor
+     * pattern to one of the {@code visit(...)} overloads.
+     */
     public synchronized void handle(LobbyCommand cmd) throws Exception {
         cmd.accept(this);
     }
@@ -190,13 +223,14 @@ public class LobbyManager implements LobbyCommandVisitor {
         BlockingQueue<GameCommand> queue = new LinkedBlockingQueue<>();
         List<PlayerEntry> players = lobby.getPlayers();
 
-        Game gameSession = new Game(players, queue);
-        gameSession.start();
+        Game game = new Game(players, queue);
+        game.start();
 
-        players.forEach(p -> activeGames.put(p.getName(), gameSession));
+        players.forEach(p -> activeGames.put(p.getName(), game));
     }
 
     // Disconnect
+    // TODO: controlla che la disconnessione avvenga correttamente
     public synchronized void onDisconnected(String playerName) {
         // rivedere chiamate a onDisconncted, nel frarttempo faccio questo controllo
         if (!connectedPlayers.containsKey(playerName)
@@ -262,14 +296,14 @@ public class LobbyManager implements LobbyCommandVisitor {
         lobby.getViews().forEach(v -> v.sendLobbyState(dto));
     }
 
-    private synchronized List<LobbyDto> currentLobbyList() {
+    private List<LobbyDto> currentLobbyList() {
         return lobbies.values().stream()
                 .filter(l -> !l.isFull())
                 .map(Lobby::toDto)
                 .toList();
     }
 
-    private synchronized VirtualView getView(String playerName) {
+    private VirtualView getView(String playerName) {
         PlayerEntry entry = connectedPlayers.get(playerName);
         return entry != null ? entry.getView() : null;
     }
@@ -288,3 +322,6 @@ public class LobbyManager implements LobbyCommandVisitor {
         try { socket.close(); } catch (IOException ignored) {}
     }
 }
+
+// TODO:    - non c'è metodo removeGame quando finisce una partita
+//          - la lobby non deve essere eliminata se un solo player la abbandona
