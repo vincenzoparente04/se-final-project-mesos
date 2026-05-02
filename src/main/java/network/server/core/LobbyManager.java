@@ -53,19 +53,43 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     private static final int CONNECT_TIMEOUT_MS = 5_000;
 
+    /** Soglia oltre la quale un player senza heartbeat è considerato disconnesso. */
+    private static final long HEARTBEAT_TIMEOUT_MS = 6_000L;
+    /** Periodo di scansione della mappa lastHeartbeat. */
+    private static final long HEARTBEAT_CHECK_PERIOD_MS = 2_000L;
+
+    // @GuardedBy("this") // TODO controlla che tutti i metodi che accedono a queste siano synchronized
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>(); // <id, lobby>
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
     private final Map<String, Game> activeGames = new HashMap<>(); // <PlayerName, Game>
 
+
     /**
-     * Performs the full socket handshake for an incoming client and, on
-     * success, starts the read loop. Called by the server's accept loop on
-     * a worker thread; this method blocks during the handshake (subject to {@value #CONNECT_TIMEOUT_MS} ms timeout)
-     * but holds the instance lock only for the brief registration step.
-     * <p>
-     * On any I/O failure or protocol violation the socket is silently
-     * closed.
+     * Timestamp (millis epoch) dell'ultimo heartbeat ricevuto da ciascun player.
+     * ConcurrentHashMap perché viene letta dallo scheduler e scritta dai
+     * thread di rete (SocketClientHandler / RMI) senza il lock {@code this}.
      */
+    private final java.util.concurrent.ConcurrentHashMap<String, Long> lastHeartbeat =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    private final java.util.concurrent.ScheduledExecutorService heartbeatScanner =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "heartbeat-scanner");
+                t.setDaemon(true);
+                return t;
+            });
+
+    public LobbyManager() {
+        heartbeatScanner.scheduleAtFixedRate(
+                this::scanForDeadConnections,
+                HEARTBEAT_CHECK_PERIOD_MS,
+                HEARTBEAT_CHECK_PERIOD_MS,
+                java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+
+
+    // ─── Socket entry point ───────────────────────────────────
+
     public void openSocketConnection(Socket socket) {
         try {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
@@ -91,16 +115,19 @@ public class LobbyManager implements LobbyCommandVisitor {
 
                 // if the just added player has the same name of a player in an active game it reactivates it
                 if (activeGames.containsKey(playerName)) { // search between activeGames
-                    activeGames.get(playerName).onPlayerReconnected(playerName, entry);
+                    Game game = activeGames.get(playerName);
+                    game.onPlayerReconnected(playerName, entry);
+                    connectedPlayers.put(playerName, entry);
+                }else {
+                    connectedPlayers.put(playerName, entry);
+                    view.sendLobbyList(currentLobbyList());
                 }
-                connectedPlayers.put(playerName, entry);
             }
 
             Thread t = new Thread(handler, "client-" + playerName);
             t.setDaemon(true);
             t.start();
 
-            view.sendLobbyList(currentLobbyList());
 
         } catch (IOException | ClassNotFoundException e) {
             closeSocket(socket);
@@ -125,9 +152,11 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (activeGames.containsKey(entry.getName())) { // search between activeGames
             Game game = activeGames.get(entry.getName());
             game.onPlayerReconnected(entry.getName(), entry);
+            connectedPlayers.put(entry.getName(), entry);
+        }else {
+            connectedPlayers.put(entry.getName(), entry);
+            entry.getView().sendLobbyList(currentLobbyList());
         }
-        connectedPlayers.put(entry.getName(), entry);
-        entry.getView().sendLobbyList(currentLobbyList());
     }
 
     /**
@@ -203,13 +232,60 @@ public class LobbyManager implements LobbyCommandVisitor {
     // Disconnect
     // TODO: controlla che la disconnessione avvenga correttamente
     public synchronized void onDisconnected(String playerName) {
-        connectedPlayers.remove(playerName);
-        Game game = activeGames.get(playerName); // returns the Game the player was in, or null if not in any
-        if (game != null) {
-            game.onPlayerDisconnected(playerName);
+        // rivedere chiamate a onDisconncted, nel frarttempo faccio questo controllo
+        if (!connectedPlayers.containsKey(playerName)
+                && !lastHeartbeat.containsKey(playerName)) {
+            return;
+        }
+
+        PlayerEntry entry = connectedPlayers.remove(playerName);
+        lastHeartbeat.remove(playerName);
+
+        Game gameSession = activeGames.get(playerName);
+        if (gameSession != null) {
+            // Game.onPlayerDisconnected chiude già la view di questo player
+            // e notifica gli altri.
+            gameSession.onPlayerDisconnected(playerName);
         } else { // if the game was not started yet (player was in a lobby)
-            lobbies.values().removeIf(lobby -> lobby.getPlayers().stream().anyMatch(p -> p.getName().equals(playerName))); // delete player from the lobby
-            lobbies.values().forEach(lobby -> lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
+            // Remove the single player from all lobbies
+            lobbies.values().forEach(lobby -> 
+                    lobby.getPlayers().stream().filter(p -> p.getName().equals(playerName)).forEach(lobby::removePlayer));
+            // Notify remaining players in all lobbies
+            lobbies.values().forEach(lobby ->
+                    lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
+            // empty lobbies deleted
+            lobbies.values().removeIf(lobby -> lobby.getPlayers().isEmpty());
+        }
+    }
+
+
+    /**
+     * Aggiorna il timestamp dell'ultimo heartbeat per il player.
+     * Invocato dai thread di rete quando arriva un {@link shared.command.HeartbeatCommand}.
+     * <p>
+     * Non è {@code synchronized} perché opera solo sulla {@code ConcurrentHashMap}
+     * {@link #lastHeartbeat}; non tocca lo stato protetto da {@code this}.
+     */
+    public void onHeartbeatReceived(String playerName) {
+        // computeIfPresent invece di put: se un heartbeat ritardato arriva DOPO
+        // che il player è stato rimosso, non lo "resuscita" come zombie.
+        lastHeartbeat.computeIfPresent(playerName, (k, v) -> System.currentTimeMillis());
+    }
+
+    /**
+     * Scansione periodica: identifica i player il cui ultimo heartbeat
+     * è più vecchio di {@link #HEARTBEAT_TIMEOUT_MS} e ne forza la disconnessione
+     * attraverso la pipeline esistente {@link #onDisconnected(String)}.
+     */
+    private void scanForDeadConnections() {
+        long now = System.currentTimeMillis();
+        // Snapshot per non iterare la mappa mentre la modifichiamo via onDisconnected.
+        List<String> dead = lastHeartbeat.entrySet().stream()
+                .filter(e -> now - e.getValue() > HEARTBEAT_TIMEOUT_MS)
+                .map(Map.Entry::getKey)
+                .toList();
+        for (String playerName : dead) {
+            onDisconnected(playerName);
         }
     }
 

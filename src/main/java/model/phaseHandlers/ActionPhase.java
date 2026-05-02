@@ -29,7 +29,12 @@ public class ActionPhase extends GamePhaseHandler {
         // get the next player; if it's a disconnected one it skips him
         do {
             currentPlayer = board.getNextPlayerOnOfferTrack();
-        }while (currentPlayer != null && !currentPlayer.getState());
+            if (currentPlayer == null) break;  // No more players
+            if (!currentPlayer.getState()) {
+                // Skip disconnected player and return their totem to the turn order
+                board.returnTotemToTurnOrder(currentPlayer);
+            }
+        } while (!currentPlayer.getState());
 
         // Se non ci sono più giocatori, la fase Action è finita
         if (currentPlayer == null) {
@@ -60,6 +65,7 @@ public class ActionPhase extends GamePhaseHandler {
     @Override
     public void drawCard(int cardId) {
         ensureActiveTurn();
+
 
         RowsManager rowsManager = model.getRowsManager();
         Card card = rowsManager.findCardById(cardId)
@@ -138,6 +144,14 @@ public class ActionPhase extends GamePhaseHandler {
         if (currentPlayer == null || currentAction == null) {
             throw new IllegalStateException("No active action turn.");
         }
+    }
+
+    @Override
+    public void skipCurrentPlayerTurn() {
+        model.getBoard().returnTotemToTurnOrder(currentPlayer);
+        currentPlayer = null;
+        currentAction = null;
+        startNextPlayerTurn();
     }
 
     @Override

@@ -24,6 +24,11 @@ public class PlacementPhase extends GamePhaseHandler {
         currentIndex = 0;
         currentPlayer = turnOrder.get(currentIndex);
 
+        if (!currentPlayer.getState()) {
+            advanceTurn();
+            return;
+        }
+
         model.notifyChange();
     }
 
@@ -56,8 +61,7 @@ public class PlacementPhase extends GamePhaseHandler {
         // get the next player; if it's a disconnected one it skips him
         do {
             currentIndex++;
-        }while (currentIndex < model.getPlayerCount() && !model.getPlayers().get(currentIndex).getState());
-
+        } while (currentIndex < turnOrder.size() && !turnOrder.get(currentIndex).getState());
 
         if (currentIndex < turnOrder.size()) {
             // next player's turn to place
@@ -68,6 +72,11 @@ public class PlacementPhase extends GamePhaseHandler {
             model.setPhase(new ActionPhase(model));
             model.notifyChange();
         }
+    }
+
+    @Override
+    public void skipCurrentPlayerTurn(){
+        advanceTurn();
     }
 
     @Override
