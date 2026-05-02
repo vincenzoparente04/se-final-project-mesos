@@ -25,7 +25,7 @@ public class Game {
         this.players = new ArrayList<>(players);
         this.views = players.stream().map(PlayerEntry::getView).collect(Collectors.toCollection(ArrayList::new)); // Idem
         this.commandQueue = commandQueue;
-        this.model = new GameModel(List.copyOf(views));
+        this.model = new GameModel(this.views);
         this.controller = new GameController(model);
         controller.startGame(players.stream().map(PlayerEntry::getName).toList());
     }
@@ -60,7 +60,6 @@ public class Game {
 
     public synchronized void onPlayerReconnected(String playerName, PlayerEntry entry) {
         if (gameOver) return;
-        views.forEach(v -> v.sendError("player_reconnected:" + playerName));
 
         this.players.add(entry);
         this.views.add(entry.getView());

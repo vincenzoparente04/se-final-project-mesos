@@ -8,6 +8,7 @@ import shared.command.EndTurnCommand;
 import shared.command.JoinLobbyCommand;
 import shared.command.ListLobbiesCommand;
 import shared.command.PlaceTotemCommand;
+import shared.command.HeartbeatCommand;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -16,6 +17,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledExecutorService;
 
 import network.client.LocalGameState;
 import network.client.VirtualServer;
@@ -31,6 +33,10 @@ public class RmiVirtualServer implements VirtualServer {
     private final ClientCallbackImpl callback;
     private final ExecutorService commandExecutor;
 
+    /** Periodo di invio heartbeat: deve essere < del timeout server (6s). */
+    private static final long HEARTBEAT_INTERVAL_MS = 2_000L;
+    private final ScheduledExecutorService heartbeatScheduler;
+
     public RmiVirtualServer(String host, int rmiPort, String playerName,
                             LocalGameState localState, ClientStateListener listener)
             throws Exception {
@@ -38,7 +44,6 @@ public class RmiVirtualServer implements VirtualServer {
 
         Registry registry = LocateRegistry.getRegistry(host, rmiPort);
         this.serverStub = (GameServerRemote) registry.lookup(SERVICE_NAME);
-
         this.callback = new ClientCallbackImpl(localState, listener);
 
         this.commandExecutor = Executors.newSingleThreadExecutor(r -> {
@@ -47,7 +52,17 @@ public class RmiVirtualServer implements VirtualServer {
             return t;
         });
 
+        this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "heartbeat-sender-" + playerName);
+            t.setDaemon(true);
+            return t;
+        });
+
         serverStub.join(playerName, callback);
+
+        this.heartbeatScheduler.scheduleAtFixedRate(
+                () -> submitAsync(new HeartbeatCommand(playerName)),
+                HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
     // ─── Game commands ────────────────────────────────────────
@@ -91,6 +106,9 @@ public class RmiVirtualServer implements VirtualServer {
 
     @Override
     public void close() {
+        heartbeatScheduler.shutdownNow();
+
+
         // 1. Notifica il server della disconnessione
         try {
             serverStub.disconnect(playerName);

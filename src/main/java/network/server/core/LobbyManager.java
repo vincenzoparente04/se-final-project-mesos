@@ -29,12 +29,42 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     private static final int CONNECT_TIMEOUT_MS = 5_000;
 
+    /** Soglia oltre la quale un player senza heartbeat è considerato disconnesso. */
+    private static final long HEARTBEAT_TIMEOUT_MS = 6_000L;
+    /** Periodo di scansione della mappa lastHeartbeat. */
+    private static final long HEARTBEAT_CHECK_PERIOD_MS = 2_000L;
+
     // @GuardedBy("this") // TODO controlla che tutti i metodi che accedono a queste siano synchronized
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>(); // <id, lobby>
     // @GuardedBy("this")
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
     // @GuardedBy("this")
     private final Map<String, Game> activeGames = new HashMap<>(); // <PlayerName, Game>
+
+
+    /**
+     * Timestamp (millis epoch) dell'ultimo heartbeat ricevuto da ciascun player.
+     * ConcurrentHashMap perché viene letta dallo scheduler e scritta dai
+     * thread di rete (SocketClientHandler / RMI) senza il lock {@code this}.
+     */
+    private final java.util.concurrent.ConcurrentHashMap<String, Long> lastHeartbeat =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    private final java.util.concurrent.ScheduledExecutorService heartbeatScanner =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "heartbeat-scanner");
+                t.setDaemon(true);
+                return t;
+            });
+
+    public LobbyManager() {
+        heartbeatScanner.scheduleAtFixedRate(
+                this::scanForDeadConnections,
+                HEARTBEAT_CHECK_PERIOD_MS,
+                HEARTBEAT_CHECK_PERIOD_MS,
+                java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+
 
     // ─── Socket entry point ───────────────────────────────────
 
@@ -168,9 +198,19 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     // Disconnect
     public synchronized void onDisconnected(String playerName) {
-        connectedPlayers.remove(playerName);
-        Game gameSession = activeGames.get(playerName); // returns the Game the player was in, or null if not in any
+        // rivedere chiamate a onDisconncted, nel frarttempo faccio questo controllo
+        if (!connectedPlayers.containsKey(playerName)
+                && !lastHeartbeat.containsKey(playerName)) {
+            return;
+        }
+
+        PlayerEntry entry = connectedPlayers.remove(playerName);
+        lastHeartbeat.remove(playerName);
+
+        Game gameSession = activeGames.get(playerName);
         if (gameSession != null) {
+            // Game.onPlayerDisconnected chiude già la view di questo player
+            // e notifica gli altri.
             gameSession.onPlayerDisconnected(playerName);
         } else { // if the game was not started yet (player was in a lobby)
             // Remove the single player from all lobbies
@@ -181,6 +221,37 @@ public class LobbyManager implements LobbyCommandVisitor {
                     lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
             // empty lobbies deleted
             lobbies.values().removeIf(lobby -> lobby.getPlayers().isEmpty());
+        }
+    }
+
+
+    /**
+     * Aggiorna il timestamp dell'ultimo heartbeat per il player.
+     * Invocato dai thread di rete quando arriva un {@link shared.command.HeartbeatCommand}.
+     * <p>
+     * Non è {@code synchronized} perché opera solo sulla {@code ConcurrentHashMap}
+     * {@link #lastHeartbeat}; non tocca lo stato protetto da {@code this}.
+     */
+    public void onHeartbeatReceived(String playerName) {
+        // computeIfPresent invece di put: se un heartbeat ritardato arriva DOPO
+        // che il player è stato rimosso, non lo "resuscita" come zombie.
+        lastHeartbeat.computeIfPresent(playerName, (k, v) -> System.currentTimeMillis());
+    }
+
+    /**
+     * Scansione periodica: identifica i player il cui ultimo heartbeat
+     * è più vecchio di {@link #HEARTBEAT_TIMEOUT_MS} e ne forza la disconnessione
+     * attraverso la pipeline esistente {@link #onDisconnected(String)}.
+     */
+    private void scanForDeadConnections() {
+        long now = System.currentTimeMillis();
+        // Snapshot per non iterare la mappa mentre la modifichiamo via onDisconnected.
+        List<String> dead = lastHeartbeat.entrySet().stream()
+                .filter(e -> now - e.getValue() > HEARTBEAT_TIMEOUT_MS)
+                .map(Map.Entry::getKey)
+                .toList();
+        for (String playerName : dead) {
+            onDisconnected(playerName);
         }
     }
 

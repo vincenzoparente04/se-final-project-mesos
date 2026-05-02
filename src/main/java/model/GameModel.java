@@ -13,6 +13,7 @@ import shared.dto.GameStateDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameModel {
     private static final int MAX_ROUNDS = 10;
@@ -123,5 +124,10 @@ public class GameModel {
     public void notifyChange() {
         GameStateDto dto = GameStateDtoBuilder.build(this);
         views.forEach(v -> v.sendState(dto));
+    }
+
+    public synchronized void swapView(String playerName, VirtualView newView) {
+        views.removeIf(v -> v.getPlayerName().equals(playerName));
+        views.add(newView);
     }
 }
