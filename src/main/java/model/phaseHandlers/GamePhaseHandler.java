@@ -31,6 +31,10 @@ public abstract class GamePhaseHandler {
         throw new IllegalStateException("Cannot end turn during " + getPhase());
     }
 
+    public void skipCurrentPlayerTurn() {
+        throw new IllegalStateException("Cannot skip turn during " + getPhase());
+    }
+
     public abstract GamePhase getPhase();
     public abstract Player getCurrentPlayer();
 }

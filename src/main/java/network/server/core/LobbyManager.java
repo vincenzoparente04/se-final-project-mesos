@@ -94,17 +94,17 @@ public class LobbyManager implements LobbyCommandVisitor {
                 if (activeGames.containsKey(playerName)) { // search between activeGames
                     Game game = activeGames.get(playerName);
                     game.onPlayerReconnected(playerName, entry);
+                    connectedPlayers.put(playerName, entry);
+                }else {
+                    connectedPlayers.put(playerName, entry);
+                    view.sendLobbyList(currentLobbyList());
                 }
-                connectedPlayers.put(playerName, entry);
-                lastHeartbeat.put(playerName, System.currentTimeMillis());
-
             }
 
             Thread t = new Thread(handler, "client-" + playerName);
             t.setDaemon(true);
             t.start();
 
-            view.sendLobbyList(currentLobbyList());
 
         } catch (IOException | ClassNotFoundException e) {
             closeSocket(socket);
@@ -122,10 +122,11 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (activeGames.containsKey(entry.getName())) { // search between activeGames
             Game game = activeGames.get(entry.getName());
             game.onPlayerReconnected(entry.getName(), entry);
+            connectedPlayers.put(entry.getName(), entry);
+        }else {
+            connectedPlayers.put(entry.getName(), entry);
+            entry.getView().sendLobbyList(currentLobbyList());
         }
-        connectedPlayers.put(entry.getName(), entry);
-        lastHeartbeat.put(entry.getName(), System.currentTimeMillis());
-        //entry.getView().sendLobbyList(currentLobbyList());
     }
 
     // Entry point for lobbies commands
@@ -211,16 +212,15 @@ public class LobbyManager implements LobbyCommandVisitor {
             // Game.onPlayerDisconnected chiude già la view di questo player
             // e notifica gli altri.
             gameSession.onPlayerDisconnected(playerName);
-        } else {
-            // Player era in lobby (o appena connesso, senza lobby): chiudi
-            // esplicitamente la view per liberare socket / executor.
-            if (entry != null) {
-                entry.getView().close();
-            }
-            lobbies.values().removeIf(lobby -> lobby.getPlayers().stream()
-                    .anyMatch(p -> p.getName().equals(playerName)));
+        } else { // if the game was not started yet (player was in a lobby)
+            // Remove the single player from all lobbies
+            lobbies.values().forEach(lobby -> 
+                    lobby.getPlayers().stream().filter(p -> p.getName().equals(playerName)).forEach(lobby::removePlayer));
+            // Notify remaining players in all lobbies
             lobbies.values().forEach(lobby ->
                     lobby.getViews().forEach(v -> v.sendLobbyList(currentLobbyList())));
+            // empty lobbies deleted
+            lobbies.values().removeIf(lobby -> lobby.getPlayers().isEmpty());
         }
     }
 
