@@ -150,22 +150,22 @@ public class GameStateDtoBuilder {
 
         @Override
         public void visit(CharacterCard card) {
-            dto = new CardDto(card.getId(), "CHARACTER", card.getEra().name(), 0, 0);
+            dto = new CardDto(card.getId(), "CHARACTER", card.getEra().name(), 0, 0, card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(EventCard card) {
-            dto = new CardDto(card.getId(), "EVENT", card.getEra().name(), 0, 0);
+            dto = new CardDto(card.getId(), "EVENT", card.getEra().name(), 0, 0, card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(SustenanceEventCard card) {
-            dto = new CardDto(card.getId(), "EVENT", card.getEra().name(), 0, 0);
+            dto = new CardDto(card.getId(), "EVENT", card.getEra().name(), 0, 0, card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(BuildingCard card) {
-            dto = new CardDto(card.getId(), "BUILDING", card.getEra().name(), card.getFoodCost(), card.getEndGamePoints());
+            dto = new CardDto(card.getId(), "BUILDING", card.getEra().name(), card.getFoodCost(), card.getEndGamePoints(), card.getImagePath(), card.getBackImagePath());
         }
 
         CardDto getDto() { return dto; }
