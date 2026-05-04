@@ -88,8 +88,7 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
 
-    // ─── Socket entry point ───────────────────────────────────
-
+    // Socket entry point
     public void openSocketConnection(Socket socket) {
         try {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
@@ -168,7 +167,6 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     // LobbyCommandVisitor
-
     @Override
     public synchronized void visit(ListLobbiesCommand cmd) {
         VirtualView view = getView(cmd.playerName());
@@ -213,8 +211,8 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     // Game start
-
-    private void checkAndStartIfFull(Lobby lobby) {
+    // vedi se synchronized da problemi
+    private synchronized void checkAndStartIfFull(Lobby lobby) {
         if (!lobby.isFull()) return;
 
         lobby.getViews().forEach(VirtualView::sendGameStarting);
@@ -290,7 +288,6 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     // Helpers
-
     private void broadcastLobbyState(Lobby lobby) {
         LobbyDto dto = lobby.toDto();
         lobby.getViews().forEach(v -> v.sendLobbyState(dto));
@@ -308,11 +305,13 @@ public class LobbyManager implements LobbyCommandVisitor {
         return entry != null ? entry.getView() : null;
     }
 
-    private boolean nameAlreadyTaken(String name) {
+    // vedi se synchronized da problemi
+    private synchronized boolean nameAlreadyTaken(String name) {
         return connectedPlayers.containsKey(name);
     }
 
-    private boolean playerAlreadyInLobby(String playerName) {
+    // vedi se synchronized da problemi
+    private synchronized boolean playerAlreadyInLobby(String playerName) {
         return lobbies.values().stream()
                 .flatMap(l -> l.getPlayers().stream())
                 .anyMatch(p -> p.getName().equals(playerName));
@@ -321,6 +320,8 @@ public class LobbyManager implements LobbyCommandVisitor {
     private void closeSocket(Socket socket) {
         try { socket.close(); } catch (IOException ignored) {}
     }
+
+    // TODO da fixare tanti bug relativi a player che si disconnettono e lobby che restano attive anche se vuote
 }
 
 // TODO:    - non c'è metodo removeGame quando finisce una partita
