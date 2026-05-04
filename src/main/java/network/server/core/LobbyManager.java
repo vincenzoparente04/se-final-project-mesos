@@ -124,6 +124,8 @@ public class LobbyManager implements LobbyCommandVisitor {
                 }
             }
 
+            lastHeartbeat.put(playerName, System.currentTimeMillis());
+
             Thread t = new Thread(handler, "client-" + playerName);
             t.setDaemon(true);
             t.start();
@@ -157,6 +159,8 @@ public class LobbyManager implements LobbyCommandVisitor {
             connectedPlayers.put(entry.getName(), entry);
             entry.getView().sendLobbyList(currentLobbyList());
         }
+
+        lastHeartbeat.put(entry.getName(), System.currentTimeMillis());
     }
 
     /**
