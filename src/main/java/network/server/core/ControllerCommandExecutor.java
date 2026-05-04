@@ -11,7 +11,7 @@ import shared.command.PlaceTotemCommand;
  * {@link CommandVisitor} implementation that delegates each command to the
  * corresponding {@link GameController} method.
  * <p>
- * Used by {@link GameThread} to execute commands dequeued from the central
+ * Used by {@link QueueDrainerThread} to execute commands dequeued from the central
  * {@code BlockingQueue}.  Because the visitor dispatch is polymorphic, no
  * {@code instanceof} or {@code switch} is needed here.
  */

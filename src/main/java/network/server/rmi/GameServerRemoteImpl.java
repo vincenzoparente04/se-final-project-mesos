@@ -1,9 +1,6 @@
 package network.server.rmi;
 
-import shared.command.ClientCommand;
-import shared.command.CommandDispatcher;
-import shared.command.GameCommand;
-import shared.command.LobbyCommand;
+import shared.command.*;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -33,6 +30,11 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
             }
             queue.put(cmd);
         }
+
+        @Override
+        public void onHeartbeatCommand(HeartbeatCommand cmd) {
+            lobbyManager.onHeartbeatReceived(cmd.playerName());
+        }
     };
 
     public GameServerRemoteImpl(LobbyManager lobbyManager) throws RemoteException {
@@ -57,5 +59,10 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
         } catch (Exception e) {
             throw new RemoteException("Command routing failed: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void disconnect(String playerName) throws RemoteException {
+        lobbyManager.onDisconnected(playerName);
     }
 }
