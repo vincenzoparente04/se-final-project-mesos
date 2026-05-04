@@ -10,7 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @DisplayName("OfferTrack Tests")
@@ -63,6 +65,27 @@ class OfferTrackTest {
         offerTrack.placeTotem(playerOnC, tileC);
 
         assertEquals(playerOnC, offerTrack.getNextPlayer());
+    }
+
+    @Test
+    @DisplayName("removeTotem clears the tile occupied by the player")
+    void removeTotemFreesOccupiedTile() {
+        Player player = new Player("Player");
+        offerTrack.placeTotem(player, tileB);
+
+        offerTrack.removeTotem(player);
+
+        assertAll(
+                () -> assertFalse(tileB.isOccupied()),
+                () -> assertNull(tileB.getOccupant())
+        );
+    }
+
+    @Test
+    @DisplayName("removeTotem does nothing when player is not on the offer track")
+    void removeTotemIsNoopWhenPlayerNotOnTrack() {
+        Player player = new Player("NotOnTrack");
+        assertDoesNotThrow(() -> offerTrack.removeTotem(player));
     }
 
     @Test

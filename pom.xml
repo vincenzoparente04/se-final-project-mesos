@@ -15,7 +15,6 @@
         <mockito.version>5.23.0</mockito.version>
         <maven.surefire.version>3.2.5</maven.surefire.version>
         <jacoco.version>0.8.12</jacoco.version>
-        <jacoco.skip>true</jacoco.skip>
         <bytebuddy.experimental>true</bytebuddy.experimental>
     </properties>
 
@@ -85,8 +84,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>25</source>
-                    <target>25</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -104,6 +103,13 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>com/sun/**/*</exclude>
+                        <exclude>net/bytebuddy/**/*</exclude>
+                        <exclude>org/mockito/**/*</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -134,13 +140,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>org.example.mesos/org.example.mesos.HelloApplication</mainClass>
-                            <launcher>app</launcher>
-                            <jlinkZipName>app</jlinkZipName>
-                            <jlinkImageName>app</jlinkImageName>
-                            <noManPages>true</noManPages>
-                            <stripDebug>true</stripDebug>
-                            <noHeaderFiles>true</noHeaderFiles>
+                            <mainClass>network.client.ClientMain</mainClass>
                         </configuration>
                     </execution>
                 </executions>

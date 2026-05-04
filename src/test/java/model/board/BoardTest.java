@@ -84,4 +84,22 @@ class BoardTest {
 
         assertThrows(IllegalArgumentException.class, () -> board.setup(1));
     }
+
+    @Test
+    @DisplayName("returnTotemToTurnOrder removes player from offer track and places them in turn order")
+    void returnTotemToTurnOrderClearsOfferTrackAndJoinsTurnOrder() {
+        Board board = new Board();
+        board.setup(3);
+
+        Player player = new Player("Player");
+        OfferTile tileB = board.findTileByLetter('B');
+
+        board.placeTotem(player, tileB);
+        board.returnTotemToTurnOrder(player);
+
+        assertAll(
+                () -> assertNull(tileB.getOccupant(), "Tile should be freed after returning totem"),
+                () -> assertTrue(board.getTurnOrder().contains(player), "Player should appear in turn order")
+        );
+    }
 }

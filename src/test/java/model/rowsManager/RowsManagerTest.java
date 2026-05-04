@@ -303,6 +303,24 @@ class  RowsManagerTest {
         assertDoesNotThrow(() -> rowsManager.resolveEvents(List.of(mock(Player.class))));
     }
 
+    @Test
+    @DisplayName("resolveAllEvents delegates to resolver with all tribe cards from both rows")
+    void resolveAllEventsDelegatesWithAllBoardTribeCards() throws Exception {
+        EventResolver eventResolver = mock(EventResolver.class);
+        setField(rowsManager, "eventResolver", eventResolver);
+
+        TribeCard bottom = mock(TribeCard.class);
+        TribeCard top = mock(TribeCard.class);
+        bottomRowTribe.add(bottom);
+        topRowTribe.add(top);
+
+        List<Player> players = List.of(mock(Player.class));
+        rowsManager.resolveAllEvents(players);
+
+        verify(eventResolver).sortEvents(List.of(bottom, top));
+        verify(eventResolver).resolve(players);
+    }
+
     private static void setField(Object target, String fieldName, Object value) throws Exception {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);

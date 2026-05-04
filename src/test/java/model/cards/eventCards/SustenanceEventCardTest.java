@@ -1,5 +1,6 @@
 package model.cards.eventCards;
 
+import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 @DisplayName("SustenanceEventCard Tests")
 class SustenanceEventCardTest {
@@ -109,8 +111,26 @@ class SustenanceEventCardTest {
 
         card.resolve(List.of(player));
 
-        verify(player, never()).removeFoodWithPrestigePenalty(
-                org.mockito.ArgumentMatchers.anyInt(),
-                org.mockito.ArgumentMatchers.anyInt());
+        verify(player, never()).removeFoodWithPrestigePenalty(anyInt(), anyInt());
+    }
+
+    @Test
+    @DisplayName("resolve applies OnEvent building discount on top of gatherer discount")
+    void resolveBuildingEffectDiscountReducesFoodPenalty() {
+        Player player = mock(Player.class);
+        Tribe tribe = mock(Tribe.class);
+        OnEventBuildingEffect buildingEffect = mock(OnEventBuildingEffect.class);
+
+        when(player.getTribe()).thenReturn(tribe);
+        when(tribe.getTotalCharacterCount()).thenReturn(8);
+        when(tribe.getTotalGatherersDiscount()).thenReturn(2);
+        when(tribe.getOnEventBuildingEffects()).thenReturn(List.of(buildingEffect));
+        when(buildingEffect.applyOnSustenance(player)).thenReturn(3);
+
+        SustenanceEventCard card = new SustenanceEventCard(40, Era.ERA_I, 2, "f.png", "b.png");
+        card.resolve(List.of(player));
+
+        // 8 characters, 2 gatherer + 3 building = 5 discount → 8-5=3 food, era I multiplier=1
+        verify(player, times(1)).removeFoodWithPrestigePenalty(3, 1);
     }
 }

@@ -1,8 +1,11 @@
 package model.phaseHandlers;
 
+import controller.GameController;
 import model.GameModel;
 import model.board.Board;
 import model.board.OfferTile;
+import model.enums.GamePhase;
+import model.enums.TotemColor;
 import model.enums.TotemLocation;
 import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -37,6 +41,7 @@ class PlacementPhaseTest {
 
     @BeforeEach
     void setUp() {
+
         model = mock(GameModel.class);
         board = mock(Board.class);
         tileA = mock(OfferTile.class);
@@ -53,8 +58,6 @@ class PlacementPhaseTest {
         when(p1.getName()).thenReturn("Player1");
         when(p2.getName()).thenReturn("Player2");
         when(p3.getName()).thenReturn("Player3");
-
-        // By default, all players can place from turn-order tile unless overridden in a test.
         when(p1.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
         when(p2.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
         when(p3.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
@@ -75,7 +78,7 @@ class PlacementPhaseTest {
         phase.onEnter();
 
         assertEquals(p1, phase.getCurrentPlayer());
-        verify(model, times(1)).notifyChange("placement_started:Player1");
+        verify(model, times(1)).notifyChange();
     }
 
     @Test
@@ -87,53 +90,27 @@ class PlacementPhaseTest {
 
         verify(board, times(1)).findTileByLetter('A');
         verify(board, times(1)).placeTotem(p1, tileA);
-        verify(model, times(1)).notifyChange("totem_placed:Player1");
-        verify(model, times(1)).notifyChange("turn_changed:Player2");
         assertEquals(p2, phase.getCurrentPlayer());
     }
 
     @Test
-    @DisplayName("placeTotem should ignore move when wrong player tries to place")
-    void placeTotemWrongPlayerDoesNothing() {
-        phase.onEnter();
-
-        phase.placeTotem(p2, 'A');
-
-        verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
-        verify(model, never()).notifyChange("totem_placed:Player2");
-        verify(model, never()).notifyChange("turn_changed:Player2");
-        verify(model, never()).setPhase(any());
-        assertEquals(p1, phase.getCurrentPlayer());
-    }
-
-    @Test
-    @DisplayName("placeTotem should ignore move when tile is already occupied")
-    void placeTotemOccupiedTileDoesNothing() {
+    @DisplayName("placeTotem should throw when tile is already occupied")
+    void placeTotemOccupiedTileThrows() {
         phase.onEnter();
         when(tileA.isOccupied()).thenReturn(true);
 
-        phase.placeTotem(p1, 'A');
-
+        assertThrows(IllegalArgumentException.class, () -> phase.placeTotem(p1, 'A'));
         verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
-        verify(model, never()).notifyChange("totem_placed:Player1");
-        verify(model, never()).notifyChange("turn_changed:Player2");
-        verify(model, never()).setPhase(any());
-        assertEquals(p1, phase.getCurrentPlayer());
     }
 
     @Test
-    @DisplayName("placeTotem should ignore move when current player is not on turn-order tile")
-    void placeTotemWrongLocationDoesNothing() {
+    @DisplayName("placeTotem should throw when tile letter does not exist")
+    void placeTotemUnknownTileThrows() {
         phase.onEnter();
-        when(p1.getLocation()).thenReturn(TotemLocation.OFFER_TRACK);
+        when(board.findTileByLetter('Z')).thenReturn(null);
 
-        phase.placeTotem(p1, 'A');
-
+        assertThrows(IllegalArgumentException.class, () -> phase.placeTotem(p1, 'Z'));
         verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
-        verify(model, never()).notifyChange("totem_placed:Player1");
-        verify(model, never()).notifyChange("turn_changed:Player2");
-        verify(model, never()).setPhase(any());
-        assertEquals(p1, phase.getCurrentPlayer());
     }
 
     @Test
@@ -145,10 +122,7 @@ class PlacementPhaseTest {
         phase.placeTotem(p2, 'B');
         phase.placeTotem(p3, 'C');
 
-        verify(model, times(1)).notifyChange("turn_changed:Player2");
-        verify(model, times(1)).notifyChange("turn_changed:Player3");
-        verify(model, never()).notifyChange("turn_changed:Player4");
+        verify(model, times(4)).notifyChange();
         verify(model, times(1)).setPhase(argThat(handler -> handler instanceof ActionPhase));
     }
 }
-

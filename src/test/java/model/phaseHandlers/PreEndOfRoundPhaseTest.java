@@ -117,7 +117,7 @@ class PreEndOfRoundPhaseTest {
         when(rowsManager.findCardById(10)).thenReturn(Optional.empty());
 
         phase.onEnter();
-        phase.drawCard(10);
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> phase.drawCard(10));
 
         verify(rowsManager, times(1)).findCardById(10);
         verify(rowsManager, never()).removeCard(10);
@@ -133,7 +133,7 @@ class PreEndOfRoundPhaseTest {
         when(rowsManager.topRowContainsCard(10)).thenReturn(false);
 
         phase.onEnter();
-        phase.drawCard(10);
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> phase.drawCard(10));
 
         verify(rowsManager, times(1)).findCardById(10);
         verify(rowsManager, times(1)).topRowContainsCard(10);
@@ -202,4 +202,3 @@ class PreEndOfRoundPhaseTest {
     }
 
 }
-

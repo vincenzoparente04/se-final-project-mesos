@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -193,5 +194,71 @@ class ShamanicRitualEventCardTest {
         verify(p2, never()).addPrestigePoints(10);
         verify(p3, never()).addPrestigePoints(10);
         verify(p4, never()).addPrestigePoints(10);
+    }
+
+    @Test
+    @DisplayName("resolve doubles prestige reward for winner with shamanicDoublePrestige building")
+    void resolveShamanicDoublePrestigeDoublesWinnerReward() {
+        Player winner = mock(Player.class);
+        Player loser = mock(Player.class);
+        Tribe winnerTribe = mock(Tribe.class);
+        Tribe loserTribe = mock(Tribe.class);
+
+        when(winner.getTribe()).thenReturn(winnerTribe);
+        when(loser.getTribe()).thenReturn(loserTribe);
+        when(winnerTribe.getTotalShamanStars()).thenReturn(5);
+        when(loserTribe.getTotalShamanStars()).thenReturn(1);
+        when(winner.hasShamanicDoublePrestige()).thenReturn(true);
+
+        ShamanicRitualEventCard card = new ShamanicRitualEventCard(30, Era.ERA_I, 2, "f.png", "b.png");
+        card.resolve(List.of(winner, loser));
+
+        verify(winner, times(1)).addPrestigePoints(10); // 5 * 2 doubled
+        verify(loser, times(1)).removePrestigePoints(3);
+        verify(winner, never()).removePrestigePoints(anyInt());
+    }
+
+    @Test
+    @DisplayName("resolve skips penalty for loser with shamanicImmunity building")
+    void resolveShamanicImmunityPreventsPenalty() {
+        Player winner = mock(Player.class);
+        Player loser = mock(Player.class);
+        Tribe winnerTribe = mock(Tribe.class);
+        Tribe loserTribe = mock(Tribe.class);
+
+        when(winner.getTribe()).thenReturn(winnerTribe);
+        when(loser.getTribe()).thenReturn(loserTribe);
+        when(winnerTribe.getTotalShamanStars()).thenReturn(5);
+        when(loserTribe.getTotalShamanStars()).thenReturn(1);
+        when(loser.hasShamanicImmunity()).thenReturn(true);
+
+        ShamanicRitualEventCard card = new ShamanicRitualEventCard(31, Era.ERA_I, 2, "f.png", "b.png");
+        card.resolve(List.of(winner, loser));
+
+        verify(winner, times(1)).addPrestigePoints(5);
+        verify(loser, never()).removePrestigePoints(anyInt());
+    }
+
+    @Test
+    @DisplayName("resolve counts bonus icons from building when computing majority")
+    void resolveBonusIconsTiltMajority() {
+        Player playerWithBonus = mock(Player.class);
+        Player otherPlayer = mock(Player.class);
+        Tribe tribeWithBonus = mock(Tribe.class);
+        Tribe otherTribe = mock(Tribe.class);
+
+        when(playerWithBonus.getTribe()).thenReturn(tribeWithBonus);
+        when(otherPlayer.getTribe()).thenReturn(otherTribe);
+        when(tribeWithBonus.getTotalShamanStars()).thenReturn(2);
+        when(otherTribe.getTotalShamanStars()).thenReturn(4);
+        when(playerWithBonus.hasShamanicBonusIcons()).thenReturn(true); // 2 + 3 = 5 → wins
+
+        ShamanicRitualEventCard card = new ShamanicRitualEventCard(32, Era.ERA_I, 2, "f.png", "b.png");
+        card.resolve(List.of(playerWithBonus, otherPlayer));
+
+        verify(playerWithBonus, times(1)).addPrestigePoints(5);
+        verify(otherPlayer, times(1)).removePrestigePoints(3);
+        verify(playerWithBonus, never()).removePrestigePoints(anyInt());
+        verify(otherPlayer, never()).addPrestigePoints(5);
     }
 }

@@ -2,30 +2,21 @@ package network.client;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
-
-
-import java.util.List;
+import view.LobbyViewController;
 
 /**
- * Entry point for the Mesos client application.
- * <p>
- * <b>Usage</b>:
- * <pre>
- *   ClientMain socket &lt;host&gt; &lt;port&gt;    &lt;playerName&gt;
- *   ClientMain rmi    &lt;host&gt; &lt;rmiPort&gt; &lt;playerName&gt;
- * </pre>
- * The first argument selects the transport:
- * <ul>
- *   <li>{@code socket} — TCP connection via {@link network.client.socket.SocketVirtualServer}</li>
- *   <li>{@code rmi}    — RMI connection via {@link network.client.rmi.RmiVirtualServer}</li>
- * </ul>
- * For backwards compatibility, if the first argument is not a transport keyword
- * (i.e. it looks like a hostname) the client defaults to {@link ConnectionProtocol#SOCKET}
- * and treats the arguments as {@code <host> <port> <playerName>}.
- * <p>
- * The network connection is established on a background thread so the JavaFX
- * stage opens immediately, independently of server availability.
+ * Entry point for the Mesos GUI client.
+ *
+ * Usage:
+ *   ClientMain socket <host> <port> <playerName>
+ *   ClientMain rmi <host> <rmiPort> <playerName>
+ *
+ * The lobby scene is shown immediately; the network connection is established
+ * on a background thread so the stage opens without blocking.
  */
 public class ClientMain extends Application {
 
@@ -34,26 +25,23 @@ public class ClientMain extends Application {
     private static int port;
     private static String playerName;
 
-    // ─────────────────────────────────────────────────────────
-    // Main entry — parses args and launches JavaFX
-    // ─────────────────────────────────────────────────────────
 
+    // Main parse args, launch JavaFX
     public static void main(String[] args) {
         if (args.length < 3) {
             printUsage();
             return;
         }
 
-        String firstArg = args[0].toLowerCase();
-        if (firstArg.equals("socket") || firstArg.equals("rmi")) {
-            // New-style: <transport> <host> <port> <playerName>
+        String first = args[0].toLowerCase();
+        if (first.equals("socket") || first.equals("rmi")) {
             if (args.length < 4) { printUsage(); return; }
             transport  = ConnectionProtocol.from(args[0]);
             host       = args[1];
             port       = Integer.parseInt(args[2]);
             playerName = args[3];
         } else {
-            // Legacy / default: <host> <port> <playerName>  (socket)
+            //<host> <port> <playerName>
             transport  = ConnectionProtocol.SOCKET;
             host       = args[0];
             port       = Integer.parseInt(args[1]);
@@ -63,42 +51,47 @@ public class ClientMain extends Application {
         launch(args);
     }
 
-    // ─────────────────────────────────────────────────────────
     // JavaFX start
-    // ─────────────────────────────────────────────────────────
-
     @Override
-    public void start(Stage primaryStage) {
-        primaryStage.setTitle("Mesos — " + playerName + " [connecting via " + transport + "...]");
+    public void start(Stage primaryStage) throws Exception {
+        // Load lobby scene
+        FXMLLoader loader = new FXMLLoader(ClientMain.class.getResource("/org/example/mesos/lobby-view.fxml"));
+        Parent root = loader.load();
+        LobbyViewController lobbyCtrl = loader.getController();
+        lobbyCtrl.init(playerName);
+
+        // Create listener (wires lobby controller to network callbacks)
+        LocalGameState localState = new LocalGameState();
+        ClientStateListenerGui listener =
+                new ClientStateListenerGui(primaryStage, playerName, lobbyCtrl);
+
+        // Show the lobby scene immediately
+        primaryStage.setTitle("Mesos — " + playerName + "  [connecting...]");
+        primaryStage.setScene(new Scene(root, 700, 520));
         primaryStage.show();
 
-        LocalGameState localState = new LocalGameState();
-        ClientStateListener listener = new ClientStateListenerGui(primaryStage, playerName);
-
         // Connect on a background thread — never block the Application Thread
-        // with network I/O.
         Thread connectThread = new Thread(
-                () -> connect(transport, host, port, playerName, localState, listener, primaryStage),
+                () -> connect(listener, localState, primaryStage),
                 "connect-" + playerName);
         connectThread.setDaemon(true);
         connectThread.start();
     }
 
-    // ─────────────────────────────────────────────────────────
     // Connection logic (runs on background thread)
-    // ─────────────────────────────────────────────────────────
-
-    private static void connect(ConnectionProtocol transport, String host, int port, String playerName,
-                                LocalGameState localState, ClientStateListener listener, Stage primaryStage) {
+    private static void connect(ClientStateListenerGui listener, LocalGameState localState, Stage primaryStage) {
         try {
             VirtualServer proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
 
-            @SuppressWarnings("unused")
             ClientController controller = new ClientController(proxy);
 
-            Platform.runLater(() -> primaryStage.setTitle("Mesos — " + playerName));
+            // Propagate the controller to the lobby buttons
+            listener.setClientController(controller);
 
-            // TODO: attach controller and localState to the real View scene graph
+            // Ask the server for the current lobby list right away
+            controller.onListLobbies();
+
+            Platform.runLater(() -> primaryStage.setTitle("Mesos — " + playerName));
 
         } catch (Exception e) {
             Platform.runLater(() -> {
@@ -108,9 +101,7 @@ public class ClientMain extends Application {
         }
     }
 
-    // ─────────────────────────────────────────────────────────
     // Helpers
-    // ─────────────────────────────────────────────────────────
 
     private static void printUsage() {
         System.err.println("Usage:");
