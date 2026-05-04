@@ -52,7 +52,11 @@ public class ClientMainCli {
                 continue;
             }
 
-            if (!dispatch(controller, trimmed)) {
+            if (trimmed.equalsIgnoreCase("quit")) break;
+
+            if (trimmed.equalsIgnoreCase("state")) {
+                ClientStateListenerCli.printState(localState);
+            } else if (!dispatch(controller, trimmed)) {
                 System.out.println("[?] Unknown command. " + helpLine());
             }
             System.out.print("> ");
@@ -112,6 +116,6 @@ public class ClientMainCli {
     }
 
     private static String helpLine() {
-        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end";
+        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | quit";
     }
 }
