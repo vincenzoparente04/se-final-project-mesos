@@ -21,12 +21,14 @@ public class GameController {
     public synchronized void chooseColor(String playerName, String colorName) {
         Player player = resolveCurrentPlayer(playerName);
 
+        TotemColor color;
         try {
-            TotemColor color = TotemColor.valueOf(colorName.toUpperCase());
-            gameModel.chooseColor(player, color);
+            color = TotemColor.valueOf(colorName.toUpperCase());
         }catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid color: " + colorName);
         }
+        //divided logic to show the "color already taken" illegalArgumentException
+        gameModel.chooseColor(player, color);
     }
 
     public synchronized void placeTotem(String playerName, char tileId) {

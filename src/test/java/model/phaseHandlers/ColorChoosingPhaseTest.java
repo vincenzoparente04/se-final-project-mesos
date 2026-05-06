@@ -41,7 +41,7 @@ public class ColorChoosingPhaseTest {
     // ──────────────────────────────────────────────────────────────────────────────
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         // Initialize mocks
         try (var ignored = MockitoAnnotations.openMocks(this)) {
             // Setup player list
@@ -58,11 +58,12 @@ public class ColorChoosingPhaseTest {
             when(player1.getName()).thenReturn("Player1");
             when(player2.getName()).thenReturn("Player2");
             when(player3.getName()).thenReturn("Player3");
+            when(player1.getState()).thenReturn(true);
+            when(player2.getState()).thenReturn(true);
+            when(player3.getState()).thenReturn(true);
 
             // Create instance of ColorChoosingPhase
             colorChoosingPhase = new ColorChoosingPhase(gameModel);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -110,23 +111,6 @@ public class ColorChoosingPhaseTest {
         verify(player1, times(1)).setColor(TotemColor.RED);
     }
 
-    /*
-    @Test
-    @DisplayName("chooseColor() should notify observers about color choice")
-    void testChooseColorNotifiesObserversAboutChoice() {
-        // Arrange
-        colorChoosingPhase.onEnter();
-        //verify(gameModel, times(1)).notifyChange();
-
-        // Act
-        colorChoosingPhase.chooseColor(player1, TotemColor.BLUE);
-
-        // Assert - verify that player1 got the color
-        verify(player1, times(1)).setColor(TotemColor.BLUE);
-        // Verify that notifyChange was called with the color choice
-        verify(gameModel, times(1)).notifyChange();
-    }
-    */
 
     @Test
     @DisplayName("chooseColor() should advance and notify next player about their turn")
@@ -276,6 +260,12 @@ public class ColorChoosingPhaseTest {
         when(localPlayer3.getName()).thenReturn("Player3");
         when(localPlayer4.getName()).thenReturn("Player4");
         when(localPlayer5.getName()).thenReturn("Player5");
+        
+        when(localPlayer1.getState()).thenReturn(true);
+        when(localPlayer2.getState()).thenReturn(true);
+        when(localPlayer3.getState()).thenReturn(true);
+        when(localPlayer4.getState()).thenReturn(true);
+        when(localPlayer5.getState()).thenReturn(true);
 
         List<Player> localPlayers = List.of(localPlayer1, localPlayer2, localPlayer3, localPlayer4, localPlayer5);
         when(localModel.getPlayers()).thenReturn(localPlayers);

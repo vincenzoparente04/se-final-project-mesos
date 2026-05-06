@@ -58,6 +58,11 @@ class PlacementPhaseTest {
         when(p1.getName()).thenReturn("Player1");
         when(p2.getName()).thenReturn("Player2");
         when(p3.getName()).thenReturn("Player3");
+        
+        when(p1.getState()).thenReturn(true);
+        when(p2.getState()).thenReturn(true);
+        when(p3.getState()).thenReturn(true);
+        
         when(p1.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
         when(p2.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
         when(p3.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
