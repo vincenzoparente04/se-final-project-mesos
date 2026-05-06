@@ -115,6 +115,7 @@ public class GameViewController {
         currentPlayerLabel.setText(cp != null ? cp : "—");
     }
 
+    //TODO: would be cool to show to all the player simultaneously the color choices, difficult due to concurrency
     private void updateColorChoicePanel(String phase, boolean isMyTurn) {
         boolean show = "COLOR_CHOOSING_PHASE".equals(phase) && isMyTurn;
         colorChoiceBox.setVisible(show);
@@ -127,6 +128,7 @@ public class GameViewController {
     }
 
     //TODO: restyle it, now it's a mess, specifically the String[][] colors
+    //TODO: disable the color not available anymore
     private void buildColorButtons() {
         String[][] colors = {
                 {"RED",    "Red",    "#ff5c5c"},

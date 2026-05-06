@@ -11,6 +11,7 @@ import shared.command.EndTurnCommand;
 import shared.command.JoinLobbyCommand;
 import shared.command.ListLobbiesCommand;
 import shared.command.PlaceTotemCommand;
+import shared.command.HeartbeatCommand;
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
 import shared.message.ConnectMessage;
@@ -21,6 +22,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class SocketVirtualServer implements VirtualServer {
 
@@ -30,6 +34,10 @@ public class SocketVirtualServer implements VirtualServer {
     private final LocalGameState localState;
     private final ClientStateListener listener;
     private final AtomicBoolean closed = new AtomicBoolean(false);
+
+    /** Periodo di invio heartbeat: deve essere < del timeout server (6s). */
+    private static final long HEARTBEAT_INTERVAL_MS = 2_000L;
+    private final ScheduledExecutorService heartbeatScheduler;
 
     public SocketVirtualServer(String host, int port, String playerName,
                                LocalGameState localState, ClientStateListener listener)
@@ -47,6 +55,15 @@ public class SocketVirtualServer implements VirtualServer {
         this.out = objectOut;
 
         new Thread(new SocketClientThread(in, this), "socket-reader-" + playerName).start();
+
+        this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "heartbeat-sender-" + playerName);
+            t.setDaemon(true);
+            return t;
+        });
+        this.heartbeatScheduler.scheduleAtFixedRate(
+                () -> send(new HeartbeatCommand(playerName)),
+                HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
     // ─── Game commands ────────────────────────────────────────
@@ -104,6 +121,7 @@ public class SocketVirtualServer implements VirtualServer {
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
+            heartbeatScheduler.shutdownNow();
             try { socket.close(); } catch (IOException ignored) {}
         }
     }

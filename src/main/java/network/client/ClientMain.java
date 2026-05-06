@@ -24,6 +24,7 @@ public class ClientMain extends Application {
     private static String host;
     private static int port;
     private static String playerName;
+    private VirtualServer proxy;
 
 
     // Main parse args, launch JavaFX
@@ -79,9 +80,9 @@ public class ClientMain extends Application {
     }
 
     // Connection logic (runs on background thread)
-    private static void connect(ClientStateListenerGui listener, LocalGameState localState, Stage primaryStage) {
+    private void connect(ClientStateListenerGui listener, LocalGameState localState, Stage primaryStage) {
         try {
-            VirtualServer proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
+            this.proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
 
             ClientController controller = new ClientController(proxy);
 
@@ -99,6 +100,12 @@ public class ClientMain extends Application {
                 System.err.println("Could not connect to server: " + e.getMessage());
             });
         }
+    }
+
+    //method to close the RMI connection when the application is closed
+    @Override
+    public void stop() {
+        if (proxy != null) proxy.close();
     }
 
     // Helpers

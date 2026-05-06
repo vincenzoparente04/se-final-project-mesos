@@ -23,12 +23,14 @@ public class Lobby {
         players.add(entry);
     }
 
+    public void removePlayer(PlayerEntry entry) {players.remove(entry);}
+
     public boolean isFull() {
         return players.size() >= maxPlayers;
     }
 
     public List<PlayerEntry> getPlayers() {
-        return List.copyOf(players);
+        return new ArrayList<>(players);
     }
 
     public String getId() {

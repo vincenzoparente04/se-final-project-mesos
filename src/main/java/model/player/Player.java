@@ -17,6 +17,7 @@ public class Player {
     private boolean shamanicDoublePrestige = false;
     private boolean extraFoodOnTotemReturn = false;
     private boolean extraDraw = false;
+    private boolean online;
 
     public Player(String name) {
         this.name = name;
@@ -25,6 +26,7 @@ public class Player {
         this.tribe = new Tribe();
         this.totemLocation = TotemLocation.TURN_ORDER_TILE; // default location at the start of the game
         this.color = null;
+        this.online = true;
     }
 
     // -- food --
@@ -94,4 +96,14 @@ public class Player {
         this.totemLocation = location;
     }
     public void setColor(TotemColor color) { this.color = color; }
+
+    public boolean getState(){
+        return this.online;
+    }
+    public void setConnected(){
+        this.online = true;
+    }
+    public void setDisconnected(){
+        this.online = false;
+    }
 }

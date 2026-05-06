@@ -51,7 +51,12 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onGameStateUpdated(LocalGameState state) {
         Platform.runLater(() -> {
-            if (gameCtrl != null) gameCtrl.update(state);
+            if (gameCtrl != null) {
+                gameCtrl.update(state);
+            }else{
+                switchToGameScene();
+                gameCtrl.update(state);
+            }
         });
     }
 
