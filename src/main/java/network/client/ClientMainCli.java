@@ -64,6 +64,13 @@ public class ClientMainCli {
         System.out.println("Disconnected.");
     }
 
+    /**
+     * @implNote This is a simple command dispatcher that parses the first word as the command and the rest as an argument.
+     * It calls the appropriate method on the VirtualServer proxy based on the command.
+     * @param proxy virtual server associated to the client
+     * @param input command string took from CLI
+     * @return false if the command is unknown, true otherwise
+     */
     private static boolean dispatch(VirtualServer proxy, String input) {
         String[] parts = input.split("\\s+", 2);
         String verb = parts[0].toLowerCase();

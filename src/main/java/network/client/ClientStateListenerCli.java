@@ -79,6 +79,10 @@ public class ClientStateListenerCli implements ClientStateListener{
 // State printer — reads from LocalGameState (AtomicReference)
 // ─────────────────────────────────────────────────────────
 
+    /**
+     * @implNote This method reads the latest snapshot from the LocalGameState and prints it in a human-readable format.
+     * @param state the LocalGameState to read the snapshot from
+     */
     public static void printState(LocalGameState state) {
         GameStateDto dto = state.snapshot();
         if (dto == null) {

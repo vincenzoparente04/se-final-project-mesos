@@ -26,6 +26,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Socket implementation of {@link VirtualServer} proxy.
+ * It's responsible both of sending commands to the server and receiving updates through a dedicated reader thread (SocketClientThread).
+ */
 public class SocketVirtualServer implements VirtualServer {
 
     private final String playerName;
@@ -39,6 +43,9 @@ public class SocketVirtualServer implements VirtualServer {
     private static final long HEARTBEAT_INTERVAL_MS = 2_000L;
     private final ScheduledExecutorService heartbeatScheduler;
 
+    /**
+     * @implNote The constructor establishes the connection to the server, sends the Connect message, and starts the reader thread.
+     */
     public SocketVirtualServer(String host, int port, String playerName,
                                LocalGameState localState, ClientStateListener listener)
             throws IOException {

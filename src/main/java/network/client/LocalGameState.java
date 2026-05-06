@@ -14,9 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Client-side view of the game state.
  * Populated by deserialising {@link GameStateDto} snapshots received from the server.
  * <p>
- * Thread-safe: {@link #update(GameStateDto)} is called from the {@link SocketClientThread}
- * (network thread) while getters are called from the UI thread. The internal
- * {@link AtomicReference} guarantees that every getter always reads a consistent,
+ * The internal {@link AtomicReference} guarantees that every getter always reads a consistent,
  * fully-written snapshot with no synchronisation overhead on reads.
  */
 public class LocalGameState {

@@ -14,6 +14,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.SocketException;
 
+/**
+ * Background thread that continuously reads objects from the socket's ObjectInputStream and dispatches them to the SocketVirtualServer.
+ */
 public class SocketClientThread implements Runnable {
 
     private final ObjectInputStream in;
