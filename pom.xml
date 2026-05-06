@@ -14,7 +14,7 @@
         <junit.version>5.12.1</junit.version>
         <mockito.version>5.23.0</mockito.version>
         <maven.surefire.version>3.2.5</maven.surefire.version>
-        <jacoco.version>0.8.12</jacoco.version>
+        <jacoco.version>0.8.13</jacoco.version>
         <bytebuddy.experimental>true</bytebuddy.experimental>
     </properties>
 
@@ -115,6 +115,13 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>*$MockitoMock$*</exclude>
+                                <exclude>*$auxiliary$*</exclude>
+                                <exclude>*$ByteBuddy$*</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>report</id>

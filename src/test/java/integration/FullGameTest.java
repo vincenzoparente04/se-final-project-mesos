@@ -59,7 +59,7 @@ public class FullGameTest {
                 IllegalStateException.class,
                 () -> gameController.placeTotem("Bart", 'A')
         );
-        assert(errorWrongPhaseCOLOR_CHOOSING.getMessage().contains("Cannot place totem during COLOR_CHOOSING_PHASE"));
+        assertTrue(errorWrongPhaseCOLOR_CHOOSING.getMessage().contains("Cannot place totem during COLOR_CHOOSING_PHASE"));
 
 
         gameController.chooseColor("Bart", "GREEN");
@@ -203,7 +203,7 @@ public class FullGameTest {
                 loserPP = model.getPlayerByName(playerNames.get(i)).getPrestigePoints();
             }
         }
-        assertEquals(winnerPP>=loserPP, true, "Winner should have more PP than loser");
+        assertTrue(winnerPP>=loserPP, "Winner should have more PP than loser");
 
         assertNotNull(model.getPhaseHandler());
 
@@ -224,7 +224,7 @@ public class FullGameTest {
             }
         }
         
-        // PRE_END_OF_ROUND PHASE
+        // PRE END OF ROUND PHASE
         if (model.getCurrentPhase() == GamePhase.PRE_END_OF_ROUND) {
             Player current = model.getCurrentPlayer();
             if (current != null) {
@@ -234,7 +234,10 @@ public class FullGameTest {
         
         // ACTION PHASE
         if (model.getCurrentPhase() == GamePhase.ACTION) {
+            int maxIterations = 1000;
+            int iterations = 0;
             while (model.getCurrentPhase() == GamePhase.ACTION) {
+                if (++iterations > maxIterations) fail("Action phase stuck in infinite loop");
                 Player current = model.getCurrentPlayer();
                 if (current == null) {
                     break;
@@ -247,7 +250,7 @@ public class FullGameTest {
                     gameController.drawCard(current.getName(), topCardId);
                     couldDraw = true;
                 } catch (Exception e) {
-                    // Top row not allowed or failed
+                    // top row not allowed or failed
                 }
                 
                 if (!couldDraw) {
@@ -265,7 +268,9 @@ public class FullGameTest {
                     // For tiles that just give food, or if finished drawing
                     try {
                         gameController.endTurn(current.getName());
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                        //tile auto-advances
+                    }
                 }
             }
         }
