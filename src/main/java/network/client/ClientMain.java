@@ -84,13 +84,11 @@ public class ClientMain extends Application {
         try {
             this.proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
 
-            ClientController controller = new ClientController(proxy);
-
-            // Propagate the controller to the lobby buttons
-            listener.setClientController(controller);
+            // Propagate the VirtualServer proxy to the listener and UI controller
+            listener.setVirtualServer(proxy);
 
             // Ask the server for the current lobby list right away
-            controller.onListLobbies();
+            proxy.sendListLobbies();
 
             Platform.runLater(() -> primaryStage.setTitle("Mesos — " + playerName));
 
