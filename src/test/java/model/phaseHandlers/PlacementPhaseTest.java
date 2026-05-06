@@ -130,4 +130,19 @@ class PlacementPhaseTest {
         verify(model, times(4)).notifyChange();
         verify(model, times(1)).setPhase(argThat(handler -> handler instanceof ActionPhase));
     }
+
+
+    @Test
+    @DisplayName("endTurn throws during PlacementPhase")
+    void endTurnThrows() {
+        assertThrows(IllegalStateException.class, () -> phase.endTurn());
+    }
+
+    @Test
+    @DisplayName("drawCard throws during PlacementPhase")
+    void drawCardThrows() {
+        assertThrows(IllegalStateException.class, () -> phase.drawCard(45));
+    }
+
+
 }
