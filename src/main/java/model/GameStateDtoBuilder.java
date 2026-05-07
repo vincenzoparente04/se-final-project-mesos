@@ -32,7 +32,7 @@ public class GameStateDtoBuilder {
 
     public static GameStateDto build(GameModel model) {
         Player currentPlayer = model.getCurrentPlayer();
-        String currentEra = model.getCurrentEra() != null ? model.getCurrentEra().name() : null;
+        String currentEra = model.getCurrentEra() != null ? String.valueOf(model.getCurrentEra().ordinal() + 1) : null;
         String phase = model.getCurrentPhase() != null ? model.getCurrentPhase().name() : null;
         String currentPlayerName = currentPlayer != null ? currentPlayer.getName() : null;
 
@@ -166,23 +166,23 @@ public class GameStateDtoBuilder {
                 case GathererCard g -> "GATHERER";
                 default             -> "CHARACTER";
             };
-            dto = new CardDto(card.getId(), subtype, card.getEra().name(),
+            dto = new CardDto(card.getId(), subtype, String.valueOf(card.getEra().ordinal() + 1),
                     0, 0, card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(EventCard card) {
-            dto = new CardDto(card.getId(), "EVENT", card.getEra().name(), 0, 0, card.getImagePath(), card.getBackImagePath());
+            dto = new CardDto(card.getId(), "EVENT", String.valueOf(card.getEra().ordinal() + 1), 0, 0, card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(SustenanceEventCard card) {
-            dto = new CardDto(card.getId(), "EVENT", card.getEra().name(), 0, 0, card.getImagePath(), card.getBackImagePath());
+            dto = new CardDto(card.getId(), "EVENT", String.valueOf(card.getEra().ordinal() + 1), 0, 0, card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(BuildingCard card) {
-            dto = new CardDto(card.getId(), "BUILDING", card.getEra().name(), card.getFoodCost(), card.getEndGamePoints(), card.getImagePath(), card.getBackImagePath());
+            dto = new CardDto(card.getId(), "BUILDING", String.valueOf(card.getEra().ordinal() + 1), card.getFoodCost(), card.getEndGamePoints(), card.getImagePath(), card.getBackImagePath());
         }
 
         CardDto getDto() { return dto; }

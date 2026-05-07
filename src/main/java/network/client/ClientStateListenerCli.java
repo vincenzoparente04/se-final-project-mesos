@@ -96,7 +96,7 @@ public class ClientStateListenerCli implements ClientStateListener{
     private void printHeader(GameStateDto dto) {
         System.out.println("┌─ STATE ─────────────────────────────────────");
         System.out.printf("│ Phase: %-20s Round: %d   Era: %s%n",
-                friendlyPhase(dto.phase), dto.currentRound,
+                //friendlyPhase(dto.phase), dto.currentRound,
                 dto.currentEra != null ? dto.currentEra : "—");
 
         String cp = dto.currentPlayerName != null ? dto.currentPlayerName : "—";
@@ -116,7 +116,7 @@ public class ClientStateListenerCli implements ClientStateListener{
         }
     }
 
-    private static void printOfferTrack(GameStateDto dto) {  // FIX Bug 3
+    private static void printOfferTrack(GameStateDto dto) {
         if (dto.offerTiles == null || dto.offerTiles.isEmpty()) return;
         System.out.println("├─ Offer tiles ───────────────────────────────");
         for (OfferTileDto t : dto.offerTiles) {
@@ -129,7 +129,7 @@ public class ClientStateListenerCli implements ClientStateListener{
         }
     }
 
-    private static void printCardRows(GameStateDto dto) {  // FIX Bug 4
+    private static void printCardRows(GameStateDto dto) {
         if (dto.topRowTribe != null && !dto.topRowTribe.isEmpty()) {
             System.out.println("├─ Cards (top tribe) ─────────────────────────");
             printCards(dto.topRowTribe);
@@ -174,7 +174,7 @@ public class ClientStateListenerCli implements ClientStateListener{
     private void printCurrentPlayerTribe(LocalGameState state) {
         GameStateDto dto = state.snapshot();
         if (dto == null || dto.players == null || dto.currentPlayerName == null) return;
-        if (dto.currentPlayerName.equals(localPlayerName)) return; // già in printMyTribe
+        if (dto.currentPlayerName.equals(localPlayerName)) return;
         dto.players.stream()
                 .filter(p -> dto.currentPlayerName.equals(p.name))
                 .findFirst()
@@ -198,7 +198,7 @@ public class ClientStateListenerCli implements ClientStateListener{
 
     //HEPLERS
 
-    private static String friendlyPhase(String phase) {  // FIX Bug 2
+    /*private static String friendlyPhase(String phase) {
         if (phase == null) return "—";
         return switch (phase) {
             case "SETUP"                -> "Setup";
@@ -210,7 +210,7 @@ public class ClientStateListenerCli implements ClientStateListener{
             case "END_OF_GAME"          -> "Game Over";
             default                     -> phase;
         };
-    }
+    }*/
 
     private static String helpForPhase(String phase) {
         if (phase == null) return "lobbies | create <n> | join <id>";
@@ -227,7 +227,7 @@ public class ClientStateListenerCli implements ClientStateListener{
         GameStateDto dto = state.snapshot();
         if (dto == null) return "> ";
         boolean isMyTurn = localPlayerName.equals(dto.currentPlayerName);
-        String label = isMyTurn ? "⚡ YOUR TURN — " + helpForPhase(dto.phase) : dto.phase;
+        String label = isMyTurn ? "YOUR TURN — " + helpForPhase(dto.phase) : dto.phase;
         return "[" + label + "]\n> ";
     }
 }
