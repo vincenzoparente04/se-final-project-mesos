@@ -19,6 +19,13 @@ import shared.dto.PlayerDto;
 import shared.dto.TribeDto;
 import shared.dto.TurnOrderSlotDto;
 
+import model.cards.characterCards.HunterCard;
+import model.cards.characterCards.ShamanCard;
+import model.cards.characterCards.BuilderCard;
+import model.cards.characterCards.ArtistCard;
+import model.cards.characterCards.InventorCard;
+import model.cards.characterCards.GathererCard;
+
 import java.util.List;
 
 public class GameStateDtoBuilder {
@@ -150,7 +157,17 @@ public class GameStateDtoBuilder {
 
         @Override
         public void visit(CharacterCard card) {
-            dto = new CardDto(card.getId(), "CHARACTER", card.getEra().name(), 0, 0, card.getImagePath(), card.getBackImagePath());
+            String subtype = switch (card) {
+                case HunterCard   h -> "HUNTER";
+                case ShamanCard   s -> "SHAMAN";
+                case BuilderCard  b -> "BUILDER";
+                case ArtistCard   a -> "ARTIST";
+                case InventorCard i -> "INVENTOR";
+                case GathererCard g -> "GATHERER";
+                default             -> "CHARACTER";
+            };
+            dto = new CardDto(card.getId(), subtype, card.getEra().name(),
+                    0, 0, card.getImagePath(), card.getBackImagePath());
         }
 
         @Override

@@ -31,7 +31,7 @@ public class ClientMainCli {
         }
 
         LocalGameState localState = new LocalGameState();
-        ClientStateListener listener = new ClientStateListenerCli();
+        ClientStateListenerCli listener = new ClientStateListenerCli(playerName);
 
         System.out.println("Connecting via " + transport + " to " + host + ":" + port + " as \"" + playerName + "\"...");
 
@@ -55,7 +55,7 @@ public class ClientMainCli {
             if (trimmed.equalsIgnoreCase("quit")) break;
 
             if (trimmed.equalsIgnoreCase("state")) {
-                ClientStateListenerCli.printState(localState);
+                listener.printState(localState);
             } else if (!dispatch(controller, trimmed)) {
                 System.out.println("[?] Unknown command. " + helpLine());
             }
