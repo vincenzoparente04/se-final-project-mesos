@@ -106,21 +106,22 @@ public class EndOfGamePhase extends GamePhaseHandler {
                 .filter(p -> p.getFood() == maxFood)
                 .toList();
     }
-
-    /**
-     * @implNote Returns the name(s) of the winner(s)
-     * @return Winners's name
-     */
-    private String formatWinners() {
-        if (winners.size() == 1) {
-            return winners.getFirst().getName();
-        }
-        return winners.stream()
-                .map(Player::getName)
-                .reduce((a, b) -> a + ", " + b)
-                .orElse("");
-    }
-
+    
+    // TODO: eliminate?
+    // /**
+    //  * @implNote Returns the name(s) of the winner(s)
+    //  * @return Winners's name
+    //  */
+    // private String formatWinners() {
+    //     if (winners.size() == 1) {
+    //         return winners.getFirst().getName();
+    //     }
+    //     return winners.stream()
+    //             .map(Player::getName)
+    //             .reduce((a, b) -> a + ", " + b)
+    //             .orElse("");
+    // }
+    
     public List<Player> getWinners() {
         return winners;
     }
