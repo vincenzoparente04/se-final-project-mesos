@@ -1,5 +1,6 @@
 package model.cards.eventCards;
 
+import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.cards.eventCards.CavePaintingsEventCard;
 import model.enums.Era;
 import model.player.Player;
@@ -48,6 +49,22 @@ class CavePaintingsEventCardTest {
 
         verify(player, times(1)).addPrestigePoints(4); //2*2
         verify(player, never()).removePrestigePoints(org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    @DisplayName("resolve triggers OnEventBuildingEffect.applyOnCavePaintings for each player's building effects")
+    void resolveTriggersOnEventBuildingEffects() {
+        Player player = mock(Player.class);
+        Tribe tribe = mock(Tribe.class);
+        OnEventBuildingEffect effect = mock(OnEventBuildingEffect.class);
+        when(player.getTribe()).thenReturn(tribe);
+        when(tribe.getArtistCount()).thenReturn(3);
+        when(tribe.getOnEventBuildingEffects()).thenReturn(List.of(effect));
+
+        CavePaintingsEventCard card = new CavePaintingsEventCard(1, Era.ERA_II, 3, "test/front.png", "test/front.png");
+        card.resolve(List.of(player));
+
+        verify(effect, times(1)).applyOnCavePaintings(player);
     }
 
     @Test

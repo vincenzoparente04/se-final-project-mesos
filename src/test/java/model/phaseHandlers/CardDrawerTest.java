@@ -96,6 +96,22 @@ class CardDrawerTest {
     }
 
     @Test
+    @DisplayName("visit(BuildingCard) skips performDraw when action is null (PreEndOfRoundPhase context)")
+    void visitBuildingCardWithNullActionSkipsPerformDraw() {
+        BuildingCard card = mock(BuildingCard.class);
+        when(card.getId()).thenReturn(11);
+        when(card.getDiscountedCost(player)).thenReturn(2);
+        when(player.getFood()).thenReturn(5);
+
+        CardDrawer drawerNoAction = new CardDrawer(player, rowsManager, null);
+        drawerNoAction.visit(card);
+
+        verify(rowsManager).removeCard(11);
+        verify(player).removeFood(2);
+        verify(card).registerToTribe(player);
+    }
+
+    @Test
     @DisplayName("visit(BuildingCard) throws when player has insufficient food")
     void visitBuildingCardWithInsufficientFoodThrows() {
         BuildingCard card = mock(BuildingCard.class);
