@@ -96,7 +96,7 @@ public class ClientStateListenerCli implements ClientStateListener{
     private void printHeader(GameStateDto dto) {
         System.out.println("┌─ STATE ─────────────────────────────────────");
         System.out.printf("│ Phase: %-20s Round: %d   Era: %s%n",
-                //friendlyPhase(dto.phase), dto.currentRound,
+                friendlyPhase(dto.phase), dto.currentRound,
                 dto.currentEra != null ? dto.currentEra : "—");
 
         String cp = dto.currentPlayerName != null ? dto.currentPlayerName : "—";
@@ -198,7 +198,7 @@ public class ClientStateListenerCli implements ClientStateListener{
 
     //HEPLERS
 
-    /*private static String friendlyPhase(String phase) {
+    private static String friendlyPhase(String phase) {
         if (phase == null) return "—";
         return switch (phase) {
             case "SETUP"                -> "Setup";
@@ -210,7 +210,7 @@ public class ClientStateListenerCli implements ClientStateListener{
             case "END_OF_GAME"          -> "Game Over";
             default                     -> phase;
         };
-    }*/
+    }
 
     private static String helpForPhase(String phase) {
         if (phase == null) return "lobbies | create <n> | join <id>";
