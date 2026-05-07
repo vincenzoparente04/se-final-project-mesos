@@ -1,6 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
@@ -285,6 +286,37 @@ public class ColorChoosingPhaseTest {
         
         // Verify that setColor was not called for player5 with RED
         verify(localPlayer5, never()).setColor(TotemColor.RED);
+    }
+
+    @Test
+    @DisplayName("Skip player when disconnected")
+    void testSkipPlayerWhenDisconnected() {
+
+        /// DIFFFERS FROM OTHERS --> no setup
+
+        GameModel localModel = new GameModel();
+
+        List<String> localPlayers = List.of("Player1", "Player2", "Player3");
+        localModel.startGame(localPlayers);
+
+
+        Player pl2 = localModel.getPlayerByName("Player2");
+        pl2.setDisconnected();
+
+        assertEquals(GamePhase.COLOR_CHOOSING_PHASE, localModel.getCurrentPhase());
+
+        localModel.chooseColor(localModel.getPlayerByName("Player1"), TotemColor.RED);
+
+        //first player disconnected so curr player should be the next
+        Player follows = localModel.getCurrentPlayer();
+        assertNotEquals(pl2, follows);
+
+        GamePhaseHandler currPhase = localModel.getPhaseHandler();
+        currPhase.skipCurrentPlayerTurn();
+
+        GamePhaseHandler afterPhase = localModel.getPhaseHandler();
+        assertNotEquals(currPhase, afterPhase);
+
     }
 
 }
