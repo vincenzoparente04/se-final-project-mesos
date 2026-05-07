@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 public class Game {
@@ -21,10 +22,12 @@ public class Game {
     private volatile boolean gameOver = false;
     private Thread gameThread;
 
-    public Game(List<PlayerEntry> players, BlockingQueue<GameCommand> commandQueue) {
+    public Game(List<PlayerEntry> players) {
         this.players = new ArrayList<>(players);
-        this.views = players.stream().map(PlayerEntry::getView).collect(Collectors.toCollection(ArrayList::new)); // Idem
-        this.commandQueue = commandQueue;
+        this.views = players.stream()
+                .map(PlayerEntry::getView)
+                .collect(Collectors.toCollection(ArrayList::new));
+        this.commandQueue = new LinkedBlockingQueue<>();
         this.model = new GameModel(this.views);
         this.controller = new GameController(model);
         controller.startGame(players.stream().map(PlayerEntry::getName).toList());
@@ -33,20 +36,22 @@ public class Game {
     public void start() {
         players.forEach(p -> p.setGameQueue(commandQueue));
         QueueDrainerThread qdt = new QueueDrainerThread(commandQueue, new ControllerCommandExecutor(controller),
+                // TODO: leva consumer
                 (playerName, errorMsg) -> findView(playerName).ifPresent(v -> v.sendError(errorMsg)));
         gameThread = new Thread(qdt, "game-thread");
         gameThread.setDaemon(true);
         gameThread.start();
     }
 
-    public synchronized void onPlayerDisconnected(String playerName) {
+    public synchronized void onPlayerDisconnect(String playerName) {
+        // TODO: forse può delegare al model la notifica delle view, in questo modo Game non conosce più le view, pensiamoci
         if (gameOver) return;
         views.forEach(v -> v.sendError("Player_disconnected:" + playerName));
-        // close and remove the old view
-        Optional<VirtualView> oldView = findView(playerName);
-        if (oldView.isPresent()) {
-            oldView.get().close();
-            this.views.remove(oldView.get());
+
+        Optional<VirtualView> disconnectedView = findView(playerName);
+        if (disconnectedView.isPresent()) {
+            disconnectedView.get().close();
+            this.views.remove(disconnectedView.get());
         }
         findPlayerEntry(playerName).ifPresent(this.players::remove);
 

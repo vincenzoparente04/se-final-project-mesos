@@ -22,7 +22,7 @@ public class QueueDrainerThread implements Runnable {
 
     private final BlockingQueue<GameCommand> commandQueue;
     private final CommandVisitor executor;
-    private final BiConsumer<String, String> onError;
+    private final BiConsumer<String, String> onError; // TODO vedi se si può levare
 
     /**
      * @param commandQueue the shared queue to drain
@@ -31,11 +31,10 @@ public class QueueDrainerThread implements Runnable {
      *                     command fails; used by {@link Game} to route
      *                     the error back to the responsible player
      */
-    public QueueDrainerThread(BlockingQueue<GameCommand> commandQueue,
-                      CommandVisitor executor,
-                      BiConsumer<String, String> onError) {
+    // TODO: leva consumer se possibile (bisogna semplificare)
+    public QueueDrainerThread(BlockingQueue<GameCommand> commandQueue, CommandVisitor executor, BiConsumer<String, String> onError) {
         this.commandQueue = commandQueue;
-        this.executor = executor;
+        this.executor = executor; // forse può essere direttamente il controller e bypassiamo ControllerCommandExecutor
         this.onError = onError;
     }
 
@@ -54,7 +53,7 @@ public class QueueDrainerThread implements Runnable {
     private void execute(GameCommand command) {
         try {
             command.accept(executor);
-        } catch (Exception e) {
+        } catch (Exception e) { // TODO vedi se può essere lui stesso a notificare le view cosi evitiamo il consumer
             String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             onError.accept(command.getPlayerName(), message);
         }

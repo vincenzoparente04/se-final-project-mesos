@@ -19,7 +19,8 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
     private final CommandDispatcher dispatcher = new CommandDispatcher() {
         @Override
         public void onLobbyCommand(LobbyCommand cmd) throws Exception {
-            lobbyManager.handle(cmd);
+            //lobbyManager.handle(cmd);
+            cmd.accept(lobbyManager);
         }
 
         @Override
@@ -63,6 +64,6 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
 
     @Override
     public void disconnect(String playerName) throws RemoteException {
-        lobbyManager.onDisconnected(playerName);
+        lobbyManager.onDisconnect(playerName);
     }
 }

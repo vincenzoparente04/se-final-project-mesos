@@ -17,6 +17,7 @@ import shared.command.PlaceTotemCommand;
  */
 public class ControllerCommandExecutor implements CommandVisitor {
 
+    // TODO: vedi se può farlo direttamente il controller e eliminiamo questa classe
     private final GameController controller;
 
     public ControllerCommandExecutor(GameController controller) {

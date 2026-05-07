@@ -116,6 +116,6 @@ public class ClientMainCli {
     }
 
     private static String helpLine() {
-        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | quit";
+        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | quitxx";
     }
 }
