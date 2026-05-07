@@ -133,6 +133,28 @@ class PlacementPhaseTest {
 
 
     @Test
+    @DisplayName("placeTotem throws when player's totem is not on the turn order tile")
+    void placeTotemThrowsWhenPlayerNotOnTurnOrderTile() {
+        when(p1.getLocation()).thenReturn(TotemLocation.OFFER_TRACK);
+        phase.onEnter();
+
+        assertThrows(IllegalArgumentException.class, () -> phase.placeTotem(p1, 'A'));
+        verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
+    }
+
+    @Test
+    @DisplayName("skipCurrentPlayerTurn advances to the next player in turn order")
+    void skipCurrentPlayerTurnAdvancesToNextPlayer() {
+        phase.onEnter();
+        assertEquals(p1, phase.getCurrentPlayer());
+
+        phase.skipCurrentPlayerTurn();
+
+        assertEquals(p2, phase.getCurrentPlayer());
+        verify(model, times(2)).notifyChange();
+    }
+
+    @Test
     @DisplayName("endTurn throws during PlacementPhase")
     void endTurnThrows() {
         assertThrows(IllegalStateException.class, () -> phase.endTurn());
