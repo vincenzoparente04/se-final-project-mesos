@@ -145,11 +145,25 @@ public class GameStateDtoBuilder {
             bottomRowUsed = null;
         }
 
-        String getLabel()           { return label; }
-        Integer getTopRowLimit()    { return topRowLimit; }
-        Integer getBottomRowLimit() { return bottomRowLimit; }
-        Integer getTopRowUsed()     { return topRowUsed; }
-        Integer getBottomRowUsed()  { return bottomRowUsed; }
+        String getLabel() {
+            return label;
+        }
+
+        Integer getTopRowLimit() {
+            return topRowLimit;
+        }
+
+        Integer getBottomRowLimit() {
+            return bottomRowLimit;
+        }
+
+        Integer getTopRowUsed() {
+            return topRowUsed;
+        }
+
+        Integer getBottomRowUsed() {
+            return bottomRowUsed;
+        }
     }
 
     private static class CardToDtoVisitor implements CardVisitor {
@@ -158,33 +172,74 @@ public class GameStateDtoBuilder {
         @Override
         public void visit(CharacterCard card) {
             String subtype = switch (card) {
-                case HunterCard   h -> "HUNTER";
-                case ShamanCard   s -> "SHAMAN";
-                case BuilderCard  b -> "BUILDER";
-                case ArtistCard   a -> "ARTIST";
+                case HunterCard h -> "HUNTER";
+                case ShamanCard s -> "SHAMAN";
+                case BuilderCard b -> "BUILDER";
+                case ArtistCard a -> "ARTIST";
                 case InventorCard i -> "INVENTOR";
                 case GathererCard g -> "GATHERER";
-                default             -> "CHARACTER";
+                default -> "CHARACTER";
+            };
+            String details = switch (card) {
+                case HunterCard h -> h.hasTriggerIcon() ? " bonus on draw" : "no draw bonus";
+                case ShamanCard s -> "★".repeat(s.getStarCount());
+                case BuilderCard b ->
+                        "-" + b.getBuilderDiscount() + " food/bldg  |  +" + b.getPrestigePoints() + " PP end";
+                case InventorCard i -> "icon: " + i.getInventionIcon().name();
+                case ArtistCard a -> "end: +10PP per 2 artists";
+                case GathererCard g -> "sustenance: -3 food";
+                default -> "";
             };
             dto = new CardDto(card.getId(), subtype, String.valueOf(card.getEra().ordinal() + 1),
-                    0, 0, card.getImagePath(), card.getBackImagePath());
+                    0, 0, details, card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(EventCard card) {
-            dto = new CardDto(card.getId(), "EVENT", String.valueOf(card.getEra().ordinal() + 1), 0, 0, card.getImagePath(), card.getBackImagePath());
+            dto = new CardDto(card.getId(), "EVENT", String.valueOf(card.getEra().ordinal() + 1), 0, 0, "", card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(SustenanceEventCard card) {
-            dto = new CardDto(card.getId(), "EVENT", String.valueOf(card.getEra().ordinal() + 1), 0, 0, card.getImagePath(), card.getBackImagePath());
+            dto = new CardDto(card.getId(), "EVENT", String.valueOf(card.getEra().ordinal() + 1), 0, 0, "", card.getImagePath(), card.getBackImagePath());
         }
 
         @Override
         public void visit(BuildingCard card) {
-            dto = new CardDto(card.getId(), "BUILDING", String.valueOf(card.getEra().ordinal() + 1), card.getFoodCost(), card.getEndGamePoints(), card.getImagePath(), card.getBackImagePath());
+            dto = new CardDto(card.getId(), "BUILDING", String.valueOf(card.getEra().ordinal() + 1), card.getFoodCost(), card.getEndGamePoints(), describeEffect(card.getEffectId()),
+                    card.getImagePath(), card.getBackImagePath());
         }
 
-        CardDto getDto() { return dto; }
+        // only used to print the effect of the card in the cli
+        private static String describeEffect(String effectId) {
+            return switch (effectId) {
+                case "shamanic_immunity" -> "Shamanic ritual: no PP loss if losing";
+                case "shamanic_double_points" -> "Shamanic ritual: double PP if most stars (ties included)";
+                case "shamanic_extra_stars" -> "Shamanic ritual: +3 bonus star icons";
+                case "extra_food_on_totem_return" -> "Totem return on bonus slot: +1 extra food";
+                case "extra_draw" -> "After all actions: draw 1 card from top row";
+                case "on_acquire_set" -> "On acquire: +5 food per complete set of 6 types";
+                case "on_acquire_pair" -> "On acquire: +3 food per matching inventor icon pair";
+                case "on_sustenance_artist" -> "Sustenance: -1 food per artist in tribe";
+                case "on_sustenance_gatherer" -> "Sustenance: -1 food per gatherer in tribe";
+                case "on_sustenance_inventor" -> "Sustenance: -1 food per inventor in tribe";
+                case "on_hunt_bonus" -> "Hunt event: +1 food and +1 PP per hunter";
+                case "on_cave_paintings_bonus" -> "Cave paintings: +1 food per artist";
+                case "end_game_count_hunters" -> "End game: +3 PP per hunter";
+                case "end_game_count_shamans" -> "End game: +3 PP per shaman";
+                case "end_game_count_artists" -> "End game: +3 PP per artist";
+                case "end_game_count_inventors" -> "End game: +3 PP per inventor";
+                case "end_game_count_builders" -> "End game: +3 PP per builder";
+                case "end_game_count_gatherers" -> "End game: +3 PP per gatherer";
+                case "end_game_count_sets" -> "End game: +6 PP per complete set of 6 types";
+                case "end_game_double_builders" -> "End game: double PP from all builders";
+                case "none" -> "";
+                default -> effectId;
+            };
+        }
+
+        CardDto getDto () {
+            return dto;
+        }
     }
 }

@@ -22,4 +22,6 @@ public class HunterCard extends CharacterCard {
 
         if(triggerIcon){ player.addFood(player.getTribe().getHunterCount()); }
     }
+
+    public boolean hasTriggerIcon() { return triggerIcon; }
 }

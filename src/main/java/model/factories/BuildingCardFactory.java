@@ -53,7 +53,7 @@ public class BuildingCardFactory {
             BuildingEffect effect = createEffect(effectId);
 
             // Assicurati che il costruttore di BuildingCard accetti backImage come ultimo parametro
-            cards.add(new BuildingCard(id, era, minPlayers, foodCost, endGamePoints, effect, image, backImage));
+            cards.add(new BuildingCard(id, era, minPlayers, foodCost, endGamePoints, effect, effectId, image, backImage));
         }
 
         return cards;

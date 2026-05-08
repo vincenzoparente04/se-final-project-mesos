@@ -131,11 +131,11 @@ public class ClientStateListenerCli implements ClientStateListener{
 
     private static void printCardRows(GameStateDto dto) {
         if (dto.topRowTribe != null && !dto.topRowTribe.isEmpty()) {
-            System.out.println("├─ Cards (top tribe) ─────────────────────────");
+            System.out.println("├─ Cards (top row) ─────────────────────────");
             printCards(dto.topRowTribe);
         }
         if (dto.bottomRowTribe != null && !dto.bottomRowTribe.isEmpty()) {
-            System.out.println("├─ Cards (bottom tribe) ──────────────────────");
+            System.out.println("├─ Cards (bottom row) ──────────────────────");
             printCards(dto.bottomRowTribe);
         }
         if (dto.topRowBuilding != null && !dto.topRowBuilding.isEmpty()) {
@@ -190,8 +190,15 @@ public class ClientStateListenerCli implements ClientStateListener{
 
     private static void printCards(List<CardDto> cards) {
         for (CardDto c : cards) {
-            System.out.printf("│    id=%-4d  %-12s  era=%-8s  food=%-2d  pts=%d%n",
-                    c.id, c.type, c.era, c.foodCost, c.endGamePoints);
+            // Mostra food/pts solo per i building (gli unici che li hanno significativi)
+            String costInfo = "BUILDING".equals(c.type)
+                    ? String.format("  cost=%-2d  pts=%-2d", c.foodCost, c.endGamePoints)
+                    : "";
+            String detailInfo = (c.details != null && !c.details.isEmpty())
+                    ? "  [" + c.details + "]"
+                    : "";
+            System.out.printf("│    id=%-4d  %-10s  era=%-8s%s%s%n",
+                    c.id, c.type, c.era, costInfo, detailInfo);
         }
     }
 
