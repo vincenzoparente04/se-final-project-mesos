@@ -1,11 +1,6 @@
 package network.server.core;
 
-import shared.command.LobbyCommandVisitor;
-import shared.command.GameCommand;
-import shared.command.CreateLobbyCommand;
-import shared.command.JoinLobbyCommand;
-import shared.command.ListLobbiesCommand;
-import shared.command.LobbyCommand;
+import shared.command.*;
 import shared.dto.LobbyDto;
 
 import java.io.IOException;
@@ -216,6 +211,22 @@ public class LobbyManager implements LobbyCommandVisitor {
         checkAndStartIfFull(lobby);
     }
 
+    @Override
+    public synchronized void visit(LeaveCommand cmd) throws Exception {
+        String playerName = cmd.getPlayerName();
+
+        if (isPlayerInEndGame(playerName)) {
+            handleLeaveFromGame(playerName);
+        } else if (isPlayerInLobby(playerName)) {
+            handleLeaveFromLobby(playerName);
+        } else {
+            VirtualView view = getView(playerName);
+            if (view != null) {
+                view.sendError("LEAVE_INVALID:not_in_lobby_or_game");
+            }
+        }
+    }
+
     // Game start
 
     private void checkAndStartIfFull(Lobby lobby) {
@@ -290,6 +301,51 @@ public class LobbyManager implements LobbyCommandVisitor {
                 .toList();
         for (String playerName : dead) {
             onDisconnected(playerName);
+        }
+    }
+
+    // ─── LEAVE command handlers ────────────────────────────────────────
+
+    private boolean isPlayerInEndGame(String playerName) {
+        return (activeGames.containsKey(playerName) && activeGames.get(playerName).isGameOver());
+    }
+
+    private boolean isPlayerInLobby(String playerName) {
+        return lobbies.values().stream()
+                .flatMap(l -> l.getPlayers().stream())
+                .anyMatch(p -> p.getName().equals(playerName));
+    }
+
+    private void handleLeaveFromLobby(String playerName) {
+        // Find the lobby where the player is currently in
+        Lobby lobbyToLeave = lobbies.values().stream()
+                .filter(lobby -> lobby.getPlayers().stream().anyMatch(p -> p.getName().equals(playerName)))
+                .findFirst()
+                .orElse(null);
+
+        //remove the player
+        lobbyToLeave.getPlayers().stream().filter(p -> p.getName().equals(playerName)).forEach(lobbyToLeave::removePlayer);
+
+        //Notify the left player about active lobbies
+        getView(playerName).sendError("Lobby left");
+
+        // Notify remaining players in that lobby of the new state
+        if (!lobbyToLeave.getPlayers().isEmpty()) {
+            broadcastLobbyState(lobbyToLeave);
+        }else{
+            lobbies.values().remove(lobbyToLeave);
+        }
+    }
+
+    private void handleLeaveFromGame(String playerName) {
+        Game game = activeGames.get(playerName);
+        if (game != null) {
+            game.onPlayerLeft(playerName);
+
+            // If game is now empty, remove ALL references to it from activeGames
+            if (game.getActivePlayers().isEmpty()) {
+                activeGames.values().removeIf(g -> g == game);
+            }
         }
     }
 

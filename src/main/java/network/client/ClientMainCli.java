@@ -105,6 +105,7 @@ public class ClientMainCli {
                 }
             }
             case "end" -> proxy.sendEndTurn();
+            case "leave" -> proxy.sendLeaveCommand();
             default    -> { return false; }
         }
         return true;
@@ -121,6 +122,6 @@ public class ClientMainCli {
     }
 
     private static String helpLine() {
-        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | quit";
+        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | leave | state | quit";
     }
 }

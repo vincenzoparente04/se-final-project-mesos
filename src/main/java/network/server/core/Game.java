@@ -69,8 +69,41 @@ public class Game {
         this.model.notifyChange();
     }
 
+    /**
+     * Called when a player explicitly leaves the game (only valid in END_OF_GAME phase).
+     * Removes the player from the game and notifies remaining players.
+     * If all players have left, the game can be cleaned up by the server.
+     */
+    public synchronized void onPlayerLeft(String playerName) {
+        if (!isGameOver()) return;
+
+        // Remove from views
+        Optional<VirtualView> oldView = findView(playerName);
+        if (oldView.isPresent()) {
+            oldView.get().close();
+            this.views.remove(oldView.get());
+        }
+
+        // Remove from players
+        findPlayerEntry(playerName).ifPresent(this.players::remove);
+
+        // Mark player as disconnected in model
+        this.model.getPlayerByName(playerName).setDisconnected();
+
+        // Notify remaining players
+        views.forEach(v -> v.sendError("player_left:" + playerName));
+    }
+
     public boolean isGameOver() {
-        return gameOver;
+        return this.model.isGameOver();
+    }
+
+    /**
+     * Returns a copy of the list of active players in this game.
+     * Used to check if the game should be cleaned up.
+     */
+    public List<PlayerEntry> getActivePlayers() {
+        return new ArrayList<>(players);
     }
 
     private Optional<VirtualView> findView(String playerName) {
