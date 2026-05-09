@@ -77,21 +77,22 @@ public class Game {
     public synchronized void onPlayerLeft(String playerName) {
         if (!isGameOver()) return;
 
-        // Remove from views
-        Optional<VirtualView> oldView = findView(playerName);
-        if (oldView.isPresent()) {
-            oldView.get().close();
-            this.views.remove(oldView.get());
+        try {
+            // Remove from views
+            Optional<VirtualView> oldView = findView(playerName);
+            oldView.ifPresent(this.views::remove);
+
+            // Remove from players
+            findPlayerEntry(playerName).ifPresent(this.players::remove);
+
+            // Mark player as disconnected in model
+            this.model.getPlayerByName(playerName).setDisconnected();
+
+            // Notify remaining players
+            views.forEach(v -> v.sendError("player_left:" + playerName));
+        } catch (Exception e) {
+            views.forEach(v -> v.sendError("ERROR_leaving_lobby" + e.getMessage()));
         }
-
-        // Remove from players
-        findPlayerEntry(playerName).ifPresent(this.players::remove);
-
-        // Mark player as disconnected in model
-        this.model.getPlayerByName(playerName).setDisconnected();
-
-        // Notify remaining players
-        views.forEach(v -> v.sendError("player_left:" + playerName));
     }
 
     public boolean isGameOver() {

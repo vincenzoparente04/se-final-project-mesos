@@ -323,28 +323,57 @@ public class LobbyManager implements LobbyCommandVisitor {
                 .findFirst()
                 .orElse(null);
 
-        //remove the player
-        lobbyToLeave.getPlayers().stream().filter(p -> p.getName().equals(playerName)).forEach(lobbyToLeave::removePlayer);
+        try {
+            //remove the player
+            if (lobbyToLeave != null) {
+                lobbyToLeave.getPlayers().stream().filter(p -> p.getName().equals(playerName)).forEach(lobbyToLeave::removePlayer);
+                //Notify the left player about active lobbies
+                getView(playerName).sendError("Lobby left");
+            }
 
-        //Notify the left player about active lobbies
-        getView(playerName).sendError("Lobby left");
 
-        // Notify remaining players in that lobby of the new state
-        if (!lobbyToLeave.getPlayers().isEmpty()) {
-            broadcastLobbyState(lobbyToLeave);
-        }else{
-            lobbies.values().remove(lobbyToLeave);
+            // Notify remaining players in that lobby of the new state
+            if (!lobbyToLeave.getPlayers().isEmpty()) {
+                broadcastLobbyState(lobbyToLeave);
+            } else {
+                lobbies.values().remove(lobbyToLeave);
+            }
+
+            // Notify the leaving player with updated lobby list and confirmation
+            VirtualView leavingPlayerView = getView(playerName);
+            if (leavingPlayerView != null) {
+                leavingPlayerView.sendError("LEFT_LOBBY:success");
+                leavingPlayerView.sendLobbyList(currentLobbyList());
+            }
+
+        } catch (Exception e) {
+            if (getView(playerName) != null) {
+                getView(playerName).sendError("ERROR_leaving_lobby" + e.getMessage());
+            }
         }
     }
 
     private void handleLeaveFromGame(String playerName) {
         Game game = activeGames.get(playerName);
         if (game != null) {
+            VirtualView leavingPlayerView = getView(playerName);
             game.onPlayerLeft(playerName);
 
-            // If game is now empty, remove ALL references to it from activeGames
-            if (game.getActivePlayers().isEmpty()) {
-                activeGames.values().removeIf(g -> g == game);
+            try {
+                // If game is now empty, remove ALL references to it from activeGames
+                if (game.getActivePlayers().isEmpty()) {
+                    activeGames.values().removeIf(g -> g == game);
+                }
+
+                // Notify the leaving player with confirmation
+                if (leavingPlayerView != null) {
+                    leavingPlayerView.sendError("LEFT_GAME:success");
+                    leavingPlayerView.sendLobbyList(currentLobbyList());
+                }
+            } catch (Exception e) {
+                if (getView(playerName) != null) {
+                    getView(playerName).sendError("ERROR_leaving_lobby" + e.getMessage());
+                }
             }
         }
     }
