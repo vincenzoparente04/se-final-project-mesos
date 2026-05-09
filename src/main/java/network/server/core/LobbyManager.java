@@ -411,6 +411,3 @@ public class LobbyManager implements LobbyCommandVisitor {
         try { socket.close(); } catch (IOException ignored) {}
     }
 }
-
-// TODO:    - non c'è metodo removeGame quando finisce una partita
-//          - la lobby non deve essere eliminata se un solo player la abbandona
