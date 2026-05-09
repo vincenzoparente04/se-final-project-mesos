@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @DisplayName("TakeFoodAction Tests")
 class TakeFoodActionTest {
@@ -42,6 +42,23 @@ class TakeFoodActionTest {
                 () -> assertFalse(action.canDraw(card, rowsManager)),
                 () -> assertThrows(UnsupportedOperationException.class, () -> action.performDraw(card, rowsManager))
         );
+    }
+
+    @Test
+    @DisplayName("accept offerTileActionVisitor")
+    void acceptsOfferTileActionVisitor() {
+        TakeFoodAction action = new TakeFoodAction(1);
+        Card card = mock(Card.class);
+        RowsManager rowsManager = mock(RowsManager.class);
+        when(rowsManager.bottomRowContainsCard(card.getId())).thenReturn(true);
+
+        OfferTileActionVisitor offerTileActionVisitor = mock(OfferTileActionVisitor.class);
+
+        action.accept(offerTileActionVisitor);
+
+        verify(offerTileActionVisitor, times(1)).visitTakeFood(action);
+
+
     }
 }
 
