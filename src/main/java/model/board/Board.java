@@ -4,20 +4,16 @@ import model.factories.BoardFactory;
 import model.player.Player;
 
 import java.util.List;
+import java.util.Collections;
 
 public class Board {
-    private final OfferTrack offerTrack;
-    private final TurnOrderTile turnOrderTile;
-
-    public Board() {  // TODO: check how we want to construct the board
-        this.offerTrack = new OfferTrack();
-        this.turnOrderTile = new TurnOrderTile();
-    }
+    private OfferTrack offerTrack;
+    private TurnOrderTile turnOrderTile;
 
     public void setup(int playerCount) {
         BoardFactory.BoardComponents components = BoardFactory.createComponents(playerCount);
-        offerTrack.setup(components.offerTiles());
-        turnOrderTile.setup(components.turnOrderSlots(), components.turnOrderTileImage());
+        this.offerTrack = new OfferTrack(components.offerTiles());
+        this.turnOrderTile = new TurnOrderTile(components.turnOrderSlots(), components.turnOrderTileImage());
     }
 
     /**
@@ -59,7 +55,7 @@ public class Board {
     }
 
     public Player getNextPlayerOnOfferTrack() {
-        return offerTrack.getNextPlayer();
+        return offerTrack != null ? offerTrack.getNextPlayer() : null;
     }
 
     /**
@@ -73,14 +69,14 @@ public class Board {
     }
 
     public List<Player> getTurnOrder() {
-        return turnOrderTile.getTurnOrder();
+        return turnOrderTile != null ? turnOrderTile.getTurnOrder() : Collections.emptyList();
     }
 
     public List<OfferTile> getOfferTiles() {
-        return offerTrack.getTiles();
+        return offerTrack != null ? offerTrack.getTiles() : Collections.emptyList();
     }
 
     public List<TurnOrderSlot> getTurnOrderSlots() {
-        return turnOrderTile.getSlots();
+        return turnOrderTile != null ? turnOrderTile.getSlots() : Collections.emptyList();
     }
 }

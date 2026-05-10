@@ -13,8 +13,11 @@ import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.command.ChooseColorCommand;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
+import shared.command.PlaceTotemCommand;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +29,7 @@ class GameFlowTest {
     private GameModel model;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         model = new GameModel();
         model.startGame(List.of("Player1", "Player2"));
         completeColorChoosing();
@@ -34,11 +37,12 @@ class GameFlowTest {
 
     // functions to make tests easier
 
-    private void completeColorChoosing() {
+    private void completeColorChoosing() throws Exception {
         TotemColor[] colors = TotemColor.values();
         int i = 0;
         while (model.getCurrentPhase() == GamePhase.COLOR_CHOOSING_PHASE) {
-            model.chooseColor(model.getCurrentPlayer(), colors[i++]);
+            Player current = model.getCurrentPlayer();
+            model.handleCommand(new ChooseColorCommand(current.getName(), colors[i++].name()));
         }
     }
 
@@ -47,14 +51,14 @@ class GameFlowTest {
      * Player at turn-order position 0 → tile B (leftmost for 2-player game).
      * Player at turn-order position 1 → tile C (next leftmost).
      */
-    private void completePlacement() {
+    private void completePlacement() throws Exception {
         while (model.getCurrentPhase() == GamePhase.PLACEMENT) {
             Player current = model.getCurrentPlayer();
             OfferTile free = model.getBoard().getOfferTiles().stream()
                     .filter(t -> !t.isOccupied())
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("No free tile for placement"));
-            model.placeTotem(current, free.getLetter());
+            model.handleCommand(new PlaceTotemCommand(current.getName(), free.getLetter()));
         }
     }
 
@@ -78,10 +82,10 @@ class GameFlowTest {
                     .findFirst();
 
             if (forcedCard.isPresent()) {
-                model.drawCard(forcedCard.get().getId());
+                model.handleCommand(new DrawCardCommand(current.getName(), forcedCard.get().getId()));
             } else {
                 try {
-                    model.endTurn();
+                    model.handleCommand(new EndTurnCommand(current.getName()));
                 } catch (IllegalStateException ignored) {
                     // action auto-advanced; loop will re-evaluate phase
                 }
@@ -89,7 +93,10 @@ class GameFlowTest {
         }
         // Waive extra draw if a player earned one during this round
         if (model.getCurrentPhase() == GamePhase.PRE_END_OF_ROUND) {
-            model.endTurn();
+            Player current = model.getCurrentPlayer();
+            if (current != null) {
+                model.handleCommand(new EndTurnCommand(current.getName()));
+            }
         }
     }
 

@@ -6,16 +6,19 @@ import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemLocation;
 import model.player.Player;
+import shared.command.PlaceTotemCommand;
 
 import java.util.List;
 
-public class PlacementPhase extends GamePhaseHandler {
+public class PlacementPhase implements GamePhaseHandler {
+
+    private final GameModel model;
     private List<Player> turnOrder;
     private int currentIndex;
     private Player currentPlayer;
 
     public PlacementPhase(GameModel model) {
-        super(model);
+        this.model = model;
     }
 
     @Override
@@ -24,7 +27,7 @@ public class PlacementPhase extends GamePhaseHandler {
         currentIndex = 0;
         currentPlayer = turnOrder.get(currentIndex);
 
-        if (!currentPlayer.getState()) {
+        if (!currentPlayer.isConnected()) {
             advanceTurn();
             return;
         }
@@ -33,25 +36,26 @@ public class PlacementPhase extends GamePhaseHandler {
     }
 
     @Override
-    public void placeTotem(Player player, char tileId) {
+    public void visit(PlaceTotemCommand cmd) throws Exception {
+        Player player = model.getPlayerByName(cmd.playerName());
+        char tileId = cmd.tileId();
+
         Board board = model.getBoard();
         OfferTile offerTile = board.findTileByLetter(tileId);
         if (offerTile == null) {
             throw new IllegalArgumentException("tileId " + tileId + " is invalid");
         }
 
-        if(player != currentPlayer) {
+        if (player != currentPlayer) {
             //checked also in gameController
             throw new IllegalArgumentException("It's not " + player.getName() + "'s turn to place a totem");
         }
-        //if(model.getCurrentPhase() != GamePhase.PLACEMENT) return false;
-        if(currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE){
+        if (currentPlayer.getLocation() != TotemLocation.TURN_ORDER_TILE) {
             throw new IllegalArgumentException("Player " + player.getName() + " cannot place a totem because he is not on the turn order tile");
         }
-        if(offerTile.isOccupied()) {
+        if (offerTile.isOccupied()) {
             throw new IllegalArgumentException("Tile " + offerTile.getLetter() + " is already occupied");
         }
-
 
         board.placeTotem(player, offerTile);
         advanceTurn();
@@ -61,7 +65,7 @@ public class PlacementPhase extends GamePhaseHandler {
         // get the next player; if it's a disconnected one it skips him
         do {
             currentIndex++;
-        } while (currentIndex < turnOrder.size() && !turnOrder.get(currentIndex).getState());
+        } while (currentIndex < turnOrder.size() && !turnOrder.get(currentIndex).isConnected());
 
         if (currentIndex < turnOrder.size()) {
             // next player's turn to place
@@ -75,7 +79,7 @@ public class PlacementPhase extends GamePhaseHandler {
     }
 
     @Override
-    public void skipCurrentPlayerTurn(){
+    public void skipCurrentPlayerTurn() {
         advanceTurn();
     }
 

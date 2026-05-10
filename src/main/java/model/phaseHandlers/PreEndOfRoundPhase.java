@@ -5,14 +5,19 @@ import model.cards.Card;
 import model.enums.GamePhase;
 import model.player.Player;
 import model.rowsManager.RowsManager;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
 
 import java.util.Optional;
 
-public class PreEndOfRoundPhase extends GamePhaseHandler {
+public class PreEndOfRoundPhase implements GamePhaseHandler {
 
+    private final GameModel model;
     private Player activePlayer;
 
-    public PreEndOfRoundPhase(GameModel model) { super(model); }
+    public PreEndOfRoundPhase(GameModel model) {
+        this.model = model;
+    }
 
     /**
      * @implNote Find the player who can have an extra draw.
@@ -32,20 +37,20 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
 
     /**
      * @implNote Draw a card from the top row.
-     * @param cardId
      */
     @Override
-    public void drawCard(int cardId) {
+    public void visit(DrawCardCommand cmd) throws Exception {
+        int cardId = cmd.cardId();
         if (activePlayer == null) return;
 
         RowsManager rowsManager = model.getRowsManager();
         Optional<Card> found = rowsManager.findCardById(cardId);
 
         if (found.isEmpty()) {
-            throw new IllegalStateException("Card "+cardId+" not found");
+            throw new IllegalStateException("Card " + cardId + " not found");
         }
-        if(!rowsManager.topRowContainsCard(cardId)) {
-            throw new IllegalStateException("Card "+cardId+" is not in the top row and cannot be drawn");
+        if (!rowsManager.topRowContainsCard(cardId)) {
+            throw new IllegalStateException("Card " + cardId + " is not in the top row and cannot be drawn");
         }
 
         CardDrawer cardDrawer = new CardDrawer(activePlayer, rowsManager, null);
@@ -56,10 +61,10 @@ public class PreEndOfRoundPhase extends GamePhaseHandler {
 
     /**
      * @implNote End the turn without drawing a card, if the player decides not to use the extra draw.
-      * This will transition directly to the EndOfRoundPhase.
+     * This will transition directly to the EndOfRoundPhase.
      */
     @Override
-    public void endTurn() {
+    public void visit(EndTurnCommand cmd) throws Exception {
         if (activePlayer != null) {
             // notificare che il player ha deciso di non pescare?
             model.setPhase(new EndOfRoundPhase(model));

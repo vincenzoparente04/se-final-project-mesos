@@ -185,15 +185,13 @@ public class LobbyManager implements LobbyCommandVisitor {
         Lobby lobby = lobbies.get(cmd.lobbyId());
         if (lobby == null || lobby.isFull()) {
             entry.getView().sendError("lobby_not_found_or_full");
+            broadcastLobbyListToBrowsers();
             return;
         }
 
         lobby.addPlayer(entry);
         lobby.broadcastState();
         startIfFull(lobby);
-        if (!lobbies.containsKey(lobby.getId())) {
-            broadcastLobbyListToBrowsers();
-        }
     }
 
     // Game start –––––––––––––––––––––––––––––––––––––––––––––––––
@@ -236,13 +234,11 @@ public class LobbyManager implements LobbyCommandVisitor {
             // player era solo "browsing" → niente da fare lato lobby
             return;
         }
-
         hostingLobby.removePlayerByName(playerName);
-
         if (hostingLobby.isEmpty()) {
             lobbies.remove(hostingLobby.getId());
         } else {
-            hostingLobby.broadcastState();
+            hostingLobby.broadcastState(); // TODO incorpora in lobby removePlayer
         }
         // Per i browser la lista lobby è cambiata in entrambi i casi
         // (lobby sparita, o lobby con un player in meno).
@@ -302,6 +298,17 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     /**
+     * Manda la lista corrente delle lobby aperte ai soli player in stato
+     * "browsing". Da invocare ogni volta che la lista lobby visibile cambia
+     * (creazione di una nuova lobby, rimozione di una lobby svuotatasi, lobby
+     * che parte come Game).
+     */
+    private void broadcastLobbyListToBrowsers() {
+        List<LobbyDto> list = currentLobbyList();
+        browsingPlayers().forEach(e -> e.getView().sendLobbyList(list));
+    }
+
+    /**
      * Ritorna gli {@link PlayerEntry} dei player attualmente in stato "browsing":
      * connessi, non in nessuna lobby, non in nessuna partita attiva.
      * <p>
@@ -312,21 +319,10 @@ public class LobbyManager implements LobbyCommandVisitor {
     private List<PlayerEntry> browsingPlayers() {
         return connectedPlayers.values().stream()
                 .filter(e -> !activeGames.containsKey(e.getName()))
-                .filter(e -> lobbies.values().stream()
-                        .noneMatch(l -> l.containsPlayer(e.getName())))
+                .filter(e -> lobbies.values().stream().noneMatch(l -> l.containsPlayer(e.getName())))
                 .toList();
     }
 
-    /**
-     * Manda la lista corrente delle lobby aperte ai soli player in stato
-     * "browsing". Da invocare ogni volta che la lista lobby visibile cambia
-     * (creazione di una nuova lobby, rimozione di una lobby svuotatasi, lobby
-     * che parte come Game).
-     */
-    private void broadcastLobbyListToBrowsers() {
-        List<LobbyDto> list = currentLobbyList();
-        browsingPlayers().forEach(e -> e.getView().sendLobbyList(list));
-    }
 
     private void closeSocket(Socket socket) {
         try { socket.close(); } catch (IOException ignored) {}

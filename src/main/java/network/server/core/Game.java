@@ -35,7 +35,7 @@ public class Game {
 
     public void start() {
         players.forEach(p -> p.setGameQueue(commandQueue));
-        QueueDrainerThread qdt = new QueueDrainerThread(commandQueue, new ControllerCommandExecutor(controller),
+        QueueDrainerThread qdt = new QueueDrainerThread(commandQueue, controller,
                 // TODO: leva consumer
                 (playerName, errorMsg) -> findView(playerName).ifPresent(v -> v.sendError(errorMsg)));
         gameThread = new Thread(qdt, "game-thread");
@@ -70,7 +70,7 @@ public class Game {
         this.views.add(entry.getView());
         this.players.getLast().setGameQueue(commandQueue);
         this.model.getPlayerByName(playerName).setConnected();
-        this.model.addView(entry.getView());
+        this.model.swapView(entry.getName(), entry.getView());
         this.model.notifyChange();
     }
 

@@ -1,16 +1,14 @@
 package model.phaseHandlers;
 
-import controller.GameController;
 import model.GameModel;
 import model.board.Board;
 import model.board.OfferTile;
-import model.enums.GamePhase;
-import model.enums.TotemColor;
 import model.enums.TotemLocation;
 import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.command.PlaceTotemCommand;
 
 import java.util.List;
 
@@ -41,7 +39,6 @@ class PlacementPhaseTest {
 
     @BeforeEach
     void setUp() {
-
         model = mock(GameModel.class);
         board = mock(Board.class);
         tileA = mock(OfferTile.class);
@@ -69,6 +66,14 @@ class PlacementPhaseTest {
         when(tileB.isOccupied()).thenReturn(false);
         when(tileC.isOccupied()).thenReturn(false);
 
+        when(model.getPlayerByName("Player1")).thenReturn(p1);
+        when(model.getPlayerByName("Player2")).thenReturn(p2);
+        when(model.getPlayerByName("Player3")).thenReturn(p3);
+
+        when(tileA.getLetter()).thenReturn('A');
+        when(tileB.getLetter()).thenReturn('B');
+        when(tileC.getLetter()).thenReturn('C');
+
         phase = new PlacementPhase(model);
     }
 
@@ -82,11 +87,11 @@ class PlacementPhaseTest {
     }
 
     @Test
-    @DisplayName("placeTotem should place totem for current player and advance turn")
-    void placeTotemValidMovePlacesAndAdvances() {
+    @DisplayName("visit(PlaceTotemCommand) should place totem for current player and advance turn")
+    void placeTotemValidMovePlacesAndAdvances() throws Exception {
         phase.onEnter();
 
-        phase.placeTotem(p1, 'A');
+        phase.visit(new PlaceTotemCommand("Player1", 'A'));
 
         verify(board, times(1)).findTileByLetter('A');
         verify(board, times(1)).placeTotem(p1, tileA);
@@ -94,33 +99,35 @@ class PlacementPhaseTest {
     }
 
     @Test
-    @DisplayName("placeTotem should throw when tile is already occupied")
-    void placeTotemOccupiedTileThrows() {
+    @DisplayName("visit(PlaceTotemCommand) should throw when tile is already occupied")
+    void placeTotemOccupiedTileThrows() throws Exception {
         phase.onEnter();
         when(tileA.isOccupied()).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> phase.placeTotem(p1, 'A'));
+        assertThrows(IllegalArgumentException.class,
+                () -> phase.visit(new PlaceTotemCommand("Player1", 'A')));
         verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
     }
 
     @Test
-    @DisplayName("placeTotem should throw when tile letter does not exist")
-    void placeTotemUnknownTileThrows() {
+    @DisplayName("visit(PlaceTotemCommand) should throw when tile letter does not exist")
+    void placeTotemUnknownTileThrows() throws Exception {
         phase.onEnter();
         when(board.findTileByLetter('Z')).thenReturn(null);
 
-        assertThrows(IllegalArgumentException.class, () -> phase.placeTotem(p1, 'Z'));
+        assertThrows(IllegalArgumentException.class,
+                () -> phase.visit(new PlaceTotemCommand("Player1", 'Z')));
         verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
     }
 
     @Test
-    @DisplayName("placeTotem should transition to ActionPhase after last player places")
-    void placeTotemLastPlayerTransitionsToActionPhase() {
+    @DisplayName("visit(PlaceTotemCommand) should transition to ActionPhase after last player places")
+    void placeTotemLastPlayerTransitionsToActionPhase() throws Exception {
         phase.onEnter();
 
-        phase.placeTotem(p1, 'A');
-        phase.placeTotem(p2, 'B');
-        phase.placeTotem(p3, 'C');
+        phase.visit(new PlaceTotemCommand("Player1", 'A'));
+        phase.visit(new PlaceTotemCommand("Player2", 'B'));
+        phase.visit(new PlaceTotemCommand("Player3", 'C'));
 
         verify(model, times(4)).notifyChange();
         verify(model, times(1)).setPhase(argThat(handler -> handler instanceof ActionPhase));
