@@ -1,16 +1,24 @@
 package network.client;
 
+import network.client.view.GameStateRenderer;
 import shared.dto.*;
 
 import java.util.List;
 
 public class ClientStateListenerCli implements ClientStateListener{
+    private final String localPlayerName;
+    private final GameStateRenderer renderer;
 
+    public ClientStateListenerCli(String localPlayerName, GameStateRenderer renderer) {
+        this.localPlayerName = localPlayerName;
+        this.renderer = renderer;
+    }
     @Override
     public synchronized void onGameStateUpdated(LocalGameState state) {
-        System.out.println();
-        printState(state);
-        System.out.print("> ");
+        GameStateDto dto = state.snapshot();
+
+        renderer.render(dto, localPlayerName);
+        System.out.print(contextualPrompt(state));
     }
 
     @Override
@@ -73,78 +81,42 @@ public class ClientStateListenerCli implements ClientStateListener{
         System.out.println("\n[DISCONNECTED] Connection to server lost.");
     }
 
-
-
-// ─────────────────────────────────────────────────────────
-// State printer — reads from LocalGameState (AtomicReference)
-// ─────────────────────────────────────────────────────────
-
     /**
-     * @implNote This method reads the latest snapshot from the LocalGameState and prints it in a human-readable format.
-     * @param state the LocalGameState to read the snapshot from
+     * Forza il rendering dello stato e la stampa del prompt contestuale.
+     * Utile quando l'utente richiede esplicitamente un refresh manuale della UI.
      */
-    public static void printState(LocalGameState state) {
+    public void forceRefresh(LocalGameState state) {
         GameStateDto dto = state.snapshot();
-        if (dto == null) {
-            System.out.println("[STATE] No state received yet.");
-            return;
-        }
 
-        System.out.println("┌─ STATE ─────────────────────────────────────");
-        System.out.printf("│ Phase: %-16s Round: %d   Era: %s%n",
-                dto.phase, dto.currentRound,
-                dto.currentEra != null ? dto.currentEra : "—");
-        System.out.println("│ Current player: " +
-                (dto.currentPlayerName != null ? dto.currentPlayerName : "—"));
-
-        if (dto.players != null && !dto.players.isEmpty()) {
-            System.out.println("├─ Players ───────────────────────────────────");
-            for (PlayerDto p : dto.players) {
-                System.out.printf("│  %-12s  food=%-3d  prestige=%-3d  color=%-6s  location=%s%n",
-                        p.name, p.food, p.prestigePoints,
-                        p.color != null ? p.color : "—",
-                        p.totemLocation != null ? p.totemLocation : "—");
-            }
-        }
-
-        if (dto.offerTiles != null && !dto.offerTiles.isEmpty()) {
-            System.out.println("├─ Offer tiles ───────────────────────────────");
-            for (OfferTileDto t : dto.offerTiles) {
-                String occupant = t.occupantName != null ? "[" + t.occupantName + "]" : "[free]";
-                String draws = "DRAW_CARDS".equals(t.actionType)
-                        ? String.format(" top=%d/%s bot=%d/%s",
-                        t.topRowUsed, t.topRowLimit,
-                        t.bottomRowUsed, t.bottomRowLimit)
-                        : "";
-                System.out.printf("│  %c  %-12s %-10s%s%n",
-                        t.letter, t.actionType, occupant, draws);
-            }
-        }
-
-        if (dto.topRowTribe != null && !dto.topRowTribe.isEmpty()) {
-            System.out.println("├─ Cards (top tribe) ─────────────────────────");
-            printCards(dto.topRowTribe);
-        }
-        if (dto.bottomRowTribe != null && !dto.bottomRowTribe.isEmpty()) {
-            System.out.println("├─ Cards (bottom tribe) ──────────────────────");
-            printCards(dto.bottomRowTribe);
-        }
-        if (dto.topRowBuilding != null && !dto.topRowBuilding.isEmpty()) {
-            System.out.println("├─ Cards (top building) ──────────────────────");
-            printCards(dto.topRowBuilding);
-        }
-        if (dto.bottomRowBuilding != null && !dto.bottomRowBuilding.isEmpty()) {
-            System.out.println("├─ Cards (bottom building) ───────────────────");
-            printCards(dto.bottomRowBuilding);
-        }
-        System.out.println("└─────────────────────────────────────────────");
+        renderer.render(dto, localPlayerName);
+        System.out.print(contextualPrompt(state));
     }
 
-    public static void printCards(List<CardDto> cards) {
-        for (CardDto c : cards) {
-            System.out.printf("│  id=%-4d  %-12s  era=%-5s  food=%-2d  pts=%d%n",
-                    c.id, c.type, c.era, c.foodCost, c.endGamePoints);
-        }
+    public void printAllTribes(LocalGameState state) {
+        renderer.renderAllTribes(state.snapshot(), localPlayerName);
     }
 
+
+    //HEPLERS
+
+    private static String helpForPhase(String phase) {
+        if (phase == null) return "lobbies | create <n> | join <id>";
+        return switch (phase) {
+            case "COLOR_CHOOSING_PHASE" -> "color <RED|BLUE|GREEN|YELLOW|WHITE>";
+            case "PLACEMENT"            -> "totem <LETTER>  (place your totem on a free offer tile)";
+            case "ACTION"              -> "draw <cardId>   (pick from the visible rows above)";
+            case "TURN_END"             -> "end             (confirm end of your turn)";
+            default                     -> "state | quit";
+        };
+    }
+
+    private String contextualPrompt(LocalGameState state) {
+        GameStateDto dto = state.snapshot();
+        if (dto == null) return "> ";
+
+        boolean isMyTurn = localPlayerName.equals(dto.currentPlayerName);
+        String label = isMyTurn ? "YOUR TURN — " + helpForPhase(dto.phase) : dto.phase;
+
+        return "[" + label + "]\n> ";
+    }
 }

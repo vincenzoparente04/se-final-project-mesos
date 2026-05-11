@@ -1,5 +1,8 @@
 package network.client;
 
+import network.client.view.BoardRenderer;
+import network.client.view.GameStateRenderer;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
@@ -31,7 +34,8 @@ public class ClientMainCli {
         }
 
         LocalGameState localState = new LocalGameState();
-        ClientStateListener listener = new ClientStateListenerCli();
+        GameStateRenderer renderer = new BoardRenderer();
+        ClientStateListenerCli listener = new ClientStateListenerCli(playerName, renderer);
 
         System.out.println("Connecting via " + transport + " to " + host + ":" + port + " as \"" + playerName + "\"...");
 
@@ -53,8 +57,12 @@ public class ClientMainCli {
             if (trimmed.equalsIgnoreCase("quit")) break;
 
             if (trimmed.equalsIgnoreCase("state")) {
-                ClientStateListenerCli.printState(localState);
-            } else if (!dispatch(proxy, trimmed)) {
+                listener.forceRefresh(localState);
+            } else if (trimmed.equalsIgnoreCase("tribes"))
+            {
+                listener.printAllTribes(localState);
+            } else if (!dispatch(proxy, trimmed))
+            {
                 System.out.println("[?] Unknown command. " + helpLine());
             }
             System.out.print("> ");
@@ -122,6 +130,6 @@ public class ClientMainCli {
     }
 
     private static String helpLine() {
-        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | leave | state | quit";
+        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | tribes | quit";
     }
 }
