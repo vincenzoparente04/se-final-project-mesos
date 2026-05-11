@@ -254,6 +254,29 @@
     -fx-border-width: 1.5;
     -fx-border-radius: 8;
 }
+/* ── Disconnect overlay ─────────────────────────────────────────── */
+
+.mesos-disconnect-backdrop {
+    -fx-background-color: rgba(10, 5, 4, 0.88);
+}
+.mesos-disconnect-box {
+    -fx-background-color: rgba(31, 12, 10, 0.96);
+    -fx-padding: 40 60 40 60;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(200, 60, 40, 0.85);
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 24, 0.5, 0, 6);
+}
+.mesos-disconnect-title {
+    -fx-text-fill: rgba(220, 80, 60, 1.0);
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+.mesos-disconnect-countdown {
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 18px;
+}
 
 /* ── Mini "card chip" used inside player markers ────────────────── */
 

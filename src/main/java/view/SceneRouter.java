@@ -5,6 +5,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import view.widgets.DisconnectOverlay;
 import network.client.ClientStateListener;
 import network.client.LocalGameState;
 import network.client.VirtualServer;
@@ -78,6 +79,15 @@ public class SceneRouter {
     public void toBoard() {
         load("/org/example/mesos/board-view.fxml",
                 ctrl -> ((BoardViewController) ctrl).bind(this));
+    }
+
+    public void showDisconnectOverlay() {
+        if (currentRoot != null) {
+            DisconnectOverlay.show(currentRoot, stage);
+        } else {
+            // No scene loaded yet — just close immediately
+            stage.close();
+        }
     }
 
     public void toWinner(List<PlayerDto> players, List<String> winners) {

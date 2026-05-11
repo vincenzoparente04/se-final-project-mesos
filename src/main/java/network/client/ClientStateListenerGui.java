@@ -106,7 +106,7 @@ public class ClientStateListenerGui implements ClientStateListener {
 
     @Override
     public void onDisconnected() {
-        Platform.runLater(() -> ErrorToast.show(router.currentRoot(), "Disconnected from server"));
+        Platform.runLater(router::showDisconnectOverlay);
     }
 
     private static boolean isColorChoosingPhase(String phase) {
