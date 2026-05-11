@@ -88,11 +88,9 @@ public class LobbyViewController {
             super.updateItem(lobby, empty);
             if (empty || lobby == null) {
                 setText(null);
-                setStyle("");
                 return;
             }
             setText(lobby.name() + "    •    " + lobby.currentPlayers() + " / " + lobby.maxPlayers() + " players");
-            setStyle("-fx-text-fill: white; -fx-padding: 8 12 8 12; -fx-font-size: 13;");
         }
     }
 }

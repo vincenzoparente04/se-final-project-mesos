@@ -52,22 +52,25 @@ public class WinnerViewController {
 
     private HBox buildRow(int rank, PlayerDto p) {
         Label rankLbl = new Label("#" + rank);
-        rankLbl.setStyle("-fx-text-fill: #aab7b8; -fx-font-size: 14; -fx-font-weight: bold; -fx-min-width: 36;");
+        rankLbl.getStyleClass().add("mesos-label-bold");
+        rankLbl.setMinWidth(40);
 
-        TotemView totem = new TotemView(p.color, 22);
+        TotemView totem = new TotemView(p.color, 24);
 
         Label name = new Label(p.name);
-        name.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-min-width: 200;");
+        name.getStyleClass().add("mesos-label-bold");
+        name.setMinWidth(200);
 
         Label pp = new Label(p.prestigePoints + " PP");
-        pp.setStyle("-fx-text-fill: #9b59b6; -fx-font-size: 13; -fx-font-weight: bold; -fx-min-width: 80;");
+        pp.getStyleClass().add("mesos-label-glow");
+        pp.setMinWidth(80);
 
         Label food = new Label(p.food + " food");
-        food.setStyle("-fx-text-fill: #f39c12; -fx-font-size: 13;");
+        food.getStyleClass().add("mesos-label");
 
         HBox row = new HBox(12, rankLbl, totem, name, pp, food);
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setStyle("-fx-background-color: #102b40; -fx-padding: 8 16 8 16; -fx-background-radius: 6;");
+        row.getStyleClass().add("mesos-tribe-group");
         return row;
     }
 

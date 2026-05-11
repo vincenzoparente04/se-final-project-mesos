@@ -5,6 +5,7 @@ import shared.dto.LobbyDto;
 import view.BoardViewController;
 import view.LobbyViewController;
 import view.SceneRouter;
+import view.TotemPickViewController;
 import view.WaitingViewController;
 import view.widgets.ErrorToast;
 
@@ -26,9 +27,29 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onGameStateUpdated(LocalGameState state) {
         Platform.runLater(() -> {
+            String phase = state.getPhase();
             Object ctrl = router.currentController();
+
             if (ctrl instanceof BoardViewController bvc) {
                 bvc.update(state);
+                return;
+            }
+            if (ctrl instanceof TotemPickViewController tpc) {
+                if (isColorChoosingPhase(phase)) {
+                    tpc.update(state);
+                } else {
+                    router.toBoard();
+                    Object after = router.currentController();
+                    if (after instanceof BoardViewController bvc) bvc.update(state);
+                }
+                return;
+            }
+
+            // Race: a state arrived before onGameStarting routed us.
+            if (isColorChoosingPhase(phase)) {
+                router.toTotemPick();
+                Object after = router.currentController();
+                if (after instanceof TotemPickViewController tpc) tpc.update(state);
             } else {
                 router.toBoard();
                 Object after = router.currentController();
@@ -64,7 +85,7 @@ public class ClientStateListenerGui implements ClientStateListener {
 
     @Override
     public void onGameStarting() {
-        Platform.runLater(router::toBoard);
+        Platform.runLater(router::toTotemPick);
     }
 
     @Override
@@ -86,5 +107,9 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onDisconnected() {
         Platform.runLater(() -> ErrorToast.show(router.currentRoot(), "Disconnected from server"));
+    }
+
+    private static boolean isColorChoosingPhase(String phase) {
+        return "COLOR_CHOOSING_PHASE".equals(phase) || "SETUP".equals(phase);
     }
 }

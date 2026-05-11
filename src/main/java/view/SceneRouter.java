@@ -70,6 +70,11 @@ public class SceneRouter {
                 ctrl -> ((WaitingViewController) ctrl).bind(this, lobby));
     }
 
+    public void toTotemPick() {
+        load("/org/example/mesos/totem-pick-view.fxml",
+                ctrl -> ((TotemPickViewController) ctrl).bind(this));
+    }
+
     public void toBoard() {
         load("/org/example/mesos/board-view.fxml",
                 ctrl -> ((BoardViewController) ctrl).bind(this));
@@ -99,7 +104,10 @@ public class SceneRouter {
 
             Scene scene = stage.getScene();
             if (scene == null) {
-                stage.setScene(new Scene(root, 1280, 800));
+                scene = new Scene(root, 1280, 800);
+                String css = getClass().getResource("/styles/mesos.css").toExternalForm();
+                scene.getStylesheets().add(css);
+                stage.setScene(scene);
             } else {
                 scene.setRoot(root);
             }

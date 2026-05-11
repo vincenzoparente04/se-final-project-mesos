@@ -8,34 +8,25 @@
 <?import javafx.scene.layout.VBox?>
 
 <StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
-           fx:controller="view.WinnerViewController"
-           style="-fx-background-color: #0e2435;">
+           fx:controller="view.WinnerViewController">
 
-    <VBox alignment="CENTER" spacing="22" maxWidth="640">
+    <VBox alignment="CENTER" spacing="22" maxWidth="680">
         <padding>
             <Insets top="40" right="40" bottom="40" left="40"/>
         </padding>
 
-        <Label text="GAME OVER"
-               style="-fx-text-fill: #95a5a6; -fx-font-size: 16; -fx-letter-spacing: 6;"/>
+        <Label text="GAME OVER" styleClass="mesos-section-label"/>
 
-        <Label fx:id="winnerNameLabel"
-               style="-fx-text-fill: #f1c40f; -fx-font-size: 48; -fx-font-weight: bold;"/>
+        <Label fx:id="winnerNameLabel" styleClass="mesos-title-medium"/>
 
-        <Label fx:id="winnerScoreLabel"
-               style="-fx-text-fill: #ecf0f1; -fx-font-size: 18;"/>
+        <Label fx:id="winnerScoreLabel" styleClass="mesos-label-bold"/>
 
-        <Label text="Final standings"
-               style="-fx-text-fill: #aab7b8; -fx-font-size: 14; -fx-font-weight: bold;"/>
+        <Label text="Final standings" styleClass="mesos-section-label"/>
 
-        <VBox fx:id="rankingBox" spacing="6" alignment="CENTER"/>
+        <VBox fx:id="rankingBox" spacing="8" alignment="CENTER"/>
 
-        <HBox alignment="CENTER" spacing="14">
-            <Button text="Back to lobby" onAction="#onBack"
-                    style="-fx-padding: 8 24 8 24;
-                           -fx-background-color: #2ecc71;
-                           -fx-text-fill: white;
-                           -fx-font-weight: bold;"/>
+        <HBox alignment="CENTER">
+            <Button text="Back to lobby" onAction="#onBack" styleClass="mesos-button"/>
         </HBox>
     </VBox>
 

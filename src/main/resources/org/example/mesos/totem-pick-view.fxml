@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.TotemPickViewController">
+
+    <VBox alignment="CENTER" spacing="26">
+
+        <Label text="MESOS" styleClass="mesos-title-small"/>
+
+        <Label text="Choose your totem" styleClass="mesos-title-medium"/>
+
+        <Label fx:id="hintLabel" styleClass="mesos-hint"/>
+
+        <HBox fx:id="colorRow" alignment="CENTER" spacing="20"/>
+
+        <Label fx:id="statusLabel" styleClass="mesos-label"/>
+
+        <VBox fx:id="othersBox" alignment="CENTER" spacing="6"/>
+
+    </VBox>
+
+</StackPane>

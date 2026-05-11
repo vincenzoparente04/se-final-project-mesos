@@ -21,13 +21,8 @@ public final class ErrorToast {
         if (root == null || message == null) return;
 
         Label label = new Label(message);
-        label.setStyle(
-                "-fx-background-color: rgba(192, 57, 43, 0.92);" +
-                "-fx-text-fill: white;" +
-                "-fx-padding: 10 16 10 16;" +
-                "-fx-background-radius: 6;" +
-                "-fx-font-size: 13;" +
-                "-fx-font-weight: bold;");
+        label.getStyleClass().add("mesos-toast");
+        label.setUserData("error-toast");
         label.setWrapText(true);
         label.setMaxWidth(360);
         StackPane.setAlignment(label, Pos.TOP_RIGHT);

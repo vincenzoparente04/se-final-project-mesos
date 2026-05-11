@@ -29,7 +29,7 @@ public class CreateLobbyDialog extends Stage {
         setResizable(false);
 
         Label title = new Label("How many players?");
-        title.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
+        title.getStyleClass().add("mesos-label-bold");
 
         Spinner<Integer> spinner = new Spinner<>(2, 5, 4);
         spinner.setEditable(false);
@@ -37,6 +37,7 @@ public class CreateLobbyDialog extends Stage {
 
         Button ok = new Button("Create");
         ok.setDefaultButton(true);
+        ok.getStyleClass().add("mesos-button");
         ok.setOnAction(e -> {
             chosen = spinner.getValue();
             close();
@@ -44,6 +45,7 @@ public class CreateLobbyDialog extends Stage {
 
         Button cancel = new Button("Cancel");
         cancel.setCancelButton(true);
+        cancel.getStyleClass().add("mesos-button-secondary");
         cancel.setOnAction(e -> close());
 
         HBox buttons = new HBox(10, ok, cancel);
@@ -53,7 +55,10 @@ public class CreateLobbyDialog extends Stage {
         layout.setPadding(new Insets(20));
         layout.setAlignment(Pos.CENTER_LEFT);
 
-        setScene(new Scene(layout, 280, 160));
+        Scene scene = new Scene(layout, 300, 170);
+        scene.getStylesheets().add(
+                getClass().getResource("/styles/mesos.css").toExternalForm());
+        setScene(scene);
     }
 
     public Optional<Integer> showAndWait(Window owner) {

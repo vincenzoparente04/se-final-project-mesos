@@ -1,12 +1,10 @@
 package view;
 
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -14,57 +12,56 @@ import network.client.LocalGameState;
 import shared.dto.CardDto;
 import shared.dto.OfferTileDto;
 import shared.dto.PlayerDto;
-import shared.dto.TurnOrderSlotDto;
 import view.widgets.CardView;
+import view.widgets.CardZoomOverlay;
 import view.widgets.DeckView;
 import view.widgets.OfferTileView;
 import view.widgets.TurnOrderTileView;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Main in-game scene. Receives full {@link LocalGameState} snapshots from the listener
  * and rebuilds every panel from scratch — the DTO is small enough that this is simpler
- * than incremental diffs, and JavaFX handles the re-layout fine.
+ * than diffing, and JavaFX handles the re-layout fine.
  */
 public class BoardViewController {
+
+    // Card sizes: the bottom row enlarges during end-of-round so the events being
+    // resolved are obvious; everything else stays compact.
+    private static final double CARD_W_NORMAL   = 84;
+    private static final double CARD_H_NORMAL   = 122;
+    private static final double CARD_W_RESOLVED = 120;
+    private static final double CARD_H_RESOLVED = 174;
+    private static final double SELF_CARD_W     = 90;
+    private static final double SELF_CARD_H     = 130;
 
     @FXML private StackPane rootPane;
     @FXML private Label phaseLabel;
     @FXML private Label roundLabel;
     @FXML private Label eraLabel;
     @FXML private Label currentPlayerLabel;
-
-    @FXML private HBox colorPicker;
     @FXML private Button endTurnButton;
 
-    @FXML private AnchorPane tablePane;
-    @FXML private VBox boardBox;
+    @FXML private HBox othersBar;
     @FXML private HBox upperRowsBox;
     @FXML private VBox centralBox;
     @FXML private HBox lowerRowsBox;
     @FXML private VBox decksBox;
 
     @FXML private StackPane selfPlayerSlot;
-    @FXML private StackPane selfTribeSlot;
-    @FXML private StackPane selfBuildingsSlot;
+    @FXML private HBox selfTribeSlot;
+    @FXML private HBox selfBuildingsSlot;
+    @FXML private HBox colorPicker;
 
     private SceneRouter router;
-    private final HBox othersBar = new HBox(18);
     private boolean winnerShown = false;
 
     public void bind(SceneRouter router) {
         this.router = router;
-
-        othersBar.setAlignment(Pos.CENTER);
-        AnchorPane.setTopAnchor(othersBar, 14.0);
-        AnchorPane.setLeftAnchor(othersBar, 0.0);
-        AnchorPane.setRightAnchor(othersBar, 0.0);
-        tablePane.getChildren().add(othersBar);
-
         LocalGameState state = router.localState();
         if (state != null && state.snapshot() != null) update(state);
     }
@@ -80,17 +77,20 @@ public class BoardViewController {
 
         // TODO: banner "evento risolto" — richiede aggiunta EventResolvedMessage al protocollo, posticipato
 
-        updateStatusBar(state, phase, isMyTurn);
-        updateColorPicker(phase, isMyTurn, state.getPlayers());
-
         Map<String, PlayerDto> playersByName = indexByName(state.getPlayers());
+
+        updateStatusBar(state, phase, isMyTurn);
+        updateColorPicker(phase, isMyTurn);
 
         updatePlayersBar(state.getPlayers(), me, state.getCurrentPlayerName());
         updateSelfPanel(state.getPlayers(), me, state.getCurrentPlayerName());
 
         updateCentralBox(state, playersByName, phase, isMyTurn);
-        updateRowsBox(upperRowsBox, state.getTopRowTribe(), state.getTopRowBuilding(), phase, isMyTurn);
-        updateRowsBox(lowerRowsBox, state.getBottomRowTribe(), state.getBottomRowBuilding(), phase, isMyTurn);
+        boolean resolving = isEndOfRoundPhase(phase);
+        updateRowsBox(upperRowsBox, state.getTopRowTribe(), state.getTopRowBuilding(),
+                phase, isMyTurn, false);
+        updateRowsBox(lowerRowsBox, state.getBottomRowTribe(), state.getBottomRowBuilding(),
+                phase, isMyTurn, resolving);
         updateDecks(state.getCurrentEra());
 
         if (state.isGameOver() && !winnerShown) {
@@ -106,45 +106,34 @@ public class BoardViewController {
         roundLabel.setText("Round " + state.getCurrentRound());
         eraLabel.setText(state.getCurrentEra() != null ? "Era " + state.getCurrentEra() : "");
         String cp = state.getCurrentPlayerName();
-        currentPlayerLabel.setText(cp != null ? cp + (isMyTurn ? "  (you)" : "") + "'s turn" : "—");
+        currentPlayerLabel.setText(cp != null ? cp + (isMyTurn ? " (you)" : "") + "'s turn" : "—");
 
         boolean showEnd = "ACTION".equals(phase) && isMyTurn;
         endTurnButton.setVisible(showEnd);
         endTurnButton.setManaged(showEnd);
     }
 
-    // ── Color picker ───────────────────────────────────────────────────────
+    // ── Color picker (sits in the bottom self-bar) ─────────────────────────
 
-    private void updateColorPicker(String phase, boolean isMyTurn, List<PlayerDto> players) {
+    private void updateColorPicker(String phase, boolean isMyTurn) {
         boolean show = "COLOR_CHOOSING_PHASE".equals(phase) && isMyTurn;
         colorPicker.setVisible(show);
         colorPicker.setManaged(show);
         if (!show) return;
         if (!colorPicker.getChildren().isEmpty()) return;
 
-        String[][] colors = {
-                {"RED",    "#e74c3c"},
-                {"BLUE",   "#3498db"},
-                {"GREEN",  "#2ecc71"},
-                {"YELLOW", "#f1c40f"},
-                {"WHITE",  "#ecf0f1"}
-        };
-        for (String[] c : colors) {
-            Button btn = new Button(c[0].substring(0, 1));
-            btn.setStyle(
-                    "-fx-background-color: " + c[1] + ";" +
-                    "-fx-min-width: 32; -fx-min-height: 32; -fx-max-width: 32; -fx-max-height: 32;" +
-                    "-fx-background-radius: 16;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-cursor: hand;");
+        String[] colors = {"RED", "BLUE", "GREEN", "YELLOW", "WHITE"};
+        for (String c : colors) {
+            Button btn = new Button();
+            btn.getStyleClass().addAll("mesos-totem-btn", "mesos-totem-" + c);
             btn.setOnAction(e -> {
-                if (router.virtualServer() != null) router.virtualServer().sendChooseColor(c[0]);
+                if (router.virtualServer() != null) router.virtualServer().sendChooseColor(c);
             });
             colorPicker.getChildren().add(btn);
         }
     }
 
-    // ── Players around the table ───────────────────────────────────────────
+    // ── Other players (above the play area) ────────────────────────────────
 
     private void updatePlayersBar(List<PlayerDto> players, String me, String currentPlayer) {
         othersBar.getChildren().clear();
@@ -158,6 +147,8 @@ public class BoardViewController {
         }
     }
 
+    // ── Self panel ─────────────────────────────────────────────────────────
+
     private void updateSelfPanel(List<PlayerDto> players, String me, String currentPlayer) {
         PlayerDto self = players.stream().filter(p -> p.name.equals(me)).findFirst().orElse(null);
         if (self == null) {
@@ -170,20 +161,65 @@ public class BoardViewController {
         PlayerViewController pvc = PlayerViewController.load(self, true, isCurrent);
         selfPlayerSlot.getChildren().setAll(pvc.root());
 
-        selfTribeSlot.getChildren().setAll(buildFan(
-                self.tribe != null ? self.tribe.characterCards : List.of()));
-        selfBuildingsSlot.getChildren().setAll(buildFan(
-                self.tribe != null ? self.tribe.buildings : List.of()));
+        List<CardDto> chars = self.tribe != null && self.tribe.characterCards != null
+                ? self.tribe.characterCards : List.of();
+        List<CardDto> builds = self.tribe != null && self.tribe.buildings != null
+                ? self.tribe.buildings : List.of();
+
+        selfTribeSlot.getChildren().setAll(buildTribeGroups(chars));
+        selfBuildingsSlot.getChildren().setAll(buildBuildingsStack(builds));
     }
 
-    private HBox buildFan(List<CardDto> cards) {
-        // Negative spacing makes cards overlap like a fanned hand.
-        HBox fan = new HBox(-50);
-        for (CardDto c : cards) {
-            fan.getChildren().add(new CardView(c, true, 80, 116));
+    private HBox buildBuildingsStack(List<CardDto> buildings) {
+        HBox stack = new HBox(-58);
+        stack.setAlignment(Pos.CENTER_LEFT);
+        for (CardDto c : buildings) {
+            CardView v = new CardView(c, true, SELF_CARD_W, SELF_CARD_H);
+            v.setStyle("-fx-cursor: hand;");
+            v.setOnMouseClicked(e -> CardZoomOverlay.show(rootPane, c));
+            stack.getChildren().add(v);
         }
-        fan.setPadding(new Insets(0, 0, 0, 0));
-        return fan;
+        return stack;
+    }
+
+    /**
+     * Group character cards by sub-type ("HUNTER", "BUILDER", …) so the player
+     * can read their own tribe at a glance. Each group is a column with a header
+     * and the cards fanned vertically with a generous overlap.
+     */
+    private List<VBox> buildTribeGroups(List<CardDto> cards) {
+        Map<String, java.util.List<CardDto>> grouped = new LinkedHashMap<>();
+        // Stable group order for the UI
+        for (String t : new String[]{"HUNTER", "BUILDER", "SHAMAN", "ARTIST", "INVENTOR", "GATHERER"}) {
+            grouped.put(t, new java.util.ArrayList<>());
+        }
+        for (CardDto c : cards) grouped.computeIfAbsent(c.type, k -> new java.util.ArrayList<>()).add(c);
+
+        java.util.List<VBox> out = new java.util.ArrayList<>();
+        for (Map.Entry<String, java.util.List<CardDto>> e : grouped.entrySet()) {
+            if (e.getValue().isEmpty()) continue;
+            out.add(buildSingleGroup(prettyType(e.getKey()), e.getValue()));
+        }
+        return out;
+    }
+
+    private VBox buildSingleGroup(String title, List<CardDto> cards) {
+        VBox group = new VBox(4);
+        group.setAlignment(Pos.TOP_CENTER);
+
+        Label header = new Label(title + " ×" + cards.size());
+        header.getStyleClass().add("mesos-section-label");
+
+        HBox stack = new HBox(-58);  // generous overlap — fanned hand of cards
+        stack.setAlignment(Pos.CENTER_LEFT);
+        for (CardDto c : cards) {
+            CardView v = new CardView(c, true, SELF_CARD_W, SELF_CARD_H);
+            v.setStyle("-fx-cursor: hand;");
+            v.setOnMouseClicked(e -> CardZoomOverlay.show(rootPane, c));
+            stack.getChildren().add(v);
+        }
+        group.getChildren().addAll(header, stack);
+        return group;
     }
 
     // ── Central area: TurnOrderTile + OfferTrack ───────────────────────────
@@ -211,43 +247,37 @@ public class BoardViewController {
         centralBox.getChildren().add(offerTrack);
     }
 
-    // ── Tribe + Building rows ──────────────────────────────────────────────
+    // ── Tribe + Building rows on the board ─────────────────────────────────
 
     private void updateRowsBox(HBox box,
                                List<CardDto> tribeCards,
                                List<CardDto> buildingCards,
-                               String phase, boolean isMyTurn) {
+                               String phase, boolean isMyTurn,
+                               boolean resolving) {
         box.getChildren().clear();
         box.setAlignment(Pos.CENTER);
 
-        VBox tribeGroup = new VBox(4);
-        tribeGroup.setAlignment(Pos.CENTER);
-        Label tribeLabel = new Label("Tribe");
-        tribeLabel.setStyle("-fx-text-fill: #aab7b8; -fx-font-size: 10; -fx-font-weight: bold;");
-        tribeGroup.getChildren().add(tribeLabel);
-        tribeGroup.getChildren().add(buildRow(tribeCards, phase, isMyTurn));
+        double w = resolving ? CARD_W_RESOLVED : CARD_W_NORMAL;
+        double h = resolving ? CARD_H_RESOLVED : CARD_H_NORMAL;
 
-        VBox buildingGroup = new VBox(4);
-        buildingGroup.setAlignment(Pos.CENTER);
-        Label buildingLabel = new Label("Buildings");
-        buildingLabel.setStyle("-fx-text-fill: #aab7b8; -fx-font-size: 10; -fx-font-weight: bold;");
-        buildingGroup.getChildren().add(buildingLabel);
-        buildingGroup.getChildren().add(buildRow(buildingCards, phase, isMyTurn));
-
-        box.getChildren().addAll(tribeGroup, buildingGroup);
+        box.getChildren().add(buildRow(tribeCards,    phase, isMyTurn, w, h));
+        box.getChildren().add(buildRow(buildingCards, phase, isMyTurn, w, h));
     }
 
-    private HBox buildRow(List<CardDto> cards, String phase, boolean isMyTurn) {
+    private HBox buildRow(List<CardDto> cards, String phase, boolean isMyTurn,
+                          double cardW, double cardH) {
         boolean canDraw = "ACTION".equals(phase) && isMyTurn;
         HBox row = new HBox(6);
         row.setAlignment(Pos.CENTER);
         for (CardDto c : cards) {
-            CardView v = new CardView(c, true, 70, 100);
+            CardView v = new CardView(c, true, cardW, cardH);
+            v.setStyle("-fx-cursor: hand;");
             if (canDraw) {
-                v.setStyle("-fx-cursor: hand;");
                 v.setOnMouseClicked(e -> {
                     if (router.virtualServer() != null) router.virtualServer().sendDrawCard(c.id);
                 });
+            } else {
+                v.setOnMouseClicked(e -> CardZoomOverlay.show(rootPane, c));
             }
             row.getChildren().add(v);
         }
@@ -259,20 +289,23 @@ public class BoardViewController {
     private void updateDecks(String era) {
         decksBox.getChildren().clear();
         int eraNum = eraNumber(era);
+
+        Label tribeLbl = new Label("Tribe deck");
+        tribeLbl.getStyleClass().add("mesos-section-label");
+        Label buildLbl = new Label("Building deck");
+        buildLbl.getStyleClass().add("mesos-section-label");
+
         DeckView tribeDeck = new DeckView("BackEra" + eraNum + ".png");
         DeckView buildingDeck = new DeckView(buildingBackForEra(eraNum));
 
-        Label tribeLbl = new Label("Tribe deck");
-        tribeLbl.setStyle("-fx-text-fill: #aab7b8; -fx-font-size: 10;");
-        Label buildLbl = new Label("Building deck");
-        buildLbl.setStyle("-fx-text-fill: #aab7b8; -fx-font-size: 10;");
-
         VBox td = new VBox(4, tribeLbl, tribeDeck);
+        td.setAlignment(Pos.CENTER);
         VBox bd = new VBox(4, buildLbl, buildingDeck);
+        bd.setAlignment(Pos.CENTER);
         decksBox.getChildren().addAll(td, bd);
     }
 
-    /** Mirrors the model's filename: era 1 & 2 use "BackBuildinaEra" (typo), era 3 uses "BackBuildingEra". */
+    /** Mirrors the model's filename: era 1 & 2 use "BackBuildinaEra" (typo in asset), era 3 uses "BackBuildingEra". */
     private String buildingBackForEra(int eraNum) {
         return switch (eraNum) {
             case 1 -> "BackBuildinaEra1.png";
@@ -284,11 +317,15 @@ public class BoardViewController {
     private int eraNumber(String era) {
         if (era == null) return 1;
         return switch (era) {
-            case "ERA_I", "I", "1"  -> 1;
-            case "ERA_II", "II", "2" -> 2;
+            case "ERA_I", "I", "1"    -> 1;
+            case "ERA_II", "II", "2"  -> 2;
             case "ERA_III", "III", "3" -> 3;
             default -> 1;
         };
+    }
+
+    private boolean isEndOfRoundPhase(String phase) {
+        return "END_OF_ROUND".equals(phase) || "PRE_END_OF_ROUND".equals(phase);
     }
 
     // ── Handlers / formatting ──────────────────────────────────────────────
@@ -304,6 +341,19 @@ public class BoardViewController {
         return m;
     }
 
+    private static String prettyType(String type) {
+        if (type == null) return "?";
+        return switch (type) {
+            case "HUNTER"   -> "Hunters";
+            case "BUILDER"  -> "Builders";
+            case "SHAMAN"   -> "Shamans";
+            case "ARTIST"   -> "Artists";
+            case "INVENTOR" -> "Inventors";
+            case "GATHERER" -> "Gatherers";
+            default -> type;
+        };
+    }
+
     private static String formatPhase(String phase) {
         if (phase == null) return "—";
         return switch (phase) {
@@ -311,7 +361,7 @@ public class BoardViewController {
             case "COLOR_CHOOSING_PHASE" -> "Choose color";
             case "PLACEMENT"            -> "Placement";
             case "ACTION"               -> "Action";
-            case "PRE_END_OF_ROUND"     -> "Pre-end of round";
+            case "PRE_END_OF_ROUND"     -> "Resolving…";
             case "END_OF_ROUND"         -> "End of round";
             case "END_OF_GAME"          -> "End of game";
             default                     -> phase;
