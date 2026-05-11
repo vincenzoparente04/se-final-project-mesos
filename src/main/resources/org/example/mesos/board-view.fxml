@@ -12,32 +12,35 @@
 
     <BorderPane>
 
-        <!-- Top: status bar + other players bar (kept above the play area so they can't overlap the rows) -->
+        <!-- Top: status bar only. Player tokens live inside the play area
+             below so they look like they sit on the table. -->
         <top>
-            <VBox>
-                <HBox alignment="CENTER_LEFT" spacing="18" styleClass="mesos-status-bar">
-                    <Label fx:id="phaseLabel"      styleClass="mesos-label-bold"/>
-                    <Label fx:id="roundLabel"      styleClass="mesos-label"/>
-                    <Label fx:id="eraLabel"        styleClass="mesos-label"/>
-                    <Label text="•" styleClass="mesos-label"/>
-                    <Label fx:id="currentPlayerLabel" styleClass="mesos-label-glow"/>
-                    <Label text="" HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"
-                            visible="false" managed="false"
-                            styleClass="mesos-button"/>
-                </HBox>
-
-                <HBox fx:id="othersBar" alignment="CENTER" spacing="18"
-                      styleClass="mesos-other-players-bar"/>
-            </VBox>
+            <HBox alignment="CENTER_LEFT" spacing="18" styleClass="mesos-status-bar">
+                <Label fx:id="phaseLabel"      styleClass="mesos-label-bold"/>
+                <Label fx:id="roundLabel"      styleClass="mesos-label"/>
+                <Label fx:id="eraLabel"        styleClass="mesos-label"/>
+                <Label text="•" styleClass="mesos-label"/>
+                <Label fx:id="currentPlayerLabel" styleClass="mesos-label-glow"/>
+                <Label text="" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"
+                        visible="false" managed="false"
+                        styleClass="mesos-button"/>
+            </HBox>
         </top>
 
-        <!-- Center: board play area -->
+        <!-- Center: board play area. The opponents bar lives at the very top
+             of the wooden surface and spans the FULL width (decks included),
+             so a single marker lands at the centre of the whole screen. -->
         <center>
-            <BorderPane styleClass="mesos-board-area">
+            <VBox styleClass="mesos-board-area" spacing="0">
+                <!-- Opponents sit on the table, hugging its upper edge.
+                     Region spacers in the controller distribute them evenly. -->
+                <HBox fx:id="othersBar" styleClass="mesos-other-players-bar"/>
+
+                <BorderPane VBox.vgrow="ALWAYS">
                 <center>
                     <VBox fx:id="boardBox" spacing="14" alignment="CENTER"
-                          style="-fx-padding: 18 20 18 20;">
+                          style="-fx-padding: 4 20 18 20;">
                         <!-- Upper rows: tribe top + building top -->
                         <HBox fx:id="upperRowsBox" spacing="40" alignment="CENTER"/>
 
@@ -52,7 +55,8 @@
                     <VBox fx:id="decksBox" spacing="20" alignment="CENTER"
                           style="-fx-padding: 24 24 24 12;"/>
                 </right>
-            </BorderPane>
+                </BorderPane>
+            </VBox>
         </center>
 
         <!-- Bottom: self player + own tribe -->

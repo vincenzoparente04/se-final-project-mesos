@@ -183,10 +183,10 @@
 }
 
 .mesos-other-players-bar {
-    -fx-background-color: rgba(31, 12, 10, 0.6);
-    -fx-padding: 12 14 12 14;
-    -fx-border-color: rgba(232,104,42,0.4);
-    -fx-border-width: 0 0 1 0;
+    /* Purely structural: tokens float on the play-area background,
+       hugging the upper edge of the table. */
+    -fx-background-color: transparent;
+    -fx-padding: 0 12 8 12;
 }
 
 .mesos-self-bar {

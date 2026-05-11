@@ -6,6 +6,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import network.client.LocalGameState;
@@ -133,18 +135,33 @@ public class BoardViewController {
         }
     }
 
-    // ── Other players (above the play area) ────────────────────────────────
+    // ── Other players (sitting on the table) ───────────────────────────────
 
     private void updatePlayersBar(List<PlayerDto> players, String me, String currentPlayer) {
         othersBar.getChildren().clear();
-        for (PlayerDto p : players) {
-            if (p.name.equals(me)) continue;
+
+        List<PlayerDto> opponents = players.stream()
+                .filter(p -> !p.name.equals(me))
+                .toList();
+        if (opponents.isEmpty()) return;
+
+        // Region spacers with equal HGROW priority push each marker to k/(N+1)
+        // of the bar's width, so they always cover the full row evenly.
+        othersBar.getChildren().add(makeSpacer());
+        for (PlayerDto p : opponents) {
             boolean isCurrent = p.name.equals(currentPlayer);
             PlayerViewController pvc = PlayerViewController.load(p, false, isCurrent);
             Parent node = pvc.root();
             node.setOnMouseClicked(e -> TribePopupController.show(rootPane.getScene().getWindow(), p));
             othersBar.getChildren().add(node);
+            othersBar.getChildren().add(makeSpacer());
         }
+    }
+
+    private static Region makeSpacer() {
+        Region r = new Region();
+        HBox.setHgrow(r, Priority.ALWAYS);
+        return r;
     }
 
     // ── Self panel ─────────────────────────────────────────────────────────
@@ -167,19 +184,33 @@ public class BoardViewController {
                 ? self.tribe.buildings : List.of();
 
         selfTribeSlot.getChildren().setAll(buildTribeGroups(chars));
-        selfBuildingsSlot.getChildren().setAll(buildBuildingsStack(builds));
+        // Buildings: same layout as character groups but with a hidden header
+        // placeholder, so they top-align with the character columns without
+        // showing a redundant "Buildings ×N" label.
+        selfBuildingsSlot.getChildren().setAll(buildHeaderlessGroup(builds));
     }
 
-    private HBox buildBuildingsStack(List<CardDto> buildings) {
+    private VBox buildHeaderlessGroup(List<CardDto> cards) {
+        VBox group = new VBox(4);
+        group.setAlignment(Pos.TOP_CENTER);
+
+        // Invisible placeholder with the same style class as the section
+        // headers used for character groups — keeps the cards row at the
+        // same vertical offset without painting any text.
+        Label spacer = new Label(" ");
+        spacer.getStyleClass().add("mesos-section-label");
+        spacer.setVisible(false);
+
         HBox stack = new HBox(-58);
         stack.setAlignment(Pos.CENTER_LEFT);
-        for (CardDto c : buildings) {
+        for (CardDto c : cards) {
             CardView v = new CardView(c, true, SELF_CARD_W, SELF_CARD_H);
             v.setStyle("-fx-cursor: hand;");
-            v.setOnMouseClicked(e -> CardZoomOverlay.show(rootPane, c));
+            v.setOnContextMenuRequested(e -> CardZoomOverlay.show(rootPane, c));
             stack.getChildren().add(v);
         }
-        return stack;
+        group.getChildren().addAll(spacer, stack);
+        return group;
     }
 
     /**
