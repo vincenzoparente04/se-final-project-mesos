@@ -8,7 +8,7 @@ import java.rmi.RemoteException;
 
 public interface GameServerRemote extends Remote {
 
-    void join(String playerName, ClientCallbackRemote callback) throws RemoteException;
+    void join(String playerName, ClientCallbackRemote callback, String host) throws RemoteException;
 
     void submitClientCommand(ClientCommand command) throws RemoteException;
 

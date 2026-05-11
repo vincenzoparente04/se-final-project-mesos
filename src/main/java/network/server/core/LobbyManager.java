@@ -98,15 +98,18 @@ public class LobbyManager implements LobbyCommandVisitor {
 
             String playerName = connect.playerName();
             SocketVirtualView view = new SocketVirtualView(playerName, socket, out);
+
+            synchronized (this) {
+
+            if (nameAlreadyTaken(playerName)) {
+               view.sendError("name_already_taken:" + playerName);
+               view.close();
+               throw new IOException();
+            }
+
             SocketClientHandler handler = new SocketClientHandler(view, in, this);
             SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
 
-            synchronized (this) {
-                if (nameAlreadyTaken(playerName)) {
-                    view.sendError("name_already_taken:" + playerName);
-                    view.close();
-                    return;
-                }
 
                 // if the just added player has the same name of a player in an active game it reactivates it
                 if (activeGames.containsKey(playerName)) { // search between activeGames
@@ -117,15 +120,13 @@ public class LobbyManager implements LobbyCommandVisitor {
                     connectedPlayers.put(playerName, entry);
                     view.sendLobbyList(currentLobbyList());
                 }
-            }
 
-            lastHeartbeat.put(playerName, System.currentTimeMillis());
+                lastHeartbeat.put(playerName, System.currentTimeMillis());
 
             Thread t = new Thread(handler, "client-" + playerName);
             t.setDaemon(true);
             t.start();
-
-
+            }
         } catch (IOException | ClassNotFoundException e) {
             closeSocket(socket);
         }
