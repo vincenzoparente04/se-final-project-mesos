@@ -4,7 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import network.client.ClientController;
+import network.client.VirtualServer;
 import shared.dto.LobbyDto;
 
 import java.util.ArrayList;
@@ -17,15 +17,15 @@ public class LobbyViewController {
     @FXML private TextField maxPlayersField;
     @FXML private Label statusLabel;
 
-    private ClientController clientController;
+    private VirtualServer virtualServer;
     private final List<LobbyDto> currentLobbies = new ArrayList<>();
 
     public void init(String playerName) {
         playerNameLabel.setText(playerName);
     }
 
-    public void setClientController(ClientController cc) {
-        this.clientController = cc;
+    public void setVirtualServer(VirtualServer vs) {
+        this.virtualServer = vs;
         setStatus("Connected. Find a lobby or create one.", false);
     }
 
@@ -58,24 +58,24 @@ public class LobbyViewController {
 
     @FXML
     private void onListLobbies() {
-        if (clientController == null) return;
-        clientController.onListLobbies();
+        if (virtualServer == null) return;
+        virtualServer.sendListLobbies();
     }
 
     @FXML
     private void onJoinLobby() {
-        if (clientController == null) return;
+        if (virtualServer == null) return;
         int idx = lobbyListView.getSelectionModel().getSelectedIndex();
         if (idx < 0 || idx >= currentLobbies.size()) {
             setStatus("Select a lobby from the list.", true);
             return;
         }
-        clientController.onJoinLobby(currentLobbies.get(idx).id());
+        virtualServer.sendJoinLobby(currentLobbies.get(idx).id());
     }
 
     @FXML
     private void onCreateLobby() {
-        if (clientController == null) return;
+        if (virtualServer == null) return;
         String text = maxPlayersField.getText().trim();
         try {
             int max = Integer.parseInt(text);
@@ -83,7 +83,7 @@ public class LobbyViewController {
                 setStatus("Number of players must be between 2 and 5", true);
                 return;
             }
-            clientController.onCreateLobby(max);
+            virtualServer.sendCreateLobby(max);
         } catch (NumberFormatException e) {
             setStatus("Insert a valid number of players", true);
         }

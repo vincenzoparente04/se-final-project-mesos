@@ -11,8 +11,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import network.client.ClientController;
 import network.client.LocalGameState;
+import network.client.VirtualServer;
 import shared.dto.CardDto;
 import shared.dto.OfferTileDto;
 import shared.dto.PlayerDto;
@@ -54,14 +54,14 @@ public class GameViewController {
 
     // ─── State ──────────────────────────────────────────────────────────────
 
-    private ClientController clientController;
+    private VirtualServer virtualServer;
     private String myPlayerName;
     private boolean colorButtonsBuilt = false;
 
     // ─── Wiring (called by ClientStateListenerGui) ───────────────────────────
 
-    public void setClientController(ClientController cc) {
-        this.clientController = cc;
+    public void setVirtualServer(VirtualServer vs) {
+        this.virtualServer = vs;
     }
 
     public void setMyPlayerName(String name) {
@@ -102,7 +102,7 @@ public class GameViewController {
 
     @FXML
     private void onEndTurn() {
-        if (clientController != null) clientController.onTurnEnded();
+        if (virtualServer != null) virtualServer.sendEndTurn();
     }
 
     // ─── Private update methods ──────────────────────────────────────────────
@@ -161,7 +161,7 @@ public class GameViewController {
             );
 
             btn.setOnAction(e -> {
-                if (clientController != null) clientController.onColorChosen(colorName);
+                if (virtualServer != null) virtualServer.sendChooseColor(colorName);
             });
 
             colorButtonsBox.getChildren().add(btn);
@@ -212,7 +212,7 @@ public class GameViewController {
         if (clickable && free) {
             box.setStyle(box.getStyle() + " -fx-cursor: hand;");
             box.setOnMouseClicked(e -> {
-                if (clientController != null) clientController.onTotemPlaced(tile.letter);
+                if (virtualServer != null) virtualServer.sendPlaceTotem(tile.letter);
             });
         }
         return box;
@@ -280,7 +280,7 @@ public class GameViewController {
         if (clickable) {
             box.setStyle(box.getStyle() + " -fx-cursor: hand;");
             box.setOnMouseClicked(e -> {
-                if (clientController != null) clientController.onCardDrawn(card.id);
+                if (virtualServer != null) virtualServer.sendDrawCard(card.id);
             });
         }
         return box;

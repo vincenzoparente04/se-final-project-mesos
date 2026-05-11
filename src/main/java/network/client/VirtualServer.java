@@ -16,5 +16,7 @@ public interface VirtualServer {
 
     void sendListLobbies();
 
+    void sendLeaveCommand();
+
     void close();
 }
