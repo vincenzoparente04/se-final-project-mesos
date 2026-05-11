@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.WinnerViewController"
+           style="-fx-background-color: #0e2435;">
+
+    <VBox alignment="CENTER" spacing="22" maxWidth="640">
+        <padding>
+            <Insets top="40" right="40" bottom="40" left="40"/>
+        </padding>
+
+        <Label text="GAME OVER"
+               style="-fx-text-fill: #95a5a6; -fx-font-size: 16; -fx-letter-spacing: 6;"/>
+
+        <Label fx:id="winnerNameLabel"
+               style="-fx-text-fill: #f1c40f; -fx-font-size: 48; -fx-font-weight: bold;"/>
+
+        <Label fx:id="winnerScoreLabel"
+               style="-fx-text-fill: #ecf0f1; -fx-font-size: 18;"/>
+
+        <Label text="Final standings"
+               style="-fx-text-fill: #aab7b8; -fx-font-size: 14; -fx-font-weight: bold;"/>
+
+        <VBox fx:id="rankingBox" spacing="6" alignment="CENTER"/>
+
+        <HBox alignment="CENTER" spacing="14">
+            <Button text="Back to lobby" onAction="#onBack"
+                    style="-fx-padding: 8 24 8 24;
+                           -fx-background-color: #2ecc71;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;"/>
+        </HBox>
+    </VBox>
+
+</StackPane>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.NickViewController"
+           style="-fx-background-color: #1a1a1a;">
+
+    <VBox alignment="CENTER" spacing="24" maxWidth="420">
+        <padding>
+            <Insets top="40" right="40" bottom="40" left="40"/>
+        </padding>
+
+        <Label text="MESOS"
+               style="-fx-text-fill: #ecf0f1; -fx-font-size: 36; -fx-font-weight: bold; -fx-letter-spacing: 6;"/>
+
+        <GridPane hgap="12" vgap="12">
+            <Label text="Nickname:" style="-fx-text-fill: #bdc3c7;"
+                   GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <TextField fx:id="nameField" promptText="your nickname"
+                       GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+            <Label text="Host:" style="-fx-text-fill: #bdc3c7;"
+                   GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextField fx:id="hostField" text="localhost"
+                       GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+            <Label text="Port:" style="-fx-text-fill: #bdc3c7;"
+                   GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <TextField fx:id="portField" text="1099"
+                       GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+            <Label text="Transport:" style="-fx-text-fill: #bdc3c7;"
+                   GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <HBox spacing="14"
+                  GridPane.rowIndex="3" GridPane.columnIndex="1">
+                <fx:define>
+                    <ToggleGroup fx:id="transportGroup"/>
+                </fx:define>
+                <RadioButton fx:id="rmiRadio" text="RMI" selected="true"
+                             toggleGroup="$transportGroup" style="-fx-text-fill: #ecf0f1;"/>
+                <RadioButton fx:id="socketRadio" text="Socket"
+                             toggleGroup="$transportGroup" style="-fx-text-fill: #ecf0f1;"/>
+            </HBox>
+        </GridPane>
+
+        <Button fx:id="connectButton" text="Connect" onAction="#onConnect"
+                defaultButton="true"
+                style="-fx-font-size: 14; -fx-padding: 8 24 8 24;"/>
+
+        <Label fx:id="statusLabel" style="-fx-text-fill: #f39c12; -fx-font-size: 12;"/>
+    </VBox>
+
+</StackPane>

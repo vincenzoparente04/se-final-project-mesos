@@ -1,127 +1,90 @@
 package network.client;
 
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
 import shared.dto.LobbyDto;
-import view.GameViewController;
+import view.BoardViewController;
 import view.LobbyViewController;
+import view.SceneRouter;
+import view.WaitingViewController;
+import view.widgets.ErrorToast;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
- * Connects network callbacks to JavaFX UI controllers.
- *
- * Every method is invoked from a background thread (socket reader or RMI thread), so all UI mutations are wrapped in Platform.runLater().
- *
- * Lifecycle:
- *   1. Created in ClientMain.start() together with the lobby scene.
- *   2. setClientController() is called once the network connection is up.
- *   3. onGameStarting() switches the scene and creates the GameViewController.
+ * Bridges {@link ClientStateListener} callbacks (network thread) to the JavaFX UI
+ * by way of a {@link SceneRouter}. Every method jumps to the JavaFX Application Thread
+ * before touching any controller.
  */
 public class ClientStateListenerGui implements ClientStateListener {
 
-    private final Stage stage;
-    private final String playerName;
-    private final LobbyViewController lobbyCtrl;
+    private final SceneRouter router;
 
-    private VirtualServer virtualServer;
-    private GameViewController gameCtrl;
-
-    public ClientStateListenerGui(Stage stage, String playerName, LobbyViewController lobbyCtrl) {
-        this.stage = stage;
-        this.playerName = playerName;
-        this.lobbyCtrl = lobbyCtrl;
+    public ClientStateListenerGui(SceneRouter router) {
+        this.router = router;
     }
-
-    /**
-     * Called from the connect-thread once the VirtualServer is ready.
-     * Propagates the VirtualServer to the lobby screen so buttons work.
-     */
-    public void setVirtualServer(VirtualServer vs) {
-        this.virtualServer = vs;
-        Platform.runLater(() -> lobbyCtrl.setVirtualServer(vs));
-    }
-
-    // ─── ClientStateListener callbacks ───────────────────────────────────────
 
     @Override
     public void onGameStateUpdated(LocalGameState state) {
         Platform.runLater(() -> {
-            if (gameCtrl != null) {
-                gameCtrl.update(state);
-            }else{
-                switchToGameScene();
-                gameCtrl.update(state);
+            Object ctrl = router.currentController();
+            if (ctrl instanceof BoardViewController bvc) {
+                bvc.update(state);
+            } else {
+                router.toBoard();
+                Object after = router.currentController();
+                if (after instanceof BoardViewController bvc) bvc.update(state);
             }
         });
     }
 
     @Override
     public void onWaiting(String rawWaitingMessage) {
-        Platform.runLater(() ->
-                stage.setTitle("Mesos — " + playerName + "  [attesa: " + rawWaitingMessage + "]"));
+        // TODO: server non emette eventi onWaiting al momento
     }
 
     @Override
-    public void onError(String message) {
+    public void onLobbyList(List<LobbyDto> lobbies) {
         Platform.runLater(() -> {
-            if (gameCtrl == null) {
-                lobbyCtrl.showError(message);
+            Object ctrl = router.currentController();
+            if (ctrl instanceof LobbyViewController lvc) lvc.showLobbies(lobbies);
+        });
+    }
+
+    @Override
+    public void onLobbyState(LobbyDto lobby) {
+        Platform.runLater(() -> {
+            Object ctrl = router.currentController();
+            if (ctrl instanceof WaitingViewController wvc) {
+                wvc.update(lobby);
             } else {
-                // In-game errors: show in the title bar for now
-                //TODO: maybe add an error label in the game scene?
-                stage.setTitle("Mesos — errore: " + message);
+                router.toWaiting(lobby);
             }
         });
     }
 
     @Override
-    public void onLobbyList(List<LobbyDto> lobbies) {
-        Platform.runLater(() -> lobbyCtrl.showLobbies(lobbies));
-    }
-
-    @Override
-    public void onLobbyState(LobbyDto lobby) {
-        Platform.runLater(() -> lobbyCtrl.showLobbyState(lobby));
-    }
-
-    @Override
     public void onGameStarting() {
-        Platform.runLater(this::switchToGameScene);
+        Platform.runLater(router::toBoard);
+    }
+
+    @Override
+    public void onError(String message) {
+        Platform.runLater(() -> ErrorToast.show(router.currentRoot(), message));
     }
 
     @Override
     public void onGameOver(List<String> winners) {
         Platform.runLater(() -> {
-            if (gameCtrl != null) gameCtrl.showGameOver(winners);
+            if (router.localState() == null || router.localState().snapshot() == null) {
+                router.toWinner(List.of(), winners);
+                return;
+            }
+            router.toWinner(router.localState().getPlayers(), winners);
         });
     }
 
     @Override
     public void onDisconnected() {
-        Platform.runLater(() -> stage.setTitle("Mesos — disconnected"));
-    }
-
-    // ─── Scene switch ─────────────────────────────────────────────────────────
-
-    private void switchToGameScene() {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/org/example/mesos/game-view.fxml"));
-            Parent root = loader.load();
-
-            gameCtrl = loader.getController();
-            gameCtrl.setVirtualServer(virtualServer);
-            gameCtrl.setMyPlayerName(playerName);
-
-            stage.setScene(new Scene(root, 1200, 800));
-            stage.setTitle("Mesos — " + playerName);
-        } catch (IOException e) {
-            System.err.println("Could not load game-view.fxml: " + e.getMessage());
-        }
+        Platform.runLater(() -> ErrorToast.show(router.currentRoot(), "Disconnected from server"));
     }
 }

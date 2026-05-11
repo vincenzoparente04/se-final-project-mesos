@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.WaitingViewController"
+           style="-fx-background-color: #1a1a1a;">
+
+    <VBox alignment="CENTER" spacing="22">
+
+        <Label text="MESOS"
+               style="-fx-text-fill: #ecf0f1; -fx-font-size: 24; -fx-font-weight: bold; -fx-letter-spacing: 4;"/>
+
+        <Label fx:id="lobbyNameLabel"
+               style="-fx-text-fill: #f1c40f; -fx-font-size: 26; -fx-font-weight: bold;"/>
+
+        <Label fx:id="countLabel"
+               style="-fx-text-fill: #ecf0f1; -fx-font-size: 36; -fx-font-weight: bold;"/>
+
+        <Label text="waiting for more players…"
+               style="-fx-text-fill: #95a5a6; -fx-font-style: italic;"/>
+
+        <Button text="Leave lobby" onAction="#onLeave"
+                style="-fx-padding: 8 24 8 24;
+                       -fx-background-color: #c0392b;
+                       -fx-text-fill: white;
+                       -fx-font-weight: bold;"/>
+
+    </VBox>
+
+</StackPane>

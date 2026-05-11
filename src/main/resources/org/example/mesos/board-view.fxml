@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.BoardViewController"
+           style="-fx-background-color: #0e2435;">
+
+    <BorderPane>
+
+        <!-- Status bar -->
+        <top>
+            <HBox alignment="CENTER_LEFT" spacing="18"
+                  style="-fx-padding: 10 18 10 18; -fx-background-color: #102b40;">
+                <Label fx:id="phaseLabel"
+                       style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13;"/>
+                <Label fx:id="roundLabel"
+                       style="-fx-text-fill: #aab7b8; -fx-font-size: 12;"/>
+                <Label fx:id="eraLabel"
+                       style="-fx-text-fill: #aab7b8; -fx-font-size: 12;"/>
+                <Label text="•" style="-fx-text-fill: #5d6d7e;"/>
+                <Label fx:id="currentPlayerLabel"
+                       style="-fx-text-fill: #f1c40f; -fx-font-weight: bold; -fx-font-size: 13;"/>
+                <Label text="" HBox.hgrow="ALWAYS"/>
+
+                <!-- Color picker (visible only in COLOR_CHOOSING_PHASE when it's my turn) -->
+                <HBox fx:id="colorPicker" spacing="8" visible="false" managed="false"/>
+
+                <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"
+                        visible="false" managed="false"
+                        style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;"/>
+            </HBox>
+        </top>
+
+        <!-- Center: board playfield with players around it -->
+        <center>
+            <AnchorPane fx:id="tablePane" style="-fx-background-color: #0e2435;">
+                <!-- Other players are placed at fixed anchor positions in code -->
+
+                <!-- The board itself lives inside its own VBox centered in the table -->
+                <VBox fx:id="boardBox" spacing="14" alignment="CENTER"
+                      AnchorPane.topAnchor="60.0"
+                      AnchorPane.bottomAnchor="60.0"
+                      AnchorPane.leftAnchor="260.0"
+                      AnchorPane.rightAnchor="260.0">
+
+                    <!-- Upper rows: tribe top + building top -->
+                    <HBox fx:id="upperRowsBox" spacing="10" alignment="CENTER"/>
+
+                    <!-- Central core: TurnOrderTile + OfferTrack stacked -->
+                    <VBox fx:id="centralBox" spacing="6" alignment="CENTER"
+                          style="-fx-background-color: rgba(20, 50, 75, 0.55);
+                                 -fx-padding: 10;
+                                 -fx-background-radius: 8;"/>
+
+                    <!-- Lower rows: tribe bottom + building bottom -->
+                    <HBox fx:id="lowerRowsBox" spacing="10" alignment="CENTER"/>
+                </VBox>
+
+                <!-- Decks anchored on the right side -->
+                <VBox fx:id="decksBox" spacing="14"
+                      AnchorPane.topAnchor="80.0"
+                      AnchorPane.rightAnchor="40.0"/>
+            </AnchorPane>
+        </center>
+
+        <!-- Bottom: self player + own tribe hand -->
+        <bottom>
+            <VBox style="-fx-background-color: #102b40; -fx-padding: 8 14 8 14;">
+                <HBox spacing="20" alignment="CENTER_LEFT">
+                    <StackPane fx:id="selfPlayerSlot"/>
+                    <VBox spacing="4">
+                        <Label text="Your tribe" style="-fx-text-fill: #95a5a6; -fx-font-size: 11; -fx-font-weight: bold;"/>
+                        <StackPane fx:id="selfTribeSlot"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="Your buildings" style="-fx-text-fill: #95a5a6; -fx-font-size: 11; -fx-font-weight: bold;"/>
+                        <StackPane fx:id="selfBuildingsSlot"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+        </bottom>
+
+    </BorderPane>
+
+</StackPane>

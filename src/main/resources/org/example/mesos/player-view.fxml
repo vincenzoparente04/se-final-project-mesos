@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="view.PlayerViewController"
+      alignment="CENTER" spacing="4"
+      style="-fx-background-color: rgba(44, 62, 80, 0.85);
+             -fx-padding: 8;
+             -fx-background-radius: 8;
+             -fx-border-color: #34495e;
+             -fx-border-width: 1;
+             -fx-border-radius: 8;
+             -fx-cursor: hand;">
+    <StackPane fx:id="totemSlot"/>
+    <Label fx:id="nameLabel"
+           style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13;"/>
+    <HBox alignment="CENTER" spacing="10">
+        <Label fx:id="foodLabel"
+               style="-fx-text-fill: #f39c12; -fx-font-size: 11;"/>
+        <Label fx:id="ppLabel"
+               style="-fx-text-fill: #9b59b6; -fx-font-size: 11;"/>
+    </HBox>
+</VBox>

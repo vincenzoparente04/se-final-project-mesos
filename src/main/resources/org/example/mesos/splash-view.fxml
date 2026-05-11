@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.SplashViewController"
+           style="-fx-background-color: #1a1a1a;">
+
+    <VBox alignment="CENTER" spacing="18">
+        <Label text="MESOS"
+               style="-fx-text-fill: #ecf0f1;
+                      -fx-font-size: 96;
+                      -fx-font-weight: bold;
+                      -fx-letter-spacing: 12;"/>
+        <Label fx:id="hintLabel"
+               text="click anywhere to start"
+               style="-fx-text-fill: #95a5a6; -fx-font-size: 14;"/>
+    </VBox>
+
+</StackPane>
