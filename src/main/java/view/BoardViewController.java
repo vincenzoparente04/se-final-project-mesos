@@ -215,7 +215,7 @@ public class BoardViewController {
         for (CardDto c : cards) {
             CardView v = new CardView(c, true, SELF_CARD_W, SELF_CARD_H);
             v.setStyle("-fx-cursor: hand;");
-            v.setOnMouseClicked(e -> CardZoomOverlay.show(rootPane, c));
+            v.setOnContextMenuRequested(e -> CardZoomOverlay.show(rootPane, c));
             stack.getChildren().add(v);
         }
         group.getChildren().addAll(header, stack);
@@ -280,7 +280,7 @@ public class BoardViewController {
                     if (router.virtualServer() != null) router.virtualServer().sendDrawCard(c.id);
                 });
             } else {
-                v.setOnMouseClicked(e -> CardZoomOverlay.show(rootPane, c));
+                v.setOnContextMenuRequested(e -> CardZoomOverlay.show(rootPane, c));
             }
             row.getChildren().add(v);
         }
