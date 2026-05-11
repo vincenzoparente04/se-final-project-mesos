@@ -87,7 +87,27 @@ public class TotemPickViewController {
         for (String c : COLORS) {
             Button btn = new Button();
             btn.setUserData(c);
-            btn.getStyleClass().addAll("mesos-totem-btn", "mesos-totem-" + c);
+            
+            // Map theoretical color to available file name
+            String fileNameColor;
+            switch(c) {
+                case "BLUE": fileNameColor = "cyan"; break;
+                case "GREEN": fileNameColor = "purple"; break;
+                default: fileNameColor = c.toLowerCase();
+            }
+            
+            String imagePath = "/images/totems/front/totem_front_" + fileNameColor + ".png";
+            java.io.InputStream stream = getClass().getResourceAsStream(imagePath);
+            if (stream != null) {
+                javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(new javafx.scene.image.Image(stream));
+                iv.setFitHeight(120);
+                iv.setPreserveRatio(true);
+                btn.setGraphic(iv);
+                btn.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+            } else {
+                btn.getStyleClass().addAll("mesos-totem-btn", "mesos-totem-" + c);
+            }
+            
             btn.setOnAction(e -> {
                 if (router.virtualServer() != null) router.virtualServer().sendChooseColor(c);
                 btn.setDisable(true);
