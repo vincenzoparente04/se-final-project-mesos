@@ -230,10 +230,9 @@ public class BoardViewController {
         centralBox.getChildren().clear();
 
         TurnOrderTileView turnOrder = new TurnOrderTileView(state.getTurnOrderSlots(), playersByName);
-        centralBox.getChildren().add(turnOrder);
 
         boolean canPlace = "PLACEMENT".equals(phase) && isMyTurn;
-        HBox offerTrack = new HBox(8);
+        HBox offerTrack = new HBox(0);
         offerTrack.setAlignment(Pos.CENTER);
         for (OfferTileDto tile : state.getOfferTiles()) {
             offerTrack.getChildren().add(new OfferTileView(
@@ -244,7 +243,11 @@ public class BoardViewController {
                         }
                     }));
         }
-        centralBox.getChildren().add(offerTrack);
+
+        HBox sideBySide = new HBox(5);
+        sideBySide.setAlignment(Pos.CENTER);
+        sideBySide.getChildren().addAll(turnOrder, offerTrack);
+        centralBox.getChildren().add(sideBySide);
     }
 
     // ── Tribe + Building rows on the board ─────────────────────────────────

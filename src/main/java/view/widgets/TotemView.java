@@ -18,7 +18,7 @@ public class TotemView extends StackPane {
     public TotemView(String colorName, double size) {
         if (colorName == null) colorName = "WHITE";
 
-        String path = "/images/Totems/Totem_" + colorName + ".png";
+        String path = "/images/totems/totem_" + colorName + ".png";
         InputStream stream = getClass().getResourceAsStream(path);
         if (stream != null) {
             ImageView iv = new ImageView(new Image(stream));
