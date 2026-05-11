@@ -17,9 +17,10 @@ public class SplashViewController {
     public void bind(SceneRouter router) {
         this.router = router;
         rootPane.setOnMouseClicked(this::onAdvance);
-        rootPane.sceneProperty().addListener((obs, oldScene, scene) -> {
-            if (scene != null) {
-                scene.setOnKeyPressed(this::onAdvance);
+        rootPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (oldScene != null) oldScene.setOnKeyPressed(null);
+            if (newScene != null) {
+                newScene.setOnKeyPressed(this::onAdvance);
                 rootPane.requestFocus();
             }
         });
