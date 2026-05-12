@@ -28,7 +28,7 @@ public class ClientStateListenerGui implements ClientStateListener {
     private final String playerName;
     private final LobbyViewController lobbyCtrl;
 
-    private ClientController clientController;
+    private VirtualServer virtualServer;
     private GameViewController gameCtrl;
 
     public ClientStateListenerGui(Stage stage, String playerName, LobbyViewController lobbyCtrl) {
@@ -38,12 +38,12 @@ public class ClientStateListenerGui implements ClientStateListener {
     }
 
     /**
-     * Called from the connect-thread once the VirtualServer and ClientController are ready.
-     * Propagates the controller to the lobby screen so buttons work.
+     * Called from the connect-thread once the VirtualServer is ready.
+     * Propagates the VirtualServer to the lobby screen so buttons work.
      */
-    public void setClientController(ClientController cc) {
-        this.clientController = cc;
-        Platform.runLater(() -> lobbyCtrl.setClientController(cc));
+    public void setVirtualServer(VirtualServer vs) {
+        this.virtualServer = vs;
+        Platform.runLater(() -> lobbyCtrl.setVirtualServer(vs));
     }
 
     // ─── ClientStateListener callbacks ───────────────────────────────────────
@@ -115,7 +115,7 @@ public class ClientStateListenerGui implements ClientStateListener {
             Parent root = loader.load();
 
             gameCtrl = loader.getController();
-            gameCtrl.setClientController(clientController);
+            gameCtrl.setVirtualServer(virtualServer);
             gameCtrl.setMyPlayerName(playerName);
 
             stage.setScene(new Scene(root, 1200, 800));

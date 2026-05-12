@@ -11,6 +11,10 @@ import java.util.List;
 import network.client.LocalGameState;
 import network.client.ClientStateListener;
 
+/**
+ * RMI implementation of the ClientCallbackRemote interface.
+ * Client side receiver of server callbacks in the RMI architecture.
+ */
 public class ClientCallbackImpl extends UnicastRemoteObject implements ClientCallbackRemote {
 
     private final LocalGameState localState;
