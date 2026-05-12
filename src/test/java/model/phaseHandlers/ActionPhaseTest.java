@@ -17,6 +17,8 @@ import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
 
 import java.util.List;
 import java.util.Optional;
@@ -108,14 +110,15 @@ class ActionPhaseTest {
     }
 
     @Test
-    @DisplayName("drawCard should throw when no action turn is active")
+    @DisplayName("visit(DrawCardCommand) should throw when no action turn is active")
     void drawCardWithoutActiveTurnThrows() {
-        assertThrows(IllegalStateException.class, () -> phase.drawCard(10));
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 10)));
     }
 
     @Test
-    @DisplayName("drawCard should execute card acquisition flow for a legal draw")
-    void drawCardLegalFlowExecutesSuccessfully() {
+    @DisplayName("visit(DrawCardCommand) should execute card acquisition flow for a legal draw")
+    void drawCardLegalFlowExecutesSuccessfully() throws Exception {
         CharacterCard legalCard = mock(CharacterCard.class);
         CharacterCard selectedCard = mock(CharacterCard.class);
 
@@ -147,7 +150,7 @@ class ActionPhaseTest {
         when(action.canDraw(selectedCard, rowsManager)).thenReturn(true);
 
         phase.onEnter();
-        phase.drawCard(10);
+        phase.visit(new DrawCardCommand("Player1", 10));
 
         verify(rowsManager, times(1)).removeCard(10);
         verify(selectedCard, times(1)).registerToTribe(p1);
@@ -156,8 +159,8 @@ class ActionPhaseTest {
     }
 
     @Test
-    @DisplayName("drawCard should throw when card is not found")
-    void drawCardMissingCardThrows() {
+    @DisplayName("visit(DrawCardCommand) should throw when card is not found")
+    void drawCardMissingCardThrows() throws Exception {
         CharacterCard legalCard = mock(CharacterCard.class);
         when(legalCard.getId()).thenReturn(1);
         doAnswer(invocation -> {
@@ -178,12 +181,13 @@ class ActionPhaseTest {
 
         phase.onEnter();
 
-        assertThrows(IllegalArgumentException.class, () -> phase.drawCard(999));
+        assertThrows(IllegalArgumentException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 999)));
     }
 
     @Test
-    @DisplayName("drawCard should throw when selected card cannot be drawn by current action")
-    void drawCardCannotDrawThrows() {
+    @DisplayName("visit(DrawCardCommand) should throw when selected card cannot be drawn by current action")
+    void drawCardCannotDrawThrows() throws Exception {
         Card selectedCard = mock(Card.class);
         CharacterCard legalCard = mock(CharacterCard.class);
         when(legalCard.getId()).thenReturn(1);
@@ -206,14 +210,15 @@ class ActionPhaseTest {
 
         phase.onEnter();
 
-        assertThrows(IllegalStateException.class, () -> phase.drawCard(50));
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 50)));
         verify(rowsManager, never()).removeCard(50);
         verify(action, never()).performDraw(selectedCard, rowsManager);
     }
 
     @Test
-    @DisplayName("drawCard should throw when selected card is an event")
-    void drawCardEventCardThrows() {
+    @DisplayName("visit(DrawCardCommand) should throw when selected card is an event")
+    void drawCardEventCardThrows() throws Exception {
         EventCard selectedCard = mock(EventCard.class);
         CharacterCard legalCard = mock(CharacterCard.class);
 
@@ -244,20 +249,22 @@ class ActionPhaseTest {
 
         phase.onEnter();
 
-        assertThrows(IllegalStateException.class, () -> phase.drawCard(60));
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 60)));
         verify(rowsManager, never()).removeCard(60);
         verify(selectedCard, never()).registerToTribe(p1);
     }
 
     @Test
-    @DisplayName("endTurn should throw when no active turn")
+    @DisplayName("visit(EndTurnCommand) should throw when no active turn")
     void endTurnWithoutActiveTurnThrows() {
-        assertThrows(IllegalStateException.class, () -> phase.endTurn());
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new EndTurnCommand("Player1")));
     }
 
     @Test
-    @DisplayName("endTurn should throw when there are forced moves remaining")
-    void endTurnWithForcedMovesThrows() {
+    @DisplayName("visit(EndTurnCommand) should throw when there are forced moves remaining")
+    void endTurnWithForcedMovesThrows() throws Exception {
         CharacterCard forcedCard = mock(CharacterCard.class);
         when(forcedCard.getId()).thenReturn(1);
         doAnswer(invocation -> {
@@ -276,12 +283,13 @@ class ActionPhaseTest {
 
         phase.onEnter();
 
-        assertThrows(IllegalStateException.class, () -> phase.endTurn());
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new EndTurnCommand("Player1")));
     }
 
     @Test
-    @DisplayName("endTurn with no forced moves notifies, returns totem and advances to next player")
-    void endTurnWithNoForcedMovesAdvancesToNextPlayer() {
+    @DisplayName("visit(EndTurnCommand) with no forced moves notifies, returns totem and advances to next player")
+    void endTurnWithNoForcedMovesAdvancesToNextPlayer() throws Exception {
         BuildingCard buildingCard = mock(BuildingCard.class);
         when(buildingCard.getId()).thenReturn(5);
         when(buildingCard.getDiscountedCost(p1)).thenReturn(2);
@@ -301,7 +309,7 @@ class ActionPhaseTest {
         when(p1.getFood()).thenReturn(10);
 
         phase.onEnter();
-        phase.endTurn();
+        phase.visit(new EndTurnCommand("Player1"));
 
         verify(model, times(2)).notifyChange();
         verify(board).returnTotemToTurnOrder(p1);
@@ -345,5 +353,3 @@ class ActionPhaseTest {
         verify(model, times(1)).setPhase(argThat(handler -> handler instanceof PreEndOfRoundPhase));
     }
 }
-
-

@@ -20,8 +20,7 @@ public class RmiVirtualView implements VirtualView {
     private final ExecutorService senderExecutor;
     private volatile boolean closed = false;
 
-    public RmiVirtualView(String playerName, ClientCallbackRemote callback,
-                          LobbyManager lobbyManager) {
+    public RmiVirtualView(String playerName, ClientCallbackRemote callback, LobbyManager lobbyManager) {
         this.playerName = playerName;
         this.callback = callback;
         this.lobbyManager = lobbyManager;
@@ -112,6 +111,6 @@ public class RmiVirtualView implements VirtualView {
         if (closed) return;
         closed = true;
         senderExecutor.shutdownNow();
-        lobbyManager.onDisconnected(playerName);
+        lobbyManager.onDisconnect(playerName);
     }
 }

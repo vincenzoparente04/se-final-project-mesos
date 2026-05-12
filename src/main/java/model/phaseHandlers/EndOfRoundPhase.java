@@ -6,10 +6,12 @@ import model.enums.GamePhase;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 
-public class EndOfRoundPhase extends GamePhaseHandler {
+public class EndOfRoundPhase implements GamePhaseHandler {
+
+    private final GameModel model;
 
     public EndOfRoundPhase(GameModel model) {
-        super(model);
+        this.model = model;
     }
 
     /**
@@ -18,7 +20,7 @@ public class EndOfRoundPhase extends GamePhaseHandler {
      * It also notifies observers of any changes that occur during this process.
      */
     @Override
-    public void onEnter(){
+    public void onEnter() {
         RowsManager rowsManager = model.getRowsManager();
         rowsManager.resolveEvents(model.getPlayers());
         model.notifyChange();

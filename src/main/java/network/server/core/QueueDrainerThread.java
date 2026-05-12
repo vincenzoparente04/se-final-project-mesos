@@ -1,6 +1,6 @@
 package network.server.core;
 
-import shared.command.CommandVisitor;
+import controller.GameController;
 import shared.command.GameCommand;
 
 import java.util.concurrent.BlockingQueue;
@@ -21,21 +21,20 @@ import java.util.function.BiConsumer;
 public class QueueDrainerThread implements Runnable {
 
     private final BlockingQueue<GameCommand> commandQueue;
-    private final CommandVisitor executor;
-    private final BiConsumer<String, String> onError;
+    private final GameController controller;
+    private final BiConsumer<String, String> onError; // TODO vedi se si può levare
 
     /**
      * @param commandQueue the shared queue to drain
-     * @param executor     visitor that maps each command to a controller call
+     * @param controller   the game controller that executes each command
      * @param onError      called with (playerName, errorMessage) when a
      *                     command fails; used by {@link Game} to route
      *                     the error back to the responsible player
      */
-    public QueueDrainerThread(BlockingQueue<GameCommand> commandQueue,
-                      CommandVisitor executor,
-                      BiConsumer<String, String> onError) {
+    // TODO: leva consumer se possibile (bisogna semplificare)
+    public QueueDrainerThread(BlockingQueue<GameCommand> commandQueue, GameController controller, BiConsumer<String, String> onError) {
         this.commandQueue = commandQueue;
-        this.executor = executor;
+        this.controller = controller;
         this.onError = onError;
     }
 
@@ -53,8 +52,8 @@ public class QueueDrainerThread implements Runnable {
 
     private void execute(GameCommand command) {
         try {
-            command.accept(executor);
-        } catch (Exception e) {
+            controller.handleCommand(command); // TODO: deve fare Game.handleCommand (che diventa il nuovo controller)
+        } catch (Exception e) { // TODO vedi se può essere lui stesso a notificare le view cosi evitiamo il consumer
             String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             onError.accept(command.getPlayerName(), message);
         }

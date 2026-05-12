@@ -80,7 +80,7 @@ public class RmiVirtualServer implements VirtualServer {
             return t;
         });
 
-        serverStub.join(playerName, callback);
+        serverStub.join(playerName, callback); // TODO chiudi se name alredy taken
 
         this.heartbeatScheduler.scheduleAtFixedRate(
                 () -> submitAsync(new HeartbeatCommand(playerName)),
@@ -127,8 +127,6 @@ public class RmiVirtualServer implements VirtualServer {
     @Override
     public void close() {
         heartbeatScheduler.shutdownNow();
-
-
         // 1. Notifica il server della disconnessione
         try {
             serverStub.disconnect(playerName);
