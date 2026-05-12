@@ -4,6 +4,7 @@ import model.GameModel;
 import model.board.Board;
 import model.board.TurnOrderSlot;
 import model.board.TurnOrderTile;
+import model.enums.GamePhase;
 import model.enums.TotemLocation;
 import model.player.Player;
 import model.rowsManager.RowsManager;
@@ -19,6 +20,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -245,6 +247,21 @@ public class SetupPhaseTest {
         verify(third).addFood(3);
         verify(fourth).addFood(4);
         verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
+    }
+
+    @Test
+    @DisplayName("getPhase returns SETUP")
+    void getPhaseReturnsSetup() {
+        assertEquals(GamePhase.SETUP, phase.getPhase());
+    }
+
+    @Test
+    @DisplayName("getCurrentPlayer delegates to model")
+    void getCurrentPlayerDelegatesToModel() {
+        Player p = mock(Player.class);
+        when(model.getCurrentPlayer()).thenReturn(p);
+
+        assertSame(p, phase.getCurrentPlayer());
     }
 
     @Test

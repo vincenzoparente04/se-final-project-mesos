@@ -1,6 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +43,7 @@ public class ColorChoosingPhaseTest {
     // ──────────────────────────────────────────────────────────────────────────────
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         // Initialize mocks
         try (var ignored = MockitoAnnotations.openMocks(this)) {
             // Setup player list
@@ -59,6 +60,9 @@ public class ColorChoosingPhaseTest {
             when(player1.getName()).thenReturn("Player1");
             when(player2.getName()).thenReturn("Player2");
             when(player3.getName()).thenReturn("Player3");
+            when(player1.getState()).thenReturn(true);
+            when(player2.getState()).thenReturn(true);
+            when(player3.getState()).thenReturn(true);
 
             // Players are connected
             when(player1.isConnected()).thenReturn(true);
@@ -72,8 +76,6 @@ public class ColorChoosingPhaseTest {
 
             // Create instance of ColorChoosingPhase
             colorChoosingPhase = new ColorChoosingPhase(gameModel);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -239,6 +241,12 @@ public class ColorChoosingPhaseTest {
         when(localPlayer3.getName()).thenReturn("Player3");
         when(localPlayer4.getName()).thenReturn("Player4");
         when(localPlayer5.getName()).thenReturn("Player5");
+        
+        when(localPlayer1.getState()).thenReturn(true);
+        when(localPlayer2.getState()).thenReturn(true);
+        when(localPlayer3.getState()).thenReturn(true);
+        when(localPlayer4.getState()).thenReturn(true);
+        when(localPlayer5.getState()).thenReturn(true);
 
         when(localPlayer1.isConnected()).thenReturn(true);
         when(localPlayer2.isConnected()).thenReturn(true);
@@ -268,4 +276,38 @@ public class ColorChoosingPhaseTest {
 
         verify(localPlayer5, never()).setColor(TotemColor.RED);
     }
+  
+  
+ //TODO: ADJUST THIS TEST TO NEW CONTROLLER VERSION 
+    @Test
+    @DisplayName("Skip player when disconnected")
+    void testSkipPlayerWhenDisconnected() {
+
+        /// DIFFFERS FROM OTHERS --> no setup
+
+        GameModel localModel = new GameModel();
+
+        List<String> localPlayers = List.of("Player1", "Player2", "Player3");
+        localModel.startGame(localPlayers);
+
+
+        Player pl2 = localModel.getPlayerByName("Player2");
+        pl2.setDisconnected();
+
+        assertEquals(GamePhase.COLOR_CHOOSING_PHASE, localModel.getCurrentPhase());
+
+        localModel.chooseColor(localModel.getPlayerByName("Player1"), TotemColor.RED);
+
+        //first player disconnected so curr player should be the next
+        Player follows = localModel.getCurrentPlayer();
+        assertNotEquals(pl2, follows);
+
+        GamePhaseHandler currPhase = localModel.getPhaseHandler();
+        currPhase.skipCurrentPlayerTurn();
+
+        GamePhaseHandler afterPhase = localModel.getPhaseHandler();
+        assertNotEquals(currPhase, afterPhase);
+
+    }
+
 }

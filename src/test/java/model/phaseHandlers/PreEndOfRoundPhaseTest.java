@@ -3,6 +3,7 @@ package model.phaseHandlers;
 import model.GameModel;
 import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
+import model.enums.GamePhase;
 import model.player.Player;
 import model.player.Tribe;
 import model.rowsManager.CardVisitor;
@@ -205,4 +206,15 @@ class PreEndOfRoundPhaseTest {
 
         verify(model, never()).setPhase(argThat(handler -> handler instanceof EndOfRoundPhase));
     }
+
+    @Test
+    @DisplayName("preEndOfRoundGetter")
+    void preEndOfRoundGetter() {
+        when(model.getPlayers()).thenReturn(List.of(p1));
+        when(p1.hasExtraDraw()).thenReturn(true);
+        phase.onEnter();
+
+        assertEquals(GamePhase.PRE_END_OF_ROUND, phase.getPhase());
+    }
+
 }

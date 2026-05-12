@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
@@ -129,5 +128,11 @@ public class EndOfRoundPhaseTest {
 	void getCurrentPlayerReturnsNull() {
 		assertNull(phase.getCurrentPlayer());
 	}
+
+    @Test
+    @DisplayName("skipCurrentPlayerTurn throws during EndOfRoundPhase")
+    void skipCurrentPlayerTurnThrows() {
+        assertThrows(IllegalStateException.class, () -> phase.skipCurrentPlayerTurn());
+    }
 
 }
