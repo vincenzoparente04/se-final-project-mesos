@@ -19,10 +19,10 @@ class TurnOrderTileTest {
     @Test
     @DisplayName("returnTotemAndResolveEffects places on first free slot and applies bonus")
     void returnTotemUsesFirstFreeSlotAndAppliesBonus() {
-        TurnOrderTile tile = new TurnOrderTile();
+
         TurnOrderSlot first = new TurnOrderSlot(2, false);
         TurnOrderSlot second = new TurnOrderSlot(0, true);
-        tile.setup(List.of(first, second), "image.png");
+        TurnOrderTile tile = new TurnOrderTile(List.of(first, second), "image.png");
 
         Player player = new Player("Player");
         tile.returnTotemAndResolveEffects(player);
@@ -38,10 +38,10 @@ class TurnOrderTileTest {
     @Test
     @DisplayName("returnTotemAndResolveEffects can apply last-slot malus")
     void returnTotemAppliesLastSlotMalusWhenFirstSlotsOccupied() {
-        TurnOrderTile tile = new TurnOrderTile();
+
         TurnOrderSlot first = new TurnOrderSlot(0, false);
         TurnOrderSlot last = new TurnOrderSlot(0, true);
-        tile.setup(List.of(first, last), "image.png");
+        TurnOrderTile tile = new TurnOrderTile(List.of(first, last), "image.png");
 
         first.placeTotem(new Player("AlreadyPlaced"));
 
@@ -60,10 +60,10 @@ class TurnOrderTileTest {
     @Test
     @DisplayName("returnTotemAndResolveEffects throws when all slots are occupied")
     void returnTotemThrowsWhenNoFreeSlots() {
-        TurnOrderTile tile = new TurnOrderTile();
+
         TurnOrderSlot first = new TurnOrderSlot(0, false);
         TurnOrderSlot second = new TurnOrderSlot(0, true);
-        tile.setup(List.of(first, second), "image.png");
+        TurnOrderTile tile = new TurnOrderTile(List.of(first, second), "image.png");
 
         first.placeTotem(new Player("P1"));
         second.placeTotem(new Player("P2"));
@@ -74,11 +74,11 @@ class TurnOrderTileTest {
     @Test
     @DisplayName("getTurnOrder returns only occupied players in slot order")
     void getTurnOrderReturnsOccupiedPlayersInOrder() {
-        TurnOrderTile tile = new TurnOrderTile();
+
         TurnOrderSlot first = new TurnOrderSlot(0, false);
         TurnOrderSlot second = new TurnOrderSlot(0, false);
         TurnOrderSlot third = new TurnOrderSlot(0, true);
-        tile.setup(List.of(first, second, third), "image.png");
+        TurnOrderTile tile = new TurnOrderTile(List.of(first, second, third), "image.png");
 
         Player p1 = new Player("P1");
         Player p3 = new Player("P3");

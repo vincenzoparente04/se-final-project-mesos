@@ -1,8 +1,8 @@
 package controller;
 
 import model.GameModel;
-import model.enums.TotemColor;
 import model.player.Player;
+import shared.command.GameCommand;
 
 import java.util.List;
 
@@ -18,38 +18,18 @@ public class GameController {
         gameModel.startGame(playerNames);
     }
 
-    public synchronized void chooseColor(String playerName, String colorName) {
-        Player player = resolveCurrentPlayer(playerName);
-
-        try {
-            TotemColor color = TotemColor.valueOf(colorName.toUpperCase());
-            gameModel.chooseColor(player, color);
-        }catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid color: " + colorName);
-        }
-    }
-
-    public synchronized void placeTotem(String playerName, char tileId) {
-        Player player = resolveCurrentPlayer(playerName);
-        gameModel.placeTotem(player, tileId);
-    }
-
-    public synchronized void drawCard(String playerName, int cardId) throws Exception {
-        resolveCurrentPlayer(playerName);
-        gameModel.drawCard(cardId);
-    }
-
-    public synchronized void endTurn(String playerName) {
-        resolveCurrentPlayer(playerName);
-        gameModel.endTurn();
-    }
-
-    private Player resolveCurrentPlayer(String playerName) {
-        Player requested = gameModel.getPlayerByName(playerName);
+    /**
+     * Single entry point for in-game commands. Validates that the command's
+     * player is the current player, then delegates dispatch to the model.
+     * Cross-cutting validation that was duplicated in the old per-command
+     * methods now lives here once.
+     */
+    public synchronized void handleCommand(GameCommand cmd) throws Exception {
         Player current = gameModel.getCurrentPlayer();
-        if (current == null || !current.getName().equals(playerName)) {
-            throw new IllegalStateException("It is not " + playerName + "'s turn.");
+        if
+        (current == null || !current.getName().equals(cmd.getPlayerName())) {
+            throw new IllegalStateException("It is not " + cmd.getPlayerName() + "'s turn.");
         }
-        return requested;
+        gameModel.handleCommand(cmd);
     }
 }

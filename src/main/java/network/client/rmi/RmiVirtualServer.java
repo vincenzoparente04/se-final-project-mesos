@@ -33,7 +33,7 @@ import network.server.rmi.GameServerRemote;
  * Construction performs the full handshake: it looks up the server
  * stub in the RMI registry, exports a {@link ClientCallbackImpl} so the
  * server can push state updates back, and registers the player by calling
- * {@link GameServerRemote#join(String, ClientCallbackRemote)}.
+ * {@link GameServerRemote#join(String, ClientCallbackRemote, String)}.
  * <p>
  * <b>Threading model.</b> All outbound commands are dispatched through a
  * dedicated single-thread executor. This serves two purposes: it prevents
@@ -80,7 +80,7 @@ public class RmiVirtualServer implements VirtualServer {
             return t;
         });
 
-        serverStub.join(playerName, callback);
+        serverStub.join(playerName, callback, host);
 
         this.heartbeatScheduler.scheduleAtFixedRate(
                 () -> submitAsync(new HeartbeatCommand(playerName)),
@@ -127,8 +127,6 @@ public class RmiVirtualServer implements VirtualServer {
     @Override
     public void close() {
         heartbeatScheduler.shutdownNow();
-
-
         // 1. Notifica il server della disconnessione
         try {
             serverStub.disconnect(playerName);

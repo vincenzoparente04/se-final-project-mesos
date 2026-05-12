@@ -40,7 +40,7 @@ public class BuildingCardTest {
     @BeforeEach
     void setUp() {
         buildingCard = new BuildingCard(ID, ERA, PLAYER_COUNT, FOOD_COST, END_GAME_POINTS,
-                mockEffect, IMAGE_PATH, BACK_IMAGE_PATH);
+                mockEffect,"effectiD", IMAGE_PATH, BACK_IMAGE_PATH);
     }
 
     @Test

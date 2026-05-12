@@ -241,4 +241,13 @@ class PlayerTest {
         // Assert
         assertEquals(TotemLocation.TURN_ORDER_TILE, player.getLocation(), "Should set and get location correctly");
     }
+
+    @Test
+    @DisplayName("setConnection and setDisconnected")
+    void setConnectionAndDisconnected() {
+        player.setConnected();
+        assertTrue(player.isConnected(), "Player should be connected");
+        player.setDisconnected();
+        assertFalse(player.isConnected(), "Player should be disconnected");
+    }
 }

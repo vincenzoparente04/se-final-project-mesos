@@ -18,9 +18,9 @@ import network.server.rmi.GameServerRemoteImpl;
  * The two listeners are independent: a failure in one does not prevent
  * the other from serving clients.
  * <p>
- * Invocation: {@code ServerMain <port> [rmiPort]}. The first argument is
- * the TCP port for socket clients; the second (optional, defaults to 1099)
- * is the port on which the RMI registry is created.
+ * Uses fixed ports:
+ * - Socket server: 9999
+ * - RMI registry: 1099 (standard Java RMI port)
  *
  * @implNote The {@code main} method does not return: after starting the RMI
  *           registry, control enters the socket acceptor's blocking
@@ -30,30 +30,15 @@ import network.server.rmi.GameServerRemoteImpl;
 public class ServerMain {
 
     private static final String RMI_SERVICE_NAME = "MesosGameServer";
+    private static final int SOCKET_PORT = 9999;
+    private static final int RMI_PORT = 1099;
 
     public static void main(String[] args) {
-        if (args.length < 1) {
-            System.err.println("Usage: ServerMain <port> [rmiPort]");
-            return;
-        }
-        /*
-        int port = Integer.parseInt(args[0]);
-        int rmiPort = args.length >= 2 ? Integer.parseInt(args[1]) : 1099;
-        */
-        int port;
-        int rmiPort;
-        try {
-            port = Integer.parseInt(args[0]);
-            rmiPort = args.length >= 2 ? Integer.parseInt(args[1]) : 1099;
-        } catch (NumberFormatException e) {
-            System.err.println("Invalid port number: " + e.getMessage());
-            return;
-        }
 
         LobbyManager lobby = new LobbyManager();
 
-        startRmiRegistry(lobby, rmiPort);
-        startSocketAcceptor(lobby, port);
+        startRmiRegistry(lobby);
+        startSocketAcceptor(lobby);
     }
 
 
@@ -64,12 +49,12 @@ public class ServerMain {
      * continues to start the socket acceptor — RMI clients will be unable
      * to connect, but socket clients will work normally.
      */
-    private static void startRmiRegistry(LobbyManager lobby, int rmiPort) {
+    private static void startRmiRegistry(LobbyManager lobby) {
         try {
-            Registry registry = LocateRegistry.createRegistry(rmiPort);
+            Registry registry = LocateRegistry.createRegistry(ServerMain.RMI_PORT);
             GameServerRemote stub = new GameServerRemoteImpl(lobby);
             registry.rebind(RMI_SERVICE_NAME, stub);
-            System.out.println("RMI registry on port " + rmiPort + " — service name: " + RMI_SERVICE_NAME);
+            System.out.println("RMI registry on port " + ServerMain.RMI_PORT + " — service name: " + RMI_SERVICE_NAME);
         } catch (Exception e) {
             System.err.println("Failed to start RMI registry: " + e.getMessage());
         }
@@ -83,9 +68,9 @@ public class ServerMain {
      * This method blocks for the lifetime of the server: it returns only if
      * the listening socket itself is closed or fails.
      */
-    private static void startSocketAcceptor(LobbyManager lobby, int port) {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Socket server on port " + port + " — waiting for connections.");
+    private static void startSocketAcceptor(LobbyManager lobby) {
+        try (ServerSocket serverSocket = new ServerSocket(ServerMain.SOCKET_PORT)) {
+            System.out.println("Socket server on port " + ServerMain.SOCKET_PORT + " — waiting for connections.");
 
 
             while (true) {

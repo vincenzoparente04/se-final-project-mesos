@@ -14,8 +14,7 @@ public class SocketPlayerEntry implements PlayerEntry {
     private final SocketVirtualView view;
     private final SocketClientHandler handler;
 
-    public SocketPlayerEntry(String name, ObjectInputStream in, SocketVirtualView view,
-                             SocketClientHandler handler) {
+    public SocketPlayerEntry(String name, ObjectInputStream in, SocketVirtualView view, SocketClientHandler handler) {
         this.name = name;
         this.in = in;
         this.view = view;

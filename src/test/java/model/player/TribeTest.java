@@ -452,4 +452,24 @@ class TribeTest {
 		assertEquals(1, tribe.getEndGameBuildingEffects().size());
 	}
 
+    @Test
+    @DisplayName("getters")
+    void gettersTest() {
+        HunterCard hunter = new HunterCard(2, Era.ERA_I, 2, true, "path", "path");
+        BuilderCard builder = new BuilderCard(1, Era.ERA_I, DEFAULT_PLAYER_COUNT, 2, 5, "path", "path");
+        ShamanCard shaman = new ShamanCard(3, Era.ERA_I, DEFAULT_PLAYER_COUNT, 3, "path", "path");
+        GathererCard gatherer = new GathererCard(4, Era.ERA_I, DEFAULT_PLAYER_COUNT, "path", "path");
+
+        tribe.addBuilder(builder);
+        tribe.addHunter(hunter);
+        tribe.addShaman(shaman);
+        tribe.addGatherer(gatherer);
+
+        assertTrue(tribe.getHunters().contains(hunter));
+        assertTrue(tribe.getShamans().contains(shaman));
+        assertTrue(tribe.getGatherers().contains(gatherer));
+        assertTrue(tribe.getBuilders().contains(builder));
+
+    }
+
 }

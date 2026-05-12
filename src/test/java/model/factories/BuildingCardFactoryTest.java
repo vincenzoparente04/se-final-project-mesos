@@ -3,6 +3,7 @@ package model.factories;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import model.buildingEffects.BuildingEffect;
 import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
 import model.buildingEffects.OnCharacterAcquiredEffects.BonusForCompletedSet;
@@ -14,6 +15,7 @@ import model.buildingEffects.OnPickingEffects.OnPickingEffects;
 import model.cards.Card;
 import model.cards.buildingCards.BuildingCard;
 import model.enums.Era;
+import model.player.Player;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
@@ -25,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class BuildingCardFactoryTest {
 
@@ -56,6 +60,61 @@ class BuildingCardFactoryTest {
     @Test
     void createEffectThrowsOnUnknownEffectId() {
         assertThrows(IllegalArgumentException.class, () -> invokeCreateEffect("unknown_effect"));
+    }
+
+    @Test
+    void shamanicImmunityLambdaSetsFlag() {
+        Player player = mock(Player.class);
+        ((OnPickingEffects) invokeCreateEffect("shamanic_immunity")).registerSelf(player);
+        verify(player).setShamanicImmunity(true);
+    }
+
+    @Test
+    void shamanicDoublePointsLambdaSetsFlag() {
+        Player player = mock(Player.class);
+        ((OnPickingEffects) invokeCreateEffect("shamanic_double_points")).registerSelf(player);
+        verify(player).setShamanicDoublePrestige(true);
+    }
+
+    @Test
+    void shamanicExtraStarsLambdaSetsFlag() {
+        Player player = mock(Player.class);
+        ((OnPickingEffects) invokeCreateEffect("shamanic_extra_stars")).registerSelf(player);
+        verify(player).setShamanicBonusIcons(true);
+    }
+
+    @Test
+    void extraFoodOnTotemReturnLambdaSetsFlag() {
+        Player player = mock(Player.class);
+        ((OnPickingEffects) invokeCreateEffect("extra_food_on_totem_return")).registerSelf(player);
+        verify(player).setExtraFoodOnTotemReturn(true);
+    }
+
+    @Test
+    void extraDrawLambdaSetsFlag() {
+        Player player = mock(Player.class);
+        ((OnPickingEffects) invokeCreateEffect("extra_draw")).registerSelf(player);
+        verify(player).setExtraDraw(true);
+    }
+
+    @Test
+    void noneLambdaIsNoOp() {
+        Player player = mock(Player.class);
+        ((OnPickingEffects) invokeCreateEffect("none")).registerSelf(player);
+        // no-op — just verifying it doesn't throw
+    }
+
+    @Test
+    void parseEraThrowsOnUnknownEraString() {
+        JsonObject fakeJson = new JsonObject();
+        fakeJson.add("era", new JsonPrimitive("INVALID"));
+
+        assertThrows(IllegalArgumentException.class, () -> invokeParseEra(fakeJson));
+    }
+
+    @Test
+    void loadJsonThrowsWhenResourceNotFound() {
+        assertThrows(RuntimeException.class, () -> invokeLoadJson("nonexistent_file.json"));
     }
 
     private static JsonArray loadBuildingsJson() {
@@ -105,6 +164,36 @@ class BuildingCardFactoryTest {
             throw new RuntimeException(e.getCause());
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to invoke createEffect", e);
+        }
+    }
+
+    private static Era invokeParseEra(JsonObject json) {
+        try {
+            Method method = BuildingCardFactory.class.getDeclaredMethod("parseEra", JsonObject.class);
+            method.setAccessible(true);
+            return (Era) method.invoke(null, json);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            throw new RuntimeException(e.getCause());
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to invoke parseEra", e);
+        }
+    }
+
+    private static JsonObject invokeLoadJson(String filename) {
+        try {
+            Method method = BuildingCardFactory.class.getDeclaredMethod("loadJson", String.class);
+            method.setAccessible(true);
+            return (JsonObject) method.invoke(null, filename);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            throw new RuntimeException(e.getCause());
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to invoke loadJson", e);
         }
     }
 

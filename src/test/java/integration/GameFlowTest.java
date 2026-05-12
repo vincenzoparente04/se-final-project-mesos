@@ -13,8 +13,11 @@ import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.command.ChooseColorCommand;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
+import shared.command.PlaceTotemCommand;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,19 +29,22 @@ class GameFlowTest {
     private GameModel model;
 
     @BeforeEach
-    void setUp() {
-        model = new GameModel();
+    void setUp() throws Exception {
+        FakeVirtualView vv1 = new FakeVirtualView();
+        FakeVirtualView vv2 = new FakeVirtualView();
+        model = new GameModel(List.of(vv1,vv2));
         model.startGame(List.of("Player1", "Player2"));
         completeColorChoosing();
     }
 
     // functions to make tests easier
 
-    private void completeColorChoosing() {
+    private void completeColorChoosing() throws Exception {
         TotemColor[] colors = TotemColor.values();
         int i = 0;
         while (model.getCurrentPhase() == GamePhase.COLOR_CHOOSING_PHASE) {
-            model.chooseColor(model.getCurrentPlayer(), colors[i++]);
+            Player current = model.getCurrentPlayer();
+            model.handleCommand(new ChooseColorCommand(current.getName(), colors[i++].name()));
         }
     }
 
@@ -47,14 +53,14 @@ class GameFlowTest {
      * Player at turn-order position 0 → tile B (leftmost for 2-player game).
      * Player at turn-order position 1 → tile C (next leftmost).
      */
-    private void completePlacement() {
+    private void completePlacement() throws Exception {
         while (model.getCurrentPhase() == GamePhase.PLACEMENT) {
             Player current = model.getCurrentPlayer();
             OfferTile free = model.getBoard().getOfferTiles().stream()
                     .filter(t -> !t.isOccupied())
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("No free tile for placement"));
-            model.placeTotem(current, free.getLetter());
+            model.handleCommand(new PlaceTotemCommand(current.getName(), free.getLetter()));
         }
     }
 
@@ -78,10 +84,10 @@ class GameFlowTest {
                     .findFirst();
 
             if (forcedCard.isPresent()) {
-                model.drawCard(forcedCard.get().getId());
+                model.handleCommand(new DrawCardCommand(current.getName(), forcedCard.get().getId()));
             } else {
                 try {
-                    model.endTurn();
+                    model.handleCommand(new EndTurnCommand(current.getName()));
                 } catch (IllegalStateException ignored) {
                     // action auto-advanced; loop will re-evaluate phase
                 }
@@ -89,7 +95,10 @@ class GameFlowTest {
         }
         // Waive extra draw if a player earned one during this round
         if (model.getCurrentPhase() == GamePhase.PRE_END_OF_ROUND) {
-            model.endTurn();
+            Player current = model.getCurrentPlayer();
+            if (current != null) {
+                model.handleCommand(new EndTurnCommand(current.getName()));
+            }
         }
     }
 
@@ -188,5 +197,144 @@ class GameFlowTest {
 
         assertNotEquals(Era.ERA_I, model.getCurrentEra(),
                 "Era should have advanced from ERA_I after the ERA_I deck is exhausted");
+    }
+
+    // Multi-player-count integration tests
+
+    private GameModel setupGame(List<String> names) {
+        List<network.server.core.VirtualView> vvs = new java.util.ArrayList<>();
+        for (int j = 0; j < names.size(); j++) {
+            vvs.add(new FakeVirtualView());
+        }
+        GameModel m = new GameModel(vvs);
+        m.startGame(names);
+        // consume color-choosing phase
+        TotemColor[] colors = TotemColor.values();
+        int i = 0;
+        while (m.getCurrentPhase() == GamePhase.COLOR_CHOOSING_PHASE) {
+            try {
+                m.getPhaseHandler().visit(new ChooseColorCommand(m.getCurrentPlayer().getName(), colors[i++].toString()));
+            }catch (Exception e) {
+                fail("Unexpected error while visiting color choose command");
+            }
+        }
+        return m;
+    }
+
+    private void runOnePlacement(GameModel m) {
+        while (m.getCurrentPhase() == GamePhase.PLACEMENT) {
+            Player current = m.getCurrentPlayer();
+            OfferTile free = m.getBoard().getOfferTiles().stream()
+                    .filter(t -> !t.isOccupied())
+                    .findFirst()
+                    .orElseThrow();
+
+            try {
+                m.getPhaseHandler().visit(new PlaceTotemCommand(current.getName(), free.getLetter()));
+            }catch (Exception e) {
+                fail("Unexpected error while visiting place totem command");
+            }
+        }
+    }
+
+    private void runOneActionPhase(GameModel m) throws Exception {
+        while (m.getCurrentPhase() == GamePhase.ACTION) {
+            Player current = m.getCurrentPlayer();
+            if (current == null) break;
+            RowsManager rm = m.getRowsManager();
+            OfferTile tile = m.getBoard().getOfferTrack().getOccupiedTileByPlayer(current);
+            OfferTileAction action = tile.getAction();
+            Optional<Card> forced = rm.getAllCardsOnBoard().stream()
+                    .filter(c -> c instanceof CharacterCard && action.canDraw(c, rm))
+                    .findFirst();
+            if (forced.isPresent()) {
+                try {
+                    m.getPhaseHandler().visit(new DrawCardCommand(current.getName(), forced.get().getId()));
+                }catch (Exception e) {
+                    fail("Unexpected error while visiting place totem command");
+                }
+            } else {
+                try { m.getPhaseHandler().visit(new EndTurnCommand(current.getName())); } catch (IllegalStateException ignored) {}
+            }
+        }
+        if (m.getCurrentPhase() == GamePhase.PRE_END_OF_ROUND) {
+            try { m.getPhaseHandler().visit(new EndTurnCommand(m.getCurrentPlayer().getName())); } catch (IllegalStateException ignored){};
+        }
+    }
+
+    @Test
+    @DisplayName("3-player game: one full round transitions back to PLACEMENT and increments round counter")
+    void threePlayerGameCompletesOneRoundCorrectly() throws Exception {
+        GameModel m = setupGame(List.of("A", "B", "C"));
+
+        assertEquals(GamePhase.PLACEMENT, m.getCurrentPhase());
+        assertEquals(1, m.getCurrentRound());
+        assertEquals(3, m.getPlayers().size());
+
+        runOnePlacement(m);
+        runOneActionPhase(m);
+
+        assertEquals(GamePhase.PLACEMENT, m.getCurrentPhase());
+        assertEquals(2, m.getCurrentRound());
+    }
+
+    @Test
+    @DisplayName("3-player game: board has exactly the tiles eligible for 3 players")
+    void threePlayerGameHasCorrectOfferTileCount() {
+        GameModel m = setupGame(List.of("A", "B", "C"));
+        // board.json: tiles with minPlayers <= 3 are active
+        long activeTiles = m.getBoard().getOfferTiles().size();
+        assertTrue(activeTiles >= 3 && activeTiles <= 6,
+                "3-player board should have between 3 and 6 offer tiles, got " + activeTiles);
+    }
+
+    @Test
+    @DisplayName("3-player game: first-position player gets 2 food, second gets 3, third gets 3")
+    void threePlayerGameFoodBonusesAreCorrect() {
+        GameModel m = setupGame(List.of("A", "B", "C"));
+        List<Player> order = m.getTurnOrder();
+        assertEquals(2, order.get(0).getFood(), "position 0 → 2 food");
+        assertEquals(3, order.get(1).getFood(), "position 1 → 3 food");
+        assertEquals(3, order.get(2).getFood(), "position 2 → 3 food");
+    }
+
+    @Test
+    @DisplayName("4-player game: one full round transitions back to PLACEMENT and increments round counter")
+    void fourPlayerGameCompletesOneRoundCorrectly() throws Exception {
+        GameModel m = setupGame(List.of("A", "B", "C", "D"));
+
+        assertEquals(GamePhase.PLACEMENT, m.getCurrentPhase());
+        assertEquals(1, m.getCurrentRound());
+        assertEquals(4, m.getPlayers().size());
+
+        runOnePlacement(m);
+        runOneActionPhase(m);
+
+        assertEquals(GamePhase.PLACEMENT, m.getCurrentPhase());
+        assertEquals(2, m.getCurrentRound());
+    }
+
+    @Test
+    @DisplayName("4-player game: first-position player gets 2 food, second gets 3, third gets 3, fourth gets 4")
+    void fourPlayerGameFoodBonusesAreCorrect() {
+        GameModel m = setupGame(List.of("A", "B", "C", "D"));
+        List<Player> order = m.getTurnOrder();
+        assertEquals(2, order.get(0).getFood(), "position 0 → 2 food");
+        assertEquals(3, order.get(1).getFood(), "position 1 → 3 food");
+        assertEquals(3, order.get(2).getFood(), "position 2 → 3 food");
+        assertEquals(4, order.get(3).getFood(), "position 3 → 4 food");
+    }
+
+    @Test
+    @DisplayName("4-player game ends after 10 rounds with at least one winner")
+    void fourPlayerGameEndsAfterTenRoundsWithWinner() throws Exception {
+        GameModel m = setupGame(List.of("A", "B", "C", "D"));
+        while (m.getCurrentPhase() != GamePhase.END_OF_GAME) {
+            if (m.getCurrentPhase() == GamePhase.PLACEMENT)        runOnePlacement(m);
+            else if (m.getCurrentPhase() == GamePhase.ACTION)      runOneActionPhase(m);
+            else fail("Unexpected phase: " + m.getCurrentPhase());
+        }
+        assertEquals(GamePhase.END_OF_GAME, m.getCurrentPhase());
+        assertFalse(m.getWinners().isEmpty(), "At least one winner should be declared");
     }
 }

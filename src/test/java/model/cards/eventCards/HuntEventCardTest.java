@@ -1,5 +1,6 @@
 package model.cards.eventCards;
 
+import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
 import model.cards.eventCards.HuntEventCard;
 import model.enums.Era;
 import model.player.Player;
@@ -9,10 +10,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
 
 @DisplayName("HuntEventCard Tests")
 class HuntEventCardTest {
@@ -63,6 +64,22 @@ class HuntEventCardTest {
 
         verify(player, times(1)).addFood(0);
         verify(player, times(1)).addPrestigePoints(0);
+    }
+
+    @Test
+    @DisplayName("resolve triggers OnEventBuildingEffect.applyOnHunt for each player's building effects")
+    void resolveTriggersOnEventBuildingEffects() {
+        Player player = mock(Player.class);
+        Tribe tribe = mock(Tribe.class);
+        OnEventBuildingEffect effect = mock(OnEventBuildingEffect.class);
+        when(player.getTribe()).thenReturn(tribe);
+        when(tribe.getHunterCount()).thenReturn(2);
+        when(tribe.getOnEventBuildingEffects()).thenReturn(List.of(effect));
+
+        HuntEventCard card = new HuntEventCard(10, Era.ERA_I, 4, "test/front.png", "test/front.png");
+        card.resolve(List.of(player));
+
+        verify(effect, times(1)).applyOnHunt(player);
     }
 
     @Test

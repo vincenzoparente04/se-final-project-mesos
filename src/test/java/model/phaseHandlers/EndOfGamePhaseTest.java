@@ -1,6 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
 import model.rowsManager.RowsManager;
 import model.player.Player;
 import model.player.Tribe;
@@ -123,6 +124,26 @@ public class EndOfGamePhaseTest {
 		verify(model, times(3)).notifyChange();
 		assertEquals(1, phase.getWinners().size());
 		assertSame(p2, phase.getWinners().getFirst());
+	}
+
+	@Test
+	@DisplayName("onEnter applies every EndGameBuildingEffect for each player")
+	void onEnterAppliesEndGameBuildingEffects() {
+		Player p1 = mock(Player.class);
+		Tribe t1 = mock(Tribe.class);
+		EndGameBuildingEffect effect1 = mock(EndGameBuildingEffect.class);
+		EndGameBuildingEffect effect2 = mock(EndGameBuildingEffect.class);
+
+		when(model.getPlayers()).thenReturn(List.of(p1));
+		when(p1.getName()).thenReturn("p1");
+		when(p1.getTribe()).thenReturn(t1);
+		when(t1.getEndGameBuildingEffects()).thenReturn(List.of(effect1, effect2));
+		when(p1.getPrestigePoints()).thenReturn(10);
+
+		phase.onEnter();
+
+		verify(effect1, times(1)).applyEffect(p1);
+		verify(effect2, times(1)).applyEffect(p1);
 	}
 
 	@Test

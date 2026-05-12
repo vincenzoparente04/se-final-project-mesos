@@ -21,9 +21,7 @@ class BoardTest {
     @Test
     @DisplayName("setup(3) loads only eligible offer tiles and a 3-slot turn order tile")
     void setupThreePlayersBuildsExpectedBoardState() {
-        Board board = new Board();
-
-        board.setup(3);
+        Board board = new Board(3);
 
         List<TurnOrderSlot> slots = board.getTurnOrderTile().getSlots();
         assertAll(
@@ -47,8 +45,7 @@ class BoardTest {
     @Test
     @DisplayName("placeTotem delegates to offer track and updates player location")
     void placeTotemPlacesPlayerOnSelectedTile() {
-        Board board = new Board();
-        board.setup(4);
+        Board board = new Board(4);
 
         Player player = new Player("Player");
         OfferTile tile = board.findTileByLetter('E');
@@ -64,8 +61,8 @@ class BoardTest {
     @Test
     @DisplayName("getNextPlayerOnOfferTrack returns left-most occupied tile occupant")
     void getNextPlayerOnOfferTrackReturnsFirstOccupiedTileInTrackOrder() {
-        Board board = new Board();
-        board.setup(5);
+        Board board = new Board(5);
+
 
         Player first = new Player("First");
         Player second = new Player("Second");
@@ -77,19 +74,11 @@ class BoardTest {
                 "Offer track resolves from left to right, not by placement time");
     }
 
-    @Test
-    @DisplayName("setup throws when player count has no board configuration")
-    void setupThrowsForUnsupportedPlayerCount() {
-        Board board = new Board();
-
-        assertThrows(IllegalArgumentException.class, () -> board.setup(1));
-    }
 
     @Test
     @DisplayName("returnTotemToTurnOrder removes player from offer track and places them in turn order")
     void returnTotemToTurnOrderClearsOfferTrackAndJoinsTurnOrder() {
-        Board board = new Board();
-        board.setup(3);
+        Board board = new Board(3);
 
         Player player = new Player("Player");
         OfferTile tileB = board.findTileByLetter('B');

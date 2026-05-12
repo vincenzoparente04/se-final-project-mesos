@@ -9,10 +9,12 @@ import model.player.Player;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SetupPhase extends GamePhaseHandler {
+public class SetupPhase implements GamePhaseHandler {
+
+    private final GameModel model;
 
     public SetupPhase(GameModel model) {
-        super(model);
+        this.model = model;
     }
 
     /**
@@ -21,26 +23,18 @@ public class SetupPhase extends GamePhaseHandler {
      */
     @Override
     public void onEnter() {
-        // Board owns the decks and knows how to set itself up
-        model.getBoard().setup(model.getPlayerCount());
         model.getRowsManager().setup(model.getPlayerCount());
-
-        // Randomize turn order: board places totems on the TurnOrderTile
         randomizeTurnOrder(model.getPlayers());
-
-        // Give each player their starting food
         distributeStartingResources();
 
-        // Done — move to placement
         model.setPhase(new PlacementPhase(model));
     }
 
     /**
      * @implNote Randomizes the turn order by shuffling the list of players and placing their totems on the
      * TurnOrderTile in the new order. Each player is also set to be located on the TurnOrderTile.
-     * @param players
      */
-    public void randomizeTurnOrder(List<Player> players){
+    public void randomizeTurnOrder(List<Player> players) {
         List<TurnOrderSlot> slots = model.getBoard().getTurnOrderTile().getSlots();
 
         List<Player> randomized = new ArrayList<>(players);
@@ -68,14 +62,13 @@ public class SetupPhase extends GamePhaseHandler {
         }
     }
 
-        @Override
-        public GamePhase getPhase () {
-            return GamePhase.SETUP;
-        }
+    @Override
+    public GamePhase getPhase() {
+        return GamePhase.SETUP;
+    }
 
-        @Override
-        public Player getCurrentPlayer () {
-            return model.getCurrentPlayer();
-        }
-
+    @Override
+    public Player getCurrentPlayer() {
+        return null;
+    }
 }
