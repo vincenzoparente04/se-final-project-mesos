@@ -11,18 +11,22 @@ public class BuildingCard extends Card {
     private final int foodCost;
     private final int endGamePoints;
     private final BuildingEffect effect;
+    private final String effectId;          // used to specify the effect of the card in the cli
 
-    public BuildingCard(int id, Era era, int playercount, int foodCost, int endGamePoints, BuildingEffect effect, String imagePath, String backImagePath) {
+
+    public BuildingCard(int id, Era era, int playercount, int foodCost, int endGamePoints, BuildingEffect effect, String effectId, String imagePath, String backImagePath) {
         super(id, era, playercount, imagePath, backImagePath);
         this.foodCost = foodCost;
         this.endGamePoints = endGamePoints;
         this.effect = effect;
+        this.effectId      = effectId;
     }
 
     // getters
     public int getFoodCost(){ return foodCost; }
     public int getEndGamePoints(){ return endGamePoints; }
     public BuildingEffect getEffect(){return effect;}
+    public String getEffectId()      { return effectId; }
 
     /**
      * @implNote Add the building card and the effect in the tribe of the player who picked the card.

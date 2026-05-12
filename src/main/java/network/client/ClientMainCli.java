@@ -1,5 +1,8 @@
 package network.client;
 
+import network.client.view.BoardRenderer;
+import network.client.view.GameStateRenderer;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
@@ -31,13 +34,12 @@ public class ClientMainCli {
         }
 
         LocalGameState localState = new LocalGameState();
-        ClientStateListener listener = new ClientStateListenerCli();
+        GameStateRenderer renderer = new BoardRenderer();
+        ClientStateListenerCli listener = new ClientStateListenerCli(playerName, renderer);
 
         System.out.println("Connecting via " + transport + " to " + host + ":" + port + " as \"" + playerName + "\"...");
 
         VirtualServer proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
-
-        ClientController controller = new ClientController(proxy);
 
         System.out.println("Connected. Use 'lobbies' to list lobbies, 'create <n>' or 'join <id>'.");
         printHelp();
@@ -55,8 +57,12 @@ public class ClientMainCli {
             if (trimmed.equalsIgnoreCase("quit")) break;
 
             if (trimmed.equalsIgnoreCase("state")) {
-                ClientStateListenerCli.printState(localState);
-            } else if (!dispatch(controller, trimmed)) {
+                listener.forceRefresh(localState);
+            } else if (trimmed.equalsIgnoreCase("tribes"))
+            {
+                listener.printAllTribes(localState);
+            } else if (!dispatch(proxy, trimmed))
+            {
                 System.out.println("[?] Unknown command. " + helpLine());
             }
             System.out.print("> ");
@@ -66,40 +72,48 @@ public class ClientMainCli {
         System.out.println("Disconnected.");
     }
 
-    private static boolean dispatch(ClientController controller, String input) {
+    /**
+     * @implNote This is a simple command dispatcher that parses the first word as the command and the rest as an argument.
+     * It calls the appropriate method on the VirtualServer proxy based on the command.
+     * @param proxy virtual server associated to the client
+     * @param input command string took from CLI
+     * @return false if the command is unknown, true otherwise
+     */
+    private static boolean dispatch(VirtualServer proxy, String input) {
         String[] parts = input.split("\\s+", 2);
         String verb = parts[0].toLowerCase();
         String arg  = parts.length > 1 ? parts[1].trim() : "";
 
         switch (verb) {
-            case "lobbies" -> controller.onListLobbies();
+            case "lobbies" -> proxy.sendListLobbies();
             case "create" -> {
                 try {
-                    controller.onCreateLobby(Integer.parseInt(arg));
+                    proxy.sendCreateLobby(Integer.parseInt(arg));
                 } catch (NumberFormatException e) {
                     System.out.println("[ERROR] create requires a number of players");
                 }
             }
             case "join" -> {
                 if (arg.isEmpty()) { System.out.println("[ERROR] join requires a lobby id"); return true; }
-                controller.onJoinLobby(arg);
+                proxy.sendJoinLobby(arg);
             }
             case "color" -> {
                 if (arg.isEmpty()) { System.out.println("[ERROR] color requires a colour name"); return true; }
-                controller.onColorChosen(arg.toUpperCase());
+                proxy.sendChooseColor(arg.toUpperCase());
             }
             case "totem" -> {
                 if (arg.isEmpty()) { System.out.println("[ERROR] totem requires a tile letter"); return true; }
-                controller.onTotemPlaced(arg.toUpperCase().charAt(0));
+                proxy.sendPlaceTotem(arg.toUpperCase().charAt(0));
             }
             case "draw" -> {
                 try {
-                    controller.onCardDrawn(Integer.parseInt(arg));
+                    proxy.sendDrawCard(Integer.parseInt(arg));
                 } catch (NumberFormatException e) {
                     System.out.println("[ERROR] Invalid card ID: \"" + arg + "\"");
                 }
             }
-            case "end" -> controller.onTurnEnded();
+            case "end" -> proxy.sendEndTurn();
+            case "leave" -> proxy.sendLeaveCommand();
             default    -> { return false; }
         }
         return true;
@@ -116,6 +130,6 @@ public class ClientMainCli {
     }
 
     private static String helpLine() {
-        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | quitxx";
+        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | tribes | quit";
     }
 }

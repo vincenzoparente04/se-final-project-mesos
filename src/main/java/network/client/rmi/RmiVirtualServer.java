@@ -6,6 +6,7 @@ import shared.command.CreateLobbyCommand;
 import shared.command.DrawCardCommand;
 import shared.command.EndTurnCommand;
 import shared.command.JoinLobbyCommand;
+import shared.command.LeaveCommand;
 import shared.command.ListLobbiesCommand;
 import shared.command.PlaceTotemCommand;
 import shared.command.HeartbeatCommand;
@@ -116,6 +117,11 @@ public class RmiVirtualServer implements VirtualServer {
     @Override
     public void sendListLobbies() {
         submitAsync(new ListLobbiesCommand(playerName));
+    }
+
+    @Override
+    public void sendLeaveCommand() {
+        submitAsync(new LeaveCommand(playerName));
     }
 
     @Override

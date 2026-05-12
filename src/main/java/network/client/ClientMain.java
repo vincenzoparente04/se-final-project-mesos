@@ -53,6 +53,25 @@ public class ClientMain extends Application {
     }
 
     // JavaFX start
+
+    /**
+     * Initializes and displays the lobby scene immediately.
+     * <p>
+     * This method is called by JavaFX after the application is launched. It performs the following:
+     * <ul>
+     *   <li>Loads the lobby-view.fxml and retrieves the LobbyViewController controller.</li>
+     *   <li>Initializes the lobby controller with the player name.</li>
+     *   <li>Creates a ClientStateListenerGui to wire network callbacks to UI updates.</li>
+     *   <li>Creates a LocalGameState to hold the current game state snapshot.</li>
+     *   <li>Displays the lobby scene immediately (non-blocking).</li>
+     *   <li>Spawns a background thread to establish the network connection in parallel.</li>
+     * </ul>
+     * <p>
+     * The UI remains responsive while the connection is being established on the background thread.
+     *
+     * @param primaryStage the main Stage provided by JavaFX
+     * @throws Exception if the FXML resource cannot be loaded
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
         // Load lobby scene
@@ -80,17 +99,37 @@ public class ClientMain extends Application {
     }
 
     // Connection logic (runs on background thread)
+
+    /**
+     * Establishes the network connection to the server on a background thread.
+     * <p>
+     * This method is invoked asynchronously from {@link #start(Stage)} to avoid blocking the
+     * JavaFX Application Thread. It performs the following steps:
+     * <ul>
+     *   <li>Creates a VirtualServer proxy (Socket or RMI) based on connection parameters.</li>
+     *   <li>Propagates the proxy to the ClientStateListenerGui for UI wiring.</li>
+     *   <li>Sends an initial sendListLobbies() request to populate the lobby list.</li>
+     *   <li>Updates the stage title to reflect successful connection.</li>
+     * </ul>
+     * <p>
+     * If the connection fails, an error message is printed and the stage title reflects the failure.
+     * <p>
+     * <b>Threading:</b> This method runs on a daemon background thread (connect-{playerName}).
+     * All UI updates are marshalled back to the JavaFX Application Thread via {@link Platform#runLater(Runnable)}.
+     *
+     * @param listener the ClientStateListenerGui that routes network callbacks to UI updates
+     * @param localState the shared LocalGameState instance to receive game state snapshots
+     * @param primaryStage the primary Stage to update with connection status
+     */
     private void connect(ClientStateListenerGui listener, LocalGameState localState, Stage primaryStage) {
         try {
             this.proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
 
-            ClientController controller = new ClientController(proxy);
-
-            // Propagate the controller to the lobby buttons
-            listener.setClientController(controller);
+            // Propagate the VirtualServer proxy to the listener and UI controller
+            listener.setVirtualServer(proxy);
 
             // Ask the server for the current lobby list right away
-            controller.onListLobbies();
+            proxy.sendListLobbies();
 
             Platform.runLater(() -> primaryStage.setTitle("Mesos — " + playerName));
 
