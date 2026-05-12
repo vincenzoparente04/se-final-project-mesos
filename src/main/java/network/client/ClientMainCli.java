@@ -11,35 +11,34 @@ import java.io.IOException;
 public class ClientMainCli {
 
     // ─── Configuration Record ──────────────────────────────────
-    
+
     /**
-     * Holds the connection configuration entered by the user.
+     * Holds the transport-level connection configuration entered by the user.
+     * The player name is negotiated separately, after the transport is open.
      */
     private record ConnectionConfig(
         ConnectionProtocol transport,
         String host,
-        int port,
-        String playerName
+        int port
     ) {}
 
     // ─── Main Entry Point ──────────────────────────────────────
-    
+
     /**
      * Entry point that collects configuration from the user interactively,
      * then starts the game with those settings.
      * No command-line arguments required.
      */
     public static void main(String[] args) throws Exception {
-        // PHASE 1: Interactive configuration
+        // PHASE 1: Interactive transport configuration
         ConnectionConfig config = acquireConfiguration();
-        
+
         System.out.println("\n✓ Configuration complete!");
         System.out.println("  Protocol: " + config.transport());
         System.out.println("  Server: " + config.host() + ":" + config.port());
-        System.out.println("  Player: " + config.playerName());
         System.out.println();
-        
-        // PHASE 2: Connect and start main game loop
+
+        // PHASE 2: Connect (transport only), negotiate name, then start the loop
         startGame(config);
     }
 
@@ -71,11 +70,8 @@ public class ClientMainCli {
         
         // Enter port (default: 9999 for Socket, 1099 for RMI)
         int port = readPort(reader, transport);
-        
-        // Enter player name (required, no default)
-        String playerName = readPlayerName(reader);
-        
-        return new ConnectionConfig(transport, host, port, playerName);
+
+        return new ConnectionConfig(transport, host, port);
     }
     
     /**
@@ -164,29 +160,41 @@ public class ClientMainCli {
     
     /**
      * Starts the game with the given configuration.
-     * Establishes the server connection and enters the command loop.
+     * <p>
+     * Opens the transport, then loops on the player-name prompt until the
+     * server accepts the name. Only after acceptance are the local game state,
+     * listener, reader thread and heartbeat scheduler created and started.
      */
     private static void startGame(ConnectionConfig config) throws Exception {
-        LocalGameState localState = new LocalGameState();
-        GameStateRenderer renderer = new BoardRenderer();
-        ClientStateListenerCli listener = new ClientStateListenerCli(config.playerName(), renderer);
-
         System.out.println("Connecting via " + config.transport() + " to " + config.host() + ":" + config.port() + "...");
-
-        VirtualServer proxy = VirtualServerFactory.create(
+        VirtualServer proxy = VirtualServerFactory.connect(
             config.transport(),
             config.host(),
-            config.port(),
-            config.playerName(),
-            localState,
-            listener
+            config.port()
         );
-
         System.out.println("✓ Connected!\n");
+
+        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+        GameStateRenderer renderer = new BoardRenderer();
+
+        String playerName;
+        LocalGameState localState;
+        ClientStateListenerCli listener;
+        while (true) {
+            playerName = readPlayerName(stdin);
+            localState = new LocalGameState();
+            listener = new ClientStateListenerCli(playerName, renderer);
+            if (proxy.tryRegisterName(playerName, localState, listener)) {
+                break;
+            }
+            System.out.println("✗ Name '" + playerName + "' is already taken on the server. Try a different one.");
+        }
+
+        proxy.start();
+
         System.out.println("Commands: " + helpLine());
         System.out.print("> ");
 
-        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         String input;
         while ((input = stdin.readLine()) != null) {
             String trimmed = input.trim();
