@@ -44,7 +44,6 @@ public class Game {
     }
 
     public synchronized void onPlayerDisconnect(String playerName) {
-        // TODO: forse può delegare al model la notifica delle view, in questo modo Game non conosce più le view, pensiamoci
         if (gameOver) return;
         views.forEach(v -> v.sendError("Player_disconnected:" + playerName));
 

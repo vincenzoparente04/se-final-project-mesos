@@ -17,7 +17,7 @@ import java.util.List;
 public class GameModel {
     private static final int MAX_ROUNDS = 10;
 
-    private final Board board = new Board();
+    private final Board board;
     private final RowsManager rowsManager = new RowsManager();
     private List<Player> players = new ArrayList<>();
     private int currentRound = 1;
@@ -28,11 +28,9 @@ public class GameModel {
 
     public GameModel(List<VirtualView> views) {
         this.views = new ArrayList<>(views);
+        this.board = new Board(views.size());
     }
 
-    public GameModel() {
-        this.views = new ArrayList<>();
-    }
 
     public void startGame(List<String> playerNames) {
         createPlayers(playerNames);

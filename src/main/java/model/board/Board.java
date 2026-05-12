@@ -10,7 +10,7 @@ public class Board {
     private OfferTrack offerTrack;
     private TurnOrderTile turnOrderTile;
 
-    public void setup(int playerCount) {
+    public Board(int playerCount) {
         BoardFactory.BoardComponents components = BoardFactory.createComponents(playerCount);
         this.offerTrack = new OfferTrack(components.offerTiles());
         this.turnOrderTile = new TurnOrderTile(components.turnOrderSlots(), components.turnOrderTileImage());
@@ -69,14 +69,14 @@ public class Board {
     }
 
     public List<Player> getTurnOrder() {
-        return turnOrderTile != null ? turnOrderTile.getTurnOrder() : Collections.emptyList();
+        return turnOrderTile.getTurnOrder();
     }
 
     public List<OfferTile> getOfferTiles() {
-        return offerTrack != null ? offerTrack.getTiles() : Collections.emptyList();
+        return offerTrack.getTiles();
     }
 
     public List<TurnOrderSlot> getTurnOrderSlots() {
-        return turnOrderTile != null ? turnOrderTile.getSlots() : Collections.emptyList();
+        return turnOrderTile.getSlots();
     }
 }

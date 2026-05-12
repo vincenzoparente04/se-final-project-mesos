@@ -23,7 +23,6 @@ public class SetupPhase implements GamePhaseHandler {
      */
     @Override
     public void onEnter() {
-        model.getBoard().setup(model.getPlayerCount());
         model.getRowsManager().setup(model.getPlayerCount());
         randomizeTurnOrder(model.getPlayers());
         distributeStartingResources();

@@ -52,7 +52,7 @@ public class QueueDrainerThread implements Runnable {
 
     private void execute(GameCommand command) {
         try {
-            controller.handleCommand(command);
+            controller.handleCommand(command); // TODO: deve fare Game.handleCommand (che diventa il nuovo controller)
         } catch (Exception e) { // TODO vedi se può essere lui stesso a notificare le view cosi evitiamo il consumer
             String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             onError.accept(command.getPlayerName(), message);

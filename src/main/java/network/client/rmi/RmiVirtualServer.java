@@ -79,7 +79,7 @@ public class RmiVirtualServer implements VirtualServer {
             return t;
         });
 
-        serverStub.join(playerName, callback);
+        serverStub.join(playerName, callback); // TODO chiudi se name alredy taken
 
         this.heartbeatScheduler.scheduleAtFixedRate(
                 () -> submitAsync(new HeartbeatCommand(playerName)),

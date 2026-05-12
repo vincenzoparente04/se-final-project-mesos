@@ -26,7 +26,8 @@ public class GameController {
      */
     public synchronized void handleCommand(GameCommand cmd) throws Exception {
         Player current = gameModel.getCurrentPlayer();
-        if (current == null || !current.getName().equals(cmd.getPlayerName())) {
+        if
+        (current == null || !current.getName().equals(cmd.getPlayerName())) {
             throw new IllegalStateException("It is not " + cmd.getPlayerName() + "'s turn.");
         }
         gameModel.handleCommand(cmd);
