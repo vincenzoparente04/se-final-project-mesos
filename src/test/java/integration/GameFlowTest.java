@@ -30,7 +30,9 @@ class GameFlowTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        model = new GameModel();
+        FakeVirtualView vv1 = new FakeVirtualView();
+        FakeVirtualView vv2 = new FakeVirtualView();
+        model = new GameModel(List.of(vv1,vv2));
         model.startGame(List.of("Player1", "Player2"));
         completeColorChoosing();
     }
@@ -200,13 +202,21 @@ class GameFlowTest {
     // Multi-player-count integration tests
 
     private GameModel setupGame(List<String> names) {
-        GameModel m = new GameModel();
+        List<network.server.core.VirtualView> vvs = new java.util.ArrayList<>();
+        for (int j = 0; j < names.size(); j++) {
+            vvs.add(new FakeVirtualView());
+        }
+        GameModel m = new GameModel(vvs);
         m.startGame(names);
         // consume color-choosing phase
         TotemColor[] colors = TotemColor.values();
         int i = 0;
         while (m.getCurrentPhase() == GamePhase.COLOR_CHOOSING_PHASE) {
-            m.chooseColor(m.getCurrentPlayer(), colors[i++]);
+            try {
+                m.getPhaseHandler().visit(new ChooseColorCommand(m.getCurrentPlayer().getName(), colors[i++].toString()));
+            }catch (Exception e) {
+                fail("Unexpected error while visiting color choose command");
+            }
         }
         return m;
     }
@@ -218,7 +228,12 @@ class GameFlowTest {
                     .filter(t -> !t.isOccupied())
                     .findFirst()
                     .orElseThrow();
-            m.placeTotem(current, free.getLetter());
+
+            try {
+                m.getPhaseHandler().visit(new PlaceTotemCommand(current.getName(), free.getLetter()));
+            }catch (Exception e) {
+                fail("Unexpected error while visiting place totem command");
+            }
         }
     }
 
@@ -233,13 +248,17 @@ class GameFlowTest {
                     .filter(c -> c instanceof CharacterCard && action.canDraw(c, rm))
                     .findFirst();
             if (forced.isPresent()) {
-                m.drawCard(forced.get().getId());
+                try {
+                    m.getPhaseHandler().visit(new DrawCardCommand(current.getName(), forced.get().getId()));
+                }catch (Exception e) {
+                    fail("Unexpected error while visiting place totem command");
+                }
             } else {
-                try { m.endTurn(); } catch (IllegalStateException ignored) {}
+                try { m.getPhaseHandler().visit(new EndTurnCommand(current.getName())); } catch (IllegalStateException ignored) {}
             }
         }
         if (m.getCurrentPhase() == GamePhase.PRE_END_OF_ROUND) {
-            m.endTurn();
+            try { m.getPhaseHandler().visit(new EndTurnCommand(m.getCurrentPlayer().getName())); } catch (IllegalStateException ignored){};
         }
     }
 

@@ -71,7 +71,7 @@ public class GameModel {
     }
 
     public synchronized void swapView(String playerName, VirtualView newView) {
-        views.removeIf(v -> v.getPlayerName().equals(playerName));
+        views.removeIf(v -> playerName.equals(v.getPlayerName()));
         views.add(newView);
     }
 

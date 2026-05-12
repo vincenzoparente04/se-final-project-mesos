@@ -6,6 +6,7 @@ import model.board.OfferTile;
 import model.enums.Era;
 import model.enums.GamePhase;
 import model.player.Player;
+import network.server.core.VirtualView;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import shared.command.ChooseColorCommand;
@@ -24,7 +25,9 @@ public class FullGameTest {
     @Test
     @DisplayName("Simulate a full game with 2 players, covering all phases and verifying correct flow and state transitions")
     void fullGameTest() throws Exception {
-        GameModel model = new GameModel();
+        VirtualView vv1 = new FakeVirtualView();
+        VirtualView vv2 = new FakeVirtualView();
+        GameModel model = new GameModel(List.of(vv1, vv2));
         GameController gameController = new GameController(model);
 
         List<String> playerNames = List.of("Homer", "Bart");

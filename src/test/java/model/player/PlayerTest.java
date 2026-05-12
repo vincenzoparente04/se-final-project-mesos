@@ -246,8 +246,8 @@ class PlayerTest {
     @DisplayName("setConnection and setDisconnected")
     void setConnectionAndDisconnected() {
         player.setConnected();
-        assertTrue(player.getState(), "Player should be connected");
+        assertTrue(player.isConnected(), "Player should be connected");
         player.setDisconnected();
-        assertFalse(player.getState(), "Player should be disconnected");
+        assertFalse(player.isConnected(), "Player should be disconnected");
     }
 }

@@ -1,5 +1,6 @@
 package model.phaseHandlers;
 
+import integration.FakeVirtualView;
 import model.GameModel;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
@@ -60,9 +61,6 @@ public class ColorChoosingPhaseTest {
             when(player1.getName()).thenReturn("Player1");
             when(player2.getName()).thenReturn("Player2");
             when(player3.getName()).thenReturn("Player3");
-            when(player1.getState()).thenReturn(true);
-            when(player2.getState()).thenReturn(true);
-            when(player3.getState()).thenReturn(true);
 
             // Players are connected
             when(player1.isConnected()).thenReturn(true);
@@ -241,12 +239,6 @@ public class ColorChoosingPhaseTest {
         when(localPlayer3.getName()).thenReturn("Player3");
         when(localPlayer4.getName()).thenReturn("Player4");
         when(localPlayer5.getName()).thenReturn("Player5");
-        
-        when(localPlayer1.getState()).thenReturn(true);
-        when(localPlayer2.getState()).thenReturn(true);
-        when(localPlayer3.getState()).thenReturn(true);
-        when(localPlayer4.getState()).thenReturn(true);
-        when(localPlayer5.getState()).thenReturn(true);
 
         when(localPlayer1.isConnected()).thenReturn(true);
         when(localPlayer2.isConnected()).thenReturn(true);
@@ -277,15 +269,17 @@ public class ColorChoosingPhaseTest {
         verify(localPlayer5, never()).setColor(TotemColor.RED);
     }
   
-  
- //TODO: ADJUST THIS TEST TO NEW CONTROLLER VERSION 
+
     @Test
     @DisplayName("Skip player when disconnected")
     void testSkipPlayerWhenDisconnected() {
 
         /// DIFFFERS FROM OTHERS --> no setup
+        FakeVirtualView vv1 = new FakeVirtualView();
+        FakeVirtualView vv2 = new FakeVirtualView();
+        FakeVirtualView vv3 = new FakeVirtualView();
 
-        GameModel localModel = new GameModel();
+        GameModel localModel = new GameModel(List.of(vv1,vv2, vv3));
 
         List<String> localPlayers = List.of("Player1", "Player2", "Player3");
         localModel.startGame(localPlayers);
@@ -296,7 +290,9 @@ public class ColorChoosingPhaseTest {
 
         assertEquals(GamePhase.COLOR_CHOOSING_PHASE, localModel.getCurrentPhase());
 
-        localModel.chooseColor(localModel.getPlayerByName("Player1"), TotemColor.RED);
+        try{localModel.getPhaseHandler().visit(new ChooseColorCommand("Player1", "RED"));} catch (Exception e) {
+                fail("Player1 should be able to choose color");
+        }
 
         //first player disconnected so curr player should be the next
         Player follows = localModel.getCurrentPlayer();

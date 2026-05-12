@@ -63,7 +63,6 @@ class ActionPhaseTest {
         t1 = mock(Tribe.class);
         when(p1.getName()).thenReturn("Player1");
         when(p1.getTribe()).thenReturn(t1);
-        when(p1.getState()).thenReturn(true);
 
         when(model.getBoard()).thenReturn(board);
         when(model.getRowsManager()).thenReturn(rowsManager);
@@ -398,8 +397,8 @@ class ActionPhaseTest {
     @DisplayName("ensure skips disconnected player")
     void ensureSkispDisconnectedPlayer() {
         Player p2 = mock(Player.class);
-        when(p2.getState()).thenReturn(true);
-        when(p1.getState()).thenReturn(false);
+        when(p2.isConnected()).thenReturn(true);
+        when(p1.isConnected()).thenReturn(false);
 
         when(board.getNextPlayerOnOfferTrack()).thenReturn(p1).thenReturn(p2);
 
@@ -438,7 +437,7 @@ class ActionPhaseTest {
 
         // Now currentPlayer is not null, but currentAction is null.
         // Calling drawCard (which calls ensureActiveTurn) should throw the correct exception.
-        IllegalStateException e = assertThrows(IllegalStateException.class, () -> phase.drawCard(10));
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> phase.visit(new DrawCardCommand(p1.getName(), 10)));
         assertEquals("No active action turn.", e.getMessage());
     }
 }

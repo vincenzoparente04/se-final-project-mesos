@@ -1,5 +1,6 @@
 package model;
 
+import integration.FakeVirtualView;
 import model.enums.GamePhase;
 import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
@@ -21,7 +22,10 @@ class GameModelTest {
 
     @BeforeEach
     void setUp() {
-        gameModel = new GameModel();
+        FakeVirtualView vv1 = new FakeVirtualView();
+        FakeVirtualView vv2 = new FakeVirtualView();
+
+        gameModel = new GameModel(List.of(vv1, vv2));
     }
 
     @Test
@@ -64,6 +68,7 @@ class GameModelTest {
         VirtualView oldView = mock(VirtualView.class);
         VirtualView newView = mock(VirtualView.class);
         when(oldView.getPlayerName()).thenReturn("Player1");
+        when(newView.getPlayerName()).thenReturn("Player1");
 
         gameModel.startGame(List.of("Player1", "Player2"));
         gameModel.addView(oldView);

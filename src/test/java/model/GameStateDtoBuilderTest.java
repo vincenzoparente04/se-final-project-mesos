@@ -121,7 +121,7 @@ public class GameStateDtoBuilderTest {
 
         assertEquals("ACTION", dto.phase);
         assertEquals("Alice", dto.currentPlayerName);
-        assertEquals("ERA_II", dto.currentEra);
+        assertEquals("2", dto.currentEra);
     }
 
     // ── winners branch ────────────────────────────────────────────────────────

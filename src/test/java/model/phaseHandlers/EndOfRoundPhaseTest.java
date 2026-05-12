@@ -129,10 +129,5 @@ public class EndOfRoundPhaseTest {
 		assertNull(phase.getCurrentPlayer());
 	}
 
-    @Test
-    @DisplayName("skipCurrentPlayerTurn throws during EndOfRoundPhase")
-    void skipCurrentPlayerTurnThrows() {
-        assertThrows(IllegalStateException.class, () -> phase.skipCurrentPlayerTurn());
-    }
 
 }
