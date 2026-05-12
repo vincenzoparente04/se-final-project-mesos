@@ -5,44 +5,185 @@ import network.client.view.GameStateRenderer;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.IOException;
 
 
 public class ClientMainCli {
 
+    // ─── Configuration Record ──────────────────────────────────
+    
+    /**
+     * Holds the connection configuration entered by the user.
+     */
+    private record ConnectionConfig(
+        ConnectionProtocol transport,
+        String host,
+        int port,
+        String playerName
+    ) {}
+
+    // ─── Main Entry Point ──────────────────────────────────────
+    
+    /**
+     * Entry point that collects configuration from the user interactively,
+     * then starts the game with those settings.
+     * No command-line arguments required.
+     */
     public static void main(String[] args) throws Exception {
-        if (args.length < 3) {
-            printUsage();
-            return;
-        }
+        // PHASE 1: Interactive configuration
+        ConnectionConfig config = acquireConfiguration();
+        
+        System.out.println("\n✓ Configuration complete!");
+        System.out.println("  Protocol: " + config.transport());
+        System.out.println("  Server: " + config.host() + ":" + config.port());
+        System.out.println("  Player: " + config.playerName());
+        System.out.println();
+        
+        // PHASE 2: Connect and start main game loop
+        startGame(config);
+    }
 
-        String firstArg = args[0].toLowerCase();
-        ConnectionProtocol transport;
-        int port;
-        String host;
-        String playerName;
-        if (firstArg.equals("socket") || firstArg.equals("rmi")) {
-            if (args.length < 4) { printUsage(); return; }
-            transport = ConnectionProtocol.from(args[0]);
-            host = args[1];
-            port = Integer.parseInt(args[2]);
-            playerName = args[3];
+    // ─── Configuration Acquisition ─────────────────────────────
+    
+    /**
+     * Interactively prompts the user for connection configuration.
+     * Returns a ConnectionConfig with validated parameters.
+     */
+    private static ConnectionConfig acquireConfiguration() throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        
+        System.out.println("╔═══════════════════════════════════════╗");
+        System.out.println("║  Mesos Game Client - Configuration    ║");
+        System.out.println("╚═══════════════════════════════════════╝\n");
+        
+        // Select protocol (default: Socket)
+        ConnectionProtocol transport = selectTransport(reader);
+        
+        // Enter host (default: localhost)
+        System.out.print("\nEnter server host (default: localhost): ");
+        String host = reader.readLine().trim();
+        if (host.isEmpty()) {
+            host = "localhost";
+            System.out.println("✓ Host: " + host);
         } else {
-            transport = ConnectionProtocol.SOCKET;
-            host = args[0];
-            port = Integer.parseInt(args[1]);
-            playerName = args[2];
+            System.out.println("✓ Host: " + host);
         }
+        
+        // Enter port (default: 9999 for Socket, 1099 for RMI)
+        int port = readPort(reader, transport);
+        
+        // Enter player name (required, no default)
+        String playerName = readPlayerName(reader);
+        
+        return new ConnectionConfig(transport, host, port, playerName);
+    }
+    
+    /**
+     * Prompts for connection protocol selection with Socket as default.
+     */
+    private static ConnectionProtocol selectTransport(BufferedReader reader) throws IOException {
+        while (true) {
+            System.out.println("Select connection protocol:");
+            System.out.println("  1) Socket (default)");
+            System.out.println("  2) RMI");
+            System.out.print("\nChoice (1 or 2, press ENTER for Socket): ");
+            
+            String choice = reader.readLine().trim();
+            
+            // Default: Socket if input is empty
+            if (choice.isEmpty()) {
+                System.out.println("✓ Protocol: Socket");
+                return ConnectionProtocol.SOCKET;
+            }
+            
+            if (choice.equals("1")) {
+                System.out.println("✓ Protocol: Socket");
+                return ConnectionProtocol.SOCKET;
+            }
+            if (choice.equals("2")) {
+                System.out.println("✓ Protocol: RMI");
+                return ConnectionProtocol.RMI;
+            }
+            
+            System.out.println("✗ Invalid choice. Try again.\n");
+        }
+    }
+    
+    /**
+     * Prompts for server port with a sensible default based on protocol.
+     */
+    private static int readPort(BufferedReader reader, ConnectionProtocol transport) throws IOException {
+        int defaultPort = transport == ConnectionProtocol.SOCKET ? 9999 : 1099;
+        
+        while (true) {
+            System.out.print("Enter server port (default: " + defaultPort + "): ");
+            String input = reader.readLine().trim();
+            
+            if (input.isEmpty()) {
+                System.out.println("✓ Port: " + defaultPort);
+                return defaultPort;
+            }
+            
+            try {
+                int port = Integer.parseInt(input);
+                if (port > 0 && port < 65536) {
+                    System.out.println("✓ Port: " + port);
+                    return port;
+                }
+                System.out.println("✗ Port must be between 1 and 65535. Try again.\n");
+            } catch (NumberFormatException e) {
+                System.out.println("✗ Invalid port number. Try again.\n");
+            }
+        }
+    }
+    
+    /**
+     * Prompts for player name with validation (non-empty, max 20 chars).
+     */
+    private static String readPlayerName(BufferedReader reader) throws IOException {
+        while (true) {
+            System.out.print("\nEnter player name: ");
+            String playerName = reader.readLine().trim();
+            
+            if (playerName.isEmpty()) {
+                System.out.println("✗ Player name cannot be empty. Try again.");
+                continue;
+            }
+            
+            if (playerName.length() > 20) {
+                System.out.println("✗ Player name too long (max 20 chars). Try again.");
+                continue;
+            }
+            
+            System.out.println("✓ Player: " + playerName);
+            return playerName;
+        }
+    }
 
+    // ─── Main Game Loop ────────────────────────────────────────
+    
+    /**
+     * Starts the game with the given configuration.
+     * Establishes the server connection and enters the command loop.
+     */
+    private static void startGame(ConnectionConfig config) throws Exception {
         LocalGameState localState = new LocalGameState();
         GameStateRenderer renderer = new BoardRenderer();
-        ClientStateListenerCli listener = new ClientStateListenerCli(playerName, renderer);
+        ClientStateListenerCli listener = new ClientStateListenerCli(config.playerName(), renderer);
 
-        System.out.println("Connecting via " + transport + " to " + host + ":" + port + " as \"" + playerName + "\"...");
+        System.out.println("Connecting via " + config.transport() + " to " + config.host() + ":" + config.port() + "...");
 
-        VirtualServer proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
+        VirtualServer proxy = VirtualServerFactory.create(
+            config.transport(),
+            config.host(),
+            config.port(),
+            config.playerName(),
+            localState,
+            listener
+        );
 
-        System.out.println("Connected. Use 'lobbies' to list lobbies, 'create <n>' or 'join <id>'.");
-        printHelp();
+        System.out.println("✓ Connected!\n");
+        System.out.println("Commands: " + helpLine());
         System.out.print("> ");
 
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
@@ -58,11 +199,9 @@ public class ClientMainCli {
 
             if (trimmed.equalsIgnoreCase("state")) {
                 listener.forceRefresh(localState);
-            } else if (trimmed.equalsIgnoreCase("tribes"))
-            {
+            } else if (trimmed.equalsIgnoreCase("tribes")) {
                 listener.printAllTribes(localState);
-            } else if (!dispatch(proxy, trimmed))
-            {
+            } else if (!dispatch(proxy, trimmed)) {
                 System.out.println("[?] Unknown command. " + helpLine());
             }
             System.out.print("> ");
@@ -72,6 +211,8 @@ public class ClientMainCli {
         System.out.println("Disconnected.");
     }
 
+    // ─── Command Dispatcher ────────────────────────────────────
+    
     /**
      * @implNote This is a simple command dispatcher that parses the first word as the command and the rest as an argument.
      * It calls the appropriate method on the VirtualServer proxy based on the command.
@@ -119,17 +260,9 @@ public class ClientMainCli {
         return true;
     }
 
-    private static void printUsage() {
-        System.err.println("Usage:");
-        System.err.println("  ClientMainCli socket <host> <port>    <playerName>");
-        System.err.println("  ClientMainCli rmi    <host> <rmiPort> <playerName>");
-    }
-
-    private static void printHelp() {
-        System.out.println("Commands: " + helpLine());
-    }
-
+    // ─── Helpers ───────────────────────────────────────────────
+    
     private static String helpLine() {
-        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | state | tribes | quit";
+        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | leave | state | tribes | quit";
     }
 }
