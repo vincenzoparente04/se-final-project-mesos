@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+//TODO: IMPLEMENT AUTO REFRESH OF LOBBY
+
 /**
  * Lobby browser: refresh, create, join.
  * Selecting a lobby and pressing Enter (or double-clicking) joins it;

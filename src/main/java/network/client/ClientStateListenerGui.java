@@ -30,6 +30,7 @@ public class ClientStateListenerGui implements ClientStateListener {
             String phase = state.getPhase();
             Object ctrl = router.currentController();
 
+            //TODO: remove instanceof by using better the SceneRouter. Wire the boardViewController.joinSelected() to router.toBoard()
             if (ctrl instanceof BoardViewController bvc) {
                 bvc.update(state);
                 return;

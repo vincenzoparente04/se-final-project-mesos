@@ -36,15 +36,20 @@ public class NickViewController {
 
     @FXML
     private void onConnect() {
+        //Ensure that fields are valid:
         String name = nameField.getText() == null ? "" : nameField.getText().trim();
         String host = hostField.getText() == null ? "" : hostField.getText().trim();
         String portText = portField.getText() == null ? "" : portField.getText().trim();
 
-        if (name.isEmpty()) { setStatus("Please enter a nickname.", true); return; }
-        if (host.isEmpty()) { setStatus("Please enter a host.", true); return; }
+        if(name.isEmpty()){setStatus("Please enter a nickname.", true); return; }
+        if(name.length() > 20){setStatus("Please enter a shorter nickname.", true); return;}
+        if(host.isEmpty()){setStatus("Please enter a host.", true); return; }
         int port;
-        try { port = Integer.parseInt(portText); }
-        catch (NumberFormatException e) { setStatus("Port must be a number.", true); return; }
+        try {
+            port = Integer.parseInt(portText);
+        } catch (NumberFormatException e) {
+            setStatus("Port must be a number.", true); return;
+        }
 
         ConnectionProtocol transport = rmiRadio.isSelected()
                 ? ConnectionProtocol.RMI : ConnectionProtocol.SOCKET;

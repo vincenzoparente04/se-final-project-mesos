@@ -62,9 +62,12 @@ public class TotemPickViewController {
         for (Button btn : colorButtons()) {
             String color = (String) btn.getUserData();
             boolean alreadyTaken = taken.contains(color);
+            //TODO: adjust the disabled totem buttons to match the concurrent color choosing phase
             btn.setDisable(!isMyTurn || iHavePicked || alreadyTaken);
+            //btn.setDisable(alreadyTaken);
         }
 
+        //TODO: remove the last else after the concurring color choosing phase
         if (iHavePicked) {
             hintLabel.setText("You picked " + self.color + ". Waiting for the others…");
         } else if (isMyTurn) {
@@ -103,7 +106,8 @@ public class TotemPickViewController {
             
             btn.setOnAction(e -> {
                 if (router.virtualServer() != null) router.virtualServer().sendChooseColor(c);
-                btn.setDisable(true);
+                //TODO: uncomment it when the color choosing phase will handle concurrency
+                //btn.setDisable(true);
             });
             colorRow.getChildren().add(btn);
         }
