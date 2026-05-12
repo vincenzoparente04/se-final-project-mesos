@@ -321,7 +321,7 @@ public class LobbyManager implements LobbyCommandVisitor {
 
             // Notify remaining players in that lobby of the new state
             if (!lobbyToLeave.getPlayers().isEmpty()) {
-                broadcastLobbyState(lobbyToLeave);
+                lobbyToLeave.broadcastState();
             } else {
                 lobbies.values().remove(lobbyToLeave);
             }
