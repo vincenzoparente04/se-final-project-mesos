@@ -25,11 +25,10 @@ class OfferTrackTest {
 
     @BeforeEach
     void setUp() {
-        offerTrack = new OfferTrack(); //all tiles takeFoodAction for testing purposes
         tileB = new OfferTile('B', new TakeFoodAction(1), "B_front.png", "B_back.png");
         tileC = new OfferTile('C', new TakeFoodAction(2), "C_front.png", "C_back.png");
         tileD = new OfferTile('D', new TakeFoodAction(3), "D_front.png", "D_back.png");
-        offerTrack.setup(List.of(tileB, tileC, tileD));
+        offerTrack = new OfferTrack(List.of(tileB, tileC, tileD)); //all tiles takeFoodAction for testing purposes
     }
 
     @Test

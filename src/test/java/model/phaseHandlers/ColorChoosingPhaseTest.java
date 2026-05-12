@@ -60,6 +60,11 @@ public class ColorChoosingPhaseTest {
             when(player2.getName()).thenReturn("Player2");
             when(player3.getName()).thenReturn("Player3");
 
+            // Players are connected
+            when(player1.isConnected()).thenReturn(true);
+            when(player2.isConnected()).thenReturn(true);
+            when(player3.isConnected()).thenReturn(true);
+
             // Wire getPlayerByName so visit() can resolve the player object
             when(gameModel.getPlayerByName("Player1")).thenReturn(player1);
             when(gameModel.getPlayerByName("Player2")).thenReturn(player2);
@@ -234,6 +239,12 @@ public class ColorChoosingPhaseTest {
         when(localPlayer3.getName()).thenReturn("Player3");
         when(localPlayer4.getName()).thenReturn("Player4");
         when(localPlayer5.getName()).thenReturn("Player5");
+
+        when(localPlayer1.isConnected()).thenReturn(true);
+        when(localPlayer2.isConnected()).thenReturn(true);
+        when(localPlayer3.isConnected()).thenReturn(true);
+        when(localPlayer4.isConnected()).thenReturn(true);
+        when(localPlayer5.isConnected()).thenReturn(true);
 
         List<Player> localPlayers = List.of(localPlayer1, localPlayer2, localPlayer3, localPlayer4, localPlayer5);
         when(localModel.getPlayers()).thenReturn(localPlayers);

@@ -74,6 +74,10 @@ class PlacementPhaseTest {
         when(tileB.getLetter()).thenReturn('B');
         when(tileC.getLetter()).thenReturn('C');
 
+        when(p1.isConnected()).thenReturn(true);
+        when(p2.isConnected()).thenReturn(true);
+        when(p3.isConnected()).thenReturn(true);
+
         phase = new PlacementPhase(model);
     }
 

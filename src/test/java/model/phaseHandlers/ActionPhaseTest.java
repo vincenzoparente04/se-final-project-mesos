@@ -68,6 +68,7 @@ class ActionPhaseTest {
         when(model.getRowsManager()).thenReturn(rowsManager);
         when(board.getOfferTrack()).thenReturn(offerTrack);
         when(board.getTurnOrderTile()).thenReturn(turnOrderTile);
+        when(p1.isConnected()).thenReturn(true);
 
         phase = new ActionPhase(model);
     }
@@ -116,6 +117,7 @@ class ActionPhaseTest {
                 () -> phase.visit(new DrawCardCommand("Player1", 10)));
     }
 
+    //LOOP INFINITO QUI ──────────────────────────────────────────
     @Test
     @DisplayName("visit(DrawCardCommand) should execute card acquisition flow for a legal draw")
     void drawCardLegalFlowExecutesSuccessfully() throws Exception {
