@@ -12,6 +12,7 @@ import shared.dto.PlayerDto;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -87,16 +88,8 @@ public class TotemPickViewController {
         for (String c : COLORS) {
             Button btn = new Button();
             btn.setUserData(c);
-            
-            // Map theoretical color to available file name
-            String fileNameColor;
-            switch(c) {
-                case "BLUE": fileNameColor = "cyan"; break;
-                case "GREEN": fileNameColor = "purple"; break;
-                default: fileNameColor = c.toLowerCase();
-            }
-            
-            String imagePath = "/images/totems/front/totem_front_" + fileNameColor + ".png";
+
+            String imagePath = "/images/totems/front/totem_front_" + c.toLowerCase() + ".png";
             java.io.InputStream stream = getClass().getResourceAsStream(imagePath);
             if (stream != null) {
                 javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(new javafx.scene.image.Image(stream));
