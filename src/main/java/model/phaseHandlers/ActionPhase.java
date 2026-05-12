@@ -7,15 +7,18 @@ import model.enums.GamePhase;
 import model.board.OfferTileAction.OfferTileAction;
 import model.player.Player;
 import model.rowsManager.RowsManager;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
 
 
-public class ActionPhase extends GamePhaseHandler {
+public class ActionPhase implements GamePhaseHandler {
 
+    private final GameModel model;
     private Player currentPlayer;
     private OfferTileAction currentAction;
 
     public ActionPhase(GameModel model) {
-        super(model);
+        this.model = model;
     }
 
     @Override
@@ -30,11 +33,11 @@ public class ActionPhase extends GamePhaseHandler {
         do {
             currentPlayer = board.getNextPlayerOnOfferTrack();
             if (currentPlayer == null) break;  // No more players
-            if (!currentPlayer.getState()) {
+            if (!currentPlayer.isConnected()) {
                 // Skip disconnected player and return their totem to the turn order
                 board.returnTotemToTurnOrder(currentPlayer);
             }
-        } while (!currentPlayer.getState());
+        } while (!currentPlayer.isConnected());
 
         // Se non ci sono più giocatori, la fase Action è finita
         if (currentPlayer == null) {
@@ -60,16 +63,15 @@ public class ActionPhase extends GamePhaseHandler {
 
     /**
      * @implNote delegates all the logic to CardDrawer which uses visitor pattern to check if the card can be drawn and if yes how to manage the drawing
-     * @param cardId
      */
     @Override
-    public void drawCard(int cardId) {
+    public void visit(DrawCardCommand cmd) throws Exception {
+        int cardId = cmd.cardId();
         ensureActiveTurn();
-
 
         RowsManager rowsManager = model.getRowsManager();
         Card card = rowsManager.findCardById(cardId)
-                .orElseThrow(() -> new IllegalArgumentException("Card " + cardId +" not found on board"));
+                .orElseThrow(() -> new IllegalArgumentException("Card " + cardId + " not found on board"));
 
         if (!currentAction.canDraw(card, rowsManager)) {
             throw new IllegalStateException("The offer tile does not allow drawing this card (wrong row or draw limit reached)");
@@ -84,7 +86,8 @@ public class ActionPhase extends GamePhaseHandler {
         checkActionCompletionOrAutoAdvance();
     }
 
-    public void endTurn() {
+    @Override
+    public void visit(EndTurnCommand cmd) throws Exception {
         ensureActiveTurn();
 
         if (hasAnyForcedMove()) {
@@ -108,22 +111,20 @@ public class ActionPhase extends GamePhaseHandler {
 
     /**
      * @implNote checks if there are no character card or acquirable building card left using legalMoveChecker which uses visitor pattern
-     * @return
      */
     private boolean hasAnyLegalMove() {
         RowsManager rowsManager = model.getRowsManager();
-        MoveChecker moveChecker = new MoveChecker(currentPlayer, currentAction,  rowsManager);
+        MoveChecker moveChecker = new MoveChecker(currentPlayer, currentAction, rowsManager);
 
         return moveChecker.checkLegalMoves(rowsManager.getAllCardsOnBoard());
     }
 
     /**
      * @implNote checks if there are no character card left using legalMoveChecker which uses visitor pattern
-     * @return
      */
     private boolean hasAnyForcedMove() {
         RowsManager rowsManager = model.getRowsManager();
-        MoveChecker moveChecker = new MoveChecker(currentPlayer, currentAction,  rowsManager);
+        MoveChecker moveChecker = new MoveChecker(currentPlayer, currentAction, rowsManager);
 
         return moveChecker.checkForcedMoves(rowsManager.getAllTribeCardsOnBoard());
     }

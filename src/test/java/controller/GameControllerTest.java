@@ -1,11 +1,15 @@
 package controller;
 
 import model.GameModel;
-import model.enums.TotemColor;
 import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.command.ChooseColorCommand;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
+import shared.command.GameCommand;
+import shared.command.PlaceTotemCommand;
 
 import java.util.List;
 
@@ -31,7 +35,6 @@ class GameControllerTest {
         currentPlayer = mock(Player.class);
         when(currentPlayer.getName()).thenReturn("Alice");
         when(model.getCurrentPlayer()).thenReturn(currentPlayer);
-        when(model.getPlayerByName("Alice")).thenReturn(currentPlayer);
     }
 
     // ── startGame ─────────────────────────────────────────────
@@ -46,102 +49,70 @@ class GameControllerTest {
         verify(model).startGame(names);
     }
 
-    // ── chooseColor ───────────────────────────────────────────
+    // ── handleCommand — turn validation ───────────────────────
 
     @Test
-    @DisplayName("chooseColor delegates to model with resolved player and parsed color")
-    void chooseColorDelegatesToModel() {
-        controller.chooseColor("Alice", "RED");
+    @DisplayName("handleCommand delegates to model when it is the player's turn")
+    void handleCommandDelegatesToModel() throws Exception {
+        GameCommand cmd = new ChooseColorCommand("Alice", "RED");
 
-        verify(model).chooseColor(currentPlayer, TotemColor.RED);
+        controller.handleCommand(cmd);
+
+        verify(model).handleCommand(cmd);
     }
 
     @Test
-    @DisplayName("chooseColor accepts color names case-insensitively")
-    void chooseColorIsCaseInsensitive() {
-        controller.chooseColor("Alice", "blue");
-
-        verify(model).chooseColor(currentPlayer, TotemColor.BLUE);
-    }
-
-    @Test
-    @DisplayName("chooseColor throws when it is not the player's turn")
-    void chooseColorThrowsWhenWrongTurn() {
+    @DisplayName("handleCommand throws when current player is null")
+    void handleCommandThrowsWhenCurrentPlayerNull() throws Exception {
         when(model.getCurrentPlayer()).thenReturn(null);
+        GameCommand cmd = new ChooseColorCommand("Alice", "RED");
 
-        assertThrows(IllegalStateException.class,
-                () -> controller.chooseColor("Alice", "RED"));
+        assertThrows(IllegalStateException.class, () -> controller.handleCommand(cmd));
 
-        verify(model, never()).chooseColor(currentPlayer, TotemColor.RED);
+        verify(model, never()).handleCommand(cmd);
     }
 
     @Test
-    @DisplayName("chooseColor throws for an unknown color name")
-    void chooseColorThrowsForUnknownColor() {
-        assertThrows(IllegalArgumentException.class,
-                () -> controller.chooseColor("Alice", "PURPLE"));
-    }
+    @DisplayName("handleCommand throws when it is not the player's turn")
+    void handleCommandThrowsWhenWrongTurn() throws Exception {
+        Player other = mock(Player.class);
+        when(other.getName()).thenReturn("Bob");
+        when(model.getCurrentPlayer()).thenReturn(other);
 
-    // ── placeTotem ────────────────────────────────────────────
+        GameCommand cmd = new ChooseColorCommand("Alice", "RED");
 
-    @Test
-    @DisplayName("placeTotem delegates to model with resolved player and tile id")
-    void placeTotemDelegatesToModel() {
-        controller.placeTotem("Alice", 'A');
+        assertThrows(IllegalStateException.class, () -> controller.handleCommand(cmd));
 
-        verify(model).placeTotem(currentPlayer, 'A');
+        verify(model, never()).handleCommand(cmd);
     }
 
     @Test
-    @DisplayName("placeTotem throws when it is not the player's turn")
-    void placeTotemThrowsWhenWrongTurn() {
-        when(model.getCurrentPlayer()).thenReturn(null);
+    @DisplayName("handleCommand works for PlaceTotemCommand")
+    void handleCommandPlaceTotem() throws Exception {
+        GameCommand cmd = new PlaceTotemCommand("Alice", 'A');
 
-        assertThrows(IllegalStateException.class,
-                () -> controller.placeTotem("Alice", 'A'));
+        controller.handleCommand(cmd);
 
-        verify(model, never()).placeTotem(currentPlayer, 'A');
-    }
-
-    // ── drawCard ──────────────────────────────────────────────
-
-    @Test
-    @DisplayName("drawCard delegates to model")
-    void drawCardDelegatesToModel() throws Exception {
-        controller.drawCard("Alice", 42);
-
-        verify(model).drawCard(42);
+        verify(model).handleCommand(cmd);
     }
 
     @Test
-    @DisplayName("drawCard throws when it is not the player's turn")
-    void drawCardThrowsWhenWrongTurn() {
-        when(model.getCurrentPlayer()).thenReturn(null);
+    @DisplayName("handleCommand works for DrawCardCommand")
+    void handleCommandDrawCard() throws Exception {
+        GameCommand cmd = new DrawCardCommand("Alice", 42);
 
-        assertThrows(IllegalStateException.class,
-                () -> controller.drawCard("Alice", 42));
-    }
+        controller.handleCommand(cmd);
 
-    // ── endTurn ───────────────────────────────────────────────
-
-    @Test
-    @DisplayName("endTurn delegates to model")
-    void endTurnDelegatesToModel() {
-        controller.endTurn("Alice");
-
-        verify(model).endTurn();
+        verify(model).handleCommand(cmd);
     }
 
     @Test
-    @DisplayName("endTurn throws when it is not the player's turn")
-    void endTurnThrowsWhenWrongTurn() {
-        Player otherPlayer = mock(Player.class);
-        when(otherPlayer.getName()).thenReturn("Bob");
-        when(model.getCurrentPlayer()).thenReturn(otherPlayer);
+    @DisplayName("handleCommand works for EndTurnCommand")
+    void handleCommandEndTurn() throws Exception {
+        GameCommand cmd = new EndTurnCommand("Alice");
 
-        assertThrows(IllegalStateException.class,
-                () -> controller.endTurn("Alice"));
+        controller.handleCommand(cmd);
 
-        verify(model, never()).endTurn();
+        verify(model).handleCommand(cmd);
     }
 }

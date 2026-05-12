@@ -11,13 +11,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class EndOfGamePhase extends GamePhaseHandler {
+public class EndOfGamePhase implements GamePhaseHandler {
 
+    private final GameModel model;
     private Player winner;
     private List<Player> winners; // in case it's a draw
 
     public EndOfGamePhase(GameModel model) {
-        super(model);
+        this.model = model;
     }
 
     /**
@@ -109,7 +110,6 @@ public class EndOfGamePhase extends GamePhaseHandler {
 
     /**
      * @implNote Returns the name(s) of the winner(s)
-     * @return Winners's name
      */
     private String formatWinners() {
         if (winners.size() == 1) {

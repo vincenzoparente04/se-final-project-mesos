@@ -3,14 +3,13 @@ package model.board;
 import model.enums.TotemLocation;
 import model.player.Player;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class TurnOrderTile {
-    private List<TurnOrderSlot> slots = new ArrayList<>();
+    private List<TurnOrderSlot> slots;
     private String imagePath;
 
-    public void setup(List<TurnOrderSlot> slots, String image) {
+    public TurnOrderTile(List<TurnOrderSlot> slots, String image) {
         this.slots = slots;
         this.imagePath = image;
     }
@@ -52,9 +51,6 @@ public class TurnOrderTile {
                 .orElseThrow();
     }
 
-    // SERVE???
-    //public void placeTotemAtSlot(Player player, int index){}
-
     /**
      * @implNote Returns the list of players in the order determined by the occupied slots.
      * It filters the slots to include only those that are occupied, then maps each occupied slot to its occupant (the player) and collects them into a list.
@@ -67,13 +63,4 @@ public class TurnOrderTile {
     public List<TurnOrderSlot> getSlots() {
         return slots;
     }
-
-    //non dovrebbe servire
-    //public void setup(int playerCount) {
-        // costruisce gli slot con i bonus corretti per playerCount
-        // es. per 3 giocatori:
-        // slot 0 → foodBonus=3, isLast=false
-        // slot 1 → foodBonus=1, isLast=false
-        // slot 2 → foodBonus=0, isLast=true
-    //}
 }

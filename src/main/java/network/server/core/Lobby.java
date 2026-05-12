@@ -23,7 +23,9 @@ public class Lobby {
         players.add(entry);
     }
 
-    public void removePlayer(PlayerEntry entry) {players.remove(entry);}
+    public void removePlayer(PlayerEntry entry) {
+        players.remove(entry);
+    }
 
     public boolean isFull() {
         return players.size() >= maxPlayers;
@@ -43,5 +45,34 @@ public class Lobby {
 
     public List<VirtualView> getViews() {
         return players.stream().map(PlayerEntry::getView).toList();
+    }
+
+    /** True se c'è un player con quel nome in questa lobby. */
+    public boolean containsPlayer(String playerName) {
+        return players.stream().anyMatch(p -> p.getName().equals(playerName));
+    }
+
+    /** True se la lobby non ha più giocatori. */
+    public boolean isEmpty() {
+        return players.isEmpty();
+    }
+
+    /**
+     * Rimuove dalla lobby il player con il nome dato.
+     * @return true se il player era presente ed è stato rimosso, false altrimenti
+     */
+    public boolean removePlayerByName(String playerName) {
+        return players.removeIf(p -> p.getName().equals(playerName));
+    }
+
+    /** Invia il LobbyDto corrente a tutte le view dei player di questa lobby. */
+    public void broadcastState() {
+        LobbyDto dto = toDto();
+        getViews().forEach(v -> v.sendLobbyState(dto));
+    }
+
+    /** Invia sendGameStarting a tutte le view dei player di questa lobby. */
+    public void notifyGameStarting() {
+        getViews().forEach(VirtualView::sendGameStarting);
     }
 }

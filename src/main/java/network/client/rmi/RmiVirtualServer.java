@@ -127,8 +127,6 @@ public class RmiVirtualServer implements VirtualServer {
     @Override
     public void close() {
         heartbeatScheduler.shutdownNow();
-
-
         // 1. Notifica il server della disconnessione
         try {
             serverStub.disconnect(playerName);

@@ -3,13 +3,12 @@ package model.board;
 import model.enums.TotemLocation;
 import model.player.Player;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class OfferTrack {
-    private List<OfferTile> tiles = new ArrayList<>();  // listed from A to G
+    private List<OfferTile> tiles;  // listed from A to G
 
-    public void setup(List<OfferTile> tiles) {
+    public OfferTrack(List<OfferTile> tiles) {
         this.tiles = tiles; // lista già filtrata e ordinata dalla factory
     }
 

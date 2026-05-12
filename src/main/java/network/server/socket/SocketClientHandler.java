@@ -25,7 +25,7 @@ public class SocketClientHandler implements Runnable {
     private final CommandDispatcher dispatcher = new CommandDispatcher() {
         @Override
         public void onLobbyCommand(LobbyCommand cmd) throws Exception {
-            lobbyManager.handle(cmd);
+            cmd.accept(lobbyManager);
         }
 
         @Override
@@ -44,8 +44,7 @@ public class SocketClientHandler implements Runnable {
         }
     };
 
-    public SocketClientHandler(VirtualView virtualView, ObjectInputStream in,
-                               LobbyManager lobbyManager) {
+    public SocketClientHandler(VirtualView virtualView, ObjectInputStream in, LobbyManager lobbyManager) {
         this.virtualView = virtualView;
         this.in = in;
         this.lobbyManager = lobbyManager;
@@ -65,7 +64,7 @@ public class SocketClientHandler implements Runnable {
         } catch (EOFException | SocketException ignored) {
         } catch (IOException | ClassNotFoundException ignored) {
         } finally {
-            lobbyManager.onDisconnected(virtualView.getPlayerName());
+            lobbyManager.onDisconnect(virtualView.getPlayerName());
         }
     }
 

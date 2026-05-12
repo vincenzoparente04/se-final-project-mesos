@@ -10,6 +10,8 @@ import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
 
 import java.util.List;
 import java.util.Optional;
@@ -100,9 +102,9 @@ class PreEndOfRoundPhaseTest {
     }
 
     @Test
-    @DisplayName("drawCard should do nothing when there is no active player")
-    void drawCardWithoutActivePlayerDoesNothing() {
-        phase.drawCard(10);
+    @DisplayName("visit(DrawCardCommand) should do nothing when there is no active player")
+    void drawCardWithoutActivePlayerDoesNothing() throws Exception {
+        phase.visit(new DrawCardCommand("Player1", 10));
 
         verify(rowsManager, never()).findCardById(10);
         verify(rowsManager, never()).removeCard(10);
@@ -110,14 +112,15 @@ class PreEndOfRoundPhaseTest {
     }
 
     @Test
-    @DisplayName("drawCard should do nothing when card is not found")
-    void drawCardMissingCardDoesNothing() {
+    @DisplayName("visit(DrawCardCommand) should throw when card is not found")
+    void drawCardMissingCardDoesNothing() throws Exception {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
         when(rowsManager.findCardById(10)).thenReturn(Optional.empty());
 
         phase.onEnter();
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> phase.drawCard(10));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 10)));
 
         verify(rowsManager, times(1)).findCardById(10);
         verify(rowsManager, never()).removeCard(10);
@@ -125,15 +128,16 @@ class PreEndOfRoundPhaseTest {
     }
 
     @Test
-    @DisplayName("drawCard should do nothing when card is not in top row")
-    void drawCardCardNotInTopRowDoesNothing() {
+    @DisplayName("visit(DrawCardCommand) should throw when card is not in top row")
+    void drawCardCardNotInTopRowDoesNothing() throws Exception {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
         when(rowsManager.findCardById(10)).thenReturn(Optional.of(card));
         when(rowsManager.topRowContainsCard(10)).thenReturn(false);
 
         phase.onEnter();
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> phase.drawCard(10));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 10)));
 
         verify(rowsManager, times(1)).findCardById(10);
         verify(rowsManager, times(1)).topRowContainsCard(10);
@@ -143,8 +147,8 @@ class PreEndOfRoundPhaseTest {
     }
 
     @Test
-    @DisplayName("drawCard should throw and stay in phase when selected card is an event")
-    void drawCardEventCardThrows() {
+    @DisplayName("visit(DrawCardCommand) should throw and stay in phase when selected card is an event")
+    void drawCardEventCardThrows() throws Exception {
         EventCard eventCard = mock(EventCard.class);
         when(eventCard.getId()).thenReturn(10);
         doAnswer(invocation -> {
@@ -159,22 +163,23 @@ class PreEndOfRoundPhaseTest {
         when(rowsManager.topRowContainsCard(10)).thenReturn(true);
 
         phase.onEnter();
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> phase.drawCard(10));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 10)));
 
         verify(rowsManager, never()).removeCard(10);
         verify(model, never()).setPhase(argThat(handler -> handler instanceof EndOfRoundPhase));
     }
 
     @Test
-    @DisplayName("drawCard should remove card, acquire it and transition to EndOfRoundPhase")
-    void drawCardValidFlowTransitionsToEndOfRound() {
+    @DisplayName("visit(DrawCardCommand) should remove card, acquire it and transition to EndOfRoundPhase")
+    void drawCardValidFlowTransitionsToEndOfRound() throws Exception {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
         when(rowsManager.findCardById(10)).thenReturn(Optional.of(card));
         when(rowsManager.topRowContainsCard(10)).thenReturn(true);
 
         phase.onEnter();
-        phase.drawCard(10);
+        phase.visit(new DrawCardCommand("Player1", 10));
 
         verify(rowsManager, times(1)).removeCard(10);
         verify(card, times(1)).registerToTribe(p1);
@@ -182,23 +187,22 @@ class PreEndOfRoundPhaseTest {
     }
 
     @Test
-    @DisplayName("endTurn should transition when there is an active player")
-    void endTurnWithActivePlayerTransitions() {
+    @DisplayName("visit(EndTurnCommand) should transition when there is an active player")
+    void endTurnWithActivePlayerTransitions() throws Exception {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
 
         phase.onEnter();
-        phase.endTurn();
+        phase.visit(new EndTurnCommand("Player1"));
 
         verify(model, times(1)).setPhase(argThat(handler -> handler instanceof EndOfRoundPhase));
     }
 
     @Test
-    @DisplayName("endTurn should do nothing when there is no active player")
-    void endTurnWithoutActivePlayerDoesNothing() {
-        phase.endTurn();
+    @DisplayName("visit(EndTurnCommand) should do nothing when there is no active player")
+    void endTurnWithoutActivePlayerDoesNothing() throws Exception {
+        phase.visit(new EndTurnCommand("Player1"));
 
         verify(model, never()).setPhase(argThat(handler -> handler instanceof EndOfRoundPhase));
     }
-
 }
