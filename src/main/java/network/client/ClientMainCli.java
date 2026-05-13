@@ -167,7 +167,7 @@ public class ClientMainCli {
      */
     private static void startGame(ConnectionConfig config) throws Exception {
         System.out.println("Connecting via " + config.transport() + " to " + config.host() + ":" + config.port() + "...");
-        VirtualServer proxy = VirtualServerFactory.connect(
+        VirtualServer virtualServer = VirtualServerFactory.connect(
             config.transport(),
             config.host(),
             config.port()
@@ -184,13 +184,13 @@ public class ClientMainCli {
             playerName = readPlayerName(stdin);
             localState = new LocalGameState();
             listener = new ClientStateListenerCli(playerName, renderer);
-            if (proxy.tryRegisterName(playerName, localState, listener)) {
+            if (virtualServer.tryRegisterName(playerName, localState, listener)) {
                 break;
             }
             System.out.println("✗ Name '" + playerName + "' is already taken on the server. Try a different one.");
         }
 
-        proxy.start();
+        virtualServer.start();
 
         System.out.println("Commands: " + helpLine());
         System.out.print("> ");
@@ -209,13 +209,13 @@ public class ClientMainCli {
                 listener.forceRefresh(localState);
             } else if (trimmed.equalsIgnoreCase("tribes")) {
                 listener.printAllTribes(localState);
-            } else if (!dispatch(proxy, trimmed)) {
+            } else if (!dispatch(virtualServer, trimmed)) {
                 System.out.println("[?] Unknown command. " + helpLine());
             }
             System.out.print("> ");
         }
 
-        proxy.close();
+        virtualServer.close();
         System.out.println("Disconnected.");
     }
 

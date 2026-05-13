@@ -15,10 +15,7 @@ import shared.command.PlaceTotemCommand;
 import shared.command.HeartbeatCommand;
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
-import shared.message.ConnectMessage;
-import shared.message.ErrorMessage;
-import shared.message.LobbyListMessage;
-import shared.message.ServerMessage;
+import shared.message.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -70,9 +67,7 @@ public class SocketVirtualServer implements VirtualServer {
     }
 
     @Override
-    public boolean tryRegisterName(String name,
-                                   LocalGameState localState,
-                                   ClientStateListener listener) {
+    public boolean tryRegisterName(String name, LocalGameState localState, ClientStateListener listener) {
         try {
             synchronized (out) {
                 out.reset();
@@ -84,6 +79,14 @@ public class SocketVirtualServer implements VirtualServer {
             ServerMessage response = (ServerMessage) in.readObject();
             socket.setSoTimeout(0);
 
+            if (response instanceof StateMessage) {
+                this.playerName = name;
+                this.localState = localState;
+                this.listener = listener;
+                StateMessage stateMessage = (StateMessage) response;
+                onStateReceived(stateMessage.state());
+                return true;
+            }
             if (response instanceof LobbyListMessage lobbyList) {
                 this.playerName = name;
                 this.localState = localState;

@@ -45,7 +45,7 @@ import shared.message.ErrorMessage;
  */
 public class LobbyManager implements LobbyCommandVisitor {
 
-    private static final int CONNECT_TIMEOUT_MS = 5_000;
+    private static final int CONNECT_TIMEOUT_MS = 50_000;
     private static final long HEARTBEAT_TIMEOUT_MS = 6_000L;
     private static final long HEARTBEAT_CHECK_PERIOD_MS = 2_000L;
     
