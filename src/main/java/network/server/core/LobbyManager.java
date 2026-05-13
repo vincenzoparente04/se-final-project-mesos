@@ -153,6 +153,7 @@ public class LobbyManager implements LobbyCommandVisitor {
      */
     public synchronized boolean addRmiPlayer(RmiPlayerEntry entry) {
         if (nameAlreadyTaken(entry.getName())) {
+            entry.getView().sendError("name_already_taken");
             return false;
         }
         if (activeGames.containsKey(entry.getName())) {

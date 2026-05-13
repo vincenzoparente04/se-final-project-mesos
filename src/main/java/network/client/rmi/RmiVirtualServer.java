@@ -68,31 +68,29 @@ public class RmiVirtualServer implements VirtualServer {
     }
 
     @Override
-    public boolean tryRegisterName(String name,
-                                   LocalGameState localState,
-                                   ClientStateListener listener) {
-        ClientCallbackImpl attempt;
+    public boolean tryRegisterName(String name, LocalGameState localState, ClientStateListener listener) {
+        ClientCallbackImpl tempCallback;
         try {
-            attempt = new ClientCallbackImpl(localState, listener);
+            tempCallback = new ClientCallbackImpl(localState, listener);
         } catch (RemoteException e) {
             throw new RuntimeException("Failed to export RMI callback: " + e.getMessage(), e);
         }
 
         boolean accepted;
         try {
-            accepted = serverStub.join(name, attempt, host);
+            accepted = serverStub.join(name, tempCallback, host);
         } catch (RemoteException e) {
-            try { UnicastRemoteObject.unexportObject(attempt, true); } catch (RemoteException ignored) {}
+            try { UnicastRemoteObject.unexportObject(tempCallback, true); } catch (RemoteException ignored) {}
             throw new RuntimeException("RMI join failed: " + e.getMessage(), e);
         }
 
         if (!accepted) {
-            try { UnicastRemoteObject.unexportObject(attempt, true); } catch (RemoteException ignored) {}
+            try { UnicastRemoteObject.unexportObject(tempCallback, true); } catch (RemoteException ignored) {}
             return false;
         }
 
         this.playerName = name;
-        this.callback = attempt;
+        this.callback = tempCallback; // TODO a che serve callback in questa classe?
         return true;
     }
 
