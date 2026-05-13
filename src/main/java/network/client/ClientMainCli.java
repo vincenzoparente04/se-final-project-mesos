@@ -187,7 +187,6 @@ public class ClientMainCli {
             if (virtualServer.tryRegisterName(playerName, localState, listener)) {
                 break;
             }
-            System.out.println("✗ Name '" + playerName + "' is already taken on the server. Try a different one.");
         }
 
         virtualServer.start();

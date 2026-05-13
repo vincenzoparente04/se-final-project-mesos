@@ -274,8 +274,6 @@ public class LobbyManager implements LobbyCommandVisitor {
         hostingLobby.removePlayerByName(playerName);
         if (hostingLobby.isEmpty()) {
             lobbies.remove(hostingLobby.getId());
-        } else {
-            hostingLobby.broadcastState(); // TODO incorpora in lobby removePlayer
         }
         // Per i browser la lista lobby è cambiata in entrambi i casi
         // (lobby sparita, o lobby con un player in meno).

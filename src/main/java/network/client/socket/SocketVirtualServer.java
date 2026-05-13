@@ -1,5 +1,6 @@
 package network.client.socket;
 
+import network.client.ClientStateListenerCli;
 import network.client.LocalGameState;
 import network.client.VirtualServer;
 import network.client.ClientStateListener;
@@ -39,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  *   <li>{@link #start()} spawns the reader thread and the heartbeat scheduler.</li>
  * </ol>
  */
-public class SocketVirtualServer implements VirtualServer {
+public class SocketVirtualServer implements VirtualServer, ServerMessageHandler {
 
     /** Timeout for reading the server's response to a name attempt. */
     private static final int NAME_NEGOTIATION_TIMEOUT_MS = 5_000;
@@ -57,6 +58,8 @@ public class SocketVirtualServer implements VirtualServer {
     private ClientStateListener listener;
     private List<LobbyDto> bufferedLobbyList;
     private ScheduledExecutorService heartbeatScheduler;
+
+    private boolean connectionResponse;
 
     public SocketVirtualServer(String host, int port) throws IOException {
         this.socket = new Socket(host, port);
@@ -79,31 +82,54 @@ public class SocketVirtualServer implements VirtualServer {
             ServerMessage response = (ServerMessage) in.readObject();
             socket.setSoTimeout(0);
 
-            if (response instanceof StateMessage) {
-                this.playerName = name;
-                this.localState = localState;
-                this.listener = listener;
-                StateMessage stateMessage = (StateMessage) response;
-                onStateReceived(stateMessage.state());
-                return true;
-            }
-            if (response instanceof LobbyListMessage lobbyList) {
-                this.playerName = name;
-                this.localState = localState;
-                this.listener = listener;
-                this.bufferedLobbyList = lobbyList.lobbies();
-                return true;
-            }
-            if (response instanceof ErrorMessage err
-                    && err.message() != null
-                    && err.message().startsWith("name_already_taken:")) {
-                return false;
-            }
-            // Unexpected message during handshake: treat as a fatal failure.
-            throw new IOException("Unexpected handshake response: " + response);
+            this.playerName = name;
+            this.localState = localState;
+            this.listener = listener;
+
+            response.accept(this);
+
+            return connectionResponse;
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Name negotiation failed: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void handle(StateMessage msg) {
+        onStateReceived(msg.state());
+        connectionResponse = true;
+    }
+
+    @Override
+    public void handle(ErrorMessage msg) {
+        if (msg.message() != null ) {
+            onErrorReceived(msg.message());
+            }
+        connectionResponse = false;
+    }
+
+    @Override
+    public void handle(GameOverMessage msg) {
+        connectionResponse = true;
+        onGameOverReceived(msg.winners());
+    }
+
+    @Override
+    public void handle(LobbyListMessage msg) {
+        this.bufferedLobbyList = msg.lobbies();
+        connectionResponse = true;
+    }
+
+    @Override
+    public void handle(LobbyStateMessage msg) {
+        connectionResponse = true;
+        onLobbyStateReceived(msg.lobby());
+    }
+
+    @Override
+    public void handle(GameStartingMessage msg) {
+        connectionResponse = true;
+        onGameStartingReceived();
     }
 
     @Override
