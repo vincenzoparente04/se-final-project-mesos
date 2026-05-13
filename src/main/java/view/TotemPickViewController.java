@@ -12,7 +12,6 @@ import shared.dto.PlayerDto;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 /**
@@ -20,7 +19,7 @@ import java.util.Set;
  * The user picks a totem colour; colours already taken by others are disabled.
  * When the server moves past COLOR_CHOOSING_PHASE the listener routes to the board.
  */
-public class TotemPickViewController {
+public class TotemPickViewController extends ViewController{
 
     private static final String[] COLORS = {"RED", "BLUE", "GREEN", "YELLOW", "WHITE"};
 
@@ -47,6 +46,11 @@ public class TotemPickViewController {
     public StackPane root() { return rootPane; }
 
     public void update(LocalGameState state) {
+        String phase = state.getPhase();
+        if(!("COLOR_CHOOSING_PHASE".equals(phase))){
+            router.toBoard();
+            return;
+        }
         String me = router.playerName();
         boolean isMyTurn = me != null && me.equals(state.getCurrentPlayerName());
 
@@ -105,7 +109,7 @@ public class TotemPickViewController {
             }
             
             btn.setOnAction(e -> {
-                if (router.virtualServer() != null) router.virtualServer().sendChooseColor(c);
+                if (router.getVirtualServer() != null) router.getVirtualServer().sendChooseColor(c);
                 //TODO: uncomment it when the color choosing phase will handle concurrency
                 //btn.setDisable(true);
             });

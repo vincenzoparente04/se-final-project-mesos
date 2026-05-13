@@ -1,6 +1,7 @@
 package network.client;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import view.SceneRouter;
 
@@ -11,6 +12,8 @@ import view.SceneRouter;
  */
 public class ClientMain extends Application {
 
+    private LocalGameState localState;
+    private ClientStateListenerGui listener;
     private SceneRouter router;
     private VirtualServer proxy;
 
@@ -20,10 +23,10 @@ public class ClientMain extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        LocalGameState localState = new LocalGameState();
-        router = new SceneRouter(primaryStage, localState);
+        localState = new LocalGameState();
+        router = new SceneRouter(primaryStage, localState, this);
 
-        ClientStateListenerGui listener = new ClientStateListenerGui(router);
+        listener = new ClientStateListenerGui(router);
         router.setListener(listener);
 
         primaryStage.setTitle("Mesos");
@@ -32,8 +35,27 @@ public class ClientMain extends Application {
 
     @Override
     public void stop() {
-        if (router != null && router.virtualServer() != null) {
-            router.virtualServer().close();
+        if (router != null && router.getVirtualServer() != null) {
+            router.getVirtualServer().close();
         }
+    }
+    
+    public void connect(String transport,String host, int port,String name){
+
+        ConnectionProtocol protocol = ConnectionProtocol.valueOf(transport.toUpperCase());
+
+        new Thread(() -> {
+            try {
+                VirtualServer connectedProxy = VirtualServerFactory.create(
+                        protocol, host, port, name,
+                        localState, listener);
+                this.proxy = connectedProxy;
+
+                router.setupLocalRouterStatus(name, connectedProxy);
+
+            }catch (Exception ex){
+                router.connectionErrorHandling(ex.getMessage());
+            }
+        }, "connect-" + name).start();
     }
 }

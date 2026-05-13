@@ -2,11 +2,7 @@ package network.client;
 
 import javafx.application.Platform;
 import shared.dto.LobbyDto;
-import view.BoardViewController;
-import view.LobbyViewController;
-import view.SceneRouter;
-import view.TotemPickViewController;
-import view.WaitingViewController;
+import view.*;
 import view.widgets.ErrorToast;
 
 import java.util.List;
@@ -27,14 +23,14 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onGameStateUpdated(LocalGameState state) {
         Platform.runLater(() -> {
+            router.update(state);
+        });
+
+        /*
+        Platform.runLater(() -> {
             String phase = state.getPhase();
             Object ctrl = router.currentController();
 
-            //TODO: remove instanceof by using better the SceneRouter. Wire the boardViewController.joinSelected() to router.toBoard()
-            if (ctrl instanceof BoardViewController bvc) {
-                bvc.update(state);
-                return;
-            }
             if (ctrl instanceof TotemPickViewController tpc) {
                 if (isColorChoosingPhase(phase)) {
                     tpc.update(state);
@@ -57,6 +53,7 @@ public class ClientStateListenerGui implements ClientStateListener {
                 if (after instanceof BoardViewController bvc) bvc.update(state);
             }
         });
+         */
     }
 
     @Override
@@ -67,20 +64,16 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onLobbyList(List<LobbyDto> lobbies) {
         Platform.runLater(() -> {
-            Object ctrl = router.currentController();
-            if (ctrl instanceof LobbyViewController lvc) lvc.showLobbies(lobbies);
+            ViewController currController = router.currentController();
+            currController.showLobbies(lobbies);
         });
     }
 
     @Override
     public void onLobbyState(LobbyDto lobby) {
         Platform.runLater(() -> {
-            Object ctrl = router.currentController();
-            if (ctrl instanceof WaitingViewController wvc) {
-                wvc.update(lobby);
-            } else {
-                router.toWaiting(lobby);
-            }
+            ViewController currController = router.currentController();
+            currController.showLobbyState(lobby);
         });
     }
 
@@ -108,9 +101,5 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onDisconnected() {
         Platform.runLater(() -> ErrorToast.show(router.currentRoot(), "Disconnected from server"));
-    }
-
-    private static boolean isColorChoosingPhase(String phase) {
-        return "COLOR_CHOOSING_PHASE".equals(phase) || "SETUP".equals(phase);
     }
 }

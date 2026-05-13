@@ -17,7 +17,7 @@ import java.util.List;
  * End-of-game screen built from the last {@link PlayerDto} list received from the server,
  * with the winner names taken from the {@code GameStateDto.winners} list to handle ties.
  */
-public class WinnerViewController {
+public class WinnerViewController extends ViewController {
 
     @FXML private StackPane rootPane;
     @FXML private Label winnerNameLabel;
@@ -28,7 +28,9 @@ public class WinnerViewController {
 
     public void bind(SceneRouter router, List<PlayerDto> players, List<String> winners) {
         this.router = router;
+    }
 
+    public void showWinners(List<PlayerDto> players, List<String> winners) {
         List<PlayerDto> ordered = new ArrayList<>(players);
         ordered.sort(Comparator.comparingInt((PlayerDto p) -> p.prestigePoints).reversed());
 

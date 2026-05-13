@@ -10,7 +10,7 @@ import shared.dto.LobbyDto;
  * Leave returns to the lobby list; once the server fires {@code onGameStarting()}
  * the router replaces this scene with the board.
  */
-public class WaitingViewController {
+public class WaitingViewController extends ViewController {
 
     @FXML private StackPane rootPane;
     @FXML private Label lobbyNameLabel;
@@ -19,14 +19,17 @@ public class WaitingViewController {
     private SceneRouter router;
     private LobbyDto lobby;
 
-    public void bind(SceneRouter router, LobbyDto lobby) {
+    public void bind(SceneRouter router) {
         this.router = router;
-        update(lobby);
+    }
+
+    public void setLobby(LobbyDto lobby) {
+        showLobbyState(lobby);
     }
 
     public StackPane root() { return rootPane; }
 
-    public void update(LobbyDto lobby) {
+    public void showLobbyState(LobbyDto lobby) {
         this.lobby = lobby;
         lobbyNameLabel.setText(lobby.name());
         countLabel.setText(lobby.currentPlayers() + " / " + lobby.maxPlayers());
@@ -34,7 +37,7 @@ public class WaitingViewController {
 
     @FXML
     private void onLeave() {
-        if (router.virtualServer() != null) router.virtualServer().sendLeaveCommand();
+        if (router.getVirtualServer() != null) router.getVirtualServer().sendLeaveCommand();
         router.toLobby();
     }
 }

@@ -11,6 +11,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import network.client.LocalGameState;
+import network.client.VirtualServer;
 import shared.dto.CardDto;
 import shared.dto.OfferTileDto;
 import shared.dto.PlayerDto;
@@ -30,7 +31,7 @@ import java.util.Map;
  * and rebuilds every panel from scratch — the DTO is small enough that this is simpler
  * than diffing, and JavaFX handles the re-layout fine.
  */
-public class BoardViewController {
+public class BoardViewController extends ViewController{
 
     // Card sizes: the bottom row enlarges during end-of-round so the events being
     // resolved are obvious; everything else stays compact.
@@ -129,7 +130,7 @@ public class BoardViewController {
             Button btn = new Button();
             btn.getStyleClass().addAll("mesos-totem-btn", "mesos-totem-" + c);
             btn.setOnAction(e -> {
-                if (router.virtualServer() != null) router.virtualServer().sendChooseColor(c);
+                if (router.getVirtualServer() != null) router.getVirtualServer().sendChooseColor(c);
             });
             colorPicker.getChildren().add(btn);
         }
@@ -269,8 +270,8 @@ public class BoardViewController {
             offerTrack.getChildren().add(new OfferTileView(
                     tile, playersByName, canPlace,
                     letter -> {
-                        if (router.virtualServer() != null) {
-                            router.virtualServer().sendPlaceTotem(letter);
+                        if (router.getVirtualServer() != null) {
+                            router.getVirtualServer().sendPlaceTotem(letter);
                         }
                     }));
         }
@@ -308,7 +309,7 @@ public class BoardViewController {
             v.setStyle("-fx-cursor: hand;");
             if (canDraw) {
                 v.setOnMouseClicked(e -> {
-                    if (router.virtualServer() != null) router.virtualServer().sendDrawCard(c.id);
+                    if (router.getVirtualServer() != null) router.getVirtualServer().sendDrawCard(c.id);
                 });
             } else {
                 v.setOnContextMenuRequested(e -> CardZoomOverlay.show(rootPane, c));
@@ -366,7 +367,7 @@ public class BoardViewController {
 
     @FXML
     private void onEndTurn() {
-        if (router.virtualServer() != null) router.virtualServer().sendEndTurn();
+        if (router.getVirtualServer() != null) router.getVirtualServer().sendEndTurn();
     }
 
     private static Map<String, PlayerDto> indexByName(List<PlayerDto> players) {

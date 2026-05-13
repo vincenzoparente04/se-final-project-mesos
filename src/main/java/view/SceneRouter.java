@@ -1,10 +1,12 @@
 package view;
 
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import network.client.ClientMain;
 import network.client.ClientStateListener;
 import network.client.LocalGameState;
 import network.client.VirtualServer;
@@ -22,6 +24,7 @@ import java.util.List;
  */
 public class SceneRouter {
 
+    private final ClientMain clientMain;
     private final Stage stage;
     private final LocalGameState localState;
     private ClientStateListener listener;
@@ -32,75 +35,81 @@ public class SceneRouter {
     private Object currentController;
     private StackPane currentRoot;
 
-    public SceneRouter(Stage stage, LocalGameState localState) {
+    private NickViewController nickViewController;
+    private ViewController currentViewController;
+
+    public SceneRouter(Stage stage, LocalGameState localState, ClientMain main) {
+        this.clientMain = main;
         this.stage = stage;
         this.localState = localState;
     }
 
-    // ── Bindings set as the user progresses through screens ────────────────
+    // Bindings set as the user progresses through screens ────────────────
 
     public void setListener(ClientStateListener l) { this.listener = l; }
     public ClientStateListener listener()          { return listener; }
     public void setVirtualServer(VirtualServer vs) { this.virtualServer = vs; }
-    public VirtualServer virtualServer()           { return virtualServer; }
+    public VirtualServer getVirtualServer()           { return virtualServer; }
     public void setPlayerName(String name)         { this.playerName = name; }
     public String playerName()                     { return playerName; }
     public LocalGameState localState()             { return localState; }
-    public Object currentController()              { return currentController; }
+    public ViewController currentController() { return currentViewController; }
     public StackPane currentRoot()                 { return currentRoot; }
     public Stage stage()                           { return stage; }
 
-    // ── Navigation ─────────────────────────────────────────────────────────
+    // Navigation ─────────────────────────────────────────────────────────
+
+    public void exitApplication() {
+        Platform.exit();
+        System.exit(0);
+    }
 
     public void toSplash() {
-        load("/org/example/mesos/splash-view.fxml", ctrl -> ((SplashViewController) ctrl).bind(this));
+        load("/org/example/mesos/splash-view.fxml");
     }
 
     public void toNick() {
-        load("/org/example/mesos/nick-view.fxml", ctrl -> ((NickViewController) ctrl).bind(this));
+        load("/org/example/mesos/nick-view.fxml");
     }
 
     public void toLobby() {
-        load("/org/example/mesos/lobby-view.fxml", ctrl -> ((LobbyViewController) ctrl).bind(this));
+        load("/org/example/mesos/lobby-view.fxml");
         if (virtualServer != null) virtualServer.sendListLobbies();
     }
 
     public void toWaiting(LobbyDto lobby) {
-        load("/org/example/mesos/waiting-view.fxml",
-                ctrl -> ((WaitingViewController) ctrl).bind(this, lobby));
+        load("/org/example/mesos/waiting-view.fxml");
+        //TODO: review how to do this setLobby
+        currentViewController.setLobby(lobby);
     }
 
     public void toTotemPick() {
-        load("/org/example/mesos/totem-pick-view.fxml",
-                ctrl -> ((TotemPickViewController) ctrl).bind(this));
+        load("/org/example/mesos/totem-pick-view.fxml");
     }
 
     public void toBoard() {
-        load("/org/example/mesos/board-view.fxml",
-                ctrl -> ((BoardViewController) ctrl).bind(this));
+        load("/org/example/mesos/board-view.fxml");
     }
 
     public void toWinner(List<PlayerDto> players, List<String> winners) {
-        load("/org/example/mesos/winner-view.fxml",
-                ctrl -> ((WinnerViewController) ctrl).bind(this, players, winners));
+        load("/org/example/mesos/winner-view.fxml");
+        //TODO: remove this terrible function
+        currentViewController.showWinners(players, winners);
     }
 
-    // ── FXML loading ──────────────────────────────────────────────────────
+    // FXML loading ──────────────────────────────────────────────────────
 
-    private void load(String fxmlResource, java.util.function.Consumer<Object> binder) {
+    private void load(String fxmlResource) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlResource));
             Parent root = loader.load();
-            Object ctrl = loader.getController();
-            this.currentController = ctrl;
-            if (root instanceof StackPane sp) {
-                this.currentRoot = sp;
-            } else {
-                StackPane wrapper = new StackPane(root);
-                this.currentRoot = wrapper;
-                root = wrapper;
-            }
-            binder.accept(ctrl);
+            ViewController ctrl = loader.getController();
+            this.currentViewController = ctrl;
+
+            //TODO: remove casting
+            this.currentRoot = (StackPane) root;
+
+            currentViewController.bind(this);
 
             Scene scene = stage.getScene();
             if (scene == null) {
@@ -117,4 +126,30 @@ public class SceneRouter {
             e.printStackTrace();
         }
     }
+
+    // Connection Handling ──────────────────────────────────────────
+
+    public void connect(String transport, String host, int port, String name, NickViewController controller) {
+        clientMain.connect(transport, host, port, name);
+        this.nickViewController = controller;
+    }
+    
+    public void setupLocalRouterStatus(String name, VirtualServer vs) {
+        setPlayerName(name);
+        setVirtualServer(vs);
+        Platform.runLater(() -> {
+            toLobby();
+        });
+    }
+
+    public void connectionErrorHandling(String message) {
+        nickViewController.onConnectionError(message);
+    }
+    
+    // Update state ──────────────────────────────────────────
+    
+    public void update(LocalGameState state) {
+        currentViewController.update(state);
+    }
+
 }

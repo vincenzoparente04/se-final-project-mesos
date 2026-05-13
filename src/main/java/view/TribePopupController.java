@@ -30,7 +30,7 @@ import java.util.Map;
  * a short caption with the key info (e.g. star count for shamans). Click any card
  * to zoom it.
  */
-public class TribePopupController {
+public class TribePopupController extends ViewController{
 
     @FXML private Label titleLabel;
     @FXML private Label statsLabel;
@@ -65,8 +65,8 @@ public class TribePopupController {
     }
 
     private void init(PlayerDto target, Parent root) {
-        // Wrap the BorderPane in a StackPane so card-zoom overlays can be added on top.
-        overlayRoot = new StackPane(root);
+        // Since the root in the FXML is already a StackPane, just cast it.
+        overlayRoot = (StackPane) root;
         overlayRoot.getStyleClass().add("mesos-tribe-popup");
 
         titleLabel.setGraphic(new TotemView(target.color, 26));

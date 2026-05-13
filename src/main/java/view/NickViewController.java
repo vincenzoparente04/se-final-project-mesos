@@ -16,7 +16,7 @@ import view.widgets.ErrorToast;
  * Connection form. Spawns a background thread to build a VirtualServer;
  * the lobby screen is shown only after the connection succeeds.
  */
-public class NickViewController {
+public class NickViewController extends ViewController {
 
     @FXML private StackPane rootPane;
     @FXML private TextField nameField;
@@ -51,30 +51,20 @@ public class NickViewController {
             setStatus("Port must be a number.", true); return;
         }
 
-        ConnectionProtocol transport = rmiRadio.isSelected()
-                ? ConnectionProtocol.RMI : ConnectionProtocol.SOCKET;
+        String transport = rmiRadio.isSelected() ? "RMI" : "SOCKET";
 
         connectButton.setDisable(true);
         setStatus("Connecting…", false);
 
-        new Thread(() -> {
-            try {
-                VirtualServer proxy = VirtualServerFactory.create(
-                        transport, host, port, name,
-                        router.localState(), router.listener());
-                Platform.runLater(() -> {
-                    router.setPlayerName(name);
-                    router.setVirtualServer(proxy);
-                    router.toLobby();
-                });
-            } catch (Exception ex) {
-                Platform.runLater(() -> {
-                    setStatus("Connection failed: " + ex.getMessage(), true);
-                    ErrorToast.show(rootPane, "Connection failed");
-                    connectButton.setDisable(false);
-                });
-            }
-        }, "connect-" + name).start();
+        router.connect(transport, host, port, name, this);
+    }
+
+    public void onConnectionError(String ex){
+        Platform.runLater(() -> {
+            setStatus("Connection failed: " + ex, true);
+            ErrorToast.show(rootPane, "Connection failed");
+            connectButton.setDisable(false);
+        });
     }
 
     private void setStatus(String msg, boolean error) {

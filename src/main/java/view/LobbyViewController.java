@@ -22,7 +22,7 @@ import java.util.Optional;
  * Selecting a lobby and pressing Enter (or double-clicking) joins it;
  * pushing a create-lobby command opens a small dialog for the player count.
  */
-public class LobbyViewController {
+public class LobbyViewController extends ViewController {
 
     @FXML private StackPane rootPane;
     @FXML private Label playerNameLabel;
@@ -59,18 +59,22 @@ public class LobbyViewController {
                 : lobbies.size() + " lobbies open. Double-click to join.");
     }
 
+    public void showLobbyState(LobbyDto lobby) {
+        router.toWaiting(lobby);
+    }
+
     // ── FXML handlers ─────────────────────────────────────────────────────
 
     @FXML
     private void onRefresh() {
-        if (router.virtualServer() != null) router.virtualServer().sendListLobbies();
+        if (router.getVirtualServer() != null) router.getVirtualServer().sendListLobbies();
     }
 
     @FXML
     private void onCreate() {
         Optional<Integer> chosen = new CreateLobbyDialog().showAndWait(rootPane.getScene().getWindow());
         if (chosen.isEmpty()) return;
-        if (router.virtualServer() != null) router.virtualServer().sendCreateLobby(chosen.get());
+        if (router.getVirtualServer() != null) router.getVirtualServer().sendCreateLobby(chosen.get());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
@@ -81,7 +85,7 @@ public class LobbyViewController {
             ErrorToast.show(rootPane, "Select a lobby first");
             return;
         }
-        if (router.virtualServer() != null) router.virtualServer().sendJoinLobby(selected.id());
+        if (router.getVirtualServer() != null) router.getVirtualServer().sendJoinLobby(selected.id());
     }
 
     private static final class LobbyCell extends ListCell<LobbyDto> {

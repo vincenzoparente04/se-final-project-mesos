@@ -21,7 +21,7 @@ import java.util.Map;
  * Shows the totem, name, food/PP, and a row of chips summarising the player's tribe
  * (e.g. "H×2", "S 4★", "Bldg ×1") so opponents are readable at a glance.
  */
-public class PlayerViewController {
+public class PlayerViewController extends ViewController {
 
     @FXML private StackPane totemSlot;
     @FXML private Label nameLabel;
