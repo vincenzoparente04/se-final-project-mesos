@@ -230,6 +230,9 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
 
     void onErrorReceived(String message) {
         listener.onError(message);
+        if (message.equals("connection_timeout:no_connect_message_received")) {
+            System.exit(1); // exit code 1 = timeout/disconnection error
+        }
     }
 
     void onLobbyListReceived(List<LobbyDto> lobbies) {

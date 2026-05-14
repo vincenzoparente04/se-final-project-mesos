@@ -87,41 +87,49 @@ public class LobbyManager implements LobbyCommandVisitor {
             // one is accepted (the socket stays open across rejections so the
             // client can retry without re-establishing the transport).
             while (true) {
-                socket.setSoTimeout(CONNECT_TIMEOUT_MS);
-                ConnectMessage connect = (ConnectMessage) in.readObject();
-                socket.setSoTimeout(0);
+                try {
+                    socket.setSoTimeout(CONNECT_TIMEOUT_MS);
+                    ConnectMessage connect = (ConnectMessage) in.readObject();
+                    socket.setSoTimeout(0);
 
-                String playerName = connect.playerName();
-                SocketVirtualView view = new SocketVirtualView(playerName, socket, out);
+                    String playerName = connect.playerName();
+                    SocketVirtualView view = new SocketVirtualView(playerName, socket, out);
 
-                synchronized (this) {
-                    if (nameAlreadyTaken(playerName)) {
-                        // Send the rejection directly through the existing
-                        // output stream; do NOT close the socket.
-                        sendHandshakeError(out, "name_already_taken:" + playerName);
-                        continue;
+                    synchronized (this) {
+                        if (nameAlreadyTaken(playerName)) {
+                            // Send the rejection directly through the existing
+                            // output stream; do NOT close the socket.
+                            sendHandshakeError(out, "name_already_taken:" + playerName);
+                            continue;
+                        }
+
+                        SocketClientHandler handler = new SocketClientHandler(view, in, this);
+                        SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
+
+                        // if the just added player has the same name of a player in an active game it reactivates it
+                        if (activeGames.containsKey(playerName)) { // search between activeGames
+                            Game game = activeGames.get(playerName);
+                            game.onPlayerReconnected(playerName, entry);
+                            connectedPlayers.put(playerName, entry);
+                        } else {
+                            connectedPlayers.put(playerName, entry);
+                            view.sendLobbyList(currentLobbyList());
+                        }
+
+                        lastHeartbeat.put(playerName, System.currentTimeMillis());
+
+                        Thread t = new Thread(handler, "client-" + playerName);
+                        t.setDaemon(true);
+                        t.start();
                     }
-
-                    SocketClientHandler handler = new SocketClientHandler(view, in, this);
-                    SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
-
-                    // if the just added player has the same name of a player in an active game it reactivates it
-                    if (activeGames.containsKey(playerName)) { // search between activeGames
-                        Game game = activeGames.get(playerName);
-                        game.onPlayerReconnected(playerName, entry);
-                        connectedPlayers.put(playerName, entry);
-                    } else {
-                        connectedPlayers.put(playerName, entry);
-                        view.sendLobbyList(currentLobbyList());
-                    }
-
-                    lastHeartbeat.put(playerName, System.currentTimeMillis());
-
-                    Thread t = new Thread(handler, "client-" + playerName);
-                    t.setDaemon(true);
-                    t.start();
+                    return;
+                } catch (java.net.SocketTimeoutException e) {
+                    // Timeout durante la lettura di ConnectMessage: invia errore e chiude
+                    try {
+                        sendHandshakeError(out, "connection_timeout:no_connect_message_received");
+                    } catch (IOException ignored) {}
+                    return;  // Chiudi la connessione
                 }
-                return;
             }
         } catch (IOException | ClassNotFoundException e) {
             closeSocket(socket);
