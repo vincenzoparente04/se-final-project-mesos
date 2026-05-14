@@ -76,7 +76,7 @@ public class RmiVirtualServer implements VirtualServer {
             throw new RuntimeException("Failed to export RMI callback: " + e.getMessage(), e);
         }
 
-        boolean accepted;
+        boolean accepted = false;
         try {
             accepted = serverStub.join(name, tempCallback, host);
         } catch (RemoteException e) {
@@ -85,7 +85,10 @@ public class RmiVirtualServer implements VirtualServer {
         }
 
         if (!accepted) {
-            try { UnicastRemoteObject.unexportObject(tempCallback, true); } catch (RemoteException ignored) {}
+            try {
+                tempCallback.onError("Name already taken: " + name);
+                UnicastRemoteObject.unexportObject(tempCallback, true);
+            } catch (RemoteException ignored) {}
             return false;
         }
 
