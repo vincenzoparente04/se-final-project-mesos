@@ -9,7 +9,7 @@ import java.util.List;
 
 public abstract class ViewController {
 
-    void update(LocalGameState state) {}
+    public void update(LocalGameState state) {}
 
     void bind(SceneRouter scene) {}
 

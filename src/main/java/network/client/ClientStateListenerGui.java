@@ -23,37 +23,9 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onGameStateUpdated(LocalGameState state) {
         Platform.runLater(() -> {
-            router.update(state);
+            ViewController currCntrl = router.currentController();
+            currCntrl.update(state);
         });
-
-        /*
-        Platform.runLater(() -> {
-            String phase = state.getPhase();
-            Object ctrl = router.currentController();
-
-            if (ctrl instanceof TotemPickViewController tpc) {
-                if (isColorChoosingPhase(phase)) {
-                    tpc.update(state);
-                } else {
-                    router.toBoard();
-                    Object after = router.currentController();
-                    if (after instanceof BoardViewController bvc) bvc.update(state);
-                }
-                return;
-            }
-
-            // Race: a state arrived before onGameStarting routed us.
-            if (isColorChoosingPhase(phase)) {
-                router.toTotemPick();
-                Object after = router.currentController();
-                if (after instanceof TotemPickViewController tpc) tpc.update(state);
-            } else {
-                router.toBoard();
-                Object after = router.currentController();
-                if (after instanceof BoardViewController bvc) bvc.update(state);
-            }
-        });
-         */
     }
 
     @Override

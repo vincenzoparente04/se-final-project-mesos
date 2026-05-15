@@ -145,11 +145,6 @@ public class SceneRouter {
     public void connectionErrorHandling(String message) {
         nickViewController.onConnectionError(message);
     }
-    
-    // Update state ──────────────────────────────────────────
-    
-    public void update(LocalGameState state) {
-        currentViewController.update(state);
-    }
+
 
 }

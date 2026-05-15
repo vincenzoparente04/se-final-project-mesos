@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.StackPane;
+import network.client.LocalGameState;
 import shared.dto.LobbyDto;
 import view.widgets.CreateLobbyDialog;
 import view.widgets.ErrorToast;
@@ -51,6 +52,15 @@ public class LobbyViewController extends ViewController {
     public StackPane root() { return rootPane; }
 
     // ── Called by the listener ────────────────────────────────────────────
+
+    public void update(LocalGameState state) {
+        // Race: a state arrived before onGameStarting routed us.
+        if(state.getPhase().contains("COLOR_CHOOSING_PHASE")) {
+            router.toTotemPick();
+        } else{
+            router.toBoard();
+        }
+    }
 
     public void showLobbies(List<LobbyDto> lobbies) {
         items.setAll(new ArrayList<>(lobbies));
