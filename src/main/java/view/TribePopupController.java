@@ -30,7 +30,7 @@ import java.util.Map;
  * a short caption with the key info (e.g. star count for shamans). Click any card
  * to zoom it.
  */
-public class TribePopupController extends ViewController{
+public class TribePopupController implements ViewController {
 
     @FXML private Label titleLabel;
     @FXML private Label statsLabel;

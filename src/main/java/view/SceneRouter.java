@@ -2,7 +2,6 @@ package view;
 
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -32,11 +31,10 @@ public class SceneRouter {
     private VirtualServer virtualServer;
     private String playerName;
 
-    private Object currentController;
     private StackPane currentRoot;
 
     private NickViewController nickViewController;
-    private ViewController currentViewController;
+    private SceneController currentViewController;
 
     public SceneRouter(Stage stage, LocalGameState localState, ClientMain main) {
         this.clientMain = main;
@@ -53,7 +51,7 @@ public class SceneRouter {
     public void setPlayerName(String name)         { this.playerName = name; }
     public String playerName()                     { return playerName; }
     public LocalGameState localState()             { return localState; }
-    public ViewController currentController() { return currentViewController; }
+    public SceneController currentController() { return currentViewController; }
     public StackPane currentRoot()                 { return currentRoot; }
     public Stage stage()                           { return stage; }
 
@@ -102,12 +100,11 @@ public class SceneRouter {
     private void load(String fxmlResource) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlResource));
-            Parent root = loader.load();
-            ViewController ctrl = loader.getController();
+            loader.load();
+            SceneController ctrl = loader.getController();
             this.currentViewController = ctrl;
-
-            //TODO: remove casting
-            this.currentRoot = (StackPane) root;
+            StackPane root = ctrl.root();
+            this.currentRoot = root;
 
             currentViewController.bind(this);
 

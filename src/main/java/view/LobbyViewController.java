@@ -23,7 +23,7 @@ import java.util.Optional;
  * Selecting a lobby and pressing Enter (or double-clicking) joins it;
  * pushing a create-lobby command opens a small dialog for the player count.
  */
-public class LobbyViewController extends ViewController {
+public class LobbyViewController implements SceneController {
 
     @FXML private StackPane rootPane;
     @FXML private Label playerNameLabel;

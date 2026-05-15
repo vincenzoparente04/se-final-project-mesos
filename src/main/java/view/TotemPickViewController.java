@@ -19,7 +19,7 @@ import java.util.Set;
  * The user picks a totem colour; colours already taken by others are disabled.
  * When the server moves past COLOR_CHOOSING_PHASE the listener routes to the board.
  */
-public class TotemPickViewController extends ViewController{
+public class TotemPickViewController implements SceneController {
 
     private static final String[] COLORS = {"RED", "BLUE", "GREEN", "YELLOW", "WHITE"};
 

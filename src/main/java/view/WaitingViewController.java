@@ -10,7 +10,7 @@ import shared.dto.LobbyDto;
  * Leave returns to the lobby list; once the server fires {@code onGameStarting()}
  * the router replaces this scene with the board.
  */
-public class WaitingViewController extends ViewController {
+public class WaitingViewController implements SceneController {
 
     @FXML private StackPane rootPane;
     @FXML private Label lobbyNameLabel;

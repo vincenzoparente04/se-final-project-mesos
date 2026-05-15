@@ -31,7 +31,7 @@ import java.util.Map;
  * and rebuilds every panel from scratch — the DTO is small enough that this is simpler
  * than diffing, and JavaFX handles the re-layout fine.
  */
-public class BoardViewController extends ViewController{
+public class BoardViewController implements SceneController {
 
     // Card sizes: the bottom row enlarges during end-of-round so the events being
     // resolved are obvious; everything else stays compact.

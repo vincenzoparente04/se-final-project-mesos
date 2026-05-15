@@ -8,12 +8,16 @@ import javafx.scene.layout.StackPane;
 /**
  * Static "MESOS" splash. Any click or key press advances to the connection form.
  */
-public class SplashViewController extends ViewController {
+public class SplashViewController implements SceneController {
 
     @FXML private StackPane rootPane;
 
     private SceneRouter router;
 
+    @Override
+    public StackPane root() { return rootPane; }
+
+    @Override
     public void bind(SceneRouter router) {
         this.router = router;
         rootPane.setOnMouseClicked(this::onAdvance);

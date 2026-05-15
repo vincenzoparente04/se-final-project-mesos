@@ -1,25 +1,25 @@
 package view;
 
-
 import network.client.LocalGameState;
 import shared.dto.LobbyDto;
 import shared.dto.PlayerDto;
 
 import java.util.List;
 
-public abstract class ViewController {
+/**
+ * Optional-hook interface for all view controllers.
+ * Implement only the methods relevant to a given screen;
+ * the defaults are intentional no-ops.
+ */
+public interface ViewController {
 
-    public void update(LocalGameState state) {}
+    default void update(LocalGameState state) {}
 
-    void bind(SceneRouter scene) {}
+    default void setLobby(LobbyDto lobby) {}
 
-    void setLobby(LobbyDto lobby) {}
+    default void showLobbies(List<LobbyDto> lobbies) {}
 
-    public void showLobbies(List<LobbyDto> lobbies) {}
+    default void showLobbyState(LobbyDto lobby) {}
 
-    public void showLobbyState(LobbyDto lobby) {}
-
-    void showWinners(List<PlayerDto> players, List<String> winners) {}
-
-
+    default void showWinners(List<PlayerDto> players, List<String> winners) {}
 }

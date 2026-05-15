@@ -16,7 +16,7 @@ import view.widgets.ErrorToast;
  * Connection form. Spawns a background thread to build a VirtualServer;
  * the lobby screen is shown only after the connection succeeds.
  */
-public class NickViewController extends ViewController {
+public class NickViewController implements SceneController {
 
     @FXML private StackPane rootPane;
     @FXML private TextField nameField;
@@ -29,6 +29,10 @@ public class NickViewController extends ViewController {
 
     private SceneRouter router;
 
+    @Override
+    public StackPane root() { return rootPane; }
+
+    @Override
     public void bind(SceneRouter router) {
         this.router = router;
         if (router.playerName() != null) nameField.setText(router.playerName());
