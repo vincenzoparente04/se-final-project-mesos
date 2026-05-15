@@ -2,7 +2,8 @@ package network.client;
 
 import javafx.application.Platform;
 import shared.dto.LobbyDto;
-import view.*;
+import view.SceneRouter;
+import view.ViewController;
 import view.widgets.ErrorToast;
 
 import java.util.List;

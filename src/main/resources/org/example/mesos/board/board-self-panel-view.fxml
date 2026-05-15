@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="view.board.BoardSelfPanelController"
+      spacing="20" alignment="CENTER_LEFT" styleClass="mesos-self-bar">
+
+    <StackPane fx:id="selfPlayerSlot"/>
+
+    <VBox spacing="4">
+        <Label text="Your tribe" styleClass="mesos-section-label"/>
+        <HBox fx:id="selfTribeSlot" spacing="14" alignment="CENTER_LEFT"/>
+    </VBox>
+
+    <VBox spacing="4">
+        <Label text="Your buildings" styleClass="mesos-section-label"/>
+        <HBox fx:id="selfBuildingsSlot" spacing="6" alignment="CENTER_LEFT"/>
+    </VBox>
+
+    <Label text="" HBox.hgrow="ALWAYS"/>
+
+    <HBox fx:id="colorPicker" alignment="CENTER" spacing="8"
+          visible="false" managed="false"/>
+
+</HBox>

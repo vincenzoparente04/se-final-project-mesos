@@ -109,7 +109,7 @@ public class TotemPickViewController implements SceneController {
             }
             
             btn.setOnAction(e -> {
-                if (router.getVirtualServer() != null) router.getVirtualServer().sendChooseColor(c);
+                router.getVirtualServer().sendChooseColor(c);
                 //TODO: uncomment it when the color choosing phase will handle concurrency
                 //btn.setDisable(true);
             });

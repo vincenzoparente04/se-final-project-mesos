@@ -37,7 +37,7 @@ public class WaitingViewController implements SceneController {
 
     @FXML
     private void onLeave() {
-        if (router.getVirtualServer() != null) router.getVirtualServer().sendLeaveCommand();
+        router.getVirtualServer().sendLeaveCommand();
         router.toLobby();
     }
 }

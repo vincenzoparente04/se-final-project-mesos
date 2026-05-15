@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="view.board.BoardGameAreaController"
+      styleClass="mesos-board-area" spacing="0">
+
+    <HBox fx:id="othersBar" styleClass="mesos-other-players-bar"/>
+
+    <BorderPane VBox.vgrow="ALWAYS">
+        <center>
+            <VBox spacing="14" alignment="CENTER" style="-fx-padding: 4 20 18 20;">
+                <HBox fx:id="upperRowsBox" spacing="40" alignment="CENTER"/>
+                <VBox fx:id="centralBox"   spacing="10" alignment="CENTER"/>
+                <HBox fx:id="lowerRowsBox" spacing="40" alignment="CENTER"/>
+            </VBox>
+        </center>
+        <right>
+            <VBox fx:id="decksBox" spacing="20" alignment="CENTER"
+                  style="-fx-padding: 24 24 24 12;"/>
+        </right>
+    </BorderPane>
+
+</VBox>

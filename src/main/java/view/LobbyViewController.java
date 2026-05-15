@@ -77,14 +77,14 @@ public class LobbyViewController implements SceneController {
 
     @FXML
     private void onRefresh() {
-        if (router.getVirtualServer() != null) router.getVirtualServer().sendListLobbies();
+        router.getVirtualServer().sendListLobbies();
     }
 
     @FXML
     private void onCreate() {
         Optional<Integer> chosen = new CreateLobbyDialog().showAndWait(rootPane.getScene().getWindow());
         if (chosen.isEmpty()) return;
-        if (router.getVirtualServer() != null) router.getVirtualServer().sendCreateLobby(chosen.get());
+        router.getVirtualServer().sendCreateLobby(chosen.get());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ public class LobbyViewController implements SceneController {
             ErrorToast.show(rootPane, "Select a lobby first");
             return;
         }
-        if (router.getVirtualServer() != null) router.getVirtualServer().sendJoinLobby(selected.id());
+        router.getVirtualServer().sendJoinLobby(selected.id());
     }
 
     private static final class LobbyCell extends ListCell<LobbyDto> {

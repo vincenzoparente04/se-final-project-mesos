@@ -1,11 +1,12 @@
 package view;
 
+import network.client.ClientMain;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import network.client.ClientMain;
+import network.client.ClientSession;
 import network.client.ClientStateListener;
 import network.client.LocalGameState;
 import network.client.VirtualServer;
@@ -28,8 +29,7 @@ public class SceneRouter {
     private final LocalGameState localState;
     private ClientStateListener listener;
 
-    private VirtualServer virtualServer;
-    private String playerName;
+    private ClientSession session;
 
     private StackPane currentRoot;
 
@@ -46,21 +46,15 @@ public class SceneRouter {
 
     public void setListener(ClientStateListener l) { this.listener = l; }
     public ClientStateListener listener()          { return listener; }
-    public void setVirtualServer(VirtualServer vs) { this.virtualServer = vs; }
-    public VirtualServer getVirtualServer()           { return virtualServer; }
-    public void setPlayerName(String name)         { this.playerName = name; }
-    public String playerName()                     { return playerName; }
+    public VirtualServer getVirtualServer()        { return session != null ? session.virtualServer() : null; }
+    public String playerName()                     { return session != null ? session.playerName() : null; }
     public LocalGameState localState()             { return localState; }
-    public SceneController currentController() { return currentViewController; }
+    public SceneController currentController()     { return currentViewController; }
     public StackPane currentRoot()                 { return currentRoot; }
     public Stage stage()                           { return stage; }
 
     // Navigation ─────────────────────────────────────────────────────────
 
-    public void exitApplication() {
-        Platform.exit();
-        System.exit(0);
-    }
 
     public void toSplash() {
         load("/org/example/mesos/splash-view.fxml");
@@ -72,7 +66,7 @@ public class SceneRouter {
 
     public void toLobby() {
         load("/org/example/mesos/lobby-view.fxml");
-        if (virtualServer != null) virtualServer.sendListLobbies();
+        if (getVirtualServer() != null) getVirtualServer().sendListLobbies();
     }
 
     public void toWaiting(LobbyDto lobby) {
@@ -86,7 +80,7 @@ public class SceneRouter {
     }
 
     public void toBoard() {
-        load("/org/example/mesos/board-view.fxml");
+        load("/org/example/mesos/board/board-view.fxml");
     }
 
     public void toWinner(List<PlayerDto> players, List<String> winners) {
@@ -130,18 +124,13 @@ public class SceneRouter {
         clientMain.connect(transport, host, port, name);
         this.nickViewController = controller;
     }
-    
-    public void setupLocalRouterStatus(String name, VirtualServer vs) {
-        setPlayerName(name);
-        setVirtualServer(vs);
-        Platform.runLater(() -> {
-            toLobby();
-        });
+
+    public void setupSession(String name, VirtualServer vs) {
+        this.session = new ClientSession(name, vs);
+        Platform.runLater(this::toLobby);
     }
 
     public void connectionErrorHandling(String message) {
         nickViewController.onConnectionError(message);
     }
-
-
 }

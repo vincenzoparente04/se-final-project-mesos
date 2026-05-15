@@ -1,7 +1,6 @@
 package network.client;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.stage.Stage;
 import view.SceneRouter;
 
@@ -39,9 +38,8 @@ public class ClientMain extends Application {
             router.getVirtualServer().close();
         }
     }
-    
-    public void connect(String transport,String host, int port,String name){
 
+    public void connect(String transport, String host, int port, String name) {
         ConnectionProtocol protocol = ConnectionProtocol.valueOf(transport.toUpperCase());
 
         new Thread(() -> {
@@ -51,9 +49,9 @@ public class ClientMain extends Application {
                         localState, listener);
                 this.proxy = connectedProxy;
 
-                router.setupLocalRouterStatus(name, connectedProxy);
+                router.setupSession(name, connectedProxy);
 
-            }catch (Exception ex){
+            } catch (Exception ex) {
                 router.connectionErrorHandling(ex.getMessage());
             }
         }, "connect-" + name).start();
