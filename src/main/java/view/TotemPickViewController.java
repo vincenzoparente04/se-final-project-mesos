@@ -10,6 +10,7 @@ import javafx.scene.layout.VBox;
 import network.client.LocalGameState;
 import shared.dto.PlayerDto;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +31,7 @@ public class TotemPickViewController implements SceneController {
     @FXML private VBox othersBox;
 
     private SceneRouter router;
+    private final List<Button> colorButtons = new ArrayList<>();
 
     public void bind(SceneRouter router) {
         this.router = router;
@@ -113,17 +115,14 @@ public class TotemPickViewController implements SceneController {
                 //TODO: uncomment it when the color choosing phase will handle concurrency
                 //btn.setDisable(true);
             });
+            colorButtons.add(btn);
             colorRow.getChildren().add(btn);
         }
         HBox.setMargin(colorRow, null);
         colorRow.setAlignment(Pos.CENTER);
     }
 
-    @SuppressWarnings("unchecked")
     private List<Button> colorButtons() {
-        return colorRow.getChildren().stream()
-                .filter(n -> n instanceof Button)
-                .map(n -> (Button) n)
-                .toList();
+        return colorButtons;
     }
 }
