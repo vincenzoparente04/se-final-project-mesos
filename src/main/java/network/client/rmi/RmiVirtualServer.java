@@ -29,18 +29,19 @@ import network.server.rmi.GameServerRemote;
 /**
  * RMI implementation of the client-side {@link VirtualServer} proxy.
  * <p>
- * Each instance represents a single client's session of a remote game server.
- * Construction performs the full handshake: it looks up the server
- * stub in the RMI registry, exports a {@link ClientCallbackImpl} so the
- * server can push state updates back, and registers the player by calling
- * {@link GameServerRemote#join(String, ClientCallbackRemote, String)}.
- * <p>
- * <b>Threading model.</b> All outbound commands are dispatched through a
- * dedicated single-thread executor. This serves two purposes: it prevents
- * the calling thread (typically the UI thread) from blocking on the synchronous
- * RMI call, and it preserves the order in which commands were issued.
- * Inbound callbacks from the server are delivered on RMI worker threads
- * inside {@link ClientCallbackImpl}; this class does not own those threads.
+ * Lifecycle:
+ * <ol>
+ *   <li>{@link #RmiVirtualServer(String, int)} looks up the server stub in the
+ *       RMI registry. No callback is exported and no {@code join} call is
+ *       made at this stage.</li>
+ *   <li>{@link #tryRegisterName(String, LocalGameState, ClientStateListener)}
+ *       exports a fresh {@link ClientCallbackImpl} bound to the given
+ *       local-state/listener pair and calls {@code serverStub.join(...)}. If
+ *       the server rejects the name (already taken), the callback is
+ *       unexported and the method returns {@code false} so the caller can
+ *       retry with a different name.</li>
+ *   <li>{@link #start()} starts the heartbeat scheduler.</li>
+ * </ol>
  *
  * @implNote The exported callback object owns an RMI listener thread that
  * keeps the JVM alive. {@link #close()} explicitly unexports it to allow clean process termination.
@@ -49,25 +50,52 @@ public class RmiVirtualServer implements VirtualServer {
 
     private static final String SERVICE_NAME = "MesosGameServer";
 
-    private final String playerName;
-    private final GameServerRemote serverStub;
-    private final ClientCallbackImpl callback;
-    private final ExecutorService commandExecutor;
-
     /** Periodo di invio heartbeat: deve essere < del timeout server (6s). */
     private static final long HEARTBEAT_INTERVAL_MS = 2_000L;
-    private final ScheduledExecutorService heartbeatScheduler;
 
-    public RmiVirtualServer(String host, int rmiPort, String playerName,
-                            LocalGameState localState, ClientStateListener listener)
-            throws Exception {
-        this.playerName = playerName;
+    private final String host;
+    private final GameServerRemote serverStub;
 
+    private String playerName;
+    private ClientCallbackImpl callback;
+    private ExecutorService commandExecutor;
+    private ScheduledExecutorService heartbeatScheduler;
+
+    public RmiVirtualServer(String host, int rmiPort) throws Exception {
+        this.host = host;
         Registry registry = LocateRegistry.getRegistry(host, rmiPort);
-        // controlla se questo cast è inevitabile
         this.serverStub = (GameServerRemote) registry.lookup(SERVICE_NAME);
-        this.callback = new ClientCallbackImpl(localState, listener);
+    }
 
+    @Override
+    public boolean tryRegisterName(String name, LocalGameState localState, ClientStateListener listener) {
+        ClientCallbackImpl tempCallback;
+        try {
+            tempCallback = new ClientCallbackImpl(localState, listener);
+        } catch (RemoteException e) {
+            throw new RuntimeException("Failed to export RMI callback: " + e.getMessage(), e);
+        }
+
+        boolean accepted;
+        try {
+            accepted = serverStub.join(name, tempCallback, host);
+        } catch (RemoteException e) {
+            try { UnicastRemoteObject.unexportObject(tempCallback, true); } catch (RemoteException ignored) {}
+            throw new RuntimeException("RMI join failed: " + e.getMessage(), e);
+        }
+
+        if (!accepted) {
+            try { UnicastRemoteObject.unexportObject(tempCallback, true); } catch (RemoteException ignored) {}
+            return false;
+        }
+
+        this.playerName = name;
+        this.callback = tempCallback; // TODO a che serve callback in questa classe?
+        return true;
+    }
+
+    @Override
+    public void start() {
         this.commandExecutor = Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "rmi-commands-" + playerName);
             t.setDaemon(true);
@@ -79,8 +107,6 @@ public class RmiVirtualServer implements VirtualServer {
             t.setDaemon(true);
             return t;
         });
-
-        serverStub.join(playerName, callback, host);
 
         this.heartbeatScheduler.scheduleAtFixedRate(
                 () -> submitAsync(new HeartbeatCommand(playerName)),
@@ -126,10 +152,10 @@ public class RmiVirtualServer implements VirtualServer {
 
     @Override
     public void close() {
-        heartbeatScheduler.shutdownNow();
+        if (heartbeatScheduler != null) heartbeatScheduler.shutdownNow();
         // 1. Notifica il server della disconnessione
         try {
-            serverStub.disconnect(playerName);
+            if (playerName != null) serverStub.disconnect(playerName);
         } catch (RemoteException e) {
             System.err.println("Disconnect notification failed: " + e.getMessage());
         }
@@ -143,18 +169,22 @@ public class RmiVirtualServer implements VirtualServer {
      * record of this client and a {@code disconnect} call would be incorrect.
      */
     private void cleanupLocalResources() {
-        commandExecutor.shutdown();
-        try {
-            if (!commandExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+        if (commandExecutor != null) {
+            commandExecutor.shutdown();
+            try {
+                if (!commandExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
+                    commandExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
                 commandExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
             }
-        } catch (InterruptedException e) {
-            commandExecutor.shutdownNow();
-            Thread.currentThread().interrupt();
         }
-        try {
-            UnicastRemoteObject.unexportObject(callback, true);
-        } catch (RemoteException ignored) {}
+        if (callback != null) {
+            try {
+                UnicastRemoteObject.unexportObject(callback, true);
+            } catch (RemoteException ignored) {}
+        }
     }
 
     /**
@@ -163,6 +193,7 @@ public class RmiVirtualServer implements VirtualServer {
      * called), the command is silently dropped.
      */
     private void submitAsync(ClientCommand command) {
+        if (commandExecutor == null) return;
         commandExecutor.submit(() -> {
             try {
                 serverStub.submitClientCommand(command);

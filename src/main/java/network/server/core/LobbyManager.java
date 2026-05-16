@@ -17,6 +17,7 @@ import network.server.socket.SocketClientHandler;
 import network.server.socket.SocketPlayerEntry;
 import network.server.socket.SocketVirtualView;
 import shared.message.ConnectMessage;
+import shared.message.ErrorMessage;
 
 /**
  * Central registry for all client sessions on the server. This class manages three orthogonal concerns:
@@ -44,7 +45,7 @@ import shared.message.ConnectMessage;
  */
 public class LobbyManager implements LobbyCommandVisitor {
 
-    private static final int CONNECT_TIMEOUT_MS = 5_000;
+    private static final int CONNECT_TIMEOUT_MS = 50_000;
     private static final long HEARTBEAT_TIMEOUT_MS = 6_000L;
     private static final long HEARTBEAT_CHECK_PERIOD_MS = 2_000L;
     
@@ -82,44 +83,61 @@ public class LobbyManager implements LobbyCommandVisitor {
             out.flush();
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
-            socket.setSoTimeout(CONNECT_TIMEOUT_MS);
-            ConnectMessage connect = (ConnectMessage) in.readObject();
-            socket.setSoTimeout(0);
+            // Name-negotiation loop: keep reading ConnectMessage attempts until
+            // one is accepted (the socket stays open across rejections so the
+            // client can retry without re-establishing the transport).
+            while (true) {
+                socket.setSoTimeout(CONNECT_TIMEOUT_MS);
+                ConnectMessage connect = (ConnectMessage) in.readObject();
+                socket.setSoTimeout(0);
 
-            String playerName = connect.playerName();
-            SocketVirtualView view = new SocketVirtualView(playerName, socket, out);
+                String playerName = connect.playerName();
+                SocketVirtualView view = new SocketVirtualView(playerName, socket, out);
 
-            synchronized (this) {
+                synchronized (this) {
+                    if (nameAlreadyTaken(playerName)) {
+                        // Send the rejection directly through the existing
+                        // output stream; do NOT close the socket.
+                        sendHandshakeError(out, "name_already_taken:" + playerName);
+                        continue;
+                    }
 
-            if (nameAlreadyTaken(playerName)) {
-               view.sendError("name_already_taken:" + playerName);
-               view.close();
-               throw new IOException();
-            }
+                    SocketClientHandler handler = new SocketClientHandler(view, in, this);
+                    SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
 
-            SocketClientHandler handler = new SocketClientHandler(view, in, this);
-            SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
+                    // if the just added player has the same name of a player in an active game it reactivates it
+                    if (activeGames.containsKey(playerName)) { // search between activeGames
+                        Game game = activeGames.get(playerName);
+                        game.onPlayerReconnected(playerName, entry);
+                        connectedPlayers.put(playerName, entry);
+                    } else {
+                        connectedPlayers.put(playerName, entry);
+                        view.sendLobbyList(currentLobbyList());
+                    }
 
+                    lastHeartbeat.put(playerName, System.currentTimeMillis());
 
-                // if the just added player has the same name of a player in an active game it reactivates it
-                if (activeGames.containsKey(playerName)) { // search between activeGames
-                    Game game = activeGames.get(playerName);
-                    game.onPlayerReconnected(playerName, entry);
-                    connectedPlayers.put(playerName, entry);
+                    Thread t = new Thread(handler, "client-" + playerName);
+                    t.setDaemon(true);
+                    t.start();
                 }
-                else {
-                    connectedPlayers.put(playerName, entry);
-                    view.sendLobbyList(currentLobbyList());
-                }
-
-                lastHeartbeat.put(playerName, System.currentTimeMillis());
-
-            Thread t = new Thread(handler, "client-" + playerName);
-            t.setDaemon(true);
-            t.start();
+                return;
             }
         } catch (IOException | ClassNotFoundException e) {
             closeSocket(socket);
+        }
+    }
+
+    /**
+     * Writes an {@link ErrorMessage} directly through the handshake's output
+     * stream. Used to reject a name attempt without spinning up a full
+     * {@link SocketVirtualView}.
+     */
+    private void sendHandshakeError(ObjectOutputStream out, String message) throws IOException {
+        synchronized (out) {
+            out.reset();
+            out.writeObject(new ErrorMessage(message));
+            out.flush();
         }
     }
 
@@ -128,12 +146,15 @@ public class LobbyManager implements LobbyCommandVisitor {
      * rejects duplicate names, triggers reconnection if the name belongs to an active game,
      * otherwise adds the player to {@link #connectedPlayers} and primes their lobby
      * list.
+     *
+     * @return {@code true} if the player was accepted (or reconnected),
+     *         {@code false} if the name was already taken. On rejection the
+     *         caller is responsible for any cleanup of the exported callback.
      */
-    public synchronized void addRmiPlayer(RmiPlayerEntry entry) {
-        if (nameAlreadyTaken(entry.getName())) { 
-            entry.getView().sendError("name_already_taken:" + entry.getName());
-            entry.getView().close();
-            return;
+    public synchronized boolean addRmiPlayer(RmiPlayerEntry entry) {
+        if (nameAlreadyTaken(entry.getName())) {
+            entry.getView().sendError("name_already_taken");
+            return false;
         }
         if (activeGames.containsKey(entry.getName())) {
             Game game = activeGames.get(entry.getName());
@@ -145,6 +166,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             entry.getView().sendLobbyList(currentLobbyList());
         }
         lastHeartbeat.put(entry.getName(), System.currentTimeMillis());
+        return true;
     }
 
     // LobbyCommandVisitor –––––––––––––––––––––––––––––––––––––––––––––
@@ -253,8 +275,6 @@ public class LobbyManager implements LobbyCommandVisitor {
         hostingLobby.removePlayerByName(playerName);
         if (hostingLobby.isEmpty()) {
             lobbies.remove(hostingLobby.getId());
-        } else {
-            hostingLobby.broadcastState(); // TODO incorpora in lobby removePlayer
         }
         // Per i browser la lista lobby è cambiata in entrambi i casi
         // (lobby sparita, o lobby con un player in meno).

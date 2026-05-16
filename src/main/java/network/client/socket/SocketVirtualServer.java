@@ -1,5 +1,6 @@
 package network.client.socket;
 
+import network.client.ClientStateListenerCli;
 import network.client.LocalGameState;
 import network.client.VirtualServer;
 import network.client.ClientStateListener;
@@ -15,7 +16,7 @@ import shared.command.PlaceTotemCommand;
 import shared.command.HeartbeatCommand;
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
-import shared.message.ConnectMessage;
+import shared.message.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -29,39 +30,110 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Socket implementation of {@link VirtualServer} proxy.
- * It's responsible both of sending commands to the server and receiving updates through a dedicated reader thread (SocketClientThread).
+ * <p>
+ * Lifecycle:
+ * <ol>
+ *   <li>{@link #SocketVirtualServer(String, int)} opens the TCP socket and the
+ *       Object{Input,Output}Streams. No game-layer wiring happens here.</li>
+ *   <li>{@link #tryRegisterName(String, LocalGameState, ClientStateListener)}
+ *       performs the name handshake. Reusable across rejections.</li>
+ *   <li>{@link #start()} spawns the reader thread and the heartbeat scheduler.</li>
+ * </ol>
  */
-public class SocketVirtualServer implements VirtualServer {
+public class SocketVirtualServer implements VirtualServer, ServerMessageHandler {
 
-    private final String playerName;
-    private final Socket socket;
-    private final ObjectOutputStream out;
-    private final LocalGameState localState;
-    private final ClientStateListener listener;
-    private final AtomicBoolean closed = new AtomicBoolean(false);
+    /** Timeout for reading the server's response to a name attempt. */
+    private static final int NAME_NEGOTIATION_TIMEOUT_MS = 5_000;
 
     /** Periodo di invio heartbeat: deve essere < del timeout server (6s). */
     private static final long HEARTBEAT_INTERVAL_MS = 2_000L;
-    private final ScheduledExecutorService heartbeatScheduler;
 
-    /**
-     * @implNote The constructor establishes the connection to the server, sends the Connect message, and starts the reader thread.
-     */
-    public SocketVirtualServer(String host, int port, String playerName,
-                               LocalGameState localState, ClientStateListener listener)
-            throws IOException {
-        this.playerName = playerName;
-        this.localState = localState;
-        this.listener = listener;
+    private final Socket socket;
+    private final ObjectOutputStream out;
+    private final ObjectInputStream in;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    private String playerName;
+    private LocalGameState localState;
+    private ClientStateListener listener;
+    private List<LobbyDto> bufferedLobbyList;
+    private ScheduledExecutorService heartbeatScheduler;
+
+    private boolean connectionResponse;
+
+    public SocketVirtualServer(String host, int port) throws IOException {
         this.socket = new Socket(host, port);
         ObjectOutputStream objectOut = new ObjectOutputStream(socket.getOutputStream());
         objectOut.flush();
-        ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-        objectOut.writeObject(new ConnectMessage(playerName));
-        objectOut.flush();
         this.out = objectOut;
+        this.in = new ObjectInputStream(socket.getInputStream());
+    }
 
+    @Override
+    public boolean tryRegisterName(String name, LocalGameState localState, ClientStateListener listener) {
+        try {
+            synchronized (out) {
+                out.reset();
+                out.writeObject(new ConnectMessage(name));
+                out.flush();
+            }
+
+            socket.setSoTimeout(NAME_NEGOTIATION_TIMEOUT_MS);
+            ServerMessage response = (ServerMessage) in.readObject();
+            socket.setSoTimeout(0);
+
+            this.playerName = name;
+            this.localState = localState;
+            this.listener = listener;
+
+            response.accept(this);
+
+            return connectionResponse;
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException("Name negotiation failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void handle(StateMessage msg) {
+        onStateReceived(msg.state());
+        connectionResponse = true;
+    }
+
+    @Override
+    public void handle(ErrorMessage msg) {
+        if (msg.message() != null ) {
+            onErrorReceived(msg.message());
+            }
+        connectionResponse = false;
+    }
+
+    @Override
+    public void handle(GameOverMessage msg) {
+        connectionResponse = true;
+        onGameOverReceived(msg.winners());
+    }
+
+    @Override
+    public void handle(LobbyListMessage msg) {
+        this.bufferedLobbyList = msg.lobbies();
+        connectionResponse = true;
+    }
+
+    @Override
+    public void handle(LobbyStateMessage msg) {
+        connectionResponse = true;
+        onLobbyStateReceived(msg.lobby());
+    }
+
+    @Override
+    public void handle(GameStartingMessage msg) {
+        connectionResponse = true;
+        onGameStartingReceived();
+    }
+
+    @Override
+    public void start() {
         new Thread(new SocketClientThread(in, this), "socket-reader-" + playerName).start();
 
         this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -72,6 +144,12 @@ public class SocketVirtualServer implements VirtualServer {
         this.heartbeatScheduler.scheduleAtFixedRate(
                 () -> send(new HeartbeatCommand(playerName)),
                 HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
+
+        // Replay the initial lobby list that was consumed during the handshake.
+        if (bufferedLobbyList != null) {
+            listener.onLobbyList(bufferedLobbyList);
+            bufferedLobbyList = null;
+        }
     }
 
     // ─── Game commands ────────────────────────────────────────
@@ -134,7 +212,7 @@ public class SocketVirtualServer implements VirtualServer {
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
-            heartbeatScheduler.shutdownNow();
+            if (heartbeatScheduler != null) heartbeatScheduler.shutdownNow();
             try { socket.close(); } catch (IOException ignored) {}
         }
     }
