@@ -56,6 +56,7 @@ public class ClientMain extends Application {
 
         if(virtualServer.tryRegisterName(name, localState, listener)){
             router.setupSession(name, virtualServer);
+            virtualServer.start();
         } else {
             router.nickRejected();
         }

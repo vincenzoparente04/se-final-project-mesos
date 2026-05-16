@@ -81,6 +81,9 @@ public class WinnerViewController implements SceneController {
 
     @FXML
     private void onBack() {
+        if (router.getVirtualServer() != null) {
+            router.getVirtualServer().sendLeaveCommand();
+        }
         router.toLobby();
     }
 }
