@@ -96,40 +96,45 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
 
     @Override
     public void handle(StateMessage msg) {
-        onStateReceived(msg.state());
+        localState.update(msg.state());
+        listener.onGameStateUpdated(localState);
         connectionResponse = true;
     }
 
     @Override
     public void handle(ErrorMessage msg) {
         if (msg.message() != null ) {
-            onErrorReceived(msg.message());
+            listener.onError(msg.message());
+            if (msg.message().equals("connection_timeout:no_connect_message_received")) {
+                System.exit(1); // exit code 1 = timeout/disconnection error
             }
+        }
         connectionResponse = false;
     }
 
     @Override
     public void handle(GameOverMessage msg) {
         connectionResponse = true;
-        onGameOverReceived(msg.winners());
+        listener.onGameOver(msg.winners());
     }
 
     @Override
     public void handle(LobbyListMessage msg) {
         this.bufferedLobbyList = msg.lobbies();
+        listener.onLobbyList(bufferedLobbyList);
         connectionResponse = true;
     }
 
     @Override
     public void handle(LobbyStateMessage msg) {
         connectionResponse = true;
-        onLobbyStateReceived(msg.lobby());
+        listener.onLobbyState(msg.lobby());
     }
 
     @Override
     public void handle(GameStartingMessage msg) {
         connectionResponse = true;
-        onGameStartingReceived();
+        listener.onGameStarting();
     }
 
     @Override
@@ -144,12 +149,6 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
         this.heartbeatScheduler.scheduleAtFixedRate(
                 () -> send(new HeartbeatCommand(playerName)),
                 HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
-
-        // Replay the initial lobby list that was consumed during the handshake.
-        if (bufferedLobbyList != null) {
-            listener.onLobbyList(bufferedLobbyList);
-            bufferedLobbyList = null;
-        }
     }
 
     // ─── Game commands ────────────────────────────────────────
@@ -215,36 +214,6 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
             if (heartbeatScheduler != null) heartbeatScheduler.shutdownNow();
             try { socket.close(); } catch (IOException ignored) {}
         }
-    }
-
-    // ─── Callbacks from SocketClientThread ───────────────────
-
-    void onStateReceived(GameStateDto dto) {
-        localState.update(dto);
-        listener.onGameStateUpdated(localState);
-    }
-
-    void onGameOverReceived(List<String> winners) {
-        listener.onGameOver(winners);
-    }
-
-    void onErrorReceived(String message) {
-        listener.onError(message);
-        if (message.equals("connection_timeout:no_connect_message_received")) {
-            System.exit(1); // exit code 1 = timeout/disconnection error
-        }
-    }
-
-    void onLobbyListReceived(List<LobbyDto> lobbies) {
-        listener.onLobbyList(lobbies);
-    }
-
-    void onLobbyStateReceived(LobbyDto lobby) {
-        listener.onLobbyState(lobby);
-    }
-
-    void onGameStartingReceived() {
-        listener.onGameStarting();
     }
 
     void onDisconnected() {
