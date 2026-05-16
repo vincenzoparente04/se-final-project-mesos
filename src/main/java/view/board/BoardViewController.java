@@ -18,8 +18,6 @@ public class BoardViewController implements SceneController {
     @FXML private StackPane rootPane;
     @FXML private Label phaseLabel;
     @FXML private Label roundLabel;
-    @FXML private Label eraLabel;
-    @FXML private Label currentPlayerLabel;
     @FXML private Button endTurnButton;
 
     @FXML private BoardGameAreaController gameAreaController;
@@ -60,11 +58,8 @@ public class BoardViewController implements SceneController {
     // ── Status bar ─────────────────────────────────────────────────────────
 
     private void updateStatusBar(LocalGameState state, String phase, boolean isMyTurn) {
-        phaseLabel.setText("Phase: " + formatPhase(phase));
+        phaseLabel.setText(formatPhase(phase));
         roundLabel.setText("Round " + state.getCurrentRound());
-        eraLabel.setText(state.getCurrentEra() != null ? "Era " + state.getCurrentEra() : "");
-        String cp = state.getCurrentPlayerName();
-        currentPlayerLabel.setText(cp != null ? cp + (isMyTurn ? " (you)" : "") + "'s turn" : "—");
 
         boolean showEnd = "ACTION".equals(phase) && isMyTurn;
         endTurnButton.setVisible(showEnd);

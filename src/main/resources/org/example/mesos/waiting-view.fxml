@@ -18,7 +18,7 @@
 
     <VBox alignment="CENTER" spacing="24" styleClass="mesos-content-panel"
           StackPane.alignment="TOP_CENTER">
-        <StackPane.margin><Insets top="80"/></StackPane.margin>
+
 
         <Label fx:id="lobbyNameLabel" styleClass="mesos-title-medium"/>
 

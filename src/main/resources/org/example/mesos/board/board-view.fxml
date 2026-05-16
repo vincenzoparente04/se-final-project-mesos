@@ -12,12 +12,10 @@
     <BorderPane>
 
         <top>
-            <HBox alignment="CENTER_LEFT" spacing="18" styleClass="mesos-status-bar">
+            <HBox alignment="CENTER_LEFT" spacing="14" styleClass="mesos-topbar-minimal">
                 <Label fx:id="phaseLabel" styleClass="mesos-label-bold"/>
+                <Label text="·" styleClass="mesos-label"/>
                 <Label fx:id="roundLabel" styleClass="mesos-label"/>
-                <Label fx:id="eraLabel" styleClass="mesos-label"/>
-                <Label text="•" styleClass="mesos-label"/>
-                <Label fx:id="currentPlayerLabel" styleClass="mesos-label-glow"/>
                 <Label text="" HBox.hgrow="ALWAYS"/>
                 <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"
                         visible="false" managed="false" styleClass="mesos-button"/>

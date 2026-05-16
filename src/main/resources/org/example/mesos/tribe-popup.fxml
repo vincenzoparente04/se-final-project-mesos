@@ -4,44 +4,45 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
 
-<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="view.TribePopupController">
-    <BorderPane styleClass="mesos-tribe-popup"
-                prefWidth="820" prefHeight="560">
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="view.TribePopupController"
+           style="-fx-background-color: transparent;">
+
+    <BorderPane styleClass="mesos-tribe-popup-panel"
+                prefWidth="840" prefHeight="580">
 
         <top>
-            <HBox alignment="CENTER_LEFT" spacing="14">
-                <Label fx:id="titleLabel" styleClass="mesos-tribe-popup-title"/>
-                <Label text="" HBox.hgrow="ALWAYS"/>
-                <Label fx:id="statsLabel" styleClass="mesos-label">
-                    <padding><Insets right="14"/></padding>
-                </Label>
-            </HBox>
+            <VBox>
+                <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="14" style="-fx-padding: 20 20 12 20; -fx-cursor: move;">
+                    <Label fx:id="titleLabel" styleClass="mesos-tribe-popup-title"/>
+                    <Label text="" HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="statsLabel" styleClass="mesos-tribe-popup-stats"/>
+                </HBox>
+                <Separator/>
+            </VBox>
         </top>
 
         <center>
             <ScrollPane fitToWidth="true"
-                        style="-fx-background-color: transparent; -fx-background: transparent;">
-                <VBox spacing="16" style="-fx-padding: 8 16 8 16;">
-                    <VBox fx:id="charactersBox" spacing="14"/>
-                    <VBox fx:id="buildingsBox" spacing="14"/>
+                        style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+                <VBox spacing="12" style="-fx-padding: 16 20 16 20;">
+                    <VBox fx:id="charactersBox" spacing="12"/>
+                    <VBox fx:id="buildingsBox" spacing="12"/>
                 </VBox>
             </ScrollPane>
         </center>
 
         <bottom>
-            <HBox alignment="CENTER_RIGHT" spacing="10" style="-fx-padding: 14;">
+            <HBox alignment="CENTER_RIGHT" style="-fx-padding: 12 20 16 20;">
                 <Button text="Close" onAction="#onClose" styleClass="mesos-button-secondary"/>
             </HBox>
         </bottom>
 
-        <padding>
-            <Insets top="0" right="0" bottom="0" left="0"/>
-        </padding>
-
     </BorderPane>
+
 </StackPane>

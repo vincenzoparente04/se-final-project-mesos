@@ -7,8 +7,15 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
            fx:controller="view.WinnerViewController">
+
+    <ImageView fitWidth="${rootPane.width}" fitHeight="${rootPane.height}"
+               preserveRatio="false" mouseTransparent="true">
+        <image><Image url="@/images/wallpapers/DBY3i.jpg"/></image>
+    </ImageView>
 
     <VBox alignment="CENTER" spacing="22" maxWidth="680">
         <padding>

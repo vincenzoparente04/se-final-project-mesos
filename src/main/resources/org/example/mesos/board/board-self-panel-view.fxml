@@ -7,17 +7,16 @@
 
 <HBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="view.board.BoardSelfPanelController"
-      spacing="20" alignment="CENTER_LEFT" styleClass="mesos-self-bar">
+      spacing="20" alignment="CENTER_LEFT" styleClass="mesos-self-bar"
+      minHeight="165" prefHeight="165">
 
     <StackPane fx:id="selfPlayerSlot"/>
 
     <VBox spacing="4">
-        <Label text="Your tribe" styleClass="mesos-section-label"/>
         <HBox fx:id="selfTribeSlot" spacing="14" alignment="CENTER_LEFT"/>
     </VBox>
 
     <VBox spacing="4">
-        <Label text="Your buildings" styleClass="mesos-section-label"/>
         <HBox fx:id="selfBuildingsSlot" spacing="6" alignment="CENTER_LEFT"/>
     </VBox>
 

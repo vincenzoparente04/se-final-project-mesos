@@ -9,8 +9,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import shared.dto.CardDto;
 import shared.dto.PlayerDto;
@@ -32,10 +34,11 @@ import java.util.Map;
  */
 public class TribePopupController implements ViewController {
 
+    @FXML private HBox  titleBar;
     @FXML private Label titleLabel;
     @FXML private Label statsLabel;
-    @FXML private VBox charactersBox;
-    @FXML private VBox buildingsBox;
+    @FXML private VBox  charactersBox;
+    @FXML private VBox  buildingsBox;
 
     private Stage stage;
     /** A separate root we attach card-zoom overlays to. */
@@ -52,12 +55,18 @@ public class TribePopupController implements ViewController {
             Stage st = new Stage();
             st.initModality(Modality.APPLICATION_MODAL);
             st.initOwner(owner);
-            st.setTitle(target.name + "'s tribe");
+            st.initStyle(StageStyle.TRANSPARENT);
+
             Scene scene = new Scene(ctrl.overlayRoot);
+            scene.setFill(Color.TRANSPARENT);
             scene.getStylesheets().add(
                     TribePopupController.class.getResource("/styles/mesos.css").toExternalForm());
             st.setScene(scene);
             ctrl.stage = st;
+
+            // Center on owner window
+            st.setX(owner.getX() + owner.getWidth()  / 2 - 420);
+            st.setY(owner.getY() + owner.getHeight() / 2 - 300);
             st.showAndWait();
         } catch (IOException e) {
             throw new RuntimeException("Failed to load tribe-popup.fxml", e);
@@ -65,14 +74,23 @@ public class TribePopupController implements ViewController {
     }
 
     private void init(PlayerDto target, Parent root) {
-        // Since the root in the FXML is already a StackPane, just cast it.
         overlayRoot = (StackPane) root;
-        overlayRoot.getStyleClass().add("mesos-tribe-popup");
 
-        titleLabel.setGraphic(new TotemView(target.color, 26));
-        titleLabel.setText("  " + target.name + "'s tribe");
+        titleLabel.setGraphic(new TotemView(target.color, 28));
+        titleLabel.setText("  " + target.name);
 
-        statsLabel.setText("food " + target.food + "   •   PP " + target.prestigePoints);
+        statsLabel.setText("food  " + target.food + "    ·    PP  " + target.prestigePoints);
+
+        // Drag support — move the window by dragging the title bar
+        final double[] drag = new double[2];
+        titleBar.setOnMousePressed(e -> {
+            drag[0] = overlayRoot.getScene().getWindow().getX() - e.getScreenX();
+            drag[1] = overlayRoot.getScene().getWindow().getY() - e.getScreenY();
+        });
+        titleBar.setOnMouseDragged(e -> {
+            overlayRoot.getScene().getWindow().setX(e.getScreenX() + drag[0]);
+            overlayRoot.getScene().getWindow().setY(e.getScreenY() + drag[1]);
+        });
 
         renderCharacters(target);
         renderBuildings(target);

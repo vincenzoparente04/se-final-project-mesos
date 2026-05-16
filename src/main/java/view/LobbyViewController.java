@@ -98,11 +98,22 @@ public class LobbyViewController implements SceneController {
         @Override
         protected void updateItem(LobbyDto lobby, boolean empty) {
             super.updateItem(lobby, empty);
+            setText(null);
             if (empty || lobby == null) {
-                setText(null);
+                setGraphic(null);
                 return;
             }
-            setText(lobby.name() + "    •    " + lobby.currentPlayers() + " / " + lobby.maxPlayers() + " players");
+            javafx.scene.control.Label name = new javafx.scene.control.Label(lobby.name());
+            name.getStyleClass().add("mesos-label-bold");
+            name.setStyle("-fx-font-size: 16;");
+
+            javafx.scene.control.Label players = new javafx.scene.control.Label(
+                    lobby.currentPlayers() + " / " + lobby.maxPlayers() + " players");
+            players.getStyleClass().add("mesos-hint");
+
+            javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(2, name, players);
+            vbox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            setGraphic(vbox);
         }
     }
 }

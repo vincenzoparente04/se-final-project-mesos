@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -34,9 +35,12 @@ import java.util.Map;
  */
 public class BoardGameAreaController implements ViewController {
 
-    private static final double CARD_ASPECT      = 122.0 / 84.0;
-    private static final double MIN_CARD_W       = 60;
-    private static final double RESOLVED_SCALE   = 120.0 / 84.0;
+    private static final double CARD_ASPECT        = 122.0 / 84.0;
+    private static final double RESOLVED_SCALE    = 120.0 / 84.0;
+
+    // Proportion of one row's width used per card (row = half of upperRowsBox minus spacing)
+    private static final double ROW_DIVISOR_SMALL = 4.5;   // ≤3 players → carte più grandi
+    private static final double ROW_DIVISOR_LARGE = 6.5;   // ≥4 players → carte più compatte
 
     @FXML private HBox othersBar;
     @FXML private HBox upperRowsBox;
@@ -47,21 +51,43 @@ public class BoardGameAreaController implements ViewController {
     private SceneRouter router;
     private StackPane overlayRoot;
     private LocalGameState lastState;
+    private double sampledWidth = 0;
+    private double userScale = 1.0;
 
     public void init(SceneRouter router, StackPane overlayRoot) {
         this.router = router;
         this.overlayRoot = overlayRoot;
         upperRowsBox.widthProperty().addListener((obs, old, w) -> {
-            if (lastState != null) update(lastState);
+            if (sampledWidth == 0 && w.doubleValue() > 10 && lastState != null) {
+                sampledWidth = w.doubleValue();
+                update(lastState);
+            }
+        });
+        overlayRoot.sceneProperty().addListener((obs, old, scene) -> {
+            if (scene != null) {
+                scene.setOnKeyPressed(e -> {
+                    if (e.isMetaDown()) {
+                        if (e.getCode() == KeyCode.PLUS || e.getCode() == KeyCode.EQUALS) {
+                            userScale = Math.min(userScale + 0.1, 2.0);
+                            if (lastState != null) update(lastState);
+                        } else if (e.getCode() == KeyCode.MINUS) {
+                            userScale = Math.max(userScale - 0.1, 0.5);
+                            if (lastState != null) update(lastState);
+                        }
+                    }
+                });
+            }
         });
     }
 
     private double cardWidth(boolean resolving) {
-        double available = upperRowsBox.getWidth();
+        double available = sampledWidth > 0 ? sampledWidth : upperRowsBox.getWidth();
         if (available < 10) return resolving ? 120 : 84;
+        int players = lastState != null ? lastState.getPlayers().size() : 2;
         double rowW = (available - 40) / 2.0;
-        double w = Math.max(MIN_CARD_W, rowW / 5.0);
-        return resolving ? w * RESOLVED_SCALE : w;
+        double divisor = players <= 3 ? ROW_DIVISOR_SMALL : ROW_DIVISOR_LARGE;
+        double base = rowW / divisor * userScale;
+        return resolving ? base * RESOLVED_SCALE : base;
     }
 
     private double cardHeight(boolean resolving) {
@@ -164,6 +190,7 @@ public class BoardGameAreaController implements ViewController {
         row.setAlignment(Pos.CENTER);
         for (CardDto c : cards) {
             CardView v = new CardView(c, true, cardW, cardH);
+            v.getStyleClass().add("mesos-board-card");
             v.setStyle("-fx-cursor: hand;");
             if (canDraw) {
                 v.setOnMouseClicked(e -> router.getVirtualServer().sendDrawCard(c.id));
@@ -214,8 +241,8 @@ public class BoardGameAreaController implements ViewController {
     private int eraNumber(String era) {
         if (era == null) return 1;
         return switch (era) {
-            case "ERA_I",   "I",   "1" -> 1;
-            case "ERA_II",  "II",  "2" -> 2;
+            case "ERA_I", "I", "1" -> 1;
+            case "ERA_II", "II", "2" -> 2;
             case "ERA_III", "III", "3" -> 3;
             default -> 1;
         };
@@ -236,10 +263,10 @@ public class BoardGameAreaController implements ViewController {
     static String prettyType(String type) {
         if (type == null) return "?";
         return switch (type) {
-            case "HUNTER"   -> "Hunters";
-            case "BUILDER"  -> "Builders";
-            case "SHAMAN"   -> "Shamans";
-            case "ARTIST"   -> "Artists";
+            case "HUNTER" -> "Hunters";
+            case "BUILDER" -> "Builders";
+            case "SHAMAN" -> "Shamans";
+            case "ARTIST" -> "Artists";
             case "INVENTOR" -> "Inventors";
             case "GATHERER" -> "Gatherers";
             default -> type;

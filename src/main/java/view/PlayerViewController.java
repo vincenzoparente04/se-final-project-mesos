@@ -2,8 +2,11 @@ package view;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -13,6 +16,7 @@ import shared.dto.TribeDto;
 import view.widgets.TotemView;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -83,32 +87,53 @@ public class PlayerViewController implements ViewController {
             }
         }
 
-        addChip(counts, "HUNTER",   "H");
-        addChip(counts, "BUILDER",  "B");
+        addIconChip(counts, "HUNTER",   "Hunter.png");
+        addIconChip(counts, "BUILDER",  "Builder.png");
         if (counts.getOrDefault("SHAMAN", 0) > 0) {
-            chipsBar.getChildren().add(buildChip("S " + counts.get("SHAMAN")
-                    + (totalStars > 0 ? "  " + totalStars + "★" : "")));
+            String label = "×" + counts.get("SHAMAN")
+                    + (totalStars > 0 ? "  " + totalStars + "★" : "");
+            chipsBar.getChildren().add(buildIconChip("Shaman.png", label));
         }
-        addChip(counts, "ARTIST",   "A");
-        addChip(counts, "INVENTOR", "I");
-        addChip(counts, "GATHERER", "G");
+        addIconChip(counts, "ARTIST",   "Artist.png");
+        addIconChip(counts, "INVENTOR", "Inventor.png");
+        addIconChip(counts, "GATHERER", "Gatherer.png");
 
         int buildings = tribe.buildings != null ? tribe.buildings.size() : 0;
         if (buildings > 0) {
-            chipsBar.getChildren().add(buildChip("Bldg ×" + buildings));
+            chipsBar.getChildren().add(buildTextChip("Bldg ×" + buildings));
         }
     }
 
-    private void addChip(Map<String, Integer> counts, String type, String shortLabel) {
+    private void addIconChip(Map<String, Integer> counts, String type, String iconFile) {
         int n = counts.getOrDefault(type, 0);
         if (n == 0) return;
-        chipsBar.getChildren().add(buildChip(shortLabel + "×" + n));
+        chipsBar.getChildren().add(buildIconChip(iconFile, "×" + n));
     }
 
-    private HBox buildChip(String text) {
+    private HBox buildIconChip(String iconFile, String text) {
+        HBox box = new HBox(4);
+        box.getStyleClass().add("mesos-card-chip");
+        box.setAlignment(Pos.CENTER);
+
+        InputStream stream = getClass().getResourceAsStream("/images/icons/" + iconFile);
+        if (stream != null) {
+            ImageView iv = new ImageView(new Image(stream));
+            iv.setFitWidth(14);
+            iv.setFitHeight(14);
+            iv.setPreserveRatio(true);
+            box.getChildren().add(iv);
+        }
+
+        Label l = new Label(text);
+        box.getChildren().add(l);
+        return box;
+    }
+
+    private HBox buildTextChip(String text) {
         Label l = new Label(text);
         HBox box = new HBox(l);
         box.getStyleClass().add("mesos-card-chip");
+        box.setAlignment(Pos.CENTER);
         return box;
     }
 
