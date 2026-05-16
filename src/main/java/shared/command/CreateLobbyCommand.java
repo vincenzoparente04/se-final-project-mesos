@@ -1,6 +1,6 @@
 package shared.command;
 
-public record CreateLobbyCommand(String playerName, int maxPlayers) implements LobbyCommand {
+public record CreateLobbyCommand(String playerName, int playersNumber) implements LobbyCommand {
 
     @Override
     public void accept(LobbyCommandVisitor visitor) throws Exception {

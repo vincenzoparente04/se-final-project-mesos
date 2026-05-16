@@ -177,8 +177,8 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     // ─── Lobby commands ───────────────────────────────────────
 
     @Override
-    public void sendCreateLobby(int maxPlayers) {
-        send(new CreateLobbyCommand(playerName, maxPlayers));
+    public void sendCreateLobby(int playersNumber) {
+        send(new CreateLobbyCommand(playerName, playersNumber));
     }
 
     @Override
