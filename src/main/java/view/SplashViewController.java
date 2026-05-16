@@ -1,6 +1,7 @@
 package view;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
@@ -11,6 +12,7 @@ import javafx.scene.layout.StackPane;
 public class SplashViewController implements SceneController {
 
     @FXML private StackPane rootPane;
+    @FXML private Label pressAnyKeyLabel;
 
     private SceneRouter router;
 
@@ -30,6 +32,6 @@ public class SplashViewController implements SceneController {
         });
     }
 
-    private void onAdvance(MouseEvent e)   { router.toNetworkSetup(); }
-    private void onAdvance(KeyEvent e)     { router.toNetworkSetup(); }
+    private void onAdvance(MouseEvent e) { router.toNetworkSetup(); }
+    private void onAdvance(KeyEvent e)   { router.toNetworkSetup(); }
 }

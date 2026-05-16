@@ -34,10 +34,9 @@ import java.util.Map;
  */
 public class BoardGameAreaController implements ViewController {
 
-    private static final double CARD_W_NORMAL   = 84;
-    private static final double CARD_H_NORMAL   = 122;
-    private static final double CARD_W_RESOLVED = 120;
-    private static final double CARD_H_RESOLVED = 174;
+    private static final double CARD_ASPECT      = 122.0 / 84.0;
+    private static final double MIN_CARD_W       = 60;
+    private static final double RESOLVED_SCALE   = 120.0 / 84.0;
 
     @FXML private HBox othersBar;
     @FXML private HBox upperRowsBox;
@@ -47,14 +46,35 @@ public class BoardGameAreaController implements ViewController {
 
     private SceneRouter router;
     private StackPane overlayRoot;
+    private LocalGameState lastState;
 
     public void init(SceneRouter router, StackPane overlayRoot) {
         this.router = router;
         this.overlayRoot = overlayRoot;
+        upperRowsBox.widthProperty().addListener((obs, old, w) -> {
+            if (lastState != null) update(lastState);
+        });
+    }
+
+    private double cardWidth(boolean resolving) {
+        double available = upperRowsBox.getWidth();
+        if (available < 10) return resolving ? 120 : 84;
+        double rowW = (available - 40) / 2.0;
+        double w = Math.max(MIN_CARD_W, rowW / 5.0);
+        return resolving ? w * RESOLVED_SCALE : w;
+    }
+
+    private double cardHeight(boolean resolving) {
+        return cardWidth(resolving) * CARD_ASPECT;
+    }
+
+    private double tileHeight() {
+        return cardWidth(false) * (110.0 / 84.0);
     }
 
     @Override
     public void update(LocalGameState state) {
+        this.lastState = state;
         String phase = state.getPhase();
         String me = router.playerName();
         boolean isMyTurn = me != null && me.equals(state.getCurrentPlayerName());
@@ -102,7 +122,8 @@ public class BoardGameAreaController implements ViewController {
                                   String phase, boolean isMyTurn) {
         centralBox.getChildren().clear();
 
-        TurnOrderTileView turnOrder = new TurnOrderTileView(state.getTurnOrderSlots(), playersByName);
+        double th = tileHeight();
+        TurnOrderTileView turnOrder = new TurnOrderTileView(state.getTurnOrderSlots(), playersByName, th);
 
         boolean canPlace = "PLACEMENT".equals(phase) && isMyTurn;
         HBox offerTrack = new HBox(0);
@@ -110,7 +131,7 @@ public class BoardGameAreaController implements ViewController {
         for (OfferTileDto tile : state.getOfferTiles()) {
             offerTrack.getChildren().add(new OfferTileView(
                     tile, playersByName, canPlace,
-                    letter -> router.getVirtualServer().sendPlaceTotem(letter)));
+                    letter -> router.getVirtualServer().sendPlaceTotem(letter), th));
         }
 
         HBox sideBySide = new HBox(5);
@@ -129,8 +150,8 @@ public class BoardGameAreaController implements ViewController {
         box.getChildren().clear();
         box.setAlignment(Pos.CENTER);
 
-        double w = resolving ? CARD_W_RESOLVED : CARD_W_NORMAL;
-        double h = resolving ? CARD_H_RESOLVED : CARD_H_NORMAL;
+        double w = cardWidth(resolving);
+        double h = cardHeight(resolving);
 
         box.getChildren().add(buildRow(tribeCards,    phase, isMyTurn, w, h));
         box.getChildren().add(buildRow(buildingCards, phase, isMyTurn, w, h));
@@ -160,14 +181,23 @@ public class BoardGameAreaController implements ViewController {
         decksBox.getChildren().clear();
         int eraNum = eraNumber(era);
 
+        double cw = cardWidth(false);
+        double ch = cardHeight(false);
+
+        /*
         Label tribeLbl = new Label("Tribe deck");
         tribeLbl.getStyleClass().add("mesos-section-label");
         Label buildLbl = new Label("Building deck");
         buildLbl.getStyleClass().add("mesos-section-label");
+         */
+        Label tribeLbl = new Label("");
+        tribeLbl.getStyleClass().add("mesos-section-label");
+        Label buildLbl = new Label("");
+        buildLbl.getStyleClass().add("mesos-section-label");
 
-        VBox td = new VBox(4, tribeLbl, new DeckView("BackEra" + eraNum + ".png"));
+        VBox td = new VBox(4, tribeLbl, new DeckView("BackEra" + eraNum + ".png", cw, ch));
         td.setAlignment(Pos.CENTER);
-        VBox bd = new VBox(4, buildLbl, new DeckView(buildingBackForEra(eraNum)));
+        VBox bd = new VBox(4, buildLbl, new DeckView(buildingBackForEra(eraNum), cw, ch));
         bd.setAlignment(Pos.CENTER);
         decksBox.getChildren().addAll(td, bd);
     }

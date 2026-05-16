@@ -13,10 +13,10 @@
 
         <top>
             <HBox alignment="CENTER_LEFT" spacing="18" styleClass="mesos-status-bar">
-                <Label fx:id="phaseLabel"         styleClass="mesos-label-bold"/>
-                <Label fx:id="roundLabel"         styleClass="mesos-label"/>
-                <Label fx:id="eraLabel"           styleClass="mesos-label"/>
-                <Label text="•"                   styleClass="mesos-label"/>
+                <Label fx:id="phaseLabel" styleClass="mesos-label-bold"/>
+                <Label fx:id="roundLabel" styleClass="mesos-label"/>
+                <Label fx:id="eraLabel" styleClass="mesos-label"/>
+                <Label text="•" styleClass="mesos-label"/>
                 <Label fx:id="currentPlayerLabel" styleClass="mesos-label-glow"/>
                 <Label text="" HBox.hgrow="ALWAYS"/>
                 <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"

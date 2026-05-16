@@ -44,7 +44,7 @@ public class LobbyViewController implements SceneController {
             if (e.getCode().getName().equalsIgnoreCase("Enter")) joinSelected();
         });
 
-        statusLabel.setText("Loading lobbies…");
+        statusLabel.setText("Loading…");
     }
 
     public StackPane root() { return rootPane; }
@@ -62,9 +62,7 @@ public class LobbyViewController implements SceneController {
 
     public void showLobbies(List<LobbyDto> lobbies) {
         items.setAll(new ArrayList<>(lobbies));
-        statusLabel.setText(lobbies.isEmpty()
-                ? "No open lobbies. Create one!"
-                : lobbies.size() + " lobbies open. Double-click to join.");
+        statusLabel.setText(lobbies.isEmpty() ? "No open lobbies.\nCreate one!" : "");
     }
 
     public void showLobbyState(LobbyDto lobby) {

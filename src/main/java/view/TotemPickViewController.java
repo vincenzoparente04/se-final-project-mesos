@@ -83,14 +83,7 @@ public class TotemPickViewController implements SceneController {
             hintLabel.setText(cp != null ? cp + " is picking a colour…" : "Waiting…");
         }
 
-        StringBuilder picked = new StringBuilder();
-        for (PlayerDto p : state.getPlayers()) {
-            if (p.color != null) {
-                if (picked.length() > 0) picked.append("   •   ");
-                picked.append(p.name).append(" → ").append(p.color);
-            }
-        }
-        statusLabel.setText(picked.toString());
+        statusLabel.setText("");
     }
 
     private void buildButtons() {

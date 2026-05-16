@@ -17,30 +17,36 @@ import java.io.InputStream;
  */
 public class DeckView extends StackPane {
 
-    public static final double CARD_WIDTH = 90;
+    public static final double CARD_WIDTH  = 90;
     public static final double CARD_HEIGHT = 130;
-    private static final int STACK_SIZE = 4;
-    private static final double OFFSET = 3.5;
+    private static final int    STACK_SIZE = 4;
+    private static final double OFFSET     = 3.5;
 
     public DeckView(String backImageFilename) {
+        this(backImageFilename, CARD_WIDTH, CARD_HEIGHT);
+    }
+
+    public DeckView(String backImageFilename, double cardWidth, double cardHeight) {
         String path = "/images/BackCards/" + backImageFilename;
         InputStream stream = backImageFilename != null
                 ? getClass().getResourceAsStream(path) : null;
 
         Image img = stream != null ? new Image(stream) : null;
 
+        double offset = OFFSET * (cardWidth / CARD_WIDTH);
+
         for (int i = 0; i < STACK_SIZE; i++) {
             StackPane layer = new StackPane();
-            layer.setTranslateX(i * OFFSET);
-            layer.setTranslateY(-i * OFFSET);
+            layer.setTranslateX(i * offset);
+            layer.setTranslateY(-i * offset);
             if (img != null) {
                 ImageView iv = new ImageView(img);
-                iv.setFitWidth(CARD_WIDTH);
-                iv.setFitHeight(CARD_HEIGHT);
+                iv.setFitWidth(cardWidth);
+                iv.setFitHeight(cardHeight);
                 iv.setPreserveRatio(true);
                 layer.getChildren().add(iv);
             } else {
-                Rectangle r = new Rectangle(CARD_WIDTH, CARD_HEIGHT, Color.DARKSLATEGRAY);
+                Rectangle r = new Rectangle(cardWidth, cardHeight, Color.DARKSLATEGRAY);
                 r.setStroke(Color.BLACK);
                 r.setArcWidth(8);
                 r.setArcHeight(8);
@@ -49,8 +55,8 @@ public class DeckView extends StackPane {
             getChildren().add(layer);
         }
 
-        double w = CARD_WIDTH + STACK_SIZE * OFFSET;
-        double h = CARD_HEIGHT + STACK_SIZE * OFFSET;
+        double w = cardWidth  + STACK_SIZE * offset;
+        double h = cardHeight + STACK_SIZE * offset;
         setMinSize(w, h);
         setPrefSize(w, h);
     }

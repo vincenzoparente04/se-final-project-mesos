@@ -50,6 +50,7 @@ public class BoardViewController implements SceneController {
         gameAreaController.update(state);
         selfPanelController.update(state);
 
+        //serve??? non basta onGameOver del clientStateListener?
         if (state.isGameOver() && !winnerShown) {
             winnerShown = true;
             router.toWinner(state.getPlayers(), state.getWinners());
@@ -78,14 +79,14 @@ public class BoardViewController implements SceneController {
     private static String formatPhase(String phase) {
         if (phase == null) return "—";
         return switch (phase) {
-            case "SETUP"                -> "Setup";
+            case "SETUP" -> "Setup";
             case "COLOR_CHOOSING_PHASE" -> "Choose color";
-            case "PLACEMENT"            -> "Placement";
-            case "ACTION"               -> "Action";
-            case "PRE_END_OF_ROUND"     -> "Resolving…";
-            case "END_OF_ROUND"         -> "End of round";
-            case "END_OF_GAME"          -> "End of game";
-            default                     -> phase;
+            case "PLACEMENT" -> "Placement";
+            case "ACTION" -> "Action";
+            case "PRE_END_OF_ROUND" -> "Resolving…";
+            case "END_OF_ROUND" -> "End of round";
+            case "END_OF_GAME" -> "End of game";
+            default  -> phase;
         };
     }
 }
