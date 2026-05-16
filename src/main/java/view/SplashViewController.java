@@ -30,6 +30,6 @@ public class SplashViewController implements SceneController {
         });
     }
 
-    private void onAdvance(MouseEvent e)   { router.toNick(); }
-    private void onAdvance(KeyEvent e)     { router.toNick(); }
+    private void onAdvance(MouseEvent e)   { router.toNetworkSetup(); }
+    private void onAdvance(KeyEvent e)     { router.toNetworkSetup(); }
 }

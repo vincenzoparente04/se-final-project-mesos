@@ -14,7 +14,7 @@ public class ClientMain extends Application {
     private LocalGameState localState;
     private ClientStateListenerGui listener;
     private SceneRouter router;
-    private VirtualServer proxy;
+    private VirtualServer virtualServer;
 
     public static void main(String[] args) {
         launch(args);
@@ -39,21 +39,25 @@ public class ClientMain extends Application {
         }
     }
 
-    public void connect(String transport, String host, int port, String name) {
+    public void connect(String transport, String host, int port) {
         ConnectionProtocol protocol = ConnectionProtocol.valueOf(transport.toUpperCase());
 
-        new Thread(() -> {
             try {
-                VirtualServer connectedProxy = VirtualServerFactory.create(
-                        protocol, host, port, name,
-                        localState, listener);
-                this.proxy = connectedProxy;
+                virtualServer = VirtualServerFactory.connect(
+                        protocol, host, port);
 
-                router.setupSession(name, connectedProxy);
-
+                router.connectionEstablished();
             } catch (Exception ex) {
                 router.connectionErrorHandling(ex.getMessage());
             }
-        }, "connect-" + name).start();
+    }
+
+    public void setName(String name){
+
+        if(virtualServer.tryRegisterName(name, localState, listener)){
+            router.setupSession(name, virtualServer);
+        } else {
+            router.nickRejected();
+        }
     }
 }

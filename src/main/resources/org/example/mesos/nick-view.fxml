@@ -3,11 +3,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
@@ -27,36 +24,9 @@
             <TextField fx:id="nameField" promptText="your nickname"
                        styleClass="mesos-textfield"
                        GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-
-            <Label text="Host" styleClass="mesos-label-bold"
-                   GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <TextField fx:id="hostField" text="localhost"
-                       styleClass="mesos-textfield"
-                       GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-
-            <Label text="Port" styleClass="mesos-label-bold"
-                   GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <TextField fx:id="portField" text="1099"
-                       styleClass="mesos-textfield"
-                       GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-
-            <Label text="Transport" styleClass="mesos-label-bold"
-                   GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-            <HBox spacing="14"
-                  GridPane.rowIndex="3" GridPane.columnIndex="1">
-                <fx:define>
-                    <ToggleGroup fx:id="transportGroup"/>
-                </fx:define>
-                <RadioButton fx:id="rmiRadio" text="RMI" selected="true"
-                             toggleGroup="$transportGroup"
-                             styleClass="mesos-radio"/>
-                <RadioButton fx:id="socketRadio" text="Socket"
-                             toggleGroup="$transportGroup"
-                             styleClass="mesos-radio"/>
-            </HBox>
         </GridPane>
 
-        <Button fx:id="connectButton" text="Connect" onAction="#onConnect"
+        <Button fx:id="joinButton" text="Join" onAction="#onJoin"
                 defaultButton="true" styleClass="mesos-button"/>
 
         <Label fx:id="statusLabel" styleClass="mesos-hint"/>

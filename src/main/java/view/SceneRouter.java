@@ -33,6 +33,7 @@ public class SceneRouter {
 
     private StackPane currentRoot;
 
+    private NetworkSetupViewController networkSetupViewController;
     private NickViewController nickViewController;
     private SceneController currentViewController;
 
@@ -55,9 +56,12 @@ public class SceneRouter {
 
     // Navigation ─────────────────────────────────────────────────────────
 
-
     public void toSplash() {
         load("/org/example/mesos/splash-view.fxml");
+    }
+
+    public void toNetworkSetup() {
+        load("/org/example/mesos/network-setup-view.fxml");
     }
 
     public void toNick() {
@@ -71,7 +75,6 @@ public class SceneRouter {
 
     public void toWaiting(LobbyDto lobby) {
         load("/org/example/mesos/waiting-view.fxml");
-        //TODO: review how to do this setLobby
         currentViewController.setLobby(lobby);
     }
 
@@ -85,7 +88,6 @@ public class SceneRouter {
 
     public void toWinner(List<PlayerDto> players, List<String> winners) {
         load("/org/example/mesos/winner-view.fxml");
-        //TODO: remove this terrible function
         currentViewController.showWinners(players, winners);
     }
 
@@ -120,9 +122,18 @@ public class SceneRouter {
 
     // Connection Handling ──────────────────────────────────────────
 
-    public void connect(String transport, String host, int port, String name, NickViewController controller) {
-        clientMain.connect(transport, host, port, name);
+    public void connect(String transport, String host, int port, NetworkSetupViewController controller) {
+        this.networkSetupViewController = controller;
+        clientMain.connect(transport, host, port);
+    }
+
+    public void connectionEstablished() {
+        Platform.runLater(this::toNick);
+    }
+
+    public void setName(String name, NickViewController controller) {
         this.nickViewController = controller;
+        clientMain.setName(name);
     }
 
     public void setupSession(String name, VirtualServer vs) {
@@ -131,6 +142,10 @@ public class SceneRouter {
     }
 
     public void connectionErrorHandling(String message) {
-        nickViewController.onConnectionError(message);
+            networkSetupViewController.onConnectionError(message);
+    }
+
+    public void nickRejected() {
+            nickViewController.onNickRejected();
     }
 }
