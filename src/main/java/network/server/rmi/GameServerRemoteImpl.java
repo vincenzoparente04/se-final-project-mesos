@@ -48,10 +48,13 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
     }
 
     @Override
-    public void join(String playerName, ClientCallbackRemote callback, String host) throws RemoteException {
-        System.out.println("RMI connection from " + host);
+    public boolean join(String playerName, ClientCallbackRemote callback, String host) throws RemoteException {
         RmiVirtualView view = new RmiVirtualView(playerName, callback, lobbyManager);
-        lobbyManager.addRmiPlayer(new RmiPlayerEntry(view, this));
+        boolean connectionSuccessful = lobbyManager.addRmiPlayer(new RmiPlayerEntry(view, this));
+        if (connectionSuccessful) {
+            System.out.println("RMI connection from " + host);
+        }
+        return connectionSuccessful;
     }
 
     @Override

@@ -123,7 +123,17 @@ public class ClientMain extends Application {
      */
     private void connect(ClientStateListenerGui listener, LocalGameState localState, Stage primaryStage) {
         try {
-            this.proxy = VirtualServerFactory.create(transport, host, port, playerName, localState, listener);
+            VirtualServer proxy = VirtualServerFactory.connect(transport, host, port);
+
+            if (!proxy.tryRegisterName(playerName, localState, listener)) {
+                proxy.close();
+                Platform.runLater(() ->
+                        primaryStage.setTitle("Mesos — name '" + playerName + "' already taken"));
+                System.err.println("Could not connect: name '" + playerName + "' is already taken on the server.");
+                return;
+            }
+            proxy.start();
+            this.proxy = proxy;
 
             // Propagate the VirtualServer proxy to the listener and UI controller
             listener.setVirtualServer(proxy);

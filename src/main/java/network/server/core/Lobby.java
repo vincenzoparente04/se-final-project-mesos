@@ -61,8 +61,9 @@ public class Lobby {
      * Rimuove dalla lobby il player con il nome dato.
      * @return true se il player era presente ed è stato rimosso, false altrimenti
      */
-    public boolean removePlayerByName(String playerName) {
-        return players.removeIf(p -> p.getName().equals(playerName));
+    public void removePlayerByName(String playerName) {
+        players.removeIf(p -> p.getName().equals(playerName));
+        broadcastState();
     }
 
     /** Invia il LobbyDto corrente a tutte le view dei player di questa lobby. */
