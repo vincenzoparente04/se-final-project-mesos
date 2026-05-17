@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.NickViewController">
+
+    <ImageView fitWidth="${rootPane.width}" fitHeight="${rootPane.height}"
+               preserveRatio="false" mouseTransparent="true">
+        <image><Image url="@/images/wallpapers/walla.jpg"/></image>
+    </ImageView>
+
+    <VBox alignment="CENTER" spacing="26" maxWidth="440" StackPane.alignment="CENTER">
+        <padding>
+            <Insets top="40" right="40" bottom="40" left="40"/>
+        </padding>
+
+        <GridPane hgap="14" vgap="14">
+            <columnConstraints>
+                <ColumnConstraints minWidth="440" prefWidth="440" halignment="RIGHT"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <VBox alignment="CENTER" spacing="14" prefWidth="440" maxWidth="440" StackPane.alignment="CENTER">
+                <Label text="Nickname" styleClass="mesos-label-bold"
+                    GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <TextField fx:id="nameField"
+                           promptText="your nickname"
+                           styleClass="mesos-textfield"
+                           GridPane.rowIndex="0"
+                           GridPane.columnIndex="1"
+                           prefWidth="200"
+                           maxWidth="200"/>
+            </VBox>
+        </GridPane>
+
+        <Button fx:id="joinButton" text="Join" onAction="#onJoin"
+                defaultButton="true" styleClass="mesos-button"/>
+
+        <Label fx:id="statusLabel" styleClass="mesos-hint"/>
+    </VBox>
+
+</StackPane>

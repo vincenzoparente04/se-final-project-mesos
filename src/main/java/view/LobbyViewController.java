@@ -1,98 +1,121 @@
 package view;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import network.client.core.VirtualServer;
+import javafx.scene.layout.StackPane;
+import network.client.core.LocalGameState;
 import shared.dto.LobbyDto;
+import view.widgets.CreateLobbyDialog;
+import view.widgets.ErrorToast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-public class LobbyViewController {
+/**
+ * Lobby browser: refresh, create, join.
+ * Selecting a lobby and pressing Enter (or double-clicking) joins it;
+ * pushing a create-lobby command opens a small dialog for the player count.
+ */
+public class LobbyViewController implements SceneController {
 
+    @FXML private StackPane rootPane;
     @FXML private Label playerNameLabel;
-    @FXML private ListView<String> lobbyListView;
-    @FXML private TextField maxPlayersField;
+    @FXML private ListView<LobbyDto> lobbyListView;
     @FXML private Label statusLabel;
 
-    private VirtualServer virtualServer;
-    private final List<LobbyDto> currentLobbies = new ArrayList<>();
+    private SceneRouter router;
+    private final ObservableList<LobbyDto> items = FXCollections.observableArrayList();
 
-    public void init(String playerName) {
-        playerNameLabel.setText(playerName);
+    public void bind(SceneRouter router) {
+        this.router = router;
+        playerNameLabel.setText("Connected as " + router.playerName());
+        lobbyListView.setItems(items);
+        lobbyListView.setCellFactory(lv -> new LobbyCell());
+
+        lobbyListView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) joinSelected();
+        });
+        lobbyListView.setOnKeyPressed(e -> {
+            if (e.getCode().getName().equalsIgnoreCase("Enter")) joinSelected();
+        });
+
+        statusLabel.setText("Loading…");
     }
 
-    public void setVirtualServer(VirtualServer vs) {
-        this.virtualServer = vs;
-        setStatus("Connected. Find a lobby or create one.", false);
-    }
+    public StackPane root() { return rootPane; }
 
-    // ─── Called by ClientStateListenerGui (already on FX thread) ───────────
+    // ── Called by the listener ────────────────────────────────────────────
+
+    public void update(LocalGameState state) {
+        // Race: a state arrived before onGameStarting routed us.
+        if(state.getPhase().contains("COLOR_CHOOSING_PHASE")) {
+            router.toTotemPick();
+        } else{
+            router.toBoard();
+        }
+    }
 
     public void showLobbies(List<LobbyDto> lobbies) {
-        currentLobbies.clear();
-        currentLobbies.addAll(lobbies);
-
-        lobbyListView.getItems().clear();
-        for (LobbyDto lobby : lobbies) {
-            lobbyListView.getItems().add(
-                    lobby.name() + "  [" + lobby.currentPlayers() + "/" + lobby.maxPlayers() + "]"
-                            + "  id:" + lobby.id()); //lobby id should be seen from the player?
-        }
-        setStatus(lobbies.size() + " available lobby.", false);
+        items.setAll(new ArrayList<>(lobbies));
+        statusLabel.setText(lobbies.isEmpty() ? "No open lobbies.\nCreate one!" : "");
     }
 
     public void showLobbyState(LobbyDto lobby) {
-        setStatus("In lobby \"" + lobby.name() + "\"  -  "
-                + lobby.currentPlayers() + "/" + lobby.maxPlayers()
-                + " players  (waiting...)", false);
+        router.toWaiting(lobby);
     }
 
-    public void showError(String message) {
-        setStatus("Error: " + message, true);
-    }
-
-    // ─── FXML button handlers ───────────────────────────────────────────────
+    // ── FXML handlers ─────────────────────────────────────────────────────
 
     @FXML
-    private void onListLobbies() {
-        if (virtualServer == null) return;
-        virtualServer.sendListLobbies();
+    private void onRefresh() {
+        router.getVirtualServer().sendListLobbies();
     }
 
     @FXML
-    private void onJoinLobby() {
-        if (virtualServer == null) return;
-        int idx = lobbyListView.getSelectionModel().getSelectedIndex();
-        if (idx < 0 || idx >= currentLobbies.size()) {
-            setStatus("Select a lobby from the list.", true);
+    private void onCreate() {
+        Optional<Integer> chosen = new CreateLobbyDialog().showAndWait(rootPane.getScene().getWindow());
+        if (chosen.isEmpty()) return;
+        router.getVirtualServer().sendCreateLobby(chosen.get());
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private void joinSelected() {
+        LobbyDto selected = lobbyListView.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            ErrorToast.show(rootPane, "Select a lobby first");
             return;
         }
-        virtualServer.sendJoinLobby(currentLobbies.get(idx).id());
+        router.getVirtualServer().sendJoinLobby(selected.id());
     }
 
-    @FXML
-    private void onCreateLobby() {
-        if (virtualServer == null) return;
-        String text = maxPlayersField.getText().trim();
-        try {
-            int max = Integer.parseInt(text);
-            if(max>5||max<2){
-                setStatus("Number of players must be between 2 and 5", true);
+    private static final class LobbyCell extends ListCell<LobbyDto> {
+        @Override
+        protected void updateItem(LobbyDto lobby, boolean empty) {
+            super.updateItem(lobby, empty);
+            setText(null);
+            if (empty || lobby == null) {
+                setGraphic(null);
                 return;
             }
-            virtualServer.sendCreateLobby(max);
-        } catch (NumberFormatException e) {
-            setStatus("Insert a valid number of players", true);
+            javafx.scene.control.Label name = new javafx.scene.control.Label(lobby.name());
+            name.getStyleClass().add("mesos-label-bold");
+            name.setStyle("-fx-font-size: 16;");
+
+            javafx.scene.control.Label players = new javafx.scene.control.Label(
+                    lobby.currentPlayers() + " / " + lobby.maxPlayers() + " players");
+            players.getStyleClass().add("mesos-hint");
+
+            javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(2, name, players);
+            vbox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            setGraphic(vbox);
         }
-    }
-
-    // ─── Helpers ────────────────────────────────────────────────────────────
-
-    private void setStatus(String message, boolean isError) {
-        statusLabel.setText(message);
-        statusLabel.setStyle(isError ? "-fx-text-fill: red;" : "-fx-text-fill: gray;");
     }
 }

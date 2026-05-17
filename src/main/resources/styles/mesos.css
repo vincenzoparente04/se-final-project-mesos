@@ -1,0 +1,504 @@
+/* ─── Mesos look & feel ──────────────────────────────────────────────
+   Palette is taken straight from the box cover: a red sunset sky
+   fading to a warm ember, cream highlights for type, dark earth for
+   silhouettes. Looked-up colors are exposed on .root so every scene
+   shares the same palette.
+   ──────────────────────────────────────────────────────────────────── */
+
+.root {
+    -mesos-sky-deep:     #4A0F0A;
+    -mesos-sky-mid:      #7B1E12;
+    -mesos-ember:        #C8401A;
+    -mesos-ember-bright: #E8682A;
+    -mesos-ember-soft:   #F5A65A;
+    -mesos-glow:         #F1C40F;
+    -mesos-cream:        #F4E2C2;
+    -mesos-cream-soft:   #EAD9B3;
+    -mesos-cream-muted:  #B89E73;
+    -mesos-dark:         #1F0C0A;
+    -mesos-dark-mid:     #36110C;
+    -mesos-danger:       #7B2418;
+    -mesos-danger-light: #A03124;
+    -mesos-shadow:       rgba(20, 6, 4, 0.55);
+
+    -mesos-font-display: "Papyrus", "Snell Roundhand", "Brush Script MT", "Marker Felt", "Trattatello", serif;
+    -mesos-font-ui:      "Avenir Next", "Avenir", "Trebuchet MS", "Helvetica Neue", sans-serif;
+
+    -fx-font-family: -mesos-font-ui;
+
+    -fx-background-color: linear-gradient(to bottom, -mesos-sky-deep 0%, -mesos-sky-mid 55%, -mesos-ember 100%);
+
+}
+
+/* ── Typography ──────────────────────────────────────────────────── */
+
+.mesos-title {
+    -fx-font-family: -mesos-font-display;
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 140;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(20,6,4,0.8), 14, 0.4, 0, 4);
+}
+.mesos-title-medium {
+    -fx-font-family: -mesos-font-display;
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 48;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(20,6,4,0.6), 8, 0.3, 0, 2);
+}
+.mesos-title-small {
+    -fx-font-family: -mesos-font-display;
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 28;
+    -fx-font-weight: bold;
+}
+.mesos-hint {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 13;
+    -fx-font-style: italic;
+}
+.mesos-label {
+    -fx-text-fill: -mesos-cream-soft;
+}
+.mesos-label-bold {
+    -fx-text-fill: -mesos-cream;
+    -fx-font-weight: bold;
+}
+.mesos-label-glow {
+    -fx-text-fill: -mesos-glow;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(241,196,15,0.7), 10, 0.5, 0, 0);
+}
+.mesos-section-label {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 11;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.5;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+
+.mesos-button {
+    -fx-background-color: linear-gradient(to bottom, -mesos-ember-bright, -mesos-ember);
+    -fx-text-fill: -mesos-cream;
+    -fx-font-family: -mesos-font-ui;
+    -fx-font-size: 14;
+    -fx-font-weight: bold;
+    -fx-padding: 8 26 8 26;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, -mesos-shadow, 8, 0.4, 0, 3);
+}
+.mesos-button:hover {
+    -fx-background-color: linear-gradient(to bottom, -mesos-ember-soft, -mesos-ember-bright);
+}
+.mesos-button:pressed  { -fx-scale-x: 0.96; -fx-scale-y: 0.96; }
+.mesos-button:disabled { -fx-opacity: 0.45; }
+
+.mesos-button-secondary {
+    -fx-background-color: -mesos-dark-mid;
+    -fx-text-fill: -mesos-cream-soft;
+    -fx-border-color: -mesos-ember;
+    -fx-border-width: 1.5;
+    -fx-font-family: -mesos-font-ui;
+    -fx-font-size: 13;
+    -fx-font-weight: bold;
+    -fx-padding: 6 20 6 20;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-cursor: hand;
+}
+.mesos-button-secondary:hover {
+    -fx-background-color: linear-gradient(to bottom, -mesos-ember, -mesos-ember-bright);
+    -fx-text-fill: -mesos-cream;
+}
+.mesos-button-secondary:pressed { -fx-scale-x: 0.96; -fx-scale-y: 0.96; }
+
+.mesos-button-danger {
+    -fx-background-color: linear-gradient(to bottom, -mesos-danger-light, -mesos-danger);
+    -fx-text-fill: -mesos-cream;
+    -fx-font-family: -mesos-font-ui;
+    -fx-font-size: 13;
+    -fx-font-weight: bold;
+    -fx-padding: 6 20 6 20;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+}
+.mesos-button-danger:hover {
+    -fx-background-color: linear-gradient(to bottom, -mesos-danger, -mesos-danger-light);
+}
+.mesos-button-danger:pressed { -fx-scale-x: 0.96; -fx-scale-y: 0.96; }
+
+/* ── Form controls ──────────────────────────────────────────────── */
+
+.mesos-textfield {
+    -fx-background-color: -mesos-dark-mid;
+    -fx-text-fill: -mesos-cream;
+    -fx-prompt-text-fill: -mesos-cream-muted;
+    -fx-border-color: -mesos-ember;
+    -fx-border-width: 1;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 6 10 6 10;
+    -fx-font-size: 13;
+}
+.mesos-textfield:focused {
+    -fx-border-color: -mesos-glow;
+    -fx-border-width: 2;
+}
+
+.mesos-radio { -fx-text-fill: -mesos-cream-soft; }
+.mesos-radio .radio {
+    -fx-background-color: -mesos-dark-mid;
+    -fx-border-color: -mesos-ember;
+    -fx-background-radius: 1em;
+    -fx-border-radius: 1em;
+}
+.mesos-radio:selected .dot { -fx-background-color: -mesos-glow; }
+
+/* ── List view (lobby) ──────────────────────────────────────────── */
+
+.mesos-listview {
+    -fx-background-color: rgba(20, 6, 4, 0.82);
+    -fx-control-inner-background: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 4;
+    -fx-border-color: rgba(200, 64, 26, 0.5);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+.mesos-listview .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -mesos-cream-soft;
+    -fx-padding: 14 18 14 18;
+    -fx-font-size: 15;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent transparent rgba(232,104,42,0.12) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.mesos-listview .list-cell:hover {
+    -fx-background-color: rgba(200, 64, 26, 0.28);
+    -fx-text-fill: -mesos-cream;
+}
+.mesos-listview .list-cell:selected {
+    -fx-background-color: rgba(232, 104, 42, 0.45);
+    -fx-text-fill: -mesos-cream;
+}
+.mesos-listview .list-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* ── In-game bars ───────────────────────────────────────────────── */
+
+.mesos-status-bar {
+    -fx-background-color: -mesos-dark;
+    -fx-border-color: -mesos-ember;
+    -fx-border-width: 0 0 2 0;
+    -fx-padding: 10 20 10 20;
+}
+
+.mesos-topbar-minimal {
+    -fx-background-color: rgba(14, 4, 2, 0.85);
+    -fx-padding: 9 20 9 20;
+    -fx-border-color: rgba(232, 104, 42, 0.4);
+    -fx-border-width: 0 0 1 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 12, 0.3, 0, 4);
+}
+
+/* ── Dialog glass panel ─────────────────────────────────────────── */
+
+.mesos-dialog-panel {
+    -fx-background-color: rgba(20, 6, 4, 0.93);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(232, 104, 42, 0.55);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75), 32, 0.25, 0, 8);
+}
+
+.mesos-spinner > .text-field {
+    -fx-background-color: -mesos-dark-mid;
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 22;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+    -fx-border-color: transparent;
+    -fx-background-radius: 8 0 0 8;
+    -fx-border-radius: 8 0 0 8;
+}
+.mesos-spinner .increment-arrow-button,
+.mesos-spinner .decrement-arrow-button {
+    -fx-background-color: -mesos-ember;
+    -fx-background-radius: 0;
+}
+.mesos-spinner .increment-arrow-button:hover,
+.mesos-spinner .decrement-arrow-button:hover {
+    -fx-background-color: -mesos-ember-bright;
+}
+.mesos-spinner .increment-arrow,
+.mesos-spinner .decrement-arrow {
+    -fx-background-color: -mesos-cream;
+}
+
+.mesos-other-players-bar {
+    /* Purely structural: tokens float on the play-area background,
+       hugging the upper edge of the table. */
+    -fx-background-color: transparent;
+    -fx-padding: 0 12 8 12;
+}
+
+.mesos-self-bar {
+    -fx-background-color: rgba(12, 4, 2, 0.92);
+    -fx-border-color: rgba(232, 104, 42, 0.55);
+    -fx-border-width: 1.5 0 0 0;
+    -fx-padding: 12 20 12 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 24, 0.3, 0, -10);
+}
+
+.mesos-board-area {
+    -fx-background-image: url('/images/wallpapers/DBY3i.jpg');
+    -fx-background-size: cover;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center center;
+}
+
+/* ── Player marker around the table ─────────────────────────────── */
+
+.mesos-player-marker {
+    -fx-background-color: rgba(22, 8, 5, 0.90);
+    -fx-padding: 10 12 10 12;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(200, 64, 26, 0.6);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 12;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 10, 0.3, 0, 3);
+}
+.mesos-player-marker:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-border-color: -mesos-ember-bright;
+    -fx-background-color: rgba(36, 12, 7, 0.95);
+    -fx-effect: dropshadow(gaussian, rgba(232,104,42,0.5), 14, 0.4, 0, 0);
+}
+.mesos-player-marker-current {
+    -fx-border-color: -mesos-glow;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(241,196,15,0.55), 14, 0.45, 0, 0);
+}
+.mesos-player-name {
+    -fx-text-fill: -mesos-cream;
+    -fx-font-weight: bold;
+    -fx-font-size: 13;
+}
+.mesos-player-name-current { -fx-text-fill: -mesos-glow; }
+.mesos-player-food {
+    -fx-text-fill: -mesos-ember-soft;
+    -fx-font-size: 11;
+    -fx-font-weight: bold;
+}
+.mesos-player-pp {
+    -fx-text-fill: -mesos-glow;
+    -fx-font-size: 11;
+    -fx-font-weight: bold;
+}
+.mesos-player-tribe-row {
+    -fx-text-fill: -mesos-cream-soft;
+    -fx-font-size: 10;
+}
+
+/* ── Toast ──────────────────────────────────────────────────────── */
+
+.mesos-toast {
+    -fx-background-color: rgba(123, 36, 24, 0.95);
+    -fx-text-fill: -mesos-cream;
+    -fx-font-weight: bold;
+    -fx-padding: 10 18 10 18;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.65), 10, 0.4, 0, 4);
+}
+
+/* ── Card zoom backdrop ─────────────────────────────────────────── */
+
+.mesos-card-zoom-backdrop {
+    -fx-background-color: rgba(10, 5, 4, 0.82);
+}
+.mesos-card-zoom-detail {
+    -fx-background-color: rgba(31, 12, 10, 0.92);
+    -fx-padding: 12 16 12 16;
+    -fx-background-radius: 8;
+    -fx-border-color: -mesos-ember;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+}
+
+/* ── Mini "card chip" used inside player markers ────────────────── */
+
+.mesos-card-chip {
+    -fx-background-color: rgba(232, 104, 42, 0.18);
+    -fx-border-color: rgba(232, 104, 42, 0.55);
+    -fx-border-width: 1;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-cursor: hand;
+}
+.mesos-card-chip:hover {
+    -fx-background-color: rgba(232, 104, 42, 0.38);
+    -fx-scale-x: 1.06;
+    -fx-scale-y: 1.06;
+}
+.mesos-card-chip .label {
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 10;
+    -fx-font-weight: bold;
+}
+
+/* ── Tribe popup ────────────────────────────────────────────────── */
+
+.mesos-tribe-popup-panel {
+    -fx-background-color: rgba(16, 5, 3, 0.97);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(232, 104, 42, 0.65);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 48, 0.35, 0, 14);
+}
+.mesos-tribe-popup-title {
+    -fx-font-family: -mesos-font-display;
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 26;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(20,6,4,0.85), 8, 0.4, 0, 2);
+}
+.mesos-tribe-popup-stats {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 13;
+    -fx-font-style: italic;
+}
+.mesos-tribe-group {
+    -fx-background-color: rgba(36, 12, 7, 0.65);
+    -fx-padding: 14 18 14 18;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(232, 104, 42, 0.22);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+.mesos-tribe-group-title {
+    -fx-text-fill: -mesos-ember-soft;
+    -fx-font-weight: bold;
+    -fx-font-size: 13;
+    -fx-effect: dropshadow(gaussian, rgba(232,104,42,0.4), 6, 0.25, 0, 0);
+}
+.mesos-card-meta {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 11;
+}
+.mesos-close-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 16;
+    -fx-font-weight: bold;
+    -fx-padding: 0 6 2 6;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-cursor: hand;
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+}
+.mesos-close-btn:hover {
+    -fx-background-color: rgba(200, 64, 26, 0.35);
+    -fx-text-fill: -mesos-cream;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+.mesos-close-btn:pressed { -fx-scale-x: 0.92; -fx-scale-y: 0.92; }
+
+/* ── Color picker on totem-pick screen ──────────────────────────── */
+
+.mesos-totem-btn {
+    -fx-background-radius: 36;
+    -fx-border-radius: 36;
+    -fx-border-color: -mesos-cream;
+    -fx-border-width: 2;
+    -fx-cursor: hand;
+    -fx-min-width: 72;
+    -fx-min-height: 72;
+    -fx-max-width: 72;
+    -fx-max-height: 72;
+    -fx-effect: dropshadow(gaussian, -mesos-shadow, 8, 0.4, 0, 3);
+}
+.mesos-totem-btn:hover {
+    -fx-border-color: -mesos-glow;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+.mesos-totem-btn:disabled {
+    -fx-opacity: 0.3;
+    -fx-cursor: default;
+    -fx-border-color: -mesos-cream-muted;
+}
+.mesos-totem-RED    { -fx-background-color: #C8401A; }
+.mesos-totem-BLUE   { -fx-background-color: #2E86C1; }
+.mesos-totem-GREEN  { -fx-background-color: #229954; }
+.mesos-totem-YELLOW { -fx-background-color: #F1C40F; }
+.mesos-totem-WHITE  { -fx-background-color: #F4E2C2; }
+
+/* ── Scrollbars (tone down for dark theme) ──────────────────────── */
+
+.scroll-bar {
+    -fx-background-color: -mesos-dark;
+}
+.scroll-bar .thumb {
+    -fx-background-color: -mesos-ember;
+    -fx-background-radius: 4;
+}
+.scroll-bar .thumb:hover { -fx-background-color: -mesos-ember-bright; }
+.scroll-bar .track       { -fx-background-color: -mesos-dark-mid; }
+
+/* ── Separators ─────────────────────────────────────────────────── */
+
+.separator .line {
+    -fx-border-color: rgba(232,104,42,0.35);
+}
+
+/* ── Card hover (board rows) ────────────────────────────────────── */
+
+.mesos-board-card:hover {
+    -fx-scale-x: 1.06;
+    -fx-scale-y: 1.06;
+    -fx-effect: dropshadow(gaussian, rgba(232,104,42,0.55), 14, 0.35, 0, 3);
+}
+
+/* ── Press-any-key arcade prompt ─────────────────────────────────── */
+
+.mesos-press-any-key {
+    -fx-font-family: -mesos-font-display;
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 18;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(20,6,4,0.9), 6, 0.5, 0, 2);
+}
+
+/* ── Content panel (semi-transparent backdrop for text over images) ── */
+
+.mesos-content-panel {
+    -fx-background-color: rgba(20, 6, 4, 0.68);
+    -fx-background-radius: 18;
+    -fx-padding: 40 60 40 60;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 20, 0.2, 0, 4);
+}
+
+/* ── Lobby empty-state hint ───────────────────────────────────────── */
+
+.mesos-lobby-empty-hint {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 18;
+    -fx-font-style: italic;
+    -fx-text-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(20,6,4,0.9), 6, 0.4, 0, 1);
+}

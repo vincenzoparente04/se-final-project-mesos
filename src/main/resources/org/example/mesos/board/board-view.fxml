@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.board.BoardViewController">
+
+    <BorderPane>
+
+        <top>
+            <HBox alignment="CENTER_LEFT" spacing="14" styleClass="mesos-topbar-minimal">
+                <Label fx:id="phaseLabel" styleClass="mesos-label-bold"/>
+                <Label text="·" styleClass="mesos-label"/>
+                <Label fx:id="roundLabel" styleClass="mesos-label"/>
+                <Label text="" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"
+                        visible="false" managed="false" styleClass="mesos-button"/>
+            </HBox>
+        </top>
+
+        <center>
+            <fx:include fx:id="gameArea" source="board-game-area-view.fxml"/>
+        </center>
+
+        <bottom>
+            <fx:include fx:id="selfPanel" source="board-self-panel-view.fxml"/>
+        </bottom>
+
+    </BorderPane>
+
+</StackPane>

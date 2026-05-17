@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.NetworkSetupViewController"
+           alignment="CENTER"
+           prefWidth="1280"
+           prefHeight="800">
+
+    <ImageView fitWidth="${rootPane.width}" fitHeight="${rootPane.height}"
+               preserveRatio="false" mouseTransparent="true">
+        <image><Image url="@/images/wallpapers/walla.jpg"/></image>
+    </ImageView>
+
+    <VBox alignment="CENTER" spacing="26" maxWidth="440" StackPane.alignment="CENTER">
+        <padding>
+            <Insets top="40" right="40" bottom="40" left="40"/>
+        </padding>
+
+        <GridPane hgap="14" vgap="14" alignment="CENTER" VBox.vgrow="NEVER">
+            <columnConstraints>
+                <ColumnConstraints minWidth="440" prefWidth="440" halignment="RIGHT"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+
+
+            <VBox alignment="CENTER" spacing="14" prefWidth="440" maxWidth="440" StackPane.alignment="CENTER">
+
+                <StackPane prefWidth="440">
+                    <TextField fx:id="hostField"
+                               text="localhost"
+                               prefWidth="200"
+                               maxWidth="200"
+                               styleClass="mesos-textfield"
+                               StackPane.alignment="CENTER"/>
+
+                    <Label text="Host"
+                           minWidth="90"
+                           alignment="CENTER_RIGHT"
+                           translateX="-200"
+                           styleClass="mesos-label-bold"
+                           StackPane.alignment="CENTER"/>
+                </StackPane>
+
+                <StackPane prefWidth="440">
+                    <TextField fx:id="portField"
+                               text="1099"
+                               prefWidth="200"
+                               maxWidth="200"
+                               styleClass="mesos-textfield"
+                               StackPane.alignment="CENTER"/>
+
+                    <Label text="Port"
+                           minWidth="90"
+                           alignment="CENTER_RIGHT"
+                           translateX="-200"
+                           styleClass="mesos-label-bold"
+                           StackPane.alignment="CENTER"/>
+                </StackPane>
+
+                <StackPane prefWidth="440">
+                    <HBox spacing="14"
+                          alignment="CENTER"
+                          prefWidth="250"
+                          maxWidth="250"
+                          StackPane.alignment="CENTER">
+
+                        <fx:define>
+                            <ToggleGroup fx:id="transportGroup"/>
+                        </fx:define>
+
+                        <RadioButton fx:id="rmiRadio"
+                                     text="RMI"
+                                     selected="true"
+                                     toggleGroup="$transportGroup"
+                                     styleClass="mesos-radio"/>
+
+                        <RadioButton fx:id="socketRadio"
+                                     text="Socket"
+                                     toggleGroup="$transportGroup"
+                                     styleClass="mesos-radio"/>
+                    </HBox>
+
+                    <Label text="Transport"
+                           minWidth="90"
+                           alignment="CENTER_RIGHT"
+                           translateX="-180"
+                           styleClass="mesos-label-bold"
+                           StackPane.alignment="CENTER"/>
+                </StackPane>
+
+            </VBox>
+        </GridPane>
+
+        <Button fx:id="connectButton" text="Connect" onAction="#onConnect"
+                defaultButton="true" styleClass="mesos-button"/>
+
+        <Label fx:id="statusLabel" styleClass="mesos-hint"/>
+    </VBox>
+
+</StackPane>

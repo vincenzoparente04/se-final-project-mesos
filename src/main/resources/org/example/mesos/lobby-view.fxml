@@ -1,42 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="12" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="view.LobbyViewController"
-      prefWidth="700" prefHeight="520">
-    <padding>
-        <Insets top="20" right="20" bottom="20" left="20"/>
-    </padding>
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.LobbyViewController">
 
-    <Label text="Mesos — Lobby" style="-fx-font-size: 22; -fx-font-weight: bold;"/>
+    <ImageView fitWidth="${rootPane.width}" fitHeight="${rootPane.height}"
+               preserveRatio="false" mouseTransparent="true">
+        <image><Image url="@/images/wallpapers/walla.jpg"/></image>
+    </ImageView>
 
-    <HBox spacing="8" alignment="CENTER_LEFT">
-        <Label text="Connected as:"/>
-        <Label fx:id="playerNameLabel" style="-fx-font-weight: bold;"/>
-    </HBox>
+    <BorderPane>
 
-    <Separator/>
+        <top>
+            <VBox alignment="CENTER" spacing="4" style="-fx-padding: 22 0 14 0;">
+                <Label text="Open Lobbies" styleClass="mesos-title-small"/>
+                <Label fx:id="playerNameLabel" styleClass="mesos-hint"/>
+            </VBox>
+        </top>
 
-    <Label text="Available lobbies:" style="-fx-font-weight: bold;"/>
+        <center>
+            <VBox spacing="0" style="-fx-padding: 0 80 0 80;">
+                <StackPane VBox.vgrow="ALWAYS">
+                    <ListView fx:id="lobbyListView" styleClass="mesos-listview"/>
+                    <Label fx:id="statusLabel" styleClass="mesos-lobby-empty-hint"
+                           StackPane.alignment="CENTER" mouseTransparent="true"/>
+                </StackPane>
+            </VBox>
+        </center>
 
-    <ListView fx:id="lobbyListView" prefHeight="220" VBox.vgrow="ALWAYS"/>
+        <bottom>
+            <HBox alignment="CENTER" spacing="16" style="-fx-padding: 22;">
+                <Button text="Refresh" onAction="#onRefresh"
+                        styleClass="mesos-button-secondary"/>
+                <Button text="Create new lobby" onAction="#onCreate"
+                        styleClass="mesos-button"/>
+            </HBox>
+        </bottom>
 
-    <HBox spacing="8" alignment="CENTER_LEFT">
-        <Button text="Refresh list" onAction="#onListLobbies"/>
-        <Button text="Join selected lobby" onAction="#onJoinLobby"/>
-        <Separator orientation="VERTICAL"/>
-        <Label text="Max players:"/>
-        <TextField fx:id="maxPlayersField" prefWidth="60" text="2"/>
-        <Button text="Create lobby" onAction="#onCreateLobby"/>
-    </HBox>
+    </BorderPane>
 
-    <Label fx:id="statusLabel" text="Connecting..." style="-fx-text-fill: gray;"/>
-</VBox>
+</StackPane>
