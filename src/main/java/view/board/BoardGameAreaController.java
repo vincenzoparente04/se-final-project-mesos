@@ -39,8 +39,8 @@ public class BoardGameAreaController implements ViewController {
     private static final double RESOLVED_SCALE    = 120.0 / 84.0;
 
     // Proportion of one row's width used per card (row = half of upperRowsBox minus spacing)
-    private static final double ROW_DIVISOR_SMALL = 4.5;   // ≤3 players → carte più grandi
-    private static final double ROW_DIVISOR_LARGE = 6.5;   // ≥4 players → carte più compatte
+    private static final double ROW_DIVISOR_SMALL = 4.5;   // ≤3 players → bigger cards
+    private static final double ROW_DIVISOR_LARGE = 6.5;   // ≥4 players → smaller cards
 
     @FXML private HBox othersBar;
     @FXML private HBox upperRowsBox;
@@ -114,7 +114,7 @@ public class BoardGameAreaController implements ViewController {
         updateDecks(state.getCurrentEra());
     }
 
-    // ── Other players bar ──────────────────────────────────────────────────
+    // Other players bar ---------------------------------------------------------------
 
     private void updatePlayersBar(List<PlayerDto> players, String me, String currentPlayer) {
         othersBar.getChildren().clear();
@@ -141,7 +141,7 @@ public class BoardGameAreaController implements ViewController {
         return r;
     }
 
-    // ── Central area: TurnOrderTile + OfferTrack ───────────────────────────
+    // Central area: TurnOrderTile + OfferTrack ---------------------------------------------------------------
 
     private void updateCentralBox(LocalGameState state,
                                   Map<String, PlayerDto> playersByName,
@@ -166,7 +166,7 @@ public class BoardGameAreaController implements ViewController {
         centralBox.getChildren().add(sideBySide);
     }
 
-    // ── Card rows ──────────────────────────────────────────────────────────
+    // Card rows ---------------------------------------------------------------
 
     private void updateRowsBox(HBox box,
                                List<CardDto> tribeCards,
@@ -202,7 +202,7 @@ public class BoardGameAreaController implements ViewController {
         return row;
     }
 
-    // ── Decks ──────────────────────────────────────────────────────────────
+    // Decks ---------------------------------------------------------------
 
     private void updateDecks(String era) {
         decksBox.getChildren().clear();
@@ -211,12 +211,7 @@ public class BoardGameAreaController implements ViewController {
         double cw = cardWidth(false);
         double ch = cardHeight(false);
 
-        /*
-        Label tribeLbl = new Label("Tribe deck");
-        tribeLbl.getStyleClass().add("mesos-section-label");
-        Label buildLbl = new Label("Building deck");
-        buildLbl.getStyleClass().add("mesos-section-label");
-         */
+        //TODO: remove dead label code
         Label tribeLbl = new Label("");
         tribeLbl.getStyleClass().add("mesos-section-label");
         Label buildLbl = new Label("");
@@ -252,7 +247,7 @@ public class BoardGameAreaController implements ViewController {
         return "END_OF_ROUND".equals(phase) || "PRE_END_OF_ROUND".equals(phase);
     }
 
-    // ── Utilities ──────────────────────────────────────────────────────────
+    // Utilities ---------------------------------------------------------------
 
     private static Map<String, PlayerDto> indexByName(List<PlayerDto> players) {
         Map<String, PlayerDto> m = new HashMap<>();

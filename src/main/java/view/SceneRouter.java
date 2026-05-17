@@ -43,18 +43,19 @@ public class SceneRouter {
         this.localState = localState;
     }
 
-    // Bindings set as the user progresses through screens ────────────────
+    // Bindings set as the user progresses through screens ---------------------------------------------------------------
 
+    //TODO: leave only useful ones
     public void setListener(ClientStateListener l) { this.listener = l; }
-    public ClientStateListener listener()          { return listener; }
-    public VirtualServer getVirtualServer()        { return session != null ? session.virtualServer() : null; }
-    public String playerName()                     { return session != null ? session.playerName() : null; }
-    public LocalGameState localState()             { return localState; }
-    public SceneController currentController()     { return currentViewController; }
-    public StackPane currentRoot()                 { return currentRoot; }
-    public Stage stage()                           { return stage; }
+    public ClientStateListener listener() { return listener; }
+    public VirtualServer getVirtualServer() { return session != null ? session.virtualServer() : null; }
+    public String playerName() { return session != null ? session.playerName() : null; }
+    public LocalGameState localState() { return localState; }
+    public SceneController currentController() { return currentViewController; }
+    public StackPane currentRoot() { return currentRoot; }
+    public Stage stage() { return stage; }
 
-    // Navigation ─────────────────────────────────────────────────────────
+    // Navigation---------------------------------------------------------------
 
     public void toSplash() {
         load("/org/example/mesos/splash-view.fxml");
@@ -91,7 +92,7 @@ public class SceneRouter {
         currentViewController.showWinners(players, winners);
     }
 
-    // FXML loading ──────────────────────────────────────────────────────
+    // FXML loading ---------------------------------------------------------------
 
     private void load(String fxmlResource) {
         try {
@@ -120,7 +121,7 @@ public class SceneRouter {
         }
     }
 
-    // Connection Handling ──────────────────────────────────────────
+    // Connection Handling ---------------------------------------------------------------
 
     public void connect(String transport, String host, int port, NetworkSetupViewController controller) {
         this.networkSetupViewController = controller;

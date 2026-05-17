@@ -20,12 +20,14 @@ public class OfferTileView extends StackPane {
 
     public static final double TILE_HEIGHT = 110;
 
+    //TODO: Remove dead code
+    /*
     public OfferTileView(OfferTileDto tile,
                          Map<String, PlayerDto> playersByName,
                          boolean clickable,
                          Consumer<Character> onClick) {
         this(tile, playersByName, clickable, onClick, TILE_HEIGHT);
-    }
+    }*/
 
     public OfferTileView(OfferTileDto tile,
                          Map<String, PlayerDto> playersByName,

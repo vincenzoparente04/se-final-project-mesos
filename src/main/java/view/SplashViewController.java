@@ -12,7 +12,7 @@ import javafx.scene.layout.StackPane;
 public class SplashViewController implements SceneController {
 
     @FXML private StackPane rootPane;
-    @FXML private Label pressAnyKeyLabel;
+    @FXML private Label pressAnyKeyLabel; //TODO: remove?
 
     private SceneRouter router;
 
@@ -33,5 +33,5 @@ public class SplashViewController implements SceneController {
     }
 
     private void onAdvance(MouseEvent e) { router.toNetworkSetup(); }
-    private void onAdvance(KeyEvent e)   { router.toNetworkSetup(); }
+    private void onAdvance(KeyEvent e) { router.toNetworkSetup(); }
 }

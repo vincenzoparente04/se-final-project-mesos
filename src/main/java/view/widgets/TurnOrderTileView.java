@@ -22,6 +22,7 @@ import java.util.Map;
  */
 public class TurnOrderTileView extends StackPane {
 
+    //TILE_WIDTH???
     public static final double TILE_HEIGHT = 110;
     public static final double TILE_WIDTH  = TILE_HEIGHT * (300.0 / 463.0);
 
@@ -48,7 +49,7 @@ public class TurnOrderTileView extends StackPane {
             getChildren().add(r);
         }
 
-        /*
+        /*TODO: REMOVE DEAD CODE
         VBox totems = new VBox(-10); // Negative spacing pushes them slightly together if needed, or adjust to match circles
         totems.setAlignment(Pos.TOP_CENTER);
         // Add padding to push the VBox down exactly to where the first circle starts on the image.
@@ -82,9 +83,9 @@ public class TurnOrderTileView extends StackPane {
             default -> new double[numPlayers];
         };
 
-        double scale      = tileHeight / TILE_HEIGHT;
-        double boxHeight  = tileHeight * 0.15;
-        double totemSize  = 38.0 * scale;
+        double scale = tileHeight / TILE_HEIGHT;
+        double boxHeight = tileHeight * 0.15;
+        double totemSize = 38.0 * scale;
 
         for (int i = 0; i < slots.size(); i++) {
             TurnOrderSlotDto slot = slots.get(i);

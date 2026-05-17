@@ -177,13 +177,13 @@ public class TribePopupController implements ViewController {
     private static String prettyType(String type) {
         if (type == null) return "?";
         return switch (type) {
-            case "HUNTER"   -> "Hunters";
-            case "BUILDER"  -> "Builders";
-            case "SHAMAN"   -> "Shamans";
-            case "ARTIST"   -> "Artists";
+            case "HUNTER" -> "Hunters";
+            case "BUILDER" -> "Builders";
+            case "SHAMAN" -> "Shamans";
+            case "ARTIST" -> "Artists";
             case "INVENTOR" -> "Inventors";
             case "GATHERER" -> "Gatherers";
-            default         -> type;
+            default -> type;
         };
     }
 

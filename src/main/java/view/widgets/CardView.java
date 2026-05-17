@@ -15,12 +15,15 @@ import java.io.InputStream;
  */
 public class CardView extends StackPane {
 
+    /* TODO: ELIMINATE DEAD CODE
     public static final double DEFAULT_WIDTH  = 90;
     public static final double DEFAULT_HEIGHT = 130;
 
     public CardView(CardDto card, boolean faceUp) {
         this(card, faceUp, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
+     */
+
 
     public CardView(CardDto card, boolean faceUp, double width, double height) {
         String filename = faceUp ? card.ImagePath : card.backImagePath;
@@ -50,9 +53,9 @@ public class CardView extends StackPane {
         if (card == null || card.type == null) return Color.LIGHTGRAY;
         return switch (card.type) {
             case "CHARACTER" -> Color.LIGHTBLUE;
-            case "EVENT"     -> Color.LIGHTCORAL;
-            case "BUILDING"  -> Color.LIGHTYELLOW;
-            default          -> Color.LIGHTGRAY;
+            case "EVENT" -> Color.LIGHTCORAL;
+            case "BUILDING" -> Color.LIGHTYELLOW;
+            default -> Color.LIGHTGRAY;
         };
     }
 }

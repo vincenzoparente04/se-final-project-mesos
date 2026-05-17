@@ -39,12 +39,12 @@ public class TotemView extends StackPane {
 
     private static Color paintFor(String colorName) {
         return switch (colorName) {
-            case "RED"    -> Color.web("#e74c3c");
-            case "BLUE"   -> Color.web("#3498db");
-            case "GREEN"  -> Color.web("#2ecc71");
+            case "RED" -> Color.web("#e74c3c");
+            case "BLUE" -> Color.web("#3498db");
+            case "GREEN" -> Color.web("#2ecc71");
             case "YELLOW" -> Color.web("#f1c40f");
-            case "WHITE"  -> Color.web("#ecf0f1");
-            default       -> Color.LIGHTGRAY;
+            case "WHITE" -> Color.web("#ecf0f1");
+            default -> Color.LIGHTGRAY;
         };
     }
 }

@@ -19,7 +19,7 @@ public class DeckView extends StackPane {
 
     public static final double CARD_WIDTH  = 90;
     public static final double CARD_HEIGHT = 130;
-    private static final int    STACK_SIZE = 4;
+    private static final int STACK_SIZE = 4;
     private static final double OFFSET     = 3.5;
 
     public DeckView(String backImageFilename) {
@@ -55,7 +55,7 @@ public class DeckView extends StackPane {
             getChildren().add(layer);
         }
 
-        double w = cardWidth  + STACK_SIZE * offset;
+        double w = cardWidth + STACK_SIZE * offset;
         double h = cardHeight + STACK_SIZE * offset;
         setMinSize(w, h);
         setPrefSize(w, h);

@@ -137,6 +137,7 @@ public class PlayerViewController implements ViewController {
         return box;
     }
 
+    //TODO: decide if we want the ★ or the drawing of the star from the game
     private static int countStars(String details) {
         int count = 0;
         for (int i = 0; i < details.length(); i++) {

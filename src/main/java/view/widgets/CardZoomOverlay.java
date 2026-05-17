@@ -49,15 +49,15 @@ public final class CardZoomOverlay {
     private static String formatType(CardDto c) {
         if (c.type == null) return "";
         return switch (c.type) {
-            case "HUNTER"   -> "Hunter";
-            case "BUILDER"  -> "Builder";
-            case "SHAMAN"   -> "Shaman";
-            case "ARTIST"   -> "Artist";
+            case "HUNTER" -> "Hunter";
+            case "BUILDER" -> "Builder";
+            case "SHAMAN" -> "Shaman";
+            case "ARTIST" -> "Artist";
             case "INVENTOR" -> "Inventor";
             case "GATHERER" -> "Gatherer";
-            case "EVENT"    -> "Event";
+            case "EVENT" -> "Event";
             case "BUILDING" -> "Building";
-            default         -> c.type;
+            default -> c.type;
         };
     }
 

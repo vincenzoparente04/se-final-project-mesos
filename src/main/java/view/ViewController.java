@@ -7,7 +7,7 @@ import shared.dto.PlayerDto;
 import java.util.List;
 
 /**
- * Optional-hook interface for all view controllers.
+ * Interface for all view controllers.
  * Implement only the methods relevant to a given screen;
  * the defaults are intentional no-ops.
  */

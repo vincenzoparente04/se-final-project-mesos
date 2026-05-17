@@ -53,7 +53,7 @@ public class BoardSelfPanelController implements ViewController {
         updateColorPicker(phase, isMyTurn);
     }
 
-    // ── Self panel ─────────────────────────────────────────────────────────
+    // Self panel ---------------------------------------------------------------
 
     private void updateSelfPanel(List<PlayerDto> players, String me, String currentPlayer) {
         PlayerDto self = players.stream().filter(p -> p.name.equals(me)).findFirst().orElse(null);
@@ -133,7 +133,7 @@ public class BoardSelfPanelController implements ViewController {
         return group;
     }
 
-    // ── Colour picker ──────────────────────────────────────────────────────
+    // Color picker ---------------------------------------------------------------
 
     private void updateColorPicker(String phase, boolean isMyTurn) {
         boolean show = "COLOR_CHOOSING_PHASE".equals(phase) && isMyTurn;
