@@ -67,7 +67,7 @@ public class ActionPhase implements GamePhaseHandler {
     @Override
     public void visit(DrawCardCommand cmd) throws Exception {
         int cardId = cmd.cardId();
-        ensureActiveTurn();
+        //ensureActiveTurn();
 
         RowsManager rowsManager = model.getRowsManager();
         Card card = rowsManager.findCardById(cardId)
@@ -88,7 +88,7 @@ public class ActionPhase implements GamePhaseHandler {
 
     @Override
     public void visit(EndTurnCommand cmd) throws Exception {
-        ensureActiveTurn();
+        //ensureActiveTurn();
 
         if (hasAnyForcedMove()) {
             throw new IllegalStateException("All mandatory draws must be completed before ending the turn");
@@ -130,7 +130,7 @@ public class ActionPhase implements GamePhaseHandler {
     }
 
     private void advanceActionTurn() {
-        ensureActiveTurn();
+        //ensureActiveTurn();
 
         model.getBoard().returnTotemToTurnOrder(currentPlayer);
 
@@ -141,11 +141,11 @@ public class ActionPhase implements GamePhaseHandler {
         startNextPlayerTurn();
     }
 
-    private void ensureActiveTurn() {
-        if (currentPlayer == null || currentAction == null) {
-            throw new IllegalStateException("No active action turn.");
-        }
-    }
+//    private void ensureActiveTurn() {
+//        if (currentPlayer == null || currentAction == null) {
+//            throw new IllegalStateException("No active action turn.");
+//        }
+//    }
 
     @Override
     public void skipCurrentPlayerTurn() {
