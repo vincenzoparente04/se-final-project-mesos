@@ -4,17 +4,19 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.net.URL;
+import java.nio.file.Paths;
+import java.util.Random;
 
 /**
  * Singleton that owns the background music MediaPlayer.
- * Call MusicManager.getInstance().play("music/yourfile.mp3") once at startup.
  */
 public class MusicManager {
 
     private static MusicManager instance;
-
     private MediaPlayer player;
+    private final Random random = new Random();
 
     private MusicManager() {}
 
@@ -23,19 +25,44 @@ public class MusicManager {
         return instance;
     }
 
-    /**
-     * Loads and plays the given resource path (e.g. "music/background.mp3").
-     * Loops indefinitely from the beginning. Safe to call multiple times —
-     * stops the previous track before starting the new one.
-     */
+    /** Picks a random audio file from the given resource folder and plays it. */
+    public void playRandom(String resourceFolder) {
+        URL folderUrl = getClass().getResource("/" + resourceFolder);
+        if (folderUrl == null) {
+            System.err.println("[MusicManager] folder not found: " + resourceFolder);
+            return;
+        }
+        File folder;
+        try {
+            folder = Paths.get(folderUrl.toURI()).toFile();
+        } catch (Exception e) {
+            System.err.println("[MusicManager] cannot resolve folder URI: " + e.getMessage());
+            return;
+        }
+        File[] files = folder.listFiles(f ->
+                f.isFile() && f.getName().matches(".*\\.(mp3|wav|aac|m4a|ogg)"));
+        if (files == null || files.length == 0) {
+            System.err.println("[MusicManager] no audio files in: " + resourceFolder);
+            return;
+        }
+        File chosen = files[random.nextInt(files.length)];
+        System.out.println("[MusicManager] playing: " + chosen.getName());
+        playFile(chosen.toURI().toString());
+    }
+
+    /** Plays a specific resource path (e.g. "music/track.mp3"). */
     public void play(String resourcePath) {
-        stop();
         URL url = getClass().getResource("/" + resourcePath);
         if (url == null) {
             System.err.println("[MusicManager] resource not found: " + resourcePath);
             return;
         }
-        Media media = new Media(url.toExternalForm());
+        playFile(url.toExternalForm());
+    }
+
+    private void playFile(String uri) {
+        stop();
+        Media media = new Media(uri);
         player = new MediaPlayer(media);
         player.setOnEndOfMedia(() -> {
             player.seek(Duration.ZERO);
