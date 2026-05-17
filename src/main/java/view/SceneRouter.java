@@ -1,15 +1,15 @@
 package view;
 
-import network.client.ClientMain;
+import network.client.core.ClientMain;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import network.client.ClientSession;
-import network.client.ClientStateListener;
-import network.client.LocalGameState;
-import network.client.VirtualServer;
+import network.client.core.ClientSession;
+import network.client.core.ClientStateListener;
+import network.client.core.LocalGameState;
+import network.client.core.VirtualServer;
 import shared.dto.LobbyDto;
 import shared.dto.PlayerDto;
 

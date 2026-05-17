@@ -1,6 +1,6 @@
 package view;
 
-import network.client.LocalGameState;
+import network.client.core.LocalGameState;
 import shared.dto.LobbyDto;
 import shared.dto.PlayerDto;
 

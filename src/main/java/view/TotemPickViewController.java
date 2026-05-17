@@ -7,7 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import network.client.LocalGameState;
+import network.client.core.LocalGameState;
 import shared.dto.PlayerDto;
 
 import java.util.ArrayList;

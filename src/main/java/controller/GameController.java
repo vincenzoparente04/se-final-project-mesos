@@ -14,6 +14,7 @@ import shared.command.LobbyCommand;
 import shared.command.LobbyCommandVisitor;
 import shared.command.PlayerDisconnectedCommand;
 import shared.command.PlayerReconnectedCommand;
+import model.phaseHandlers.GamePhaseHandler;
 
 import java.util.List;
 import java.util.Optional;
@@ -132,8 +133,8 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
      * Usata sia dal dispatch interno della coda sia dai test.
      */
     public synchronized void handleCommand(GameCommand cmd) throws Exception {
-        Player current = gameModel.getCurrentPlayer();
-        if (gameModel.getCurrentPhase() != GamePhase.COLOR_CHOOSING_PHASE) {
+        Player current = model.getCurrentPlayer();
+        if (model.getCurrentPhase() != GamePhase.COLOR_CHOOSING_PHASE) {
             if (current == null || !current.getName().equals(cmd.getPlayerName())) {
                 throw new IllegalStateException("It is not " + cmd.getPlayerName() + "'s turn.");
             }

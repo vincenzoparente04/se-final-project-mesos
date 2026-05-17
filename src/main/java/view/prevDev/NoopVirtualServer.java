@@ -1,8 +1,8 @@
 package view.prevDev;
 
-import network.client.ClientStateListener;
-import network.client.LocalGameState;
-import network.client.VirtualServer;
+import network.client.core.ClientStateListener;
+import network.client.core.LocalGameState;
+import network.client.core.VirtualServer;
 
 /** Stub VirtualServer for UI previews — all commands are silently ignored. */
 public class NoopVirtualServer implements VirtualServer {

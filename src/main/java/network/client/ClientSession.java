@@ -1,4 +1,4 @@
-package network.client;
+package network.client.core;
 
 /**
  * Immutable snapshot of the local player's session.

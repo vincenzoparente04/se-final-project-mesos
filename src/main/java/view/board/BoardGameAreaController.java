@@ -10,7 +10,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import network.client.LocalGameState;
+import network.client.core.LocalGameState;
 import shared.dto.CardDto;
 import shared.dto.OfferTileDto;
 import shared.dto.PlayerDto;
