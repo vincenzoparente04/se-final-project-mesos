@@ -1,4 +1,4 @@
-package network.client.view;
+package network.client.core.cli.view;
 
 import shared.dto.CardDto;
 import java.util.ArrayList;

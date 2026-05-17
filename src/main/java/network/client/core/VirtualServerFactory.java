@@ -1,4 +1,4 @@
-package network.client;
+package network.client.core;
 
 import network.client.rmi.RmiVirtualServer;
 import network.client.socket.SocketVirtualServer;

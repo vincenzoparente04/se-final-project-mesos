@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 
 import network.server.rmi.RmiPlayerEntry;
 import network.server.socket.SocketClientHandler;
@@ -34,9 +35,14 @@ import shared.message.ErrorMessage;
  * <h2>Threading model</h2>
  * One instance is shared by every transport thread (socket acceptor workers,
  * RMI dispatcher threads, individual client handler threads). Every public method
- * that touches the three maps is {@code synchronized}, and the few private helpers
- * ({@code nameAlreadyTaken}, {@code playerAlreadyInLobby}, {@code startIfFull})
- * are only ever called from inside synchronized blocks.
+ * that touches the three maps is {@code synchronized}.
+ *
+ * <h2>What this class does NOT do</h2>
+ * It never reads or writes the game model. When a lifecycle event affects a
+ * running session (disconnect, reconnect, leave-from-endgame), the
+ * {@code LobbyManager} simply impila il corrispondente {@link LobbyCommand}
+ * sulla coda della session e ritorna subito: la mutazione del model è eseguita
+ * dal game thread del {@code GameController}, mai dal LobbyManager.
  *
  * <h2>I/O outside the lock</h2>
  * Network I/O performed during the socket handshake is deliberately kept
@@ -48,10 +54,13 @@ public class LobbyManager implements LobbyCommandVisitor {
     private static final int CONNECT_TIMEOUT_MS = 50_000;
     private static final long HEARTBEAT_TIMEOUT_MS = 6_000L;
     private static final long HEARTBEAT_CHECK_PERIOD_MS = 2_000L;
-    
+
+    /** @apiNote @GuardedBy("this") */
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>(); // <id, lobby>
+    /** @apiNote @GuardedBy("this") */
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
-    private final Map<String, Game> activeGames = new HashMap<>(); // <PlayerName, Game>
+    /** @apiNote @GuardedBy("this") */
+    private final Map<String, GameSession> activeGames = new HashMap<>(); // <PlayerName, GameSession>
 
     /**
      * Timestamp (millis epoch) dell'ultimo heartbeat ricevuto da ciascun player.
@@ -106,17 +115,7 @@ public class LobbyManager implements LobbyCommandVisitor {
                         SocketClientHandler handler = new SocketClientHandler(view, in, this);
                         SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
 
-                        // if the just added player has the same name of a player in an active game it reactivates it
-                        if (activeGames.containsKey(playerName)) { // search between activeGames
-                            Game game = activeGames.get(playerName);
-                            game.onPlayerReconnected(playerName, entry);
-                            connectedPlayers.put(playerName, entry);
-                        } else {
-                            connectedPlayers.put(playerName, entry);
-                            view.sendLobbyList(currentLobbyList());
-                        }
-
-                        lastHeartbeat.put(playerName, System.currentTimeMillis());
+                        registerPlayer(playerName, entry);
 
                         Thread t = new Thread(handler, "client-" + playerName);
                         t.setDaemon(true);
@@ -163,21 +162,31 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (nameAlreadyTaken(entry.getName())) {
             return false;
         }
-        if (activeGames.containsKey(entry.getName())) {
-            Game game = activeGames.get(entry.getName());
-            game.onPlayerReconnected(entry.getName(), entry);
-            connectedPlayers.put(entry.getName(), entry);
-        }
-        else {
-            connectedPlayers.put(entry.getName(), entry);
+        registerPlayer(entry.getName(), entry);
+        return true;
+    }
+
+    /**
+     * Common registration path for both socket and RMI: handles the
+     * reconnection case (player name already in an active game) and the
+     * brand-new connection case. Caller must hold the monitor.
+     */
+    private void registerPlayer(String playerName, PlayerEntry entry) {
+        connectedPlayers.put(playerName, entry);
+        lastHeartbeat.put(playerName, System.currentTimeMillis());
+
+        GameSession session = activeGames.get(playerName);
+        if (session != null) {
+            entry.setGameQueue(session.getGameCommandQueue()); // TODO: questo potrebbe essere delegato più in basso forse; forse potrebbe farlo il controller
+            enqueue(session.getCommandQueue(), new PlayerReconnectedCommand(playerName, entry.getView()));
+        } else {
             entry.getView().sendLobbyList(currentLobbyList());
         }
-        lastHeartbeat.put(entry.getName(), System.currentTimeMillis());
-        return true;
     }
 
     // LobbyCommandVisitor –––––––––––––––––––––––––––––––––––––––––––––
 
+    // TODO: metti un filtro perché se un player è in una partita in corso non deve poter mandare comandi di lobby
     @Override
     public synchronized void visit(ListLobbiesCommand cmd) {
         VirtualView view = getView(cmd.playerName());
@@ -188,7 +197,7 @@ public class LobbyManager implements LobbyCommandVisitor {
     public synchronized void visit(CreateLobbyCommand cmd) {
         PlayerEntry entry = connectedPlayers.get(cmd.playerName());
         if (entry == null) return;
-  
+
         if (playerAlreadyInLobby(cmd.playerName())) {
             entry.getView().sendError("already_in_lobby");
             return;
@@ -223,20 +232,55 @@ public class LobbyManager implements LobbyCommandVisitor {
         startIfFull(lobby);
     }
 
-    @Override
-    public synchronized void visit(LeaveCommand cmd) throws Exception {
-        String playerName = cmd.getPlayerName();
+    /**
+     * Bifurcates a {@link LeaveCommand} based on the player's state:
+     * <ul>
+     *   <li>player in a lobby (pre-game): the lobby is updated inline (only
+     *       state local to the LobbyManager — no model touched);</li>
+     *   <li>player in an {@code END_OF_GAME} session: the command is impilato
+     *       sulla coda della session, dove il controller pulir&agrave; il model;
+     *       il LobbyManager rimuove l'entry da {@code activeGames} e, se non
+     *       resta nessun player connesso per quella session, shutta la session;</li>
+     *   <li>player non in lobby n&eacute; in partita: errore inline.</li>
+     * </ul>
+     */
 
-        if (isPlayerInEndGame(playerName)) {
-            handleLeaveFromGame(playerName);
-        } else if (isPlayerInLobby(playerName)) {
-            handleLeaveFromLobby(playerName);
-        } else {
-            VirtualView view = getView(playerName);
-            if (view != null) {
-                view.sendError("LEAVE_INVALID:not_in_lobby_or_game");
+    // TODO da rivedere perché forse è meglio un listener
+    @Override
+    public synchronized void visit(LeaveCommand cmd) {
+        String playerName = cmd.getPlayerName();
+        GameSession session = activeGames.get(playerName);
+
+        if (session != null && session.isGameOver()) {
+            enqueue(session.getCommandQueue(), cmd);
+            activeGames.remove(playerName);
+
+            boolean stillHasConnected = activeGames.entrySet().stream()
+                    .filter(e -> e.getValue() == session)
+                    .anyMatch(e -> connectedPlayers.containsKey(e.getKey()));
+            if (!stillHasConnected) {
+                // L'ultimo player connesso ha lasciato: rimuovi anche eventuali
+                // stragglers (player disconnessi che non hanno mai inviato
+                // LeaveCommand) e chiudi la session.
+                activeGames.values().removeIf(s -> s == session);
+                session.shutdown();
             }
+
+            VirtualView leavingView = getView(playerName);
+            if (leavingView != null) {
+                leavingView.sendError("LEFT_GAME:success");
+                leavingView.sendLobbyList(currentLobbyList());
+            }
+            return;
         }
+
+        if (isPlayerInLobby(playerName)) {
+            handleLeaveFromLobby(playerName);
+            return;
+        }
+
+        VirtualView view = getView(playerName);
+        if (view != null) view.sendError("LEAVE_INVALID:not_in_lobby_or_game");
     }
 
     // Game start
@@ -248,26 +292,34 @@ public class LobbyManager implements LobbyCommandVisitor {
         lobbies.remove(lobby.getId());
 
         List<PlayerEntry> players = lobby.getPlayers();
-        Game game = new Game(players);
-        game.start();
-        players.forEach(p -> activeGames.put(p.getName(), game));
+        GameSession session = new GameSession(players);
+        session.start(players);
+        players.forEach(p -> activeGames.put(p.getName(), session));
     }
 
-    // Disconnect
+    /**
+     * Single disconnect entry point. Called by the network endpoints
+     * ({@code SocketClientHandler} finally block, {@code RmiVirtualView}
+     * send failure) and by the heartbeat scanner. Updates the LobbyManager's
+     * local state, closes the outbound view, and — if the player was in a
+     * running game — impila un {@link PlayerDisconnectedCommand} sulla coda
+     * della session per delegare al controller la pulizia del model.
+     */
     public synchronized void onDisconnect(String playerName) {
         if (!connectedPlayers.containsKey(playerName) && !lastHeartbeat.containsKey(playerName)) {
             return;
         }
 
-        connectedPlayers.remove(playerName);
+        PlayerEntry entry = connectedPlayers.remove(playerName);
         lastHeartbeat.remove(playerName);
+        if (entry != null) entry.getView().close();
 
-        Game game = activeGames.get(playerName);
-        if (game != null) {
-            game.onPlayerDisconnect(playerName);
-            return;
+        GameSession session = activeGames.get(playerName);
+
+        // TODO: vedere cosa serve per completare la logica di riconnessione/proclamazione vincitori
+        if (session != null) {
+            enqueue(session.getCommandQueue(), new PlayerDisconnectedCommand(playerName));
         }
-
         // Era in lobby (o solo connesso, non in nessuna lobby): trova la lobby
         // specifica, rimuovi il player, notifica solo quella lobby.
         Lobby hostingLobby = lobbies.values().stream()
@@ -283,8 +335,6 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (hostingLobby.isEmpty()) {
             lobbies.remove(hostingLobby.getId());
         }
-        // Per i browser la lista lobby è cambiata in entrambi i casi
-        // (lobby sparita, o lobby con un player in meno).
         broadcastLobbyListToBrowsers();
     }
 
@@ -318,11 +368,7 @@ public class LobbyManager implements LobbyCommandVisitor {
         }
     }
 
-    // ─── LEAVE command handlers ────────────────────────────────────────
-
-    private boolean isPlayerInEndGame(String playerName) {
-        return (activeGames.containsKey(playerName) && activeGames.get(playerName).isGameOver());
-    }
+    // ─── Helpers ───────────────────────────────────────────────────────
 
     private boolean isPlayerInLobby(String playerName) {
         return lobbies.values().stream()
@@ -331,68 +377,28 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     private void handleLeaveFromLobby(String playerName) {
-        // Find the lobby where the player is currently in
         Lobby lobbyToLeave = lobbies.values().stream()
-                .filter(lobby -> lobby.getPlayers().stream().anyMatch(p -> p.getName().equals(playerName)))
+                .filter(l -> l.containsPlayer(playerName))
                 .findFirst()
                 .orElse(null);
 
-        try {
-            //remove the player
-            if (lobbyToLeave != null) {
-                lobbyToLeave.getPlayers().stream().filter(p -> p.getName().equals(playerName)).forEach(lobbyToLeave::removePlayer);
-                //Notify the left player about active lobbies
-                getView(playerName).sendError("Lobby left");
-            }
-
-
-            // Notify remaining players in that lobby of the new state
-            if (!lobbyToLeave.getPlayers().isEmpty()) {
-                lobbyToLeave.broadcastState();
-            } else {
-                lobbies.values().remove(lobbyToLeave);
-            }
-
-            // Notify the leaving player with updated lobby list and confirmation
-            VirtualView leavingPlayerView = getView(playerName);
-            if (leavingPlayerView != null) {
-                leavingPlayerView.sendError("LEFT_LOBBY:success");
-                leavingPlayerView.sendLobbyList(currentLobbyList());
-            }
-
-        } catch (Exception e) {
-            if (getView(playerName) != null) {
-                getView(playerName).sendError("ERROR_leaving_lobby" + e.getMessage());
-            }
+        VirtualView leavingView = getView(playerName);
+        if (lobbyToLeave == null) {
+            if (leavingView != null) leavingView.sendError("LEAVE_INVALID:not_in_lobby");
+            return;
         }
-    }
 
-    private void handleLeaveFromGame(String playerName) {
-        Game game = activeGames.get(playerName);
-        if (game != null) {
-            VirtualView leavingPlayerView = getView(playerName);
-            game.onPlayerLeft(playerName);
-
-            try {
-                // If game is now empty, remove ALL references to it from activeGames
-                if (game.getActivePlayers().isEmpty()) {
-                    activeGames.values().removeIf(g -> g == game);
-                }
-
-                // Notify the leaving player with confirmation
-                if (leavingPlayerView != null) {
-                    leavingPlayerView.sendError("LEFT_GAME:success");
-                    leavingPlayerView.sendLobbyList(currentLobbyList());
-                }
-            } catch (Exception e) {
-                if (getView(playerName) != null) {
-                    getView(playerName).sendError("ERROR_leaving_lobby" + e.getMessage());
-                }
-            }
+        lobbyToLeave.removePlayerByName(playerName);
+        if (lobbyToLeave.isEmpty()) {
+            lobbies.remove(lobbyToLeave.getId());
         }
-    }
 
-    // Helpers
+        if (leavingView != null) {
+            leavingView.sendError("LEFT_LOBBY:success");
+            leavingView.sendLobbyList(currentLobbyList());
+        }
+        broadcastLobbyListToBrowsers();
+    }
 
     private List<LobbyDto> currentLobbyList() {
         return lobbies.values().stream()
@@ -416,9 +422,7 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     /**
      * Manda la lista corrente delle lobby aperte ai soli player in stato
-     * "browsing". Da invocare ogni volta che la lista lobby visibile cambia
-     * (creazione di una nuova lobby, rimozione di una lobby svuotatasi, lobby
-     * che parte come Game).
+     * "browsing". Da invocare ogni volta che la lista lobby visibile cambia.
      */
     private void broadcastLobbyListToBrowsers() {
         List<LobbyDto> list = currentLobbyList();
@@ -428,10 +432,6 @@ public class LobbyManager implements LobbyCommandVisitor {
     /**
      * Ritorna gli {@link PlayerEntry} dei player attualmente in stato "browsing":
      * connessi, non in nessuna lobby, non in nessuna partita attiva.
-     * <p>
-     * Calcolo on-demand: O(n × m) con n = connectedPlayers e m = lobbies, ma
-     * in pratica entrambe sono piccole. Se il numero di player o di lobby
-     * cresce molto si potrà rendere questo set esplicito.
      */
     private List<PlayerEntry> browsingPlayers() {
         return connectedPlayers.values().stream()
@@ -440,8 +440,39 @@ public class LobbyManager implements LobbyCommandVisitor {
                 .toList();
     }
 
-
     private void closeSocket(Socket socket) {
         try { socket.close(); } catch (IOException ignored) {}
+    }
+
+    /**
+     * Helper to put a command on a session queue without leaking the
+     * {@code InterruptedException}: restore the interrupt flag and proceed.
+     * Used for the lifecycle commands the LobbyManager impila.
+     */
+    private static void enqueue(BlockingQueue<ClientCommand> queue, ClientCommand cmd) {
+        try {
+            queue.put(cmd);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    // ─── Ordered shutdown ──────────────────────────────────────────────
+
+    /**
+     * Stop the heartbeat scanner, drain every active game session, close all
+     * outbound views and clear every internal map. After this call returns
+     * the LobbyManager is no longer usable and the JVM can exit cleanly.
+     *
+     * <p>Invoked from a JVM shutdown hook in {@code ServerMain}.
+     */
+    public synchronized void shutdown() {
+        heartbeatScanner.shutdownNow();
+        new java.util.HashSet<>(activeGames.values()).forEach(GameSession::shutdown);
+        connectedPlayers.values().forEach(e -> e.getView().close());
+        lobbies.clear();
+        activeGames.clear();
+        connectedPlayers.clear();
+        lastHeartbeat.clear();
     }
 }

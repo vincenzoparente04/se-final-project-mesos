@@ -4,7 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import network.client.VirtualServer;
+import network.client.core.VirtualServer;
 import shared.dto.LobbyDto;
 
 import java.util.ArrayList;

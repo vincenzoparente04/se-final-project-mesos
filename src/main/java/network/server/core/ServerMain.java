@@ -37,6 +37,12 @@ public class ServerMain {
 
         LobbyManager lobby = new LobbyManager();
 
+        // TODO: vedi se necessario
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down server…");
+            lobby.shutdown();
+        }, "server-shutdown"));
+
         startRmiRegistry(lobby);
         startSocketAcceptor(lobby);
     }

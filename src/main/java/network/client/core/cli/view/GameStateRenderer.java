@@ -1,6 +1,6 @@
-package network.client.view;
+package network.client.core.cli.view;
 
-import network.client.LocalGameState;
+import network.client.core.LocalGameState;
 import shared.dto.GameStateDto;
 
 /**

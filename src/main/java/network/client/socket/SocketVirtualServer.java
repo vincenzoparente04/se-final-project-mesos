@@ -1,9 +1,9 @@
 package network.client.socket;
 
-import network.client.ClientStateListenerCli;
-import network.client.LocalGameState;
-import network.client.VirtualServer;
-import network.client.ClientStateListener;
+import network.client.core.cli.ClientStateListenerCli;
+import network.client.core.LocalGameState;
+import network.client.core.VirtualServer;
+import network.client.core.ClientStateListener;
 import shared.command.ChooseColorCommand;
 import shared.command.ClientCommand;
 import shared.command.CreateLobbyCommand;

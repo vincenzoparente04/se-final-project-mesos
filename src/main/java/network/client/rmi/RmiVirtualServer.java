@@ -20,9 +20,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ScheduledExecutorService;
 
-import network.client.LocalGameState;
-import network.client.VirtualServer;
-import network.client.ClientStateListener;
+import network.client.core.LocalGameState;
+import network.client.core.VirtualServer;
+import network.client.core.ClientStateListener;
 import network.server.rmi.GameServerRemote;
 
 

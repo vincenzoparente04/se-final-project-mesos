@@ -1,4 +1,4 @@
-package network.client;
+package network.client.core;
 
 import javafx.application.Application;
 import javafx.application.Platform;

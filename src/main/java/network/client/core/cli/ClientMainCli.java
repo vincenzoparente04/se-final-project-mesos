@@ -1,7 +1,8 @@
-package network.client;
+package network.client.core.cli;
 
-import network.client.view.BoardRenderer;
-import network.client.view.GameStateRenderer;
+import network.client.core.*;
+import network.client.core.cli.view.BoardRenderer;
+import network.client.core.cli.view.GameStateRenderer;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

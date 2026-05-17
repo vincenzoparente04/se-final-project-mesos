@@ -7,8 +7,10 @@ import network.server.core.VirtualView;
 import shared.command.GameCommand;
 
 /**
- * PlayerEntry is an interface that represents a player connected to the server, providing access to their name and VirtualView
- * and to register the player in the correct game command queue
+ * RMI implementation of {@link PlayerEntry}. The game queue set by the
+ * controller is forwarded to the {@link GameServerRemoteImpl} registry so
+ * that incoming in-game commands from the RMI dispatch thread can be routed
+ * to the right session.
  */
 public class RmiPlayerEntry implements PlayerEntry {
 

@@ -1,4 +1,4 @@
-package network.client;
+package network.client.core;
 
 public interface VirtualServer {
 
