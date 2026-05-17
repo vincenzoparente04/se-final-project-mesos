@@ -1,7 +1,9 @@
-package network.client;
+package network.client.core.cli;
 
-import network.client.view.BoardRenderer;
-import network.client.view.GameStateRenderer;
+import network.NetworkUtil;
+import network.client.core.*;
+import network.client.core.cli.view.BoardRenderer;
+import network.client.core.cli.view.GameStateRenderer;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,6 +32,12 @@ public class ClientMainCli {
      * No command-line arguments required.
      */
     public static void main(String[] args) throws Exception {
+        // Advertise the local LAN IP so the callback stub we export inside
+        // RmiVirtualServer carries a reachable address, not 127.0.0.1.
+        String localHost = NetworkUtil.detectLocalIPv4();
+        System.setProperty("java.rmi.server.hostname", localHost);
+        System.out.println("RMI export hostname: " + localHost);
+
         // PHASE 1: Interactive transport configuration
         ConnectionConfig config = acquireConfiguration();
 

@@ -272,7 +272,7 @@ public class ColorChoosingPhaseTest {
 
     @Test
     @DisplayName("Skip player when disconnected")
-    void testSkipPlayerWhenDisconnected() {
+    void testSkipPlayerWhenDisconnected() throws Exception {
 
         /// DIFFFERS FROM OTHERS --> no setup
         FakeVirtualView vv1 = new FakeVirtualView();
@@ -290,9 +290,7 @@ public class ColorChoosingPhaseTest {
 
         assertEquals(GamePhase.COLOR_CHOOSING_PHASE, localModel.getCurrentPhase());
 
-        try{localModel.getPhaseHandler().visit(new ChooseColorCommand("Player1", "RED"));} catch (Exception e) {
-                fail("Player1 should be able to choose color");
-        }
+        localModel.handleCommand(new ChooseColorCommand("Player1", "RED"));
 
         //first player disconnected so curr player should be the next
         Player follows = localModel.getCurrentPlayer();

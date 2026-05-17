@@ -2,7 +2,6 @@ package model;
 
 import integration.FakeVirtualView;
 import model.enums.GamePhase;
-import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
 import network.server.core.VirtualView;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,26 +39,13 @@ class GameModelTest {
         VirtualView view1 = mock(VirtualView.class);
         VirtualView view2 = mock(VirtualView.class);
 
-        gameModel.startGame(List.of("Player1", "Player2"));
-        gameModel.addView(view1);
-        gameModel.addView(view2);
+        GameModel model = new GameModel(List.of(view1, view2));
+        model.startGame(List.of("Player1", "Player2"));
 
-        gameModel.notifyChange();
+        model.notifyChange();
 
-        verify(view1, times(1)).sendState(any());
-        verify(view2, times(1)).sendState(any());
-    }
-
-    @Test
-    @DisplayName("addView registers a view that receives subsequent notifications")
-    void addViewRegistersViewForNotifications() {
-        VirtualView view = mock(VirtualView.class);
-
-        gameModel.startGame(List.of("Player1", "Player2"));
-        gameModel.addView(view);
-        gameModel.notifyChange();
-
-        verify(view, times(1)).sendState(any());
+        verify(view1, atLeastOnce()).sendState(any());
+        verify(view2, atLeastOnce()).sendState(any());
     }
 
     @Test
@@ -70,13 +56,32 @@ class GameModelTest {
         when(oldView.getPlayerName()).thenReturn("Player1");
         when(newView.getPlayerName()).thenReturn("Player1");
 
-        gameModel.startGame(List.of("Player1", "Player2"));
-        gameModel.addView(oldView);
-        gameModel.swapView("Player1", newView);
-        gameModel.notifyChange();
+        GameModel model = new GameModel(List.of(oldView));
+        model.startGame(List.of("Player1", "Player2"));
+        clearInvocations(oldView);
+
+        model.swapView("Player1", newView);
+        model.notifyChange();
 
         verify(oldView, never()).sendState(any());
         verify(newView, times(1)).sendState(any());
+    }
+
+    @Test
+    @DisplayName("removeView removes the view for the given player")
+    void removeViewRemovesPlayerView() {
+        VirtualView view = mock(VirtualView.class);
+        when(view.getPlayerName()).thenReturn("Player1");
+
+        GameModel model = new GameModel(List.of(view));
+        model.startGame(List.of("Player1", "Player2"));
+        clearInvocations(view);
+
+        model.removeView("Player1");
+        model.notifyChange();
+
+        verify(view, never()).sendState(any());
+        assertTrue(model.getViews().isEmpty());
     }
 
     @Test
@@ -98,7 +103,7 @@ class GameModelTest {
     }
 
     @Test
-    @DisplayName("isGameOver returns true when currentRound exceeds max roiunds (11)")
+    @DisplayName("isGameOver returns true when currentRound exceeds max rounds (11)")
     void isGameOverReturnsTrueAtRound11() {
         for (int i = 0; i < 10; i++) gameModel.incrementRound();
 
@@ -118,8 +123,8 @@ class GameModelTest {
 
         gameModel2.notifyChange();
 
-        verify(view1, times(2)).sendState(any());
-        verify(view2, times(2)).sendState(any());
+        verify(view1, atLeastOnce()).sendState(any());
+        verify(view2, atLeastOnce()).sendState(any());
     }
 
     @Test

@@ -111,7 +111,7 @@ public class Player {
         this.color = color;
     }
 
-    public boolean isConnected(){ // TODO VEDI PERCHè DEVE ROMPE ER CAZZO PER STO METODO
+    public boolean isConnected(){
         return this.online;
     }
     public void setConnected(){

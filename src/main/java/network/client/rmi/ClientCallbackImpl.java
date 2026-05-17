@@ -8,8 +8,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.List;
 
-import network.client.LocalGameState;
-import network.client.ClientStateListener;
+import network.client.core.LocalGameState;
+import network.client.core.ClientStateListener;
 
 /**
  * RMI implementation of the ClientCallbackRemote interface.

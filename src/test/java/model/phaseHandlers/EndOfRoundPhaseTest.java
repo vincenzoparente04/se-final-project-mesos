@@ -129,5 +129,12 @@ public class EndOfRoundPhaseTest {
 		assertNull(phase.getCurrentPlayer());
 	}
 
+    @Test
+    @DisplayName("skipCurrentPlayerTurn is a no-op during EndOfRoundPhase")
+    void skipCurrentPlayerTurnIsNoOp() {
+        // EndOfRoundPhase has no active player to skip, so the default no-op
+        // inherited from GamePhaseHandler is the intended behaviour.
+        assertDoesNotThrow(() -> phase.skipCurrentPlayerTurn());
+    }
 
 }

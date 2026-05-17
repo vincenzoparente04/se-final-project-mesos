@@ -147,7 +147,8 @@ class PlacementPhaseTest {
         when(p1.getLocation()).thenReturn(TotemLocation.OFFER_TRACK);
         phase.onEnter();
 
-        assertThrows(IllegalArgumentException.class, () -> phase.visit(new PlaceTotemCommand("Player1", 'A')));
+        assertThrows(IllegalArgumentException.class,
+                () -> phase.visit(new PlaceTotemCommand("Player1", 'A')));
         verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
     }
 
@@ -164,15 +165,17 @@ class PlacementPhaseTest {
     }
 
     @Test
-    @DisplayName("endTurn throws during PlacementPhase")
+    @DisplayName("EndTurnCommand throws during PlacementPhase")
     void endTurnThrows() {
-        assertThrows(IllegalStateException.class, () -> phase.visit(new EndTurnCommand("Player1")));
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new EndTurnCommand("Player1")));
     }
 
     @Test
-    @DisplayName("drawCard throws during PlacementPhase")
+    @DisplayName("DrawCardCommand throws during PlacementPhase")
     void drawCardThrows() {
-        assertThrows(IllegalStateException.class, () -> phase.visit(new DrawCardCommand("Player1", 45)));
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 45)));
     }
 
 

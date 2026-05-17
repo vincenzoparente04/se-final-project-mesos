@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import network.NetworkUtil;
 import network.server.rmi.GameServerRemote;
 import network.server.rmi.GameServerRemoteImpl;
 
@@ -34,8 +35,20 @@ public class ServerMain {
     private static final int RMI_PORT = 1099;
 
     public static void main(String[] args) {
+        // Advertise a LAN-reachable IP to remote RMI peers; without this the
+        // exported stubs would carry 127.0.0.1 (default of getLocalHost()) and
+        // remote clients would not be able to invoke them.
+        String host = NetworkUtil.detectLocalIPv4();
+        System.setProperty("java.rmi.server.hostname", host);
+        System.out.println("RMI export hostname: " + host);
 
         LobbyManager lobby = new LobbyManager();
+
+        // TODO: vedi se necessario
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down server…");
+            lobby.shutdown();
+        }, "server-shutdown"));
 
         startRmiRegistry(lobby);
         startSocketAcceptor(lobby);

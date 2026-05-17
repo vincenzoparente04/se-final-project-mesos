@@ -13,22 +13,18 @@ import network.server.core.LobbyManager;
 public class GameServerRemoteImpl extends UnicastRemoteObject implements GameServerRemote {
 
     private final LobbyManager lobbyManager;
-    private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues =
-            new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues = new ConcurrentHashMap<>();
 
     private final CommandDispatcher dispatcher = new CommandDispatcher() {
         @Override
         public void onLobbyCommand(LobbyCommand cmd) throws Exception {
-            //lobbyManager.handle(cmd);
             cmd.accept(lobbyManager);
         }
 
         @Override
         public void onGameCommand(GameCommand cmd) throws InterruptedException {
             BlockingQueue<GameCommand> queue = gameQueues.get(cmd.getPlayerName());
-            if (queue == null) {
-                return;
-            }
+            if (queue == null) return;
             queue.put(cmd);
         }
 
@@ -43,6 +39,7 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
         this.lobbyManager = lobbyManager;
     }
 
+    /** Register the game queue for an RMI player. Called by {@link RmiPlayerEntry#setGameQueue}. */
     public void registerQueue(String playerName, BlockingQueue<GameCommand> queue) {
         gameQueues.put(playerName, queue);
     }

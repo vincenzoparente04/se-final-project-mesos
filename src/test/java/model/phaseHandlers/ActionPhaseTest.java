@@ -436,8 +436,9 @@ class ActionPhaseTest {
         assertEquals(p1, phase.getCurrentPlayer());
 
         // Now currentPlayer is not null, but currentAction is null.
-        // Calling drawCard (which calls ensureActiveTurn) should throw the correct exception.
-        IllegalStateException e = assertThrows(IllegalStateException.class, () -> phase.visit(new DrawCardCommand(p1.getName(), 10)));
+        // Visiting a DrawCardCommand (which calls ensureActiveTurn) should throw the correct exception.
+        IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 10)));
         assertEquals("No active action turn.", e.getMessage());
     }
 }

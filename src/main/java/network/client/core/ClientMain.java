@@ -1,4 +1,4 @@
-package network.client;
+package network.client.core;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import network.NetworkUtil;
 import view.LobbyViewController;
 
 /**
@@ -29,6 +30,12 @@ public class ClientMain extends Application {
 
     // Main parse args, launch JavaFX
     public static void main(String[] args) {
+        // Advertise the local LAN IP so the RMI callback stub exported by
+        // RmiVirtualServer carries a reachable address, not 127.0.0.1.
+        String localHost = NetworkUtil.detectLocalIPv4();
+        System.setProperty("java.rmi.server.hostname", localHost);
+        System.out.println("RMI export hostname: " + localHost);
+
         if (args.length < 3) {
             printUsage();
             return;

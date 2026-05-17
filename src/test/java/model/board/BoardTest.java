@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BoardTest {
 
     @Test
-    @DisplayName("setup(3) loads only eligible offer tiles and a 3-slot turn order tile")
+    @DisplayName("new Board(3) loads only eligible offer tiles and a 3-slot turn order tile")
     void setupThreePlayersBuildsExpectedBoardState() {
         Board board = new Board(3);
 
@@ -63,7 +63,6 @@ class BoardTest {
     void getNextPlayerOnOfferTrackReturnsFirstOccupiedTileInTrackOrder() {
         Board board = new Board(5);
 
-
         Player first = new Player("First");
         Player second = new Player("Second");
 
@@ -74,6 +73,11 @@ class BoardTest {
                 "Offer track resolves from left to right, not by placement time");
     }
 
+    @Test
+    @DisplayName("Board constructor throws when player count has no board configuration")
+    void setupThrowsForUnsupportedPlayerCount() {
+        assertThrows(IllegalArgumentException.class, () -> new Board(1));
+    }
 
     @Test
     @DisplayName("returnTotemToTurnOrder removes player from offer track and places them in turn order")

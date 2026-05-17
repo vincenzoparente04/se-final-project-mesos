@@ -1,11 +1,13 @@
-package network.client;
+package network.client.core.cli;
 
-import network.client.view.GameStateRenderer;
+import network.client.core.ClientStateListener;
+import network.client.core.LocalGameState;
+import network.client.core.cli.view.GameStateRenderer;
 import shared.dto.*;
 
 import java.util.List;
 
-public class ClientStateListenerCli implements ClientStateListener{
+public class ClientStateListenerCli implements ClientStateListener {
     private final String localPlayerName;
     private final GameStateRenderer renderer;
 

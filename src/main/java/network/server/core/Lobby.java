@@ -6,6 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * A pre-game gathering of {@link PlayerEntry}s waiting for the lobby to fill
+ * up.
+ *
+ * <h2>Thread safety</h2>
+ * This class is <strong>not</strong> internally synchronized. All mutators
+ * must be invoked while holding {@code LobbyManager.this}'s monitor — i.e.
+ * from within a {@code synchronized} method of {@link LobbyManager}, which is
+ * the sole owner of every {@code Lobby} instance.
+ */
 public class Lobby {
 
     private final String id;
