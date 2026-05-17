@@ -1,5 +1,6 @@
 package model.phaseHandlers;
 
+import integration.FakeVirtualView;
 import model.GameModel;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
@@ -268,15 +269,17 @@ public class ColorChoosingPhaseTest {
         verify(localPlayer5, never()).setColor(TotemColor.RED);
     }
   
-  
- //TODO: ADJUST THIS TEST TO NEW CONTROLLER VERSION 
+
     @Test
     @DisplayName("Skip player when disconnected")
     void testSkipPlayerWhenDisconnected() throws Exception {
 
         /// DIFFFERS FROM OTHERS --> no setup
+        FakeVirtualView vv1 = new FakeVirtualView();
+        FakeVirtualView vv2 = new FakeVirtualView();
+        FakeVirtualView vv3 = new FakeVirtualView();
 
-        GameModel localModel = new GameModel();
+        GameModel localModel = new GameModel(List.of(vv1,vv2, vv3));
 
         List<String> localPlayers = List.of("Player1", "Player2", "Player3");
         localModel.startGame(localPlayers);

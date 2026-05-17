@@ -1,7 +1,8 @@
 package controller;
 
 import model.GameModel;
-import model.phaseHandlers.GamePhaseHandler;
+import model.enums.GamePhase;
+import model.phaseHandlers.ColorChoosingPhase;
 import model.player.Player;
 import network.server.core.VirtualView;
 import shared.command.ClientCommand;
@@ -131,9 +132,11 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
      * Usata sia dal dispatch interno della coda sia dai test.
      */
     public synchronized void handleCommand(GameCommand cmd) throws Exception {
-        Player current = model.getCurrentPlayer();
-        if (current == null || !current.getName().equals(cmd.getPlayerName())) {
-            throw new IllegalStateException("It is not " + cmd.getPlayerName() + "'s turn.");
+        Player current = gameModel.getCurrentPlayer();
+        if (gameModel.getCurrentPhase() != GamePhase.COLOR_CHOOSING_PHASE) {
+            if (current == null || !current.getName().equals(cmd.getPlayerName())) {
+                throw new IllegalStateException("It is not " + cmd.getPlayerName() + "'s turn.");
+            }
         }
         model.handleCommand(cmd);
     }

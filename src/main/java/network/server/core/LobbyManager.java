@@ -198,12 +198,17 @@ public class LobbyManager implements LobbyCommandVisitor {
         PlayerEntry entry = connectedPlayers.get(cmd.playerName());
         if (entry == null) return;
 
+        if (cmd.playersNumber() < 2 || cmd.playersNumber() > 5) {
+            entry.getView().sendError("invalid player number: must be between 2 and 5");
+            return;
+        }
+  
         if (playerAlreadyInLobby(cmd.playerName())) {
             entry.getView().sendError("already_in_lobby");
             return;
         }
 
-        Lobby lobby = new Lobby(cmd.playerName() + "'s lobby", cmd.maxPlayers());
+        Lobby lobby = new Lobby(cmd.playerName() + "'s lobby", cmd.playersNumber());
         lobbies.put(lobby.getId(), lobby);
         lobby.addPlayer(entry);
         lobby.broadcastState();

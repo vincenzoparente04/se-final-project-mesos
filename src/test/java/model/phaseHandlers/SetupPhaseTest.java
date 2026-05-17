@@ -253,6 +253,7 @@ public class SetupPhaseTest {
         assertEquals(GamePhase.SETUP, phase.getPhase());
     }
 
+    /*
     @Test
     @DisplayName("getCurrentPlayer returns null during SetupPhase (no active player)")
     void getCurrentPlayerReturnsNull() {

@@ -1,5 +1,6 @@
 package model;
 
+import integration.FakeVirtualView;
 import model.enums.GamePhase;
 import model.player.Player;
 import network.server.core.VirtualView;
@@ -20,7 +21,10 @@ class GameModelTest {
 
     @BeforeEach
     void setUp() {
-        gameModel = new GameModel();
+        FakeVirtualView vv1 = new FakeVirtualView();
+        FakeVirtualView vv2 = new FakeVirtualView();
+
+        gameModel = new GameModel(List.of(vv1, vv2));
     }
 
     @Test

@@ -121,7 +121,6 @@ public class GameStateDtoBuilderTest {
 
         assertEquals("ACTION", dto.phase);
         assertEquals("Alice", dto.currentPlayerName);
-        // The builder emits the 1-based era index as a string, not the enum name.
         assertEquals("2", dto.currentEra);
     }
 

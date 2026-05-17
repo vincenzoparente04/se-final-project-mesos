@@ -30,7 +30,9 @@ class GameFlowTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        model = new GameModel();
+        FakeVirtualView vv1 = new FakeVirtualView();
+        FakeVirtualView vv2 = new FakeVirtualView();
+        model = new GameModel(List.of(vv1,vv2));
         model.startGame(List.of("Player1", "Player2"));
         completeColorChoosing();
     }

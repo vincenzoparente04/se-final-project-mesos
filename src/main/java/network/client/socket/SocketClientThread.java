@@ -22,15 +22,6 @@ public class SocketClientThread implements Runnable {
     private final ObjectInputStream in;
     private final SocketVirtualServer socketVirtualServer;
 
-    private final ServerMessageHandler handler = new ServerMessageHandler() {
-        @Override public void handle(StateMessage m)       { socketVirtualServer.onStateReceived(m.state()); }
-        @Override public void handle(ErrorMessage m)       { socketVirtualServer.onErrorReceived(m.message()); }
-        @Override public void handle(GameOverMessage m)    { socketVirtualServer.onGameOverReceived(m.winners()); }
-        @Override public void handle(LobbyListMessage m)   { socketVirtualServer.onLobbyListReceived(m.lobbies()); }
-        @Override public void handle(LobbyStateMessage m)  { socketVirtualServer.onLobbyStateReceived(m.lobby()); }
-        @Override public void handle(GameStartingMessage m){ socketVirtualServer.onGameStartingReceived(); }
-    };
-
     public SocketClientThread(ObjectInputStream in, SocketVirtualServer socketVirtualServer) {
         this.in = in;
         this.socketVirtualServer = socketVirtualServer;
@@ -41,7 +32,7 @@ public class SocketClientThread implements Runnable {
         try {
             while (true) {
                 ServerMessage msg = (ServerMessage) in.readObject();
-                msg.accept(handler);
+                msg.accept(this.socketVirtualServer);
             }
         } catch (EOFException | SocketException ignored) {
         } catch (IOException | ClassNotFoundException ignored) {

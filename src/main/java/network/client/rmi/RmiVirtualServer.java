@@ -136,8 +136,8 @@ public class RmiVirtualServer implements VirtualServer {
 
     // Lobby commands
     @Override
-    public void sendCreateLobby(int maxPlayers) {
-        submitAsync(new CreateLobbyCommand(playerName, maxPlayers));
+    public void sendCreateLobby(int playersNumber) {
+        submitAsync(new CreateLobbyCommand(playerName, playersNumber));
     }
     @Override
     public void sendJoinLobby(String lobbyId) {
