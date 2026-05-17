@@ -197,6 +197,7 @@ public class RmiVirtualServer implements VirtualServer {
         if (!disconnected.compareAndSet(false, true)) return;
         if (sentinel != null) sentinel.stop();
         cleanupLocalResources();
+        System.out(1);
         if (listener != null) listener.onDisconnected();
     }
 

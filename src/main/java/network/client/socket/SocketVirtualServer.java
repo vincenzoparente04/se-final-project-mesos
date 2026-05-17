@@ -220,7 +220,10 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     public void close() {
         if (closed.compareAndSet(false, true)) {
             if (sentinel != null) sentinel.stop();
-            try { socket.close(); } catch (IOException ignored) {}
+            try {
+                socket.close();
+                System.exit(1);
+            } catch (IOException ignored) {}
         }
     }
 
