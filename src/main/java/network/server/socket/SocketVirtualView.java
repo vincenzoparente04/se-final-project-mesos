@@ -32,8 +32,8 @@ public class SocketVirtualView implements VirtualView {
      * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
      */
     private static final long SEND_INTERVAL_MS  = 2_000L;
-    private static final long CHECK_INTERVAL_MS = 2_000L;
-    private static final long TIMEOUT_MS        = 10_000L;
+    private static final long CHECK_INTERVAL_MS = 20_000L;
+    private static final long TIMEOUT_MS        = 100_000L;
 
     private final String playerName;
     private final Socket socket;

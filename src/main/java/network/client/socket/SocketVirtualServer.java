@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SocketVirtualServer implements VirtualServer, ServerMessageHandler {
 
     /** Timeout for reading the server's response to a name attempt. */
-    private static final int NAME_NEGOTIATION_TIMEOUT_MS = 5_000;
+    private static final int NAME_NEGOTIATION_TIMEOUT_MS = 50_000;
 
     /**
      * Intervalli del sentinel client-side socket.
@@ -49,8 +49,8 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
      * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
      */
     private static final long SEND_INTERVAL_MS  = 2_000L;
-    private static final long CHECK_INTERVAL_MS = 2_000L;
-    private static final long TIMEOUT_MS        = 10_000L;
+    private static final long CHECK_INTERVAL_MS = 20_000L;
+    private static final long TIMEOUT_MS        = 100_000L;
 
     private final Socket socket;
     private final ObjectOutputStream out;
