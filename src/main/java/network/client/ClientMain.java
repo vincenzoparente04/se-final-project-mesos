@@ -2,6 +2,7 @@ package network.client;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import view.MusicManager;
 import view.SceneRouter;
 
 /**
@@ -29,11 +30,13 @@ public class ClientMain extends Application {
         router.setListener(listener);
 
         primaryStage.setTitle("Mesos");
+        MusicManager.getInstance().play("music/background.mp3");
         router.toSplash();
     }
 
     @Override
     public void stop() {
+        MusicManager.getInstance().stop();
         if (router != null && router.getVirtualServer() != null) {
             router.getVirtualServer().close();
         }
