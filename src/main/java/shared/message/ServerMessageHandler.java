@@ -7,4 +7,6 @@ public interface ServerMessageHandler {
     void handle(LobbyListMessage msg);
     void handle(LobbyStateMessage msg);
     void handle(GameStartingMessage msg);
+    /** No-op per la maggior parte dei ricevitori: la liveness è già aggiornata a monte. */
+    void handle(HeartbeatMessage msg);
 }

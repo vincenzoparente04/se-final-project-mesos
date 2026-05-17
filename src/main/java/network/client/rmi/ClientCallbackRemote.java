@@ -20,4 +20,7 @@ public interface ClientCallbackRemote extends Remote {
     void onGameStarting() throws RemoteException;
 
     void onGameOver(String raw) throws RemoteException;
+
+    /** Heartbeat server→client. Il ricevitore aggiorna il sentinel di liveness e non fa altro. */
+    void onHeartbeat() throws RemoteException;
 }

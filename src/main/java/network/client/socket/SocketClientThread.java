@@ -3,6 +3,7 @@ package network.client.socket;
 import shared.message.ErrorMessage;
 import shared.message.GameOverMessage;
 import shared.message.GameStartingMessage;
+import shared.message.HeartbeatMessage;
 import shared.message.LobbyListMessage;
 import shared.message.LobbyStateMessage;
 import shared.message.ServerMessage;
@@ -29,6 +30,8 @@ public class SocketClientThread implements Runnable {
         @Override public void handle(LobbyListMessage m)   { socketVirtualServer.onLobbyListReceived(m.lobbies()); }
         @Override public void handle(LobbyStateMessage m)  { socketVirtualServer.onLobbyStateReceived(m.lobby()); }
         @Override public void handle(GameStartingMessage m){ socketVirtualServer.onGameStartingReceived(); }
+        // Canale di liveness isolato: solo HeartbeatMessage aggiorna il watchdog client-side.
+        @Override public void handle(HeartbeatMessage m)   { socketVirtualServer.notifyInbound(); }
     };
 
     public SocketClientThread(ObjectInputStream in, SocketVirtualServer socketVirtualServer) {

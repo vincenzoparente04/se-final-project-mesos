@@ -19,5 +19,12 @@ public interface VirtualView {
 
     String getPlayerName();
 
+    /**
+     * Avvia il meccanismo di liveness bidirezionale (sender + watchdog).
+     * Va chiamato dopo che il player è stato registrato in {@code connectedPlayers},
+     * in modo che un eventuale timeout scatti sulla pipeline di disconnect già pronta.
+     */
+    void activateLiveness();
+
     void close();
 }

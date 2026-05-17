@@ -16,6 +16,14 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
     private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues =
             new ConcurrentHashMap<>();
 
+    /**
+     * Mappa playerName → RmiVirtualView per il dispatch del HeartbeatCommand.
+     * Accesso package-private a {@link RmiVirtualView#notifyInbound()} senza passare
+     * dall'interfaccia {@code VirtualView} (che non espone il metodo per design).
+     */
+    private final ConcurrentHashMap<String, RmiVirtualView> rmiViews =
+            new ConcurrentHashMap<>();
+
     private final CommandDispatcher dispatcher = new CommandDispatcher() {
         @Override
         public void onLobbyCommand(LobbyCommand cmd) throws Exception {
@@ -34,7 +42,9 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
 
         @Override
         public void onHeartbeatCommand(HeartbeatCommand cmd) {
-            lobbyManager.onHeartbeatReceived(cmd.playerName());
+            // Canale di liveness isolato: solo HeartbeatCommand aggiorna il watchdog server-side.
+            RmiVirtualView view = rmiViews.get(cmd.playerName());
+            if (view != null) view.notifyInbound();
         }
     };
 
@@ -52,6 +62,7 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
         RmiVirtualView view = new RmiVirtualView(playerName, callback, lobbyManager);
         boolean connectionSuccessful = lobbyManager.addRmiPlayer(new RmiPlayerEntry(view, this));
         if (connectionSuccessful) {
+            rmiViews.put(playerName, view);
             System.out.println("RMI connection from " + host);
         }
         return connectionSuccessful;
@@ -68,6 +79,7 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
 
     @Override
     public void disconnect(String playerName) throws RemoteException {
+        rmiViews.remove(playerName);
         lobbyManager.onDisconnect(playerName);
     }
 }

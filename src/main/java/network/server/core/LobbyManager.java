@@ -46,34 +46,13 @@ import shared.message.ErrorMessage;
 public class LobbyManager implements LobbyCommandVisitor {
 
     private static final int CONNECT_TIMEOUT_MS = 50_000;
-    private static final long HEARTBEAT_TIMEOUT_MS = 6_000L;
-    private static final long HEARTBEAT_CHECK_PERIOD_MS = 2_000L;
-    
+
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>(); // <id, lobby>
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
     private final Map<String, Game> activeGames = new HashMap<>(); // <PlayerName, Game>
 
-    /**
-     * Timestamp (millis epoch) dell'ultimo heartbeat ricevuto da ciascun player.
-     * ConcurrentHashMap perché viene letta dallo scheduler e scritta dai
-     * thread di rete (SocketClientHandler / RMI) senza il lock {@code this}.
-     */
-    private final java.util.concurrent.ConcurrentHashMap<String, Long> lastHeartbeat = new java.util.concurrent.ConcurrentHashMap<>();
-    private final java.util.concurrent.ScheduledExecutorService heartbeatScanner =
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "heartbeat-scanner");
-                t.setDaemon(true);
-                return t;
-            });
 
-
-    public LobbyManager() {
-        heartbeatScanner.scheduleAtFixedRate(
-                this::scanForDeadConnections,
-                HEARTBEAT_CHECK_PERIOD_MS,
-                HEARTBEAT_CHECK_PERIOD_MS,
-                java.util.concurrent.TimeUnit.MILLISECONDS);
-    }
+    public LobbyManager() {}
 
 
     // Socket entry point ───────────────────────────────────
@@ -93,7 +72,7 @@ public class LobbyManager implements LobbyCommandVisitor {
                     socket.setSoTimeout(0);
 
                     String playerName = connect.playerName();
-                    SocketVirtualView view = new SocketVirtualView(playerName, socket, out);
+                    SocketVirtualView view = new SocketVirtualView(playerName, socket, out, this);
 
                     synchronized (this) {
                         if (nameAlreadyTaken(playerName)) {
@@ -106,17 +85,23 @@ public class LobbyManager implements LobbyCommandVisitor {
                         SocketClientHandler handler = new SocketClientHandler(view, in, this);
                         SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
 
-                        // if the just added player has the same name of a player in an active game it reactivates it
-                        if (activeGames.containsKey(playerName)) { // search between activeGames
+                        boolean reconnecting = activeGames.containsKey(playerName);
+                        if (reconnecting) {
                             Game game = activeGames.get(playerName);
                             game.onPlayerReconnected(playerName, entry);
                             connectedPlayers.put(playerName, entry);
                         } else {
                             connectedPlayers.put(playerName, entry);
-                            view.sendLobbyList(currentLobbyList());
                         }
 
-                        lastHeartbeat.put(playerName, System.currentTimeMillis());
+                        // Sequenza: registra → attiva liveness → manda lobby list → avvia thread.
+                        // La liveness parte dopo la registrazione così un eventuale timeout
+                        // trova onDisconnect già operativo.
+                        view.activateLiveness();
+
+                        if (!reconnecting) {
+                            view.sendLobbyList(currentLobbyList());
+                        }
 
                         Thread t = new Thread(handler, "client-" + playerName);
                         t.setDaemon(true);
@@ -172,7 +157,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             connectedPlayers.put(entry.getName(), entry);
             entry.getView().sendLobbyList(currentLobbyList());
         }
-        lastHeartbeat.put(entry.getName(), System.currentTimeMillis());
+        entry.getView().activateLiveness();
         return true;
     }
 
@@ -193,7 +178,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             entry.getView().sendError("invalid player number: must be between 2 and 5");
             return;
         }
-  
+
         if (playerAlreadyInLobby(cmd.playerName())) {
             entry.getView().sendError("already_in_lobby");
             return;
@@ -259,13 +244,27 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     // Disconnect
+
+    /**
+     * Pipeline di disconnessione. Idempotente: la guard su {@code connectedPlayers}
+     * garantisce che la logica venga eseguita al più una volta per player, anche in
+     * presenza di race tra il timeout del sentinel e la chiusura naturale del socket.
+     *
+     * <p>Race A — watchdog scatta mentre la pipeline è già in corso per altre cause:
+     * tollerata by-design. La seconda chiamata esce immediatamente dalla guard.
+     *
+     * <p>Race B — reconnection: il vecchio sentinel è già fermato da {@link VirtualView#close()}
+     * prima che il name-handshake del nuovo client trovi spazio in {@code connectedPlayers}.
+     */
     public synchronized void onDisconnect(String playerName) {
-        if (!connectedPlayers.containsKey(playerName) && !lastHeartbeat.containsKey(playerName)) {
-            return;
-        }
+        if (!connectedPlayers.containsKey(playerName)) return;
+
+        // Ferma sentinel e canale di trasporto prima di rimuovere il player,
+        // così un eventuale secondo timeout non trova più il player registrato.
+        VirtualView view = connectedPlayers.get(playerName).getView();
+        view.close();
 
         connectedPlayers.remove(playerName);
-        lastHeartbeat.remove(playerName);
 
         Game game = activeGames.get(playerName);
         if (game != null) {
@@ -291,36 +290,6 @@ public class LobbyManager implements LobbyCommandVisitor {
         // Per i browser la lista lobby è cambiata in entrambi i casi
         // (lobby sparita, o lobby con un player in meno).
         broadcastLobbyListToBrowsers();
-    }
-
-    /**
-     * Aggiorna il timestamp dell'ultimo heartbeat per il player.
-     * Invocato dai thread di rete quando arriva un {@link shared.command.HeartbeatCommand}.
-     * <p>
-     * Non è {@code synchronized} perché opera solo sulla {@code ConcurrentHashMap}
-     * {@link #lastHeartbeat}; non tocca lo stato protetto da {@code this}.
-     */
-    // computeIfPresent invece di put: se un heartbeat ritardato arriva DOPO
-    // che il player è stato rimosso, non lo "resuscita" come zombie.
-    public void onHeartbeatReceived(String playerName) {
-        lastHeartbeat.computeIfPresent(playerName, (k, v) -> System.currentTimeMillis());
-    }
-
-    /**
-     * Scansione periodica: identifica i player il cui ultimo heartbeat
-     * è più vecchio di {@link #HEARTBEAT_TIMEOUT_MS} e ne forza la disconnessione
-     * attraverso la pipeline esistente {@link #onDisconnect(String)}.
-     */
-    private void scanForDeadConnections() {
-        long now = System.currentTimeMillis();
-        // Snapshot per non iterare la mappa mentre la modifichiamo via onDisconnected.
-        List<String> dead = lastHeartbeat.entrySet().stream()
-                .filter(e -> now - e.getValue() > HEARTBEAT_TIMEOUT_MS)
-                .map(Map.Entry::getKey)
-                .toList();
-        for (String playerName : dead) {
-            onDisconnect(playerName);
-        }
     }
 
     // ─── LEAVE command handlers ────────────────────────────────────────

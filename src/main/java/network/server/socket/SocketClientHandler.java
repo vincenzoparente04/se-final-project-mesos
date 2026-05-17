@@ -13,11 +13,12 @@ import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 
 import network.server.core.LobbyManager;
-import network.server.core.VirtualView;
 
 public class SocketClientHandler implements Runnable {
 
-    private final VirtualView virtualView;
+    // Tipizzato come SocketVirtualView (non VirtualView) per accedere
+    // al metodo package-private notifyInbound() senza cast.
+    private final SocketVirtualView virtualView;
     private final ObjectInputStream in;
     private final LobbyManager lobbyManager;
     private volatile BlockingQueue<GameCommand> gameQueue = null;
@@ -40,11 +41,12 @@ public class SocketClientHandler implements Runnable {
 
         @Override
         public void onHeartbeatCommand(HeartbeatCommand cmd) {
-            lobbyManager.onHeartbeatReceived(cmd.playerName());
+            // Canale di liveness isolato: solo HeartbeatCommand aggiorna il watchdog.
+            virtualView.notifyInbound();
         }
     };
 
-    public SocketClientHandler(VirtualView virtualView, ObjectInputStream in, LobbyManager lobbyManager) {
+    public SocketClientHandler(SocketVirtualView virtualView, ObjectInputStream in, LobbyManager lobbyManager) {
         this.virtualView = virtualView;
         this.in = in;
         this.lobbyManager = lobbyManager;

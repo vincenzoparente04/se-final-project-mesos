@@ -10,6 +10,7 @@ import shared.command.LeaveCommand;
 import shared.command.ListLobbiesCommand;
 import shared.command.PlaceTotemCommand;
 import shared.command.HeartbeatCommand;
+import shared.liveness.LivenessSentinel;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -18,7 +19,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import network.client.LocalGameState;
 import network.client.VirtualServer;
@@ -40,7 +42,7 @@ import network.server.rmi.GameServerRemote;
  *       the server rejects the name (already taken), the callback is
  *       unexported and the method returns {@code false} so the caller can
  *       retry with a different name.</li>
- *   <li>{@link #start()} starts the heartbeat scheduler.</li>
+ *   <li>{@link #start()} avvia il sentinel di liveness bidirezionale.</li>
  * </ol>
  *
  * @implNote The exported callback object owns an RMI listener thread that
@@ -50,16 +52,34 @@ public class RmiVirtualServer implements VirtualServer {
 
     private static final String SERVICE_NAME = "MesosGameServer";
 
-    /** Periodo di invio heartbeat: deve essere < del timeout server (6s). */
-    private static final long HEARTBEAT_INTERVAL_MS = 2_000L;
+    /**
+     * Intervalli del sentinel client-side RMI.
+     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling
+     * e ritardi temporanei dovuti a messaggi applicativi grandi che impegnano il sender.
+     * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
+     */
+    private static final long SEND_INTERVAL_MS  = 2_000L;
+    private static final long CHECK_INTERVAL_MS = 2_000L;
+    private static final long TIMEOUT_MS        = 10_000L;
 
     private final String host;
     private final GameServerRemote serverStub;
 
     private String playerName;
+    private ClientStateListener listener;
     private ClientCallbackImpl callback;
     private ExecutorService commandExecutor;
-    private ScheduledExecutorService heartbeatScheduler;
+    private LivenessSentinel sentinel;
+
+    /**
+     * Riferimento al notifier di liveness passato al {@link ClientCallbackImpl}.
+     * Inizialmente è un no-op; viene aggiornato in {@link #start()} quando il sentinel
+     * è pronto, evitando problemi di ordine di inizializzazione.
+     */
+    private final AtomicReference<Runnable> inboundNotifier = new AtomicReference<>(() -> {});
+
+    /** Garantisce che la pipeline di chiusura venga eseguita al più una volta. */
+    private final AtomicBoolean disconnected = new AtomicBoolean(false);
 
     public RmiVirtualServer(String host, int rmiPort) throws Exception {
         this.host = host;
@@ -71,7 +91,10 @@ public class RmiVirtualServer implements VirtualServer {
     public boolean tryRegisterName(String name, LocalGameState localState, ClientStateListener listener) {
         ClientCallbackImpl tempCallback;
         try {
-            tempCallback = new ClientCallbackImpl(localState, listener);
+            // Il notifier punta all'AtomicReference: quando start() imposta il sentinel,
+            // tutte le callback successive trovano automaticamente il notifier aggiornato.
+            tempCallback = new ClientCallbackImpl(localState, listener,
+                    () -> inboundNotifier.get().run());
         } catch (RemoteException e) {
             throw new RuntimeException("Failed to export RMI callback: " + e.getMessage(), e);
         }
@@ -93,7 +116,8 @@ public class RmiVirtualServer implements VirtualServer {
         }
 
         this.playerName = name;
-        this.callback = tempCallback; // TODO a che serve callback in questa classe?
+        this.listener = listener;
+        this.callback = tempCallback;
         return true;
     }
 
@@ -105,15 +129,14 @@ public class RmiVirtualServer implements VirtualServer {
             return t;
         });
 
-        this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "heartbeat-sender-" + playerName);
-            t.setDaemon(true);
-            return t;
-        });
-
-        this.heartbeatScheduler.scheduleAtFixedRate(
+        this.sentinel = new LivenessSentinel(
+                "client-" + playerName,
+                SEND_INTERVAL_MS, CHECK_INTERVAL_MS, TIMEOUT_MS,
                 () -> submitAsync(new HeartbeatCommand(playerName)),
-                HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
+                this::onConnectionLost);
+        sentinel.start();
+        // Da ora in poi tutte le callback del ClientCallbackImpl notificano il sentinel.
+        inboundNotifier.set(sentinel::notifyInbound);
     }
 
     // Game commands
@@ -155,14 +178,26 @@ public class RmiVirtualServer implements VirtualServer {
 
     @Override
     public void close() {
-        if (heartbeatScheduler != null) heartbeatScheduler.shutdownNow();
-        // 1. Notifica il server della disconnessione
+        if (!disconnected.compareAndSet(false, true)) return;
+        if (sentinel != null) sentinel.stop();
+        // Notifica il server della disconnessione
         try {
             if (playerName != null) serverStub.disconnect(playerName);
         } catch (RemoteException e) {
             System.err.println("Disconnect notification failed: " + e.getMessage());
         }
         cleanupLocalResources();
+    }
+
+    /**
+     * Invocata dal watchdog quando il server non invia messaggi entro {@code TIMEOUT_MS}.
+     * Ferma il sentinel, libera le risorse locali e notifica l'interfaccia utente.
+     */
+    private void onConnectionLost() {
+        if (!disconnected.compareAndSet(false, true)) return;
+        if (sentinel != null) sentinel.stop();
+        cleanupLocalResources();
+        if (listener != null) listener.onDisconnected();
     }
 
     /**

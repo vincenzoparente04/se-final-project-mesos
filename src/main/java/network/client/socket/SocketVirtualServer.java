@@ -1,6 +1,5 @@
 package network.client.socket;
 
-import network.client.ClientStateListenerCli;
 import network.client.LocalGameState;
 import network.client.VirtualServer;
 import network.client.ClientStateListener;
@@ -16,6 +15,7 @@ import shared.command.PlaceTotemCommand;
 import shared.command.HeartbeatCommand;
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
+import shared.liveness.LivenessSentinel;
 import shared.message.*;
 
 import java.io.IOException;
@@ -24,9 +24,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Socket implementation of {@link VirtualServer} proxy.
@@ -37,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  *       Object{Input,Output}Streams. No game-layer wiring happens here.</li>
  *   <li>{@link #tryRegisterName(String, LocalGameState, ClientStateListener)}
  *       performs the name handshake. Reusable across rejections.</li>
- *   <li>{@link #start()} spawns the reader thread and the heartbeat scheduler.</li>
+ *   <li>{@link #start()} spawns the reader thread and il sentinel di liveness bidirezionale.</li>
  * </ol>
  */
 public class SocketVirtualServer implements VirtualServer, ServerMessageHandler {
@@ -45,8 +42,15 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     /** Timeout for reading the server's response to a name attempt. */
     private static final int NAME_NEGOTIATION_TIMEOUT_MS = 5_000;
 
-    /** Periodo di invio heartbeat: deve essere < del timeout server (6s). */
-    private static final long HEARTBEAT_INTERVAL_MS = 2_000L;
+    /**
+     * Intervalli del sentinel client-side socket.
+     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling
+     * e ritardi temporanei dovuti a messaggi applicativi grandi che impegnano il sender.
+     * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
+     */
+    private static final long SEND_INTERVAL_MS  = 2_000L;
+    private static final long CHECK_INTERVAL_MS = 2_000L;
+    private static final long TIMEOUT_MS        = 10_000L;
 
     private final Socket socket;
     private final ObjectOutputStream out;
@@ -57,7 +61,7 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     private LocalGameState localState;
     private ClientStateListener listener;
     private List<LobbyDto> bufferedLobbyList;
-    private ScheduledExecutorService heartbeatScheduler;
+    private LivenessSentinel sentinel;
 
     private boolean connectionResponse;
 
@@ -133,17 +137,20 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     }
 
     @Override
-    public void start() {
-        new Thread(new SocketClientThread(in, this), "socket-reader-" + playerName).start();
+    public void handle(HeartbeatMessage msg) {
+        // No-op: la liveness è già aggiornata da notifyInbound() nel loop del SocketClientThread.
+    }
 
-        this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "heartbeat-sender-" + playerName);
-            t.setDaemon(true);
-            return t;
-        });
-        this.heartbeatScheduler.scheduleAtFixedRate(
+    @Override
+    public void start() {
+        this.sentinel = new LivenessSentinel(
+                "client-" + playerName,
+                SEND_INTERVAL_MS, CHECK_INTERVAL_MS, TIMEOUT_MS,
                 () -> send(new HeartbeatCommand(playerName)),
-                HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
+                this::onDisconnected);
+        sentinel.start();
+
+        new Thread(new SocketClientThread(in, this), "socket-reader-" + playerName).start();
 
         // Replay the initial lobby list that was consumed during the handshake.
         if (bufferedLobbyList != null) {
@@ -212,9 +219,14 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
-            if (heartbeatScheduler != null) heartbeatScheduler.shutdownNow();
+            if (sentinel != null) sentinel.stop();
             try { socket.close(); } catch (IOException ignored) {}
         }
+    }
+
+    /** Aggiorna il timestamp di liveness: chiamato dal {@link SocketClientThread} ad ogni messaggio. */
+    void notifyInbound() {
+        if (sentinel != null) sentinel.notifyInbound();
     }
 
     // ─── Callbacks from SocketClientThread ───────────────────
@@ -249,6 +261,7 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
 
     void onDisconnected() {
         closed.set(true);
+        if (sentinel != null) sentinel.stop();
         listener.onDisconnected();
     }
 }
