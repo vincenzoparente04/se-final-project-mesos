@@ -199,26 +199,27 @@ class GameFlowTest {
 
     // Multi-player-count integration tests
 
-    private GameModel setupGame(List<String> names) {
+    private GameModel setupGame(List<String> names) throws Exception {
         GameModel m = new GameModel();
         m.startGame(names);
         // consume color-choosing phase
         TotemColor[] colors = TotemColor.values();
         int i = 0;
         while (m.getCurrentPhase() == GamePhase.COLOR_CHOOSING_PHASE) {
-            m.chooseColor(m.getCurrentPlayer(), colors[i++]);
+            Player current = m.getCurrentPlayer();
+            m.handleCommand(new ChooseColorCommand(current.getName(), colors[i++].name()));
         }
         return m;
     }
 
-    private void runOnePlacement(GameModel m) {
+    private void runOnePlacement(GameModel m) throws Exception {
         while (m.getCurrentPhase() == GamePhase.PLACEMENT) {
             Player current = m.getCurrentPlayer();
             OfferTile free = m.getBoard().getOfferTiles().stream()
                     .filter(t -> !t.isOccupied())
                     .findFirst()
                     .orElseThrow();
-            m.placeTotem(current, free.getLetter());
+            m.handleCommand(new PlaceTotemCommand(current.getName(), free.getLetter()));
         }
     }
 
@@ -233,13 +234,15 @@ class GameFlowTest {
                     .filter(c -> c instanceof CharacterCard && action.canDraw(c, rm))
                     .findFirst();
             if (forced.isPresent()) {
-                m.drawCard(forced.get().getId());
+                m.handleCommand(new DrawCardCommand(current.getName(), forced.get().getId()));
             } else {
-                try { m.endTurn(); } catch (IllegalStateException ignored) {}
+                try { m.handleCommand(new EndTurnCommand(current.getName())); }
+                catch (IllegalStateException ignored) {}
             }
         }
         if (m.getCurrentPhase() == GamePhase.PRE_END_OF_ROUND) {
-            m.endTurn();
+            Player current = m.getCurrentPlayer();
+            m.handleCommand(new EndTurnCommand(current.getName()));
         }
     }
 
@@ -261,7 +264,7 @@ class GameFlowTest {
 
     @Test
     @DisplayName("3-player game: board has exactly the tiles eligible for 3 players")
-    void threePlayerGameHasCorrectOfferTileCount() {
+    void threePlayerGameHasCorrectOfferTileCount() throws Exception {
         GameModel m = setupGame(List.of("A", "B", "C"));
         // board.json: tiles with minPlayers <= 3 are active
         long activeTiles = m.getBoard().getOfferTiles().size();
@@ -271,7 +274,7 @@ class GameFlowTest {
 
     @Test
     @DisplayName("3-player game: first-position player gets 2 food, second gets 3, third gets 3")
-    void threePlayerGameFoodBonusesAreCorrect() {
+    void threePlayerGameFoodBonusesAreCorrect() throws Exception {
         GameModel m = setupGame(List.of("A", "B", "C"));
         List<Player> order = m.getTurnOrder();
         assertEquals(2, order.get(0).getFood(), "position 0 → 2 food");
@@ -297,7 +300,7 @@ class GameFlowTest {
 
     @Test
     @DisplayName("4-player game: first-position player gets 2 food, second gets 3, third gets 3, fourth gets 4")
-    void fourPlayerGameFoodBonusesAreCorrect() {
+    void fourPlayerGameFoodBonusesAreCorrect() throws Exception {
         GameModel m = setupGame(List.of("A", "B", "C", "D"));
         List<Player> order = m.getTurnOrder();
         assertEquals(2, order.get(0).getFood(), "position 0 → 2 food");

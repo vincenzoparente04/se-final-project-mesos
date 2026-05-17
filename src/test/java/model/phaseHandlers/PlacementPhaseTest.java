@@ -8,6 +8,8 @@ import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.command.DrawCardCommand;
+import shared.command.EndTurnCommand;
 import shared.command.PlaceTotemCommand;
 
 import java.util.List;
@@ -55,11 +57,7 @@ class PlacementPhaseTest {
         when(p1.getName()).thenReturn("Player1");
         when(p2.getName()).thenReturn("Player2");
         when(p3.getName()).thenReturn("Player3");
-        
-        when(p1.getState()).thenReturn(true);
-        when(p2.getState()).thenReturn(true);
-        when(p3.getState()).thenReturn(true);
-        
+
         when(p1.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
         when(p2.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
         when(p3.getLocation()).thenReturn(TotemLocation.TURN_ORDER_TILE);
@@ -149,7 +147,8 @@ class PlacementPhaseTest {
         when(p1.getLocation()).thenReturn(TotemLocation.OFFER_TRACK);
         phase.onEnter();
 
-        assertThrows(IllegalArgumentException.class, () -> phase.placeTotem(p1, 'A'));
+        assertThrows(IllegalArgumentException.class,
+                () -> phase.visit(new PlaceTotemCommand("Player1", 'A')));
         verify(board, never()).placeTotem(any(Player.class), any(OfferTile.class));
     }
 
@@ -166,15 +165,17 @@ class PlacementPhaseTest {
     }
 
     @Test
-    @DisplayName("endTurn throws during PlacementPhase")
+    @DisplayName("EndTurnCommand throws during PlacementPhase")
     void endTurnThrows() {
-        assertThrows(IllegalStateException.class, () -> phase.endTurn());
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new EndTurnCommand("Player1")));
     }
 
     @Test
-    @DisplayName("drawCard throws during PlacementPhase")
+    @DisplayName("DrawCardCommand throws during PlacementPhase")
     void drawCardThrows() {
-        assertThrows(IllegalStateException.class, () -> phase.drawCard(45));
+        assertThrows(IllegalStateException.class,
+                () -> phase.visit(new DrawCardCommand("Player1", 45)));
     }
 
 

@@ -60,9 +60,6 @@ public class ColorChoosingPhaseTest {
             when(player1.getName()).thenReturn("Player1");
             when(player2.getName()).thenReturn("Player2");
             when(player3.getName()).thenReturn("Player3");
-            when(player1.getState()).thenReturn(true);
-            when(player2.getState()).thenReturn(true);
-            when(player3.getState()).thenReturn(true);
 
             // Players are connected
             when(player1.isConnected()).thenReturn(true);
@@ -241,12 +238,6 @@ public class ColorChoosingPhaseTest {
         when(localPlayer3.getName()).thenReturn("Player3");
         when(localPlayer4.getName()).thenReturn("Player4");
         when(localPlayer5.getName()).thenReturn("Player5");
-        
-        when(localPlayer1.getState()).thenReturn(true);
-        when(localPlayer2.getState()).thenReturn(true);
-        when(localPlayer3.getState()).thenReturn(true);
-        when(localPlayer4.getState()).thenReturn(true);
-        when(localPlayer5.getState()).thenReturn(true);
 
         when(localPlayer1.isConnected()).thenReturn(true);
         when(localPlayer2.isConnected()).thenReturn(true);
@@ -281,7 +272,7 @@ public class ColorChoosingPhaseTest {
  //TODO: ADJUST THIS TEST TO NEW CONTROLLER VERSION 
     @Test
     @DisplayName("Skip player when disconnected")
-    void testSkipPlayerWhenDisconnected() {
+    void testSkipPlayerWhenDisconnected() throws Exception {
 
         /// DIFFFERS FROM OTHERS --> no setup
 
@@ -296,7 +287,7 @@ public class ColorChoosingPhaseTest {
 
         assertEquals(GamePhase.COLOR_CHOOSING_PHASE, localModel.getCurrentPhase());
 
-        localModel.chooseColor(localModel.getPlayerByName("Player1"), TotemColor.RED);
+        localModel.handleCommand(new ChooseColorCommand("Player1", "RED"));
 
         //first player disconnected so curr player should be the next
         Player follows = localModel.getCurrentPlayer();

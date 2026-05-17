@@ -20,7 +20,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -91,8 +91,7 @@ public class SetupPhaseTest {
 
         phase.onEnter();
 
-        var order = inOrder(board, rowsManager, model);
-        order.verify(board).setup(5);
+        var order = inOrder(rowsManager, model);
         order.verify(rowsManager).setup(5);
         order.verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 
@@ -156,8 +155,7 @@ public class SetupPhaseTest {
 
         phase.onEnter();
 
-        var order = inOrder(board, rowsManager, p4, p2, p1, p3, model);
-        order.verify(board).setup(4);
+        var order = inOrder(rowsManager, p4, p2, p1, p3, model);
         order.verify(rowsManager).setup(4);
         order.verify(p4).addFood(2);
         order.verify(p2).addFood(3);
@@ -256,12 +254,9 @@ public class SetupPhaseTest {
     }
 
     @Test
-    @DisplayName("getCurrentPlayer delegates to model")
-    void getCurrentPlayerDelegatesToModel() {
-        Player p = mock(Player.class);
-        when(model.getCurrentPlayer()).thenReturn(p);
-
-        assertSame(p, phase.getCurrentPlayer());
+    @DisplayName("getCurrentPlayer returns null during SetupPhase (no active player)")
+    void getCurrentPlayerReturnsNull() {
+        assertNull(phase.getCurrentPlayer());
     }
 
     @Test

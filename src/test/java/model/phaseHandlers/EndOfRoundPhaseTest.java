@@ -130,9 +130,11 @@ public class EndOfRoundPhaseTest {
 	}
 
     @Test
-    @DisplayName("skipCurrentPlayerTurn throws during EndOfRoundPhase")
-    void skipCurrentPlayerTurnThrows() {
-        assertThrows(IllegalStateException.class, () -> phase.skipCurrentPlayerTurn());
+    @DisplayName("skipCurrentPlayerTurn is a no-op during EndOfRoundPhase")
+    void skipCurrentPlayerTurnIsNoOp() {
+        // EndOfRoundPhase has no active player to skip, so the default no-op
+        // inherited from GamePhaseHandler is the intended behaviour.
+        assertDoesNotThrow(() -> phase.skipCurrentPlayerTurn());
     }
 
 }
