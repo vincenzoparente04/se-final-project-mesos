@@ -2,6 +2,8 @@ package controller;
 
 import model.GameModel;
 import model.enums.GamePhase;
+import model.phaseHandlers.EndOfGamePhase;
+import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
 import network.server.core.PlayerEntry;
 import network.server.core.VirtualView;
@@ -14,12 +16,16 @@ import shared.command.LobbyCommand;
 import shared.command.LobbyCommandVisitor;
 import shared.command.PlayerDisconnectedCommand;
 import shared.command.PlayerReconnectedCommand;
-import model.phaseHandlers.GamePhaseHandler;
+import shared.command.SuspensionTimeoutCommand;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Motore della sessione di gioco. Possiede la coda dei comandi e il game
@@ -35,11 +41,22 @@ import java.util.concurrent.LinkedBlockingQueue;
  *       ({@code GameCommand} → phase handler;
  *       {@code LobbyCommand} → visitor interno);</li>
  *   <li>{@link LobbyCommandVisitor}: gestisce {@link LeaveCommand},
- *       {@link PlayerDisconnectedCommand} e {@link PlayerReconnectedCommand};
- *       gli altri sotto-tipi di {@code LobbyCommand} hanno default no-op nel
- *       visitor e non interessano al controller (li gestisce
- *       {@code LobbyManager} prima dell'impilamento).</li>
+ *       {@link PlayerDisconnectedCommand}, {@link PlayerReconnectedCommand}
+ *       e {@link SuspensionTimeoutCommand}; gli altri sotto-tipi di
+ *       {@code LobbyCommand} hanno default no-op nel visitor e non
+ *       interessano al controller (li gestisce {@code LobbyManager} prima
+ *       dell'impilamento).</li>
  * </ul>
+ *
+ * <h2>Sospensione e resilienza alle disconnessioni</h2>
+ * Quando rimane un solo player connesso la partita entra in stato sospeso
+ * (flag {@link #suspended}, scrutinato in {@link #onGameCommand}). Un timer
+ * di {@value #SUSPENSION_TIMEOUT_SECONDS} secondi viene schedulato sul
+ * {@link #suspensionScheduler}; il task NON tocca il model direttamente,
+ * impila invece un {@link SuspensionTimeoutCommand} sulla coda così che il
+ * fine partita avvenga sul game thread come ogni altro evento. Se prima del
+ * timeout almeno un altro player si riconnette il future viene cancellato e
+ * il flag {@code suspended} torna false.
  *
  * <h2>Costruttori</h2>
  * <ul>
@@ -52,12 +69,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  *       test: assegna il model passato, non crea thread; chi lo usa deve
  *       invocare {@code startGame()} e {@code handleCommand()} sincroni.</li>
  * </ul>
- *
- * <h2>API pubblica sincrona</h2>
- * {@link #handleCommand(GameCommand)} resta pubblico e sincrono come
- * nell'impianto originale: validate del turno e delega a
- * {@code model.handleCommand}, propagando le eccezioni. È invocato sia dal
- * dispatch interno che dai test.
  */
 public final class GameController implements Runnable, CommandDispatcher, LobbyCommandVisitor {
 
@@ -66,6 +77,16 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
     private final List<PlayerEntry> players;
     private final Thread gameThread;
     private volatile boolean running = true;
+    private volatile boolean suspended = false;
+
+    private final ScheduledExecutorService suspensionScheduler =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "suspension-timer");
+                t.setDaemon(true);
+                return t;
+            });
+    private ScheduledFuture<?> suspensionTimeoutFuture = null;
+    private static final long SUSPENSION_TIMEOUT_SECONDS = 30;
 
     /**
      * Test-only constructor: receives a pre-built {@link GameModel} and does
@@ -92,7 +113,6 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
         this.gameThread.setDaemon(true);
     }
 
-    // TODO si puo levare ma vedi se serve per i test
     public void startGame(List<String> playerNames) {
         model.startGame(playerNames);
     }
@@ -135,11 +155,14 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
     }
 
     /**
-     * Stop the game thread cleanly. Sets the running flag, interrupts the
+     * Stop the game thread cleanly. Cancels any pending suspension timer,
+     * shuts down the scheduler, sets the running flag, interrupts the
      * thread to unblock {@code take()}, and joins for up to 2 seconds. Only
      * valid for instances built via {@link #GameController(List)}.
      */
     public void shutdown() {
+        cancelSuspensionTimer();
+        suspensionScheduler.shutdownNow();
         running = false;
         gameThread.interrupt();
         try {
@@ -169,16 +192,19 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
         }
     }
 
-    // TODO: vedi se si può fare un unico visitor che fa override su GameCommand e sui 3 comandi di rete direttamente
-
     // ─── CommandDispatcher ───────────────────────────────────────────────
 
     @Override
     public void onGameCommand(GameCommand cmd) {
+        if (suspended) {
+            findView(cmd.getPlayerName()).ifPresent(v ->
+                    v.sendError("GAME_SUSPENDED: La partita è sospesa, in attesa di riconnessioni.")
+            );
+            return;
+        }
+
         Player current = model.getCurrentPlayer();
         if (current != null && !current.isConnected()) {
-            // Comando arrivato in coda prima di un disconnect che ha già
-            // marcato il player offline: ignora silenziosamente.
             return;
         }
         try {
@@ -193,7 +219,7 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
     public void onLobbyCommand(LobbyCommand cmd) throws Exception {
         // Cast esplicito per disambiguare tra LobbyCommand.accept(CommandDispatcher)
         // e LobbyCommand.accept(LobbyCommandVisitor): qui vogliamo il secondo.
-        cmd.accept((LobbyCommandVisitor) this); // TODO: non mi piace questo cast, magari istanziamolo e facciamo this.lobbyComandVisitor
+        cmd.accept((LobbyCommandVisitor) this);
     }
 
     @Override
@@ -201,7 +227,7 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
         // Mai instradato sulla coda del game: gli endpoint lo passano
         // direttamente al LobbyManager. Eventuali heartbeat finiti qui per
         // errore vengono ignorati.
-    } // TODO: vediamo se si possono pulire i visitor e togliere questi override inutili.
+    }
 
     // Handle Command delegating to the model –––––––––––––––––––––––––––––
     /**
@@ -235,12 +261,6 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
         }
     }
 
-    // TODO: mettere un filtro che se è rimasto un player solo fa scattare un timer e setta un bool isSuspended();
-    //  ad ogni comando spilato si controlla questo bool, se la partita è sospesa non fa nulla, se il comando è un
-    //  PlayerReconnectedCommand il boolean è settato false e posso continuare a giocare. Se il timeout scade
-    //  bisogna fare setWinners, setGameOver e notifyChange
-
-    // TODO: se anche l'ultimo player restante crasha la partita deve essere eliminata in qualche modo
     @Override
     public void visit(PlayerDisconnectedCommand cmd) {
         Player p;
@@ -257,21 +277,75 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
         }
         model.removeView(cmd.getPlayerName());
         GamePhaseHandler phaseHandler = model.getPhaseHandler();
-        if (phaseHandler != null && phaseHandler.getCurrentPlayer() != null && phaseHandler.getCurrentPlayer().getName().equals(cmd.getPlayerName())) {
+        if (phaseHandler != null && phaseHandler.getCurrentPlayer() != null
+                && phaseHandler.getCurrentPlayer().getName().equals(cmd.getPlayerName())) {
             phaseHandler.skipCurrentPlayerTurn();
+        }
+
+        // ─── Sospensione: scatta quando rimane un solo connesso ────────
+        long connected = countConnected();
+        if (connected == 1 && !suspended) {
+            suspended = true;
+            for (VirtualView v : model.getViews()) {
+                v.sendError("GAME_SUSPENDED: in attesa di una riconnessione, timer " + SUSPENSION_TIMEOUT_SECONDS + "s");
+            }
+            suspensionTimeoutFuture = suspensionScheduler.schedule( () -> enqueueSelf(new SuspensionTimeoutCommand()),
+                    SUSPENSION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } else if (connected == 0) {
+            // Anche l'ultimo player è uscito durante la sospensione: termina
+            // la partita calcolando i punteggi sullo stato corrente. La
+            // session resta in activeGames (lazy cleanup), verrà rimossa
+            // quando un eventuale player riconnesso farà LeaveCommand.
+            cancelSuspensionTimer();
+            suspended = false;
+            model.setPhase(new EndOfGamePhase(model));
+            model.setGameOver(); // TODO: perche non lo fa EndOfGamePhase?
+            model.notifyChange();
         }
     }
 
-    // TODO: dovrà settare il bool suspended a false
     @Override
     public void visit(PlayerReconnectedCommand cmd) {
         try {
             model.swapView(cmd.getPlayerName(), cmd.newView());
             model.getPlayerByName(cmd.getPlayerName()).setConnected();
-            model.notifyChange();
         } catch (IllegalArgumentException ignored) {
             // player non in questa session — nulla da fare
+            return;
         }
+
+        if (suspended && countConnected() >= 2) {
+            cancelSuspensionTimer();
+            suspended = false;
+            for (VirtualView v : model.getViews()) {
+                v.sendError("GAME_RESUMED");
+            }
+        }
+        model.notifyChange();
+    }
+
+    @Override
+    public void visit(SuspensionTimeoutCommand cmd) {
+        // Guard: il reconnect potrebbe aver cancellato la sospensione
+        // mentre il task era già in coda, oppure aver vinto la corsa col
+        // suspensionScheduler. In quel caso non c'è nulla da fare.
+        if (!suspended) return;
+        suspended = false;
+
+        String winner = model.getPlayers().stream()
+                .filter(Player::isConnected)
+                .map(Player::getName)
+                .findFirst()
+                .orElse(null);
+
+        if (winner == null) {
+            // Edge: nessuno è più connesso (race con disconnect dell'ultimo).
+            model.setPhase(new EndOfGamePhase(model));
+        } else {
+            model.setWinners(List.of(winner));
+        }
+        model.setGameOver();
+        model.notifyChange();
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────
@@ -280,5 +354,24 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
         return model.getViews().stream()
                 .filter(v -> v.getPlayerName().equals(playerName))
                 .findFirst();
+    }
+
+    private long countConnected() {
+        return model.getPlayers().stream().filter(Player::isConnected).count();
+    }
+
+    private void enqueueSelf(LobbyCommand cmd) {
+        try {
+            queue.put(cmd);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void cancelSuspensionTimer() {
+        if (suspensionTimeoutFuture != null) {
+            suspensionTimeoutFuture.cancel(false);
+            suspensionTimeoutFuture = null;
+        }
     }
 }

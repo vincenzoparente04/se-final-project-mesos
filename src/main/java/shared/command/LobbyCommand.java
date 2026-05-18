@@ -2,7 +2,7 @@ package shared.command;
 
 public sealed interface LobbyCommand extends ClientCommand
         permits CreateLobbyCommand, JoinLobbyCommand, LeaveCommand, ListLobbiesCommand,
-                PlayerDisconnectedCommand, PlayerReconnectedCommand {
+                PlayerDisconnectedCommand, PlayerReconnectedCommand, SuspensionTimeoutCommand {
 
     @Override
     default void accept(CommandDispatcher dispatcher) throws Exception {

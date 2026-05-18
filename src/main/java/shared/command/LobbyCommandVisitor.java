@@ -14,4 +14,5 @@ public interface LobbyCommandVisitor {
     default void visit(LeaveCommand cmd) throws Exception {}
     default void visit(PlayerDisconnectedCommand cmd) throws Exception {}
     default void visit(PlayerReconnectedCommand cmd) throws Exception {}
+    default void visit(SuspensionTimeoutCommand cmd) throws Exception {}
 }

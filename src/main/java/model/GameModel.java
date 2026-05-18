@@ -127,6 +127,18 @@ public class GameModel {
         return currentRound > MAX_ROUNDS;
     }
 
+    /**
+     * Force the game into the "over" state regardless of round progression.
+     * Used by the controller when the suspension timeout proclaims a winner
+     * or when the last connected player drops during a suspension and the
+     * game has to end early.
+     *
+     * @apiNote @CalledOnGameThreadOnly
+     */
+    public void setGameOver() {
+        this.currentRound = MAX_ROUNDS + 1;
+    }
+
     /** @apiNote @CalledOnGameThreadOnly */
     public void setWinners(List<String> winnerNames) {
         this.winners = winnerNames;

@@ -105,6 +105,10 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     public void handle(ErrorMessage msg) {
         if (msg.message() != null ) {
             listener.onError(msg.message());
+            if (msg.message().equals("GAME_RESUMED")) {
+                connectionResponse = true;
+                return;
+            }
             if (msg.message().equals("connection_timeout:no_connect_message_received")) {
                 System.exit(1); // exit code 1 = timeout/disconnection error
             }
