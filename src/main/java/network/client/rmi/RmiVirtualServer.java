@@ -187,6 +187,8 @@ public class RmiVirtualServer implements VirtualServer {
             System.err.println("Disconnect notification failed: " + e.getMessage());
         }
         cleanupLocalResources();
+        if (listener != null) listener.onDisconnected();
+        System.exit(0);
     }
 
     /**
@@ -197,7 +199,6 @@ public class RmiVirtualServer implements VirtualServer {
         if (!disconnected.compareAndSet(false, true)) return;
         if (sentinel != null) sentinel.stop();
         cleanupLocalResources();
-        System.exit(1);
         if (listener != null) listener.onDisconnected();
     }
 

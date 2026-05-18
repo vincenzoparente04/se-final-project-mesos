@@ -147,7 +147,7 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
                 "client-" + playerName,
                 SEND_INTERVAL_MS, CHECK_INTERVAL_MS, TIMEOUT_MS,
                 () -> send(new HeartbeatCommand(playerName)),
-                this::onDisconnected);
+                this::close);
         sentinel.start();
 
         new Thread(new SocketClientThread(in, this), "socket-reader-" + playerName).start();
@@ -220,10 +220,9 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     public void close() {
         if (closed.compareAndSet(false, true)) {
             if (sentinel != null) sentinel.stop();
-            try {
-                socket.close();
-                System.exit(1);
-            } catch (IOException ignored) {}
+            try { socket.close(); } catch (IOException ignored) {}
+            if (listener != null) listener.onDisconnected();
+            System.exit(0);
         }
     }
 
@@ -263,8 +262,6 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     }
 
     void onDisconnected() {
-        closed.set(true);
-        if (sentinel != null) sentinel.stop();
-        listener.onDisconnected();
+        close();
     }
 }
