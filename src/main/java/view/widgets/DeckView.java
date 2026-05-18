@@ -22,9 +22,6 @@ public class DeckView extends StackPane {
     private static final int STACK_SIZE = 4;
     private static final double OFFSET     = 3.5;
 
-    public DeckView(String backImageFilename) {
-        this(backImageFilename, CARD_WIDTH, CARD_HEIGHT);
-    }
 
     public DeckView(String backImageFilename, double cardWidth, double cardHeight) {
         String path = "/images/BackCards/" + backImageFilename;

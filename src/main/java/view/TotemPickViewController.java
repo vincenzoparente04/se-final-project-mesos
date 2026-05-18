@@ -68,19 +68,18 @@ public class TotemPickViewController implements SceneController {
         for (Button btn : colorButtons()) {
             String color = (String) btn.getUserData();
             boolean alreadyTaken = taken.contains(color);
-            //TODO: adjust the disabled totem buttons to match the concurrent color choosing phase
-            btn.setDisable(!isMyTurn || iHavePicked || alreadyTaken);
-            //btn.setDisable(alreadyTaken);
+
+            btn.setDisable(alreadyTaken);
+
+            btn.setMouseTransparent(iHavePicked);
+            btn.setFocusTraversable(!iHavePicked);
         }
 
-        //TODO: remove the last else after the concurring color choosing phase
+        //TODO: self.color --> green color does not exist. Should be purple
         if (iHavePicked) {
             hintLabel.setText("You picked " + self.color + ". Waiting for the others…");
         } else if (isMyTurn) {
             hintLabel.setText("Pick a colour for your totem.");
-        } else {
-            String cp = state.getCurrentPlayerName();
-            hintLabel.setText(cp != null ? cp + " is picking a colour…" : "Waiting…");
         }
 
         statusLabel.setText("");
@@ -105,8 +104,7 @@ public class TotemPickViewController implements SceneController {
             
             btn.setOnAction(e -> {
                 router.getVirtualServer().sendChooseColor(c);
-                //TODO: uncomment it when the color choosing phase will handle concurrency
-                //btn.setDisable(true);
+                btn.setDisable(true);
             });
             colorButtons.add(btn);
             colorRow.getChildren().add(btn);

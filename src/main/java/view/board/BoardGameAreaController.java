@@ -207,6 +207,7 @@ public class BoardGameAreaController implements ViewController {
     private void updateDecks(String era) {
         decksBox.getChildren().clear();
         int eraNum = eraNumber(era);
+        int eraNumBuilding = eraNum + 1;
 
         double cw = cardWidth(false);
         double ch = cardHeight(false);
@@ -219,17 +220,24 @@ public class BoardGameAreaController implements ViewController {
 
         VBox td = new VBox(4, tribeLbl, new DeckView("BackEra" + eraNum + ".png", cw, ch));
         td.setAlignment(Pos.CENTER);
-        VBox bd = new VBox(4, buildLbl, new DeckView(buildingBackForEra(eraNum), cw, ch));
-        bd.setAlignment(Pos.CENTER);
-        decksBox.getChildren().addAll(td, bd);
+        if(eraNumBuilding < 4){
+            VBox bd = new VBox(4, buildLbl, new DeckView(buildingBackForEra(eraNumBuilding), cw, ch));
+            bd.setAlignment(Pos.CENTER);
+
+            decksBox.getChildren().addAll(td, bd);
+        }else{
+            decksBox.getChildren().addAll(td);
+        }
+
+
     }
 
     /** Mirrors the model's filename: era 1 & 2 use "BackBuildinaEra" (typo in asset), era 3 uses "BackBuildingEra". */
     private String buildingBackForEra(int eraNum) {
         return switch (eraNum) {
-            case 1 -> "BackBuildinaEra1.png";
             case 2 -> "BackBuildinaEra2.png";
-            default -> "BackBuildingEra3.png";
+            case 3 -> "BackBuildingEra3.png";
+            default -> "";
         };
     }
 

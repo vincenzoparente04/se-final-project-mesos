@@ -258,7 +258,7 @@ public class SetupPhaseTest {
     @DisplayName("getCurrentPlayer returns null during SetupPhase (no active player)")
     void getCurrentPlayerReturnsNull() {
         assertNull(phase.getCurrentPlayer());
-    }
+    }*/
 
     @Test
     @DisplayName("randomizeTurnOrder throws when there are more players than available slots")
