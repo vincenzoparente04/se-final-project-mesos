@@ -190,6 +190,7 @@ public class LobbyManager implements LobbyCommandVisitor {
     // TODO: metti un filtro perché se un player è in una partita in corso non deve poter mandare comandi di lobby
     @Override
     public synchronized void visit(ListLobbiesCommand cmd) {
+
         VirtualView view = getView(cmd.playerName());
         if (view != null) view.sendLobbyList(currentLobbyList());
     }
@@ -198,6 +199,11 @@ public class LobbyManager implements LobbyCommandVisitor {
     public synchronized void visit(CreateLobbyCommand cmd) {
         PlayerEntry entry = connectedPlayers.get(cmd.playerName());
         if (entry == null) return;
+
+        if (activeGames.containsKey(entry.getName())) {
+            entry.getView().sendError("already in game");
+            return;
+        }
 
         if (cmd.playersNumber() < 2 || cmd.playersNumber() > 5) {
             entry.getView().sendError("invalid player number: must be between 2 and 5");
@@ -221,6 +227,12 @@ public class LobbyManager implements LobbyCommandVisitor {
     public synchronized void visit(JoinLobbyCommand cmd) {
         PlayerEntry entry = connectedPlayers.get(cmd.playerName());
         if (entry == null) return;
+
+        if (activeGames.containsKey(entry.getName())) {
+            entry.getView().sendError("already in game");
+            return;
+        }
+
         if (playerAlreadyInLobby(cmd.playerName())) {
             entry.getView().sendError("already_in_lobby");
             return;
