@@ -14,11 +14,11 @@ import shared.dto.CardDto;
 import shared.dto.PlayerDto;
 import shared.dto.TribeDto;
 import view.widgets.FoodWidget;
+import view.widgets.ImageCache;
 import view.widgets.PpWidget;
 import view.widgets.TotemView;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -93,9 +93,9 @@ public class PlayerViewController implements ViewController {
         if (counts.getOrDefault("SHAMAN", 0) > 0) {
             HBox chip = buildIconChip("Shaman.png", "×" + counts.get("SHAMAN"));
             if (totalStars > 0) {
-                InputStream stream = getClass().getResourceAsStream("/images/icons/star.png");
-                if (stream != null) {
-                    ImageView iv = new ImageView(new Image(stream));
+                Image starImg = ImageCache.get("/images/icons/star.png");
+                if (starImg != null) {
+                    ImageView iv = new ImageView(starImg);
                     iv.setFitWidth(11);
                     iv.setFitHeight(11);
                     iv.setPreserveRatio(true);
@@ -126,9 +126,9 @@ public class PlayerViewController implements ViewController {
         box.getStyleClass().add("mesos-card-chip");
         box.setAlignment(Pos.CENTER);
 
-        InputStream stream = getClass().getResourceAsStream("/images/icons/" + iconFile);
-        if (stream != null) {
-            ImageView iv = new ImageView(new Image(stream));
+        Image img = ImageCache.get("/images/icons/" + iconFile);
+        if (img != null) {
+            ImageView iv = new ImageView(img);
             iv.setFitWidth(14);
             iv.setFitHeight(14);
             iv.setPreserveRatio(true);

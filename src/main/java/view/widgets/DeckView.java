@@ -25,10 +25,7 @@ public class DeckView extends StackPane {
 
     public DeckView(String backImageFilename, double cardWidth, double cardHeight) {
         String path = "/images/BackCards/" + backImageFilename;
-        InputStream stream = backImageFilename != null
-                ? getClass().getResourceAsStream(path) : null;
-
-        Image img = stream != null ? new Image(stream) : null;
+        Image img = backImageFilename != null ? ImageCache.get(path) : null;
 
         double offset = OFFSET * (cardWidth / CARD_WIDTH);
 

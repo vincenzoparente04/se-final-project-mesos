@@ -15,9 +15,9 @@ public class PpWidget extends StackPane {
     private static final double LABEL_OFFSET_Y = -4;
 
     public PpWidget(int amount) {
-        InputStream stream = getClass().getResourceAsStream("/images/icons/PuntiPrestige.png");
-        if (stream != null) {
-            ImageView iv = new ImageView(new Image(stream));
+        Image img = ImageCache.get("/images/icons/PuntiPrestige.png");
+        if (img != null) {
+            ImageView iv = new ImageView(img);
             iv.setFitWidth(SIZE);
             iv.setFitHeight(SIZE);
             iv.setPreserveRatio(true);

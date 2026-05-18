@@ -37,9 +37,9 @@ public class TurnOrderTileView extends StackPane {
         double tileWidth = tileHeight * (300.0 / 463.0);
         int playerCount = slots.size();
         String path = "/images/TileCards/Order_" + playerCount + "_Players_FRONT.png";
-        InputStream stream = getClass().getResourceAsStream(path);
-        if (stream != null) {
-            ImageView iv = new ImageView(new Image(stream));
+        Image img = ImageCache.get(path);
+        if (img != null) {
+            ImageView iv = new ImageView(img);
             iv.setFitHeight(tileHeight);
             iv.setPreserveRatio(true);
             getChildren().add(iv);

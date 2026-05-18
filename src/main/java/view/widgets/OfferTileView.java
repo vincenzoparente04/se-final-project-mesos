@@ -35,12 +35,11 @@ public class OfferTileView extends StackPane {
                          Consumer<Character> onClick,
                          double tileHeight) {
         String path = "/images/TileCards/OfferTrail_" + tile.letter + "_FRONT.png";
-        InputStream stream = getClass().getResourceAsStream(path);
+        Image img = ImageCache.get(path);
 
         double actualW = 300, actualH = 485;
 
-        if (stream != null) {
-            Image img = new Image(stream);
+        if (img != null) {
             actualW = img.getWidth();
             actualH = img.getHeight();
 

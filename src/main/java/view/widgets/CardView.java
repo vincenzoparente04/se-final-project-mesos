@@ -30,9 +30,9 @@ public class CardView extends StackPane {
         String dir = faceUp ? "FrontCards" : "BackCards";
         String path = "/images/" + dir + "/" + filename;
 
-        InputStream stream = filename != null ? getClass().getResourceAsStream(path) : null;
-        if (stream != null) {
-            ImageView iv = new ImageView(new Image(stream));
+        Image img = filename != null ? ImageCache.get(path) : null;
+        if (img != null) {
+            ImageView iv = new ImageView(img);
             iv.setFitWidth(width);
             iv.setFitHeight(height);
             iv.setPreserveRatio(true);

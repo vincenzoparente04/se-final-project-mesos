@@ -15,9 +15,9 @@ public class FoodWidget extends HBox {
         super(3);
         setAlignment(Pos.CENTER);
 
-        InputStream stream = getClass().getResourceAsStream("/images/icons/food.png");
-        if (stream != null) {
-            ImageView iv = new ImageView(new Image(stream));
+        Image img = ImageCache.get("/images/icons/food.png");
+        if (img != null) {
+            ImageView iv = new ImageView(img);
             iv.setFitWidth(16);
             iv.setFitHeight(16);
             iv.setPreserveRatio(true);
