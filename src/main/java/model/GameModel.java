@@ -85,9 +85,6 @@ public class GameModel {
     /** @apiNote @CalledOnGameThreadOnly */
     public void notifyChange() {
         GameStateDto dto = GameStateDtoBuilder.build(this);
-        // Snapshot to avoid iteration hazards if a future change ever mutates
-        // 'views' mid-broadcast. Today mutations only happen on the game
-        // thread, so this is purely defensive.
         for (VirtualView v : new ArrayList<>(views)) {
             v.sendState(dto);
         }

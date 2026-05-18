@@ -1,5 +1,6 @@
 package network.server.core;
 
+import controller.GameController;
 import shared.command.*;
 import shared.dto.LobbyDto;
 
@@ -60,7 +61,7 @@ public class LobbyManager implements LobbyCommandVisitor {
     /** @apiNote @GuardedBy("this") */
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
     /** @apiNote @GuardedBy("this") */
-    private final Map<String, GameSession> activeGames = new HashMap<>(); // <PlayerName, GameSession>
+    private final Map<String, GameController> activeGames = new HashMap<>(); // <PlayerName, GameController>
 
     /**
      * Timestamp (millis epoch) dell'ultimo heartbeat ricevuto da ciascun player.
@@ -175,10 +176,10 @@ public class LobbyManager implements LobbyCommandVisitor {
         connectedPlayers.put(playerName, entry);
         lastHeartbeat.put(playerName, System.currentTimeMillis());
 
-        GameSession session = activeGames.get(playerName);
-        if (session != null) {
-            entry.setGameQueue(session.getGameCommandQueue()); // TODO: questo potrebbe essere delegato più in basso forse; forse potrebbe farlo il controller
-            enqueue(session.getCommandQueue(), new PlayerReconnectedCommand(playerName, entry.getView()));
+        GameController controller = activeGames.get(playerName);
+        if (controller != null) {
+            entry.setGameQueue(controller.getGameCommandQueue());
+            enqueue(controller.getQueue(), new PlayerReconnectedCommand(playerName, entry.getView()));
         } else {
             entry.getView().sendLobbyList(currentLobbyList());
         }
@@ -254,21 +255,21 @@ public class LobbyManager implements LobbyCommandVisitor {
     @Override
     public synchronized void visit(LeaveCommand cmd) {
         String playerName = cmd.getPlayerName();
-        GameSession session = activeGames.get(playerName);
+        GameController controller = activeGames.get(playerName);
 
-        if (session != null && session.isGameOver()) {
-            enqueue(session.getCommandQueue(), cmd);
+        if (controller != null && controller.isGameOver()) {
+            enqueue(controller.getQueue(), cmd);
             activeGames.remove(playerName);
 
             boolean stillHasConnected = activeGames.entrySet().stream()
-                    .filter(e -> e.getValue() == session)
+                    .filter(e -> e.getValue() == controller)
                     .anyMatch(e -> connectedPlayers.containsKey(e.getKey()));
             if (!stillHasConnected) {
                 // L'ultimo player connesso ha lasciato: rimuovi anche eventuali
                 // stragglers (player disconnessi che non hanno mai inviato
-                // LeaveCommand) e chiudi la session.
-                activeGames.values().removeIf(s -> s == session);
-                session.shutdown();
+                // LeaveCommand) e chiudi il controller.
+                activeGames.values().removeIf(c -> c == controller);
+                controller.shutdown();
             }
 
             VirtualView leavingView = getView(playerName);
@@ -297,9 +298,9 @@ public class LobbyManager implements LobbyCommandVisitor {
         lobbies.remove(lobby.getId());
 
         List<PlayerEntry> players = lobby.getPlayers();
-        GameSession session = new GameSession(players);
-        session.start(players);
-        players.forEach(p -> activeGames.put(p.getName(), session));
+        GameController controller = new GameController(players);
+        controller.start();
+        players.forEach(p -> activeGames.put(p.getName(), controller));
     }
 
     /**
@@ -319,11 +320,11 @@ public class LobbyManager implements LobbyCommandVisitor {
         lastHeartbeat.remove(playerName);
         if (entry != null) entry.getView().close();
 
-        GameSession session = activeGames.get(playerName);
+        GameController controller = activeGames.get(playerName);
 
         // TODO: vedere cosa serve per completare la logica di riconnessione/proclamazione vincitori
-        if (session != null) {
-            enqueue(session.getCommandQueue(), new PlayerDisconnectedCommand(playerName));
+        if (controller != null) {
+            enqueue(controller.getQueue(), new PlayerDisconnectedCommand(playerName));
         }
         // Era in lobby (o solo connesso, non in nessuna lobby): trova la lobby
         // specifica, rimuovi il player, notifica solo quella lobby.
@@ -473,7 +474,7 @@ public class LobbyManager implements LobbyCommandVisitor {
      */
     public synchronized void shutdown() {
         heartbeatScanner.shutdownNow();
-        new java.util.HashSet<>(activeGames.values()).forEach(GameSession::shutdown);
+        new java.util.HashSet<>(activeGames.values()).forEach(GameController::shutdown);
         connectedPlayers.values().forEach(e -> e.getView().close());
         lobbies.clear();
         activeGames.clear();

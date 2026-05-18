@@ -2,8 +2,8 @@ package controller;
 
 import model.GameModel;
 import model.enums.GamePhase;
-import model.phaseHandlers.ColorChoosingPhase;
 import model.player.Player;
+import network.server.core.PlayerEntry;
 import network.server.core.VirtualView;
 import shared.command.ClientCommand;
 import shared.command.CommandDispatcher;
@@ -41,6 +41,18 @@ import java.util.concurrent.LinkedBlockingQueue;
  *       {@code LobbyManager} prima dell'impilamento).</li>
  * </ul>
  *
+ * <h2>Costruttori</h2>
+ * <ul>
+ *   <li>{@link #GameController(List)} è il costruttore di produzione: riceve
+ *       i {@link PlayerEntry} di una lobby completa, costruisce il
+ *       {@link GameModel}, inizializza la partita e crea il game thread
+ *       (non avviato). {@link #start()} fa il wiring delle command queue sui
+ *       player ed avvia il thread; {@link #shutdown()} lo ferma.</li>
+ *   <li>{@link #GameController(GameModel)} è un costruttore minimale per i
+ *       test: assegna il model passato, non crea thread; chi lo usa deve
+ *       invocare {@code startGame()} e {@code handleCommand()} sincroni.</li>
+ * </ul>
+ *
  * <h2>API pubblica sincrona</h2>
  * {@link #handleCommand(GameCommand)} resta pubblico e sincrono come
  * nell'impianto originale: validate del turno e delega a
@@ -51,27 +63,90 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
 
     private final GameModel model;
     private final BlockingQueue<ClientCommand> queue = new LinkedBlockingQueue<>();
+    private final List<PlayerEntry> players;
+    private final Thread gameThread;
     private volatile boolean running = true;
 
+    /**
+     * Test-only constructor: receives a pre-built {@link GameModel} and does
+     * not own a game thread. {@link #start()} and {@link #shutdown()} are
+     * undefined for instances built this way.
+     */
     public GameController(GameModel model) {
         this.model = model;
+        this.players = List.of();
+        this.gameThread = null;
     }
 
+    /**
+     * Production constructor. Builds the {@link GameModel} from the players'
+     * views, kicks off the game (creates the phase handler) and prepares the
+     * game thread. The thread is started by {@link #start()}.
+     */
+    public GameController(List<PlayerEntry> players) {
+        this.players = List.copyOf(players);
+        List<VirtualView> views = players.stream().map(PlayerEntry::getView).toList();
+        this.model = new GameModel(views);
+        model.startGame(players.stream().map(PlayerEntry::getName).toList());
+        this.gameThread = new Thread(this, "game-thread");
+        this.gameThread.setDaemon(true);
+    }
+
+    // TODO si puo levare ma vedi se serve per i test
     public void startGame(List<String> playerNames) {
         model.startGame(playerNames);
     }
 
+    /**
+     * Wires every player's command queue to this controller's queue and
+     * starts the game thread. Only valid for instances built via
+     * {@link #GameController(List)}.
+     */
+    public void start() {
+        BlockingQueue<GameCommand> q = getGameCommandQueue();
+        players.forEach(p -> p.setGameQueue(q));
+        gameThread.start();
+    }
+
+    /**
+     * The controller's internal queue, typed on {@link ClientCommand}. The
+     * {@code LobbyManager} uses this view to impilare i lifecycle command
+     * ({@code PlayerDisconnectedCommand}, {@code PlayerReconnectedCommand},
+     * {@code LeaveCommand} during END_OF_GAME).
+     */
     public BlockingQueue<ClientCommand> getQueue() {
         return queue;
+    }
+
+    /**
+     * Same instance as {@link #getQueue()}, exposed with the narrower
+     * {@code BlockingQueue<GameCommand>} type. This is the view given to
+     * {@link PlayerEntry#setGameQueue(BlockingQueue)}: gli endpoint di rete
+     * metteranno esclusivamente {@code GameCommand} (sottotipi di
+     * {@code ClientCommand}), quindi il cast è sicuro per costruzione.
+     */
+    @SuppressWarnings("unchecked")
+    public BlockingQueue<GameCommand> getGameCommandQueue() {
+        return (BlockingQueue<GameCommand>) (BlockingQueue<?>) queue;
     }
 
     public boolean isGameOver() {
         return model.isGameOver();
     }
 
-    /** Signal the game thread to stop. The caller must additionally interrupt it. */
-    public void requestShutdown() {
+    /**
+     * Stop the game thread cleanly. Sets the running flag, interrupts the
+     * thread to unblock {@code take()}, and joins for up to 2 seconds. Only
+     * valid for instances built via {@link #GameController(List)}.
+     */
+    public void shutdown() {
         running = false;
+        gameThread.interrupt();
+        try {
+            gameThread.join(2000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     // ─── Game thread loop ────────────────────────────────────────────────
@@ -93,6 +168,8 @@ public final class GameController implements Runnable, CommandDispatcher, LobbyC
             }
         }
     }
+
+    // TODO: vedi se si può fare un unico visitor che fa override su GameCommand e sui 3 comandi di rete direttamente
 
     // ─── CommandDispatcher ───────────────────────────────────────────────
 
