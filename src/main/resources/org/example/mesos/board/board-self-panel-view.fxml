@@ -6,6 +6,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <HBox xmlns:fx="http://javafx.com/fxml"
+      fx:id="rootBar"
       fx:controller="view.board.BoardSelfPanelController"
       spacing="20" alignment="CENTER_LEFT" styleClass="mesos-self-bar"
       minHeight="165" prefHeight="165">

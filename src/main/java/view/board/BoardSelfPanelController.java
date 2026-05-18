@@ -29,10 +29,15 @@ public class BoardSelfPanelController implements ViewController {
     private static final double SELF_CARD_W = 90;
     private static final double SELF_CARD_H = 130;
 
+    @FXML private HBox     rootBar;
     @FXML private StackPane selfPlayerSlot;
     @FXML private HBox selfTribeSlot;
     @FXML private HBox selfBuildingsSlot;
-    @FXML private HBox colorPicker;
+
+    public double panelHeight() {
+        double h = rootBar.getHeight();
+        return h > 0 ? h : rootBar.getPrefHeight();
+    }
 
     private SceneRouter router;
     private StackPane overlayRoot;

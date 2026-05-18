@@ -69,8 +69,8 @@ public class MusicManager {
             System.err.println("[MusicManager] no audio files in: " + resourceFolder);
             return;
         }
-        int nextSong = (playing + 1) > files.length ? 0: playing ;
-        File chosen = files[random.nextInt(files.length)];
+        int nextSong = (playing + 1) > files.length ? 0: playing + 1;
+        File chosen = files[nextSong];
         System.out.println("[MusicManager] playing: " + chosen.getName());
         playFile(chosen.toURI().toString());
     }

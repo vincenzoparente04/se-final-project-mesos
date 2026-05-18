@@ -1,5 +1,6 @@
 package view.board;
 
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -10,6 +11,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 import network.client.core.LocalGameState;
 import shared.dto.CardDto;
 import shared.dto.OfferTileDto;
@@ -51,18 +54,77 @@ public class BoardGameAreaController implements ViewController {
     private SceneRouter router;
     private StackPane overlayRoot;
     private LocalGameState lastState;
-    private double sampledWidth = 0;
+    private Stage stage;
+    private BoardSelfPanelController selfPanel;
     private double userScale = 1.0;
 
-    public void init(SceneRouter router, StackPane overlayRoot) {
+    public void init(SceneRouter router, StackPane overlayRoot, BoardSelfPanelController selfPanel) {
         this.router = router;
         this.overlayRoot = overlayRoot;
-        upperRowsBox.widthProperty().addListener((obs, old, w) -> {
-            if (sampledWidth == 0 && w.doubleValue() > 10 && lastState != null) {
-                sampledWidth = w.doubleValue();
-                update(lastState);
-            }
-        });
+        this.stage = router.stage();
+        this.selfPanel = selfPanel;
+
+        rescale();
+        rescaleCMD();
+    }
+
+    private double cardWidth(boolean resolving) {
+
+        double stageW = stage != null ? stage.getWidth()  : 1280;
+        double stageH = stage != null ? stage.getHeight() : 800;
+
+
+        // Horizontal: subtract decksBox and padding to get the full row width,
+        // then fit all n cards into that space
+        double rowW = stageW - 220 - 70;
+        int n = maxCardsInAnyRow();
+        double wFromWidth = (rowW - 6.0 * (n - 1) - 40 ) / n;
+
+        // Vertical: read actual heights from previous render,
+        double othersH  = othersBar.getHeight()  > 0 ? othersBar.getHeight()  : 90;
+        double centralH = centralBox.getHeight() > 0 ? centralBox.getHeight() : 120;
+        double selfH    = selfPanel != null ? selfPanel.panelHeight() : 180;
+        double availH   = Math.max(stageH - othersH - centralH - selfH - 70, 0);
+        double wFromHeight = (availH / 2.0) / CARD_ASPECT;
+
+        double base = Math.max(Math.min(wFromWidth, wFromHeight), 30);
+        return resolving ? base * RESOLVED_SCALE * userScale : base * userScale;
+
+
+    }
+
+    private double cardHeight(boolean resolving) {
+        return cardWidth(resolving) * CARD_ASPECT;
+    }
+
+    private double tileHeight() {
+        return cardWidth(false) * (110.0 / 84.0);
+    }
+
+    /** Total cards in the fuller row (upper = topTribe+topBuilding, lower = bottomTribe+bottomBuilding). */
+    private int maxCardsInAnyRow() {
+        if (lastState == null) return 8;
+        int upper = lastState.getTopRowTribe().size()    + lastState.getTopRowBuilding().size();
+        int lower = lastState.getBottomRowTribe().size() + lastState.getBottomRowBuilding().size();
+        return Math.max(upper, lower);
+    }
+
+    /**
+     * Automatic rescaling of the gui dimensions.
+     * Listens to stage width/height — those change only on user window resize,
+     */
+    private void rescale(){
+        PauseTransition debounce = new PauseTransition(Duration.millis(100));
+        debounce.setOnFinished(e -> { if (lastState != null) update(lastState); });
+
+        stage.widthProperty().addListener((obs, old, w)  -> debounce.playFromStart());
+        stage.heightProperty().addListener((obs, old, h) -> debounce.playFromStart());
+    }
+
+    /**
+     *  Add CMD+/- to resize the gui dimensions
+     */
+    private void rescaleCMD(){
         overlayRoot.sceneProperty().addListener((obs, old, scene) -> {
             if (scene != null) {
                 scene.setOnKeyPressed(e -> {
@@ -78,24 +140,6 @@ public class BoardGameAreaController implements ViewController {
                 });
             }
         });
-    }
-
-    private double cardWidth(boolean resolving) {
-        double available = sampledWidth > 0 ? sampledWidth : upperRowsBox.getWidth();
-        if (available < 10) return resolving ? 120 : 84;
-        int players = lastState != null ? lastState.getPlayers().size() : 2;
-        double rowW = (available - 40) / 2.0;
-        double divisor = players <= 3 ? ROW_DIVISOR_SMALL : ROW_DIVISOR_LARGE;
-        double base = rowW / divisor * userScale;
-        return resolving ? base * RESOLVED_SCALE : base;
-    }
-
-    private double cardHeight(boolean resolving) {
-        return cardWidth(resolving) * CARD_ASPECT;
-    }
-
-    private double tileHeight() {
-        return cardWidth(false) * (110.0 / 84.0);
     }
 
     @Override
@@ -229,10 +273,11 @@ public class BoardGameAreaController implements ViewController {
             decksBox.getChildren().addAll(td);
         }
 
-
     }
 
-    /** Mirrors the model's filename: era 1 & 2 use "BackBuildinaEra" (typo in asset), era 3 uses "BackBuildingEra". */
+
+
+    /** Mirrors the model's filename: 2 use "BackBuildinaEra" (typo in asset), era 3 uses "BackBuildingEra". */
     private String buildingBackForEra(int eraNum) {
         return switch (eraNum) {
             case 2 -> "BackBuildinaEra2.png";

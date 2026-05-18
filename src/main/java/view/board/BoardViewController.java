@@ -1,5 +1,6 @@
 package view.board;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -29,10 +30,11 @@ public class BoardViewController implements SceneController {
     @Override
     public void bind(SceneRouter router) {
         this.router = router;
-        gameAreaController.init(router, rootPane);
+        gameAreaController.init(router, rootPane, selfPanelController);
         selfPanelController.init(router, rootPane);
         LocalGameState state = router.localState();
-        if (state != null && state.snapshot() != null) update(state);
+        if (state != null && state.snapshot() != null)
+            Platform.runLater(() -> update(state));
     }
 
     @Override
