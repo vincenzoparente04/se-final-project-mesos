@@ -50,6 +50,31 @@ public class MusicManager {
         playFile(chosen.toURI().toString());
     }
 
+    public void playSequential(String resourceFolder, int playing) {
+        URL folderUrl = getClass().getResource("/" + resourceFolder);
+        if (folderUrl == null) {
+            System.err.println("[MusicManager] folder not found: " + resourceFolder);
+            return;
+        }
+        File folder;
+        try {
+            folder = Paths.get(folderUrl.toURI()).toFile();
+        } catch (Exception e) {
+            System.err.println("[MusicManager] cannot resolve folder URI: " + e.getMessage());
+            return;
+        }
+        File[] files = folder.listFiles(f ->
+                f.isFile() && f.getName().matches(".*\\.(mp3|wav|aac|m4a|ogg)"));
+        if (files == null || files.length == 0) {
+            System.err.println("[MusicManager] no audio files in: " + resourceFolder);
+            return;
+        }
+        int nextSong = (playing + 1) > files.length ? 0: playing ;
+        File chosen = files[random.nextInt(files.length)];
+        System.out.println("[MusicManager] playing: " + chosen.getName());
+        playFile(chosen.toURI().toString());
+    }
+
     /** Plays a specific resource path (e.g. "music/track.mp3"). */
     public void play(String resourcePath) {
         URL url = getClass().getResource("/" + resourcePath);

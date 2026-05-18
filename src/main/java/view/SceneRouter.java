@@ -139,7 +139,20 @@ public class SceneRouter {
 
     public void setupSession(String name, VirtualServer vs) {
         this.session = new ClientSession(name, vs);
-        Platform.runLater(this::toLobby);
+        Platform.runLater(() -> {
+            //Socket Reconnection Case : navigate to the right screen
+            //if localState updated we need to reconnect
+            if (localState.snapshot() != null) {
+                String phase = localState.getPhase();
+                if (phase != null && phase.contains("COLOR_CHOOSING_PHASE")) {
+                    toTotemPick();
+                } else {
+                    toBoard();
+                }
+            } else {
+                toLobby();
+            }
+        });
     }
 
     public void connectionErrorHandling(String message) {

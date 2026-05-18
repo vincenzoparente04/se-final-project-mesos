@@ -51,7 +51,7 @@ public class LobbyViewController implements SceneController {
 
     public StackPane root() { return rootPane; }
 
-    // ── Called by the listener ────────────────────────────────────────────
+    // Called by the listener
 
     public void update(LocalGameState state) {
         // Race: a state arrived before onGameStarting routed us.
@@ -59,6 +59,10 @@ public class LobbyViewController implements SceneController {
             router.toTotemPick();
         } else{
             router.toBoard();
+        }
+
+        if (state.isGameOver()) {
+            router.toWinner(state.getPlayers(), state.getWinners());
         }
     }
 
@@ -71,7 +75,7 @@ public class LobbyViewController implements SceneController {
         router.toWaiting(lobby);
     }
 
-    // ── FXML handlers ─────────────────────────────────────────────────────
+    // FXML handlers
 
     @FXML
     private void onRefresh() {
@@ -85,7 +89,7 @@ public class LobbyViewController implements SceneController {
         router.getVirtualServer().sendCreateLobby(chosen.get());
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
+    // Helpers
 
     private void joinSelected() {
         LobbyDto selected = lobbyListView.getSelectionModel().getSelectedItem();

@@ -31,7 +31,7 @@ public class ClientStateListenerGui implements ClientStateListener {
 
     @Override
     public void onWaiting(String rawWaitingMessage) {
-        // TODO: server non emette eventi onWaiting al momento
+        // TODO: a che serve? cosa fa che non si può fare con onLobbyState?
     }
 
     @Override
@@ -73,6 +73,9 @@ public class ClientStateListenerGui implements ClientStateListener {
 
     @Override
     public void onDisconnected() {
-        Platform.runLater(() -> ErrorToast.show(router.currentRoot(), "Disconnected from server"));
+        Platform.runLater(() -> {
+            ErrorToast.show(router.currentRoot(), "Disconnected from server");
+            router.toNetworkSetup();
+        });
     }
 }
