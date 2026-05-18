@@ -49,8 +49,8 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
      * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
      */
     private static final long SEND_INTERVAL_MS  = 2_000L;
-    private static final long CHECK_INTERVAL_MS = 20_000L;
-    private static final long TIMEOUT_MS        = 100_000L;
+    private static final long CHECK_INTERVAL_MS = 5_000L;
+    private static final long TIMEOUT_MS        = 15_000L;
 
     private final Socket socket;
     private final ObjectOutputStream out;

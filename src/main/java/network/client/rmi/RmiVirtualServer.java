@@ -59,8 +59,8 @@ public class RmiVirtualServer implements VirtualServer {
      * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
      */
     private static final long SEND_INTERVAL_MS  = 2_000L;
-    private static final long CHECK_INTERVAL_MS = 20_000L;
-    private static final long TIMEOUT_MS        = 100_000L;
+    private static final long CHECK_INTERVAL_MS = 5_000L;
+    private static final long TIMEOUT_MS        = 15_000L;
 
     private final String host;
     private final GameServerRemote serverStub;
@@ -239,6 +239,7 @@ public class RmiVirtualServer implements VirtualServer {
                 serverStub.submitClientCommand(command);
             } catch (RemoteException e) {
                 System.err.println("RMI command failed: " + e.getMessage());
+                onConnectionLost();
             }
         });
     }
