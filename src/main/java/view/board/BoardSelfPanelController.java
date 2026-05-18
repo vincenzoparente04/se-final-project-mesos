@@ -2,7 +2,6 @@ package view.board;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -50,7 +49,6 @@ public class BoardSelfPanelController implements ViewController {
         boolean isMyTurn = me != null && me.equals(state.getCurrentPlayerName());
 
         updateSelfPanel(state.getPlayers(), me, state.getCurrentPlayerName());
-        updateColorPicker(phase, isMyTurn);
     }
 
     // Self panel ---------------------------------------------------------------
@@ -133,21 +131,6 @@ public class BoardSelfPanelController implements ViewController {
         return group;
     }
 
-    // Color picker ---------------------------------------------------------------
 
-    private void updateColorPicker(String phase, boolean isMyTurn) {
-        boolean show = "COLOR_CHOOSING_PHASE".equals(phase) && isMyTurn;
-        colorPicker.setVisible(show);
-        colorPicker.setManaged(show);
-        if (!show) return;
-        if (!colorPicker.getChildren().isEmpty()) return;
 
-        String[] colors = {"RED", "BLUE", "GREEN", "YELLOW", "WHITE"};
-        for (String c : colors) {
-            Button btn = new Button();
-            btn.getStyleClass().addAll("mesos-totem-btn", "mesos-totem-" + c);
-            btn.setOnAction(e -> router.getVirtualServer().sendChooseColor(c));
-            colorPicker.getChildren().add(btn);
-        }
-    }
 }

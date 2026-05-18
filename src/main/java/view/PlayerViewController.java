@@ -13,6 +13,8 @@ import javafx.scene.layout.StackPane;
 import shared.dto.CardDto;
 import shared.dto.PlayerDto;
 import shared.dto.TribeDto;
+import view.widgets.FoodWidget;
+import view.widgets.PpWidget;
 import view.widgets.TotemView;
 
 import java.io.IOException;
@@ -22,15 +24,14 @@ import java.util.Map;
 
 /**
  * Small marker around the table for each player.
- * Shows the totem, name, food/PP, and a row of chips summarising the player's tribe
- * (e.g. "H×2", "S 4★", "Bldg ×1") so opponents are readable at a glance.
+ * Shows the totem, name, food/PP, and a row of chips summarising the player's tribe.
  */
 public class PlayerViewController implements ViewController {
 
     @FXML private StackPane totemSlot;
     @FXML private Label nameLabel;
-    @FXML private Label foodLabel;
-    @FXML private Label ppLabel;
+    @FXML private HBox foodBox;
+    @FXML private StackPane ppBox;
     @FXML private FlowPane chipsBar;
 
     private PlayerDto player;
@@ -66,8 +67,8 @@ public class PlayerViewController implements ViewController {
             nameLabel.getStyleClass().add("mesos-player-name-current");
             root.getStyleClass().add("mesos-player-marker-current");
         }
-        foodLabel.setText("food " + p.food);
-        ppLabel.setText("PP " + p.prestigePoints);
+        foodBox.getChildren().setAll(new FoodWidget(p.food));
+        ppBox.getChildren().setAll(new PpWidget(p.prestigePoints));
 
         buildChips(p.tribe);
     }
@@ -90,9 +91,19 @@ public class PlayerViewController implements ViewController {
         addIconChip(counts, "HUNTER",   "Hunter.png");
         addIconChip(counts, "BUILDER",  "Builder.png");
         if (counts.getOrDefault("SHAMAN", 0) > 0) {
-            String label = "×" + counts.get("SHAMAN")
-                    + (totalStars > 0 ? "  " + totalStars + "★" : "");
-            chipsBar.getChildren().add(buildIconChip("Shaman.png", label));
+            HBox chip = buildIconChip("Shaman.png", "×" + counts.get("SHAMAN"));
+            if (totalStars > 0) {
+                InputStream stream = getClass().getResourceAsStream("/images/icons/star.png");
+                if (stream != null) {
+                    ImageView iv = new ImageView(new Image(stream));
+                    iv.setFitWidth(11);
+                    iv.setFitHeight(11);
+                    iv.setPreserveRatio(true);
+                    chip.getChildren().add(iv);
+                }
+                chip.getChildren().add(new Label("×" + totalStars));
+            }
+            chipsBar.getChildren().add(chip);
         }
         addIconChip(counts, "ARTIST",   "Artist.png");
         addIconChip(counts, "INVENTOR", "Inventor.png");
@@ -100,7 +111,7 @@ public class PlayerViewController implements ViewController {
 
         int buildings = tribe.buildings != null ? tribe.buildings.size() : 0;
         if (buildings > 0) {
-            chipsBar.getChildren().add(buildTextChip("Bldg ×" + buildings));
+            chipsBar.getChildren().add(buildTextChip("⌂ ×" + buildings));
         }
     }
 
@@ -123,21 +134,17 @@ public class PlayerViewController implements ViewController {
             iv.setPreserveRatio(true);
             box.getChildren().add(iv);
         }
-
-        Label l = new Label(text);
-        box.getChildren().add(l);
+        box.getChildren().add(new Label(text));
         return box;
     }
 
     private HBox buildTextChip(String text) {
-        Label l = new Label(text);
-        HBox box = new HBox(l);
+        HBox box = new HBox(new Label(text));
         box.getStyleClass().add("mesos-card-chip");
         box.setAlignment(Pos.CENTER);
         return box;
     }
 
-    //TODO: decide if we want the ★ or the drawing of the star from the game
     private static int countStars(String details) {
         int count = 0;
         for (int i = 0; i < details.length(); i++) {

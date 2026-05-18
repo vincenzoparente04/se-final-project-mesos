@@ -20,9 +20,5 @@
         <HBox fx:id="selfBuildingsSlot" spacing="6" alignment="CENTER_LEFT"/>
     </VBox>
 
-    <Label text="" HBox.hgrow="ALWAYS"/>
-
-    <HBox fx:id="colorPicker" alignment="CENTER" spacing="8"
-          visible="false" managed="false"/>
 
 </HBox>

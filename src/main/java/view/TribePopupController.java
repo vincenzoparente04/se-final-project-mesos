@@ -18,6 +18,8 @@ import shared.dto.CardDto;
 import shared.dto.PlayerDto;
 import view.widgets.CardView;
 import view.widgets.CardZoomOverlay;
+import view.widgets.FoodWidget;
+import view.widgets.PpWidget;
 import view.widgets.TotemView;
 
 import java.io.IOException;
@@ -36,7 +38,7 @@ public class TribePopupController implements ViewController {
 
     @FXML private HBox  titleBar;
     @FXML private Label titleLabel;
-    @FXML private Label statsLabel;
+    @FXML private HBox  statsBox;
     @FXML private VBox  charactersBox;
     @FXML private VBox  buildingsBox;
 
@@ -79,7 +81,7 @@ public class TribePopupController implements ViewController {
         titleLabel.setGraphic(new TotemView(target.color, 28));
         titleLabel.setText("  " + target.name);
 
-        statsLabel.setText("food  " + target.food + "    ·    PP  " + target.prestigePoints);
+        statsBox.getChildren().setAll(new FoodWidget(target.food), new PpWidget(target.prestigePoints));
 
         // Drag support — move the window by dragging the title bar
         final double[] drag = new double[2];

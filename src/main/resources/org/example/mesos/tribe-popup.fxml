@@ -21,7 +21,7 @@
                 <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="14" style="-fx-padding: 20 20 12 20; -fx-cursor: move;">
                     <Label fx:id="titleLabel" styleClass="mesos-tribe-popup-title"/>
                     <Label text="" HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="statsLabel" styleClass="mesos-tribe-popup-stats"/>
+                    <HBox fx:id="statsBox" alignment="CENTER" spacing="14"/>
                 </HBox>
                 <Separator/>
             </VBox>

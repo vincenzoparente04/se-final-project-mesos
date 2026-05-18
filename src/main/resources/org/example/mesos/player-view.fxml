@@ -11,8 +11,8 @@
         <StackPane fx:id="totemSlot"/>
         <Label fx:id="nameLabel" styleClass="mesos-player-name"/>
         <HBox alignment="CENTER" spacing="10">
-            <Label fx:id="foodLabel" styleClass="mesos-player-food"/>
-            <Label fx:id="ppLabel"   styleClass="mesos-player-pp"/>
+            <HBox fx:id="foodBox" alignment="CENTER" spacing="3"/>
+            <StackPane fx:id="ppBox"/>
         </HBox>
         <FlowPane fx:id="chipsBar" hgap="4" vgap="4" alignment="CENTER" prefWrapLength="180"/>
     </VBox>

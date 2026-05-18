@@ -18,6 +18,7 @@ public class NetworkSetupViewController implements SceneController {
     @FXML private TextField hostField;
     @FXML private TextField portField;
     @FXML private RadioButton rmiRadio;
+    @FXML private RadioButton socketRadio;
     @FXML private Button connectButton;
     @FXML private Label statusLabel;
 
@@ -29,6 +30,20 @@ public class NetworkSetupViewController implements SceneController {
     @Override
     public void bind(SceneRouter router) {
         this.router = router;
+    }
+
+    @FXML
+    public void initialize() {
+        rmiRadio.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+            if (isNowSelected) {
+                portField.setText("1099");
+            }
+        });
+        socketRadio.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+            if (isNowSelected) {
+                portField.setText("9999");
+            }
+        });
     }
 
     @FXML
