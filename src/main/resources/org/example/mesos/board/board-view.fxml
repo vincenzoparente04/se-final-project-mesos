@@ -12,7 +12,8 @@
     <BorderPane>
 
         <top>
-            <HBox alignment="CENTER_LEFT" spacing="14" styleClass="mesos-topbar-minimal">
+            <HBox fx:id="topBar" alignment="CENTER_LEFT" spacing="14" styleClass="mesos-topbar-minimal"
+                minHeight="30" prefHeight="30">
                 <Label fx:id="phaseLabel" styleClass="mesos-label-bold"/>
                 <Label text="·" styleClass="mesos-label"/>
                 <Label fx:id="roundLabel" styleClass="mesos-label"/>

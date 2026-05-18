@@ -493,6 +493,66 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 20, 0.2, 0, 4);
 }
 
+/* ── Music player widget ─────────────────────────────────────────── */
+
+.mesos-music-icon-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -mesos-ember-bright;
+    -fx-font-size: 16;
+    -fx-padding: 0 20 0 20;
+    -fx-cursor: hand;
+}
+
+.mesos-music-icon-btn:hover {
+    -fx-text-fill: -mesos-cream;
+}
+
+.mesos-music-icon-btn:pressed {
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
+}
+
+.mesos-music-btn {
+    -fx-background-color: rgba(232, 104, 42, 0.18);
+    -fx-text-fill: -mesos-cream;
+    -fx-font-size: 16;
+    -fx-padding: 10 20 10 20;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-min-width: 36;
+}
+
+.mesos-music-btn:hover {
+    -fx-background-color: -mesos-ember-bright;
+}
+
+.mesos-music-btn:pressed {
+    -fx-scale-x: 0.92;
+    -fx-scale-y: 0.92;
+}
+
+.mesos-music-label {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 11;
+    -fx-font-style: italic;
+}
+
+.mesos-music-volume {
+    -fx-accent: -mesos-ember-bright;
+    -fx-background-color: transparent;
+}
+
+.mesos-music-volume > .bar {
+    -fx-background-color: -mesos-ember-bright;
+    -fx-background-radius: 4;
+}
+
+.mesos-music-volume > .track {
+    -fx-background-color: rgba(232, 104, 42, 0.25);
+    -fx-background-radius: 4;
+    -fx-pref-height: 6;
+}
+
 /* ── Lobby empty-state hint ───────────────────────────────────────── */
 
 .mesos-lobby-empty-hint {

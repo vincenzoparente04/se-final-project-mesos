@@ -4,10 +4,12 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import network.client.core.LocalGameState;
 import view.SceneController;
 import view.SceneRouter;
+import view.widgets.MusicPlayerWidget;
 
 /**
  * Main in-game scene controller. Owns the status bar and end-of-game
@@ -17,6 +19,7 @@ import view.SceneRouter;
 public class BoardViewController implements SceneController {
 
     @FXML private StackPane rootPane;
+    @FXML private HBox topBar;
     @FXML private Label phaseLabel;
     @FXML private Label roundLabel;
     @FXML private Button endTurnButton;
@@ -32,6 +35,7 @@ public class BoardViewController implements SceneController {
         this.router = router;
         gameAreaController.init(router, rootPane, selfPanelController);
         selfPanelController.init(router, rootPane);
+        topBar.getChildren().add(new MusicPlayerWidget());
         LocalGameState state = router.localState();
         if (state != null && state.snapshot() != null)
             Platform.runLater(() -> update(state));
