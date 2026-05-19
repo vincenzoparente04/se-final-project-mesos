@@ -67,6 +67,15 @@ public class Board {
         offerTrack.removeTotem(player);
         turnOrderTile.returnTotemAndResolveEffects(player);
     }
+    /**
+     * Removes the player's totem from the offer track and places it on the
+     * first free turn-order slot, applying that slot's food/prestige effect.
+     * This is the single call that ends an action turn atomically.
+     */
+    public void disconnectedReturnTotemToTurnOrder(Player player) {
+        offerTrack.removeTotem(player);
+        turnOrderTile.disconnectedReturnTotemAndResolveEffects(player);
+    }
 
     public List<Player> getTurnOrder() {
         return turnOrderTile.getTurnOrder();

@@ -39,6 +39,13 @@ public class TurnOrderTile {
         slot.applyEffect();
     }
 
+    public void disconnectedReturnTotemAndResolveEffects(Player player){
+        TurnOrderSlot slot = getLastFreeSlot();
+        slot.placeTotem(player);
+        player.setLocation(TotemLocation.TURN_ORDER_TILE);
+        slot.applyEffect();
+    }
+
     /**
      * @implNote Finds the first free slot on the TurnOrderTile. It filters the list of slots to find the
      * first one that is free (i.e., has no occupant) and returns it. If no free slot is found, it throws an exception.
@@ -48,6 +55,18 @@ public class TurnOrderTile {
         return slots.stream()
                 .filter(TurnOrderSlot::isFree)
                 .findFirst()
+                .orElseThrow();
+    }
+
+    /**
+     * @implNote Finds the first free slot on the TurnOrderTile. It filters the list of slots to find the
+     * first one that is free (i.e., has no occupant) and returns it. If no free slot is found, it throws an exception.
+     * @return
+     */
+    private TurnOrderSlot getLastFreeSlot() {
+        return slots.stream()
+                .filter(TurnOrderSlot::isFree)
+                .reduce((first, second) -> second) //get last free slot
                 .orElseThrow();
     }
 
