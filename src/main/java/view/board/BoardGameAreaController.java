@@ -128,7 +128,7 @@ public class BoardGameAreaController implements ViewController {
         overlayRoot.sceneProperty().addListener((obs, old, scene) -> {
             if (scene != null) {
                 scene.setOnKeyPressed(e -> {
-                    if (e.isMetaDown()) {
+                    if (e.isMetaDown() || e.isControlDown() || e.isShiftDown()) {
                         if (e.getCode() == KeyCode.PLUS || e.getCode() == KeyCode.EQUALS) {
                             userScale = Math.min(userScale + 0.1, 2.0);
                             if (lastState != null) update(lastState);
