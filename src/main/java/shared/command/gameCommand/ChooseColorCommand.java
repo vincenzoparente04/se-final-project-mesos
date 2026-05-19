@@ -1,9 +1,9 @@
-package shared.command;
+package shared.command.gameCommand;
 
 public record ChooseColorCommand(String playerName, String color) implements GameCommand {
 
     @Override
-    public void accept(CommandVisitor visitor) throws Exception {
+    public void accept(GameCommandVisitor visitor) throws Exception {
         visitor.visit(this);
     }
 

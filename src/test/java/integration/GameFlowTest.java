@@ -13,10 +13,10 @@ import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import shared.command.ChooseColorCommand;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
-import shared.command.PlaceTotemCommand;
+import ChooseColorCommand;
+import DrawCardCommand;
+import EndTurnCommand;
+import PlaceTotemCommand;
 
 import java.util.List;
 import java.util.Optional;

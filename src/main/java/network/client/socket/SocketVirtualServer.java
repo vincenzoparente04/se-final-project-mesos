@@ -1,20 +1,18 @@
 package network.client.socket;
 
-import network.client.core.cli.ClientStateListenerCli;
 import network.client.core.LocalGameState;
 import network.client.core.VirtualServer;
 import network.client.core.ClientStateListener;
-import shared.command.ChooseColorCommand;
+import ChooseColorCommand;
 import shared.command.ClientCommand;
-import shared.command.CreateLobbyCommand;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
-import shared.command.JoinLobbyCommand;
-import shared.command.LeaveCommand;
-import shared.command.ListLobbiesCommand;
-import shared.command.PlaceTotemCommand;
-import shared.command.HeartbeatCommand;
-import shared.dto.GameStateDto;
+import shared.command.lobbyCommand.CreateLobbyCommand;
+import DrawCardCommand;
+import EndTurnCommand;
+import shared.command.lobbyCommand.JoinLobbyCommand;
+import shared.command.lobbyCommand.LeaveCommand;
+import shared.command.lobbyCommand.ListLobbiesCommand;
+import PlaceTotemCommand;
+import shared.command.lobbyCommand.HeartbeatCommand;
 import shared.dto.LobbyDto;
 import shared.message.*;
 
@@ -40,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  *   <li>{@link #start()} spawns the reader thread and the heartbeat scheduler.</li>
  * </ol>
  */
-public class SocketVirtualServer implements VirtualServer, ServerMessageHandler {
+public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor {
 
     /** Timeout for reading the server's response to a name attempt. */
     private static final int NAME_NEGOTIATION_TIMEOUT_MS = 5_000;
@@ -95,14 +93,14 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     }
 
     @Override
-    public void handle(StateMessage msg) {
+    public void visit(StateMessage msg) {
         localState.update(msg.state());
         listener.onGameStateUpdated(localState);
         connectionResponse = true;
     }
 
     @Override
-    public void handle(ErrorMessage msg) {
+    public void visit(ErrorMessage msg) {
         if (msg.message() != null ) {
             listener.onError(msg.message());
             if (msg.message().equals("GAME_RESUMED")) {
@@ -117,26 +115,26 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageHandler 
     }
 
     @Override
-    public void handle(GameOverMessage msg) {
+    public void visit(GameOverMessage msg) {
         connectionResponse = true;
         listener.onGameOver(msg.winners());
     }
 
     @Override
-    public void handle(LobbyListMessage msg) {
+    public void visit(LobbyListMessage msg) {
         this.bufferedLobbyList = msg.lobbies();
         listener.onLobbyList(bufferedLobbyList);
         connectionResponse = true;
     }
 
     @Override
-    public void handle(LobbyStateMessage msg) {
+    public void visit(LobbyStateMessage msg) {
         connectionResponse = true;
         listener.onLobbyState(msg.lobby());
     }
 
     @Override
-    public void handle(GameStartingMessage msg) {
+    public void visit(GameStartingMessage msg) {
         connectionResponse = true;
         listener.onGameStarting();
     }

@@ -2,6 +2,7 @@ package network.server.core;
 
 import controller.GameController;
 import shared.command.*;
+import shared.command.lobbyCommand.*;
 import shared.dto.LobbyDto;
 
 import java.io.IOException;
@@ -358,7 +359,7 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     /**
      * Aggiorna il timestamp dell'ultimo heartbeat per il player.
-     * Invocato dai thread di rete quando arriva un {@link shared.command.HeartbeatCommand}.
+     * Invocato dai thread di rete quando arriva un {@link HeartbeatCommand}.
      * <p>
      * Non è {@code synchronized} perché opera solo sulla {@code ConcurrentHashMap}
      * {@link #lastHeartbeat}; non tocca lo stato protetto da {@code this}.

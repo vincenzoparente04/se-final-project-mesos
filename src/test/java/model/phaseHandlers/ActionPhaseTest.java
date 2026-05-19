@@ -17,8 +17,8 @@ import model.rowsManager.RowsManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
+import DrawCardCommand;
+import EndTurnCommand;
 
 import java.util.List;
 import java.util.Optional;

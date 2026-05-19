@@ -1,4 +1,4 @@
-package shared.command;
+package shared.command.lobbyCommand;
 
 /**
  * Command to leave a lobby or an ongoing game.

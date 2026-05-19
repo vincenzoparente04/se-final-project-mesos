@@ -9,27 +9,30 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import network.client.rmi.ClientCallbackRemote;
 import network.server.core.LobbyManager;
+import shared.command.gameCommand.GameCommand;
+import shared.command.lobbyCommand.HeartbeatCommand;
+import shared.command.lobbyCommand.LobbyCommand;
 
 public class GameServerRemoteImpl extends UnicastRemoteObject implements GameServerRemote {
 
     private final LobbyManager lobbyManager;
     private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues = new ConcurrentHashMap<>();
 
-    private final CommandDispatcher dispatcher = new CommandDispatcher() {
+    private final ClientCommandVisitor dispatcher = new ClientCommandVisitor() {
         @Override
-        public void onLobbyCommand(LobbyCommand cmd) throws Exception {
+        public void visit(LobbyCommand cmd) throws Exception {
             cmd.accept(lobbyManager);
         }
 
         @Override
-        public void onGameCommand(GameCommand cmd) throws InterruptedException {
+        public void visit(GameCommand cmd) throws InterruptedException {
             BlockingQueue<GameCommand> queue = gameQueues.get(cmd.getPlayerName());
             if (queue == null) return;
             queue.put(cmd);
         }
 
         @Override
-        public void onHeartbeatCommand(HeartbeatCommand cmd) {
+        public void visit(HeartbeatCommand cmd) {
             lobbyManager.onHeartbeatReceived(cmd.playerName());
         }
     };

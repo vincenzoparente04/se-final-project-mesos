@@ -1,4 +1,4 @@
-package shared.command;
+package shared.command.lobbyCommand;
 
 import network.server.core.VirtualView;
 

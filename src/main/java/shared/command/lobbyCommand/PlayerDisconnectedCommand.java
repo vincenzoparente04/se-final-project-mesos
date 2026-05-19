@@ -1,4 +1,6 @@
-package shared.command;
+package shared.command.lobbyCommand;
+
+import shared.command.ClientCommand;
 
 /**
  * Lifecycle command server-internal. Lo crea il {@code LobbyManager} quando

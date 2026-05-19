@@ -4,7 +4,7 @@ import java.util.List;
 
 public record GameOverMessage(List<String> winners) implements ServerMessage {
     @Override
-    public void accept(ServerMessageHandler handler) {
-        handler.handle(this);
+    public void accept(ServerMessageVisitor visitor) {
+        visitor.visit(this);
     }
 }

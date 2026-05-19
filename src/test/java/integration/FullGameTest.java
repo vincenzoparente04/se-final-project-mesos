@@ -9,10 +9,10 @@ import model.player.Player;
 import network.server.core.VirtualView;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import shared.command.ChooseColorCommand;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
-import shared.command.PlaceTotemCommand;
+import ChooseColorCommand;
+import DrawCardCommand;
+import EndTurnCommand;
+import PlaceTotemCommand;
 
 import java.util.List;
 

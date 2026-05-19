@@ -1,4 +1,7 @@
-package shared.command;
+package shared.command.lobbyCommand;
+
+import shared.command.ClientCommand;
+import shared.command.ClientCommandVisitor;
 
 /**
  * Heartbeat applicativo inviato periodicamente dal client al server
@@ -14,8 +17,8 @@ package shared.command;
 public record HeartbeatCommand(String playerName) implements ClientCommand {
 
     @Override
-    public void accept(CommandDispatcher dispatcher) throws Exception {
-        dispatcher.onHeartbeatCommand(this);
+    public void accept(ClientCommandVisitor visitor) throws Exception {
+        visitor.visit(this);
     }
 
     @Override

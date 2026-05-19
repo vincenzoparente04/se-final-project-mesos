@@ -5,11 +5,11 @@ import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import shared.command.ChooseColorCommand;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
-import shared.command.GameCommand;
-import shared.command.PlaceTotemCommand;
+import ChooseColorCommand;
+import DrawCardCommand;
+import EndTurnCommand;
+import shared.command.gameCommand.GameCommand;
+import PlaceTotemCommand;
 
 import java.util.List;
 

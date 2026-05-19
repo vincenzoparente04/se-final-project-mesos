@@ -1,4 +1,4 @@
-package shared.command;
+package shared.command.lobbyCommand;
 
 /**
  * Visitor on {@link LobbyCommand}. Every method has a no-op default so that

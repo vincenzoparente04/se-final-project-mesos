@@ -1,4 +1,4 @@
-package shared.command;
+package shared.command.lobbyCommand;
 
 public record CreateLobbyCommand(String playerName, int playersNumber) implements LobbyCommand {
 

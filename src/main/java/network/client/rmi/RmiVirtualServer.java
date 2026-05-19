@@ -1,15 +1,15 @@
 package network.client.rmi;
 
-import shared.command.ChooseColorCommand;
+import ChooseColorCommand;
 import shared.command.ClientCommand;
-import shared.command.CreateLobbyCommand;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
-import shared.command.JoinLobbyCommand;
-import shared.command.LeaveCommand;
-import shared.command.ListLobbiesCommand;
-import shared.command.PlaceTotemCommand;
-import shared.command.HeartbeatCommand;
+import shared.command.lobbyCommand.CreateLobbyCommand;
+import DrawCardCommand;
+import EndTurnCommand;
+import shared.command.lobbyCommand.JoinLobbyCommand;
+import shared.command.lobbyCommand.LeaveCommand;
+import shared.command.lobbyCommand.ListLobbiesCommand;
+import PlaceTotemCommand;
+import shared.command.lobbyCommand.HeartbeatCommand;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;

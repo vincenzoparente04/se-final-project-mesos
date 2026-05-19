@@ -1,13 +1,6 @@
 package network.client.socket;
 
-import shared.message.ErrorMessage;
-import shared.message.GameOverMessage;
-import shared.message.GameStartingMessage;
-import shared.message.LobbyListMessage;
-import shared.message.LobbyStateMessage;
 import shared.message.ServerMessage;
-import shared.message.ServerMessageHandler;
-import shared.message.StateMessage;
 
 import java.io.EOFException;
 import java.io.IOException;

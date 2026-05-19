@@ -2,9 +2,9 @@ package shared.command;
 
 import java.io.Serializable;
 
-public sealed interface ClientCommand extends Serializable permits GameCommand, HeartbeatCommand, LobbyCommand {
+public interface ClientCommand extends Serializable {
 
-    void accept(CommandDispatcher dispatcher) throws Exception;
+    void accept(ClientCommandVisitor visitor) throws Exception;
 
     String getPlayerName();
 }
