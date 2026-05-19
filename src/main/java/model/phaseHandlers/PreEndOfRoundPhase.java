@@ -33,6 +33,7 @@ public class PreEndOfRoundPhase implements GamePhaseHandler {
             model.setPhase(new EndOfRoundPhase(model));
             return;
         }
+        model.notifyChange();
     }
 
     /**
