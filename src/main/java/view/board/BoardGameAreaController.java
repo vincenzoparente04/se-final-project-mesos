@@ -154,8 +154,8 @@ public class BoardGameAreaController implements ViewController {
         updatePlayersBar(state.getPlayers(), me, state.getCurrentPlayerName());
         updateCentralBox(state, playersByName, phase, isMyTurn);
         boolean resolving = isEndOfRoundPhase(phase);
-        updateRowsBox(upperRowsBox, state.getTopRowTribe(), state.getTopRowBuilding(), phase, isMyTurn, false, true);
-        updateRowsBox(lowerRowsBox, state.getBottomRowTribe(), state.getBottomRowBuilding(), phase, isMyTurn, resolving, false);
+        updateRowsBox(upperRowsBox, state.getTopRowTribe(), state.getTopRowBuilding(), phase, isMyTurn, false);
+        updateRowsBox(lowerRowsBox, state.getBottomRowTribe(), state.getBottomRowBuilding(), phase, isMyTurn, resolving);
         updateDecks(state.getCurrentEra());
     }
 
@@ -217,21 +217,21 @@ public class BoardGameAreaController implements ViewController {
                                List<CardDto> tribeCards,
                                List<CardDto> buildingCards,
                                String phase, boolean isMyTurn,
-                               boolean resolving, boolean isTopRow) {
+                               boolean resolving) {
         box.getChildren().clear();
         box.setAlignment(Pos.CENTER);
 
         double w = cardWidth(resolving);
         double h = cardHeight(resolving);
 
-        box.getChildren().add(buildRow(tribeCards, phase, isMyTurn, w, h, isTopRow));
-        box.getChildren().add(buildRow(buildingCards, phase, isMyTurn, w, h, isTopRow));
+        box.getChildren().add(buildRow(tribeCards, phase, isMyTurn, w, h));
+        box.getChildren().add(buildRow(buildingCards, phase, isMyTurn, w, h));
     }
 
     private HBox buildRow(List<CardDto> cards, String phase, boolean isMyTurn,
-                          double cardW, double cardH, boolean isTopRow) {
+                          double cardW, double cardH) {
         boolean canDraw = ("ACTION".equals(phase) && isMyTurn)
-                || ("PRE_END_OF_ROUND".equals(phase) && isMyTurn && isTopRow);
+                || ("PRE_END_OF_ROUND".equals(phase) && isMyTurn);
         HBox row = new HBox(6);
         row.setAlignment(Pos.CENTER);
         for (CardDto c : cards) {

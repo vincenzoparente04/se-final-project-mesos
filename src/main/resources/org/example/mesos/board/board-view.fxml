@@ -18,8 +18,11 @@
                 <Label text="·" styleClass="mesos-label"/>
                 <Label fx:id="roundLabel" styleClass="mesos-label"/>
                 <Label text="" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="rulesButton" text="📖" onAction="#onOpenRules"
+                        styleClass="mesos-music-icon-btn"/>
                 <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"
-                        visible="false" managed="false" styleClass="mesos-button"/>
+                        opacity="0" mouseTransparent="true" styleClass="mesos-button"
+                        style="-fx-padding: 4 16 4 16; -fx-font-size: 12;"/>
             </HBox>
         </top>
 

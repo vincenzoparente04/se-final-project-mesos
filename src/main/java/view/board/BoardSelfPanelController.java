@@ -3,7 +3,11 @@ package view.board;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import network.client.core.LocalGameState;
@@ -14,6 +18,8 @@ import view.SceneRouter;
 import view.ViewController;
 import view.widgets.CardView;
 import view.widgets.CardZoomOverlay;
+import view.widgets.ImageCache;
+import view.widgets.SummaryCardOverlay;
 
 import java.util.List;
 import java.util.Map;
@@ -45,6 +51,23 @@ public class BoardSelfPanelController implements ViewController {
     public void init(SceneRouter router, StackPane overlayRoot) {
         this.router = router;
         this.overlayRoot = overlayRoot;
+        attachSummaryCard();
+    }
+
+    /** Appends a spacer + SummaryCard thumbnail anchored to the far right of the self panel. */
+    private void attachSummaryCard() {
+        Image img = ImageCache.get("/images/SummaryCard.png");
+        if (img == null) return;
+
+        ImageView thumb = new ImageView(img);
+        thumb.setFitHeight(SELF_CARD_H);
+        thumb.setPreserveRatio(true);
+        thumb.setStyle("-fx-cursor: hand;");
+        thumb.setOnMouseClicked(e -> SummaryCardOverlay.show(overlayRoot, img));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        rootBar.getChildren().addAll(spacer, thumb);
     }
 
     @Override

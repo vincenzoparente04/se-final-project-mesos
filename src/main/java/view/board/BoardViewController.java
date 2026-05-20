@@ -10,6 +10,7 @@ import network.client.core.LocalGameState;
 import view.SceneController;
 import view.SceneRouter;
 import view.widgets.MusicPlayerWidget;
+import view.widgets.RulesOverlay;
 
 /**
  * Main in-game scene controller. Owns the status bar and end-of-game
@@ -23,6 +24,7 @@ public class BoardViewController implements SceneController {
     @FXML private Label phaseLabel;
     @FXML private Label roundLabel;
     @FXML private Button endTurnButton;
+    @FXML private Button rulesButton;
 
     @FXML private BoardGameAreaController gameAreaController;
     @FXML private BoardSelfPanelController selfPanelController;
@@ -35,7 +37,11 @@ public class BoardViewController implements SceneController {
         this.router = router;
         gameAreaController.init(router, rootPane, selfPanelController);
         selfPanelController.init(router, rootPane);
-        topBar.getChildren().add(new MusicPlayerWidget());
+
+        // Insert MusicPlayerWidget before endTurnButton so order is: 📖 → ♪ → End turn
+        int endTurnIdx = topBar.getChildren().indexOf(endTurnButton);
+        topBar.getChildren().add(endTurnIdx, new MusicPlayerWidget());
+
         LocalGameState state = router.localState();
         if (state != null && state.snapshot() != null)
             Platform.runLater(() -> update(state));
@@ -67,13 +73,18 @@ public class BoardViewController implements SceneController {
         roundLabel.setText("Round " + state.getCurrentRound());
 
         boolean showEnd = "ACTION".equals(phase) && isMyTurn;
-        endTurnButton.setVisible(showEnd);
-        endTurnButton.setManaged(showEnd);
+        endTurnButton.setOpacity(showEnd ? 1.0 : 0.0);
+        endTurnButton.setMouseTransparent(!showEnd);
     }
 
     @FXML
     private void onEndTurn() {
         router.getVirtualServer().sendEndTurn();
+    }
+
+    @FXML
+    private void onOpenRules() {
+        RulesOverlay.show(rootPane);
     }
 
     private static String formatPhase(String phase) {
