@@ -34,26 +34,26 @@ public class BoardRenderer implements GameStateRenderer {
     @Override
     public void renderAllTribes(GameStateDto dto, String localPlayerName) {
         if (dto == null || dto.players == null) {
-            System.out.println("[TRIBES] Nessuno stato disponibile.");
+            System.out.println("[TRIBES] No state available.");
             return;
         }
         System.out.println();
         System.out.println("╔══════════════════════════════════════════════════════╗");
-        System.out.println("║          TRIBÙ DI TUTTI I GIOCATORI                  ║");
+        System.out.println("║               TRIBES OF ALL PLAYERS                  ║");
         System.out.println("╚══════════════════════════════════════════════════════╝");
         for (PlayerDto p : dto.players) {
             String marker = localPlayerName.equals(p.name) ? " ◄ (tu)" : "";
-            System.out.printf("%n── %s%s ─── Cibo: %d | PP: %d%n",
+            System.out.printf("%n── %s%s ─── Food: %d | PP: %d%n",
                     p.name, marker, p.food, p.prestigePoints);
             if (p.tribe == null || (p.tribe.characterCards.isEmpty() && p.tribe.buildings.isEmpty())) {
-                System.out.println("  (Nessuna carta)");
+                System.out.println("  (No card)");
             } else {
                 if (!p.tribe.characterCards.isEmpty()) {
-                    System.out.println("  Personaggi:");
+                    System.out.println("  Characters:");
                     CardPrinter.printCardsHorizontally(p.tribe.characterCards);
                 }
                 if (!p.tribe.buildings.isEmpty()) {
-                    System.out.println("  Edifici:");
+                    System.out.println("  Buildings:");
                     CardPrinter.printCardsHorizontally(p.tribe.buildings);
                 }
             }
@@ -72,10 +72,10 @@ public class BoardRenderer implements GameStateRenderer {
         String cp      = dto.currentPlayerName != null ? dto.currentPlayerName : "—";
         boolean myTurn = cp.equals(localPlayerName);
         System.out.println("═".repeat(78));
-        System.out.printf("  Fase: %-22s  Round: %-3d  Era: %s%n",
+        System.out.printf("  Phase: %-22s  Round: %-3d  Era: %s%n",
                 friendlyPhase(dto.phase), dto.currentRound,
                 dto.currentEra != null ? "ERA " + dto.currentEra : "—");
-        System.out.printf("  Turno di: %s%s%n", cp, myTurn ? "  ◄  È IL TUO TURNO!" : "");
+        System.out.printf("  Turn of: %s%s%n", cp, myTurn ? "  ◄  IT'S YOUR TURN!" : "");
         System.out.println("═".repeat(78));
     }
 
@@ -85,7 +85,7 @@ public class BoardRenderer implements GameStateRenderer {
      */
     private void printTurnOrder(GameStateDto dto) {
         if (dto.turnOrderSlots == null || dto.turnOrderSlots.isEmpty()) return;
-        System.out.print("[ ORDINE TURNO (prossimo round) ]");
+        System.out.print("[ TURN ORDER (next round) ]");
         for (TurnOrderSlotDto slot : dto.turnOrderSlots) {
             String name = slot.occupantName != null ? slot.occupantName : "—";
             System.out.printf("   %d°→%s", slot.position + 1, name);
@@ -101,10 +101,10 @@ public class BoardRenderer implements GameStateRenderer {
      */
     private void printPlayers(GameStateDto dto, String localPlayerName) {
         if (dto.players == null || dto.players.isEmpty()) return;
-        System.out.println("[ GIOCATORI ]");
+        System.out.println("[ PLAYERS ]");
         for (PlayerDto p : dto.players) {
             String mark = localPlayerName.equals(p.name) ? "►" : " ";
-            System.out.printf("%s %-12s  Colore: %-6s  Cibo: %-3d  PP: %-4d  Totem: %s%n",
+            System.out.printf("%s %-12s  Color: %-6s  Food: %-3d  PP: %-4d  Totem: %s%n",
                     mark, p.name,
                     p.color != null ? p.color : "—",
                     p.food, p.prestigePoints,
@@ -130,7 +130,7 @@ public class BoardRenderer implements GameStateRenderer {
      */
     private void printOfferTrack(GameStateDto dto) {
         if (dto.offerTiles == null || dto.offerTiles.isEmpty()) return;
-        System.out.println("[ TRACCIATO OFFERTE ]");
+        System.out.println("[ OFFER TRACK ]");
 
         List<String[]> columns = new ArrayList<>();
         for (OfferTileDto t : dto.offerTiles) columns.add(buildTileColumn(t));
@@ -140,16 +140,16 @@ public class BoardRenderer implements GameStateRenderer {
             for (String[] col : columns) sb.append(col[row]).append("  ");
             System.out.println(sb);
         }
-        System.out.println("  ↑/↓ = fila sup/inf   usa/max   ✓ disponibile  ✗ esaurita  — non disponibile");
+        System.out.println("  ↑/↓ = top/bottom row   used/max   ✓ available  ✗ finished  — not available");
         System.out.println();
     }
 
     private String[] buildTileColumn(OfferTileDto t) {
         String[] lines      = new String[TILE_HEIGHT];
         boolean  isDrawTile = "DRAW_CARDS".equals(t.actionType);
-        String   title      = pad("[" + t.letter + "] " + (isDrawTile ? "PESCA" : "CIBO"), TILE_INNER);
+        String   title      = pad("[" + t.letter + "] " + (isDrawTile ? "DRAW" : "FOOD"), TILE_INNER);
         String   occupant   = (t.occupantName != null ? "● " : "○ ")
-                + (t.occupantName != null ? t.occupantName : "(libero)");
+                + (t.occupantName != null ? t.occupantName : "(free)");
         String   topStat    = drawStatus("↑", t.topRowUsed,    t.topRowLimit);
         String   botStat    = drawStatus("↓", t.bottomRowUsed, t.bottomRowLimit);
 
@@ -180,8 +180,8 @@ public class BoardRenderer implements GameStateRenderer {
      * (┌─┐ vs ╔═╗), the visual distinction is reinforced at two levels.
      */
     private void printBoardCards(GameStateDto dto) {
-        printRow("FILA SUPERIORE", dto.topRowTribe,    dto.topRowBuilding);
-        printRow("FILA INFERIORE", dto.bottomRowTribe, dto.bottomRowBuilding);
+        printRow("TOP ROW", dto.topRowTribe,    dto.topRowBuilding);
+        printRow("BOTTOM ROW", dto.bottomRowTribe, dto.bottomRowBuilding);
         System.out.println("─".repeat(78));
     }
 
@@ -190,14 +190,14 @@ public class BoardRenderer implements GameStateRenderer {
         boolean hasTribes    = tribe    != null && !tribe.isEmpty();
         boolean hasBuildings = buildings != null && !buildings.isEmpty();
         if (!hasTribes && !hasBuildings) {
-            System.out.println("  (Nessuna carta)");
+            System.out.println("  (No cards)");
         } else {
             if (hasTribes) {
-                System.out.println("  ─── Personaggi ───────────────────────────────────────");
+                System.out.println("  ─── Characters ───────────────────────────────────────");
                 CardPrinter.printCardsHorizontally(tribe);
             }
             if (hasBuildings) {
-                System.out.println("  ═══ Edifici ═══════════════════════════════════════════");
+                System.out.println("  ═══ Buildings ═══════════════════════════════════════════");
                 CardPrinter.printCardsHorizontally(buildings);
             }
         }
@@ -210,18 +210,18 @@ public class BoardRenderer implements GameStateRenderer {
                 .filter(p -> localPlayerName.equals(p.name))
                 .findFirst()
                 .ifPresent(p -> {
-                    System.out.printf("[ LA TUA TRIBÙ — %s | Cibo: %d | PP: %d ]%n",
+                    System.out.printf("[ YOUR TRIBE — %s | Food: %d | PP: %d ]%n",
                             p.name, p.food, p.prestigePoints);
                     if (p.tribe == null || (p.tribe.characterCards.isEmpty() && p.tribe.buildings.isEmpty())) {
-                        System.out.println("  (Nessuna carta)");
+                        System.out.println("  (No cards)");
                         return;
                     }
                     if (!p.tribe.characterCards.isEmpty()) {
-                        System.out.println("  ─── Personaggi ────────────────────────────────────");
+                        System.out.println("  ─── Characters ────────────────────────────────────");
                         CardPrinter.printCardsHorizontally(p.tribe.characterCards);
                     }
                     if (!p.tribe.buildings.isEmpty()) {
-                        System.out.println("  ═══ Edifici ════════════════════════════════════════");
+                        System.out.println("  ═══ Buildings ════════════════════════════════════════");
                         CardPrinter.printCardsHorizontally(p.tribe.buildings);
                     }
                 });
@@ -239,17 +239,17 @@ public class BoardRenderer implements GameStateRenderer {
     private static String formatTribeSummary(PlayerDto p) {
         if (p.tribe == null) return "—";
         List<CardDto> chars = p.tribe.characterCards;
-        if (chars.isEmpty() && p.tribe.buildings.isEmpty()) return "(vuota)";
+        if (chars.isEmpty() && p.tribe.buildings.isEmpty()) return "(empty)";
 
         List<String> parts = new ArrayList<>();
-        if (count(chars, "HUNTER")   > 0) parts.add(count(chars, "HUNTER")   + " Cac");
-        if (count(chars, "SHAMAN")   > 0) parts.add(count(chars, "SHAMAN")   + " Sci(" + countStars(chars) + "★)");
-        if (count(chars, "BUILDER")  > 0) parts.add(count(chars, "BUILDER")  + " Cos(-" + totalBuilderDiscount(chars) + "f)");
+        if (count(chars, "HUNTER")   > 0) parts.add(count(chars, "HUNTER")   + " Hun");
+        if (count(chars, "SHAMAN")   > 0) parts.add(count(chars, "SHAMAN")   + " Sha(" + countStars(chars) + "★)");
+        if (count(chars, "BUILDER")  > 0) parts.add(count(chars, "BUILDER")  + " Bui(-" + totalBuilderDiscount(chars) + "f)");
         if (count(chars, "ARTIST")   > 0) parts.add(count(chars, "ARTIST")   + " Art");
         if (count(chars, "INVENTOR") > 0) parts.add(count(chars, "INVENTOR") + " Inv");
-        if (count(chars, "GATHERER") > 0) parts.add(count(chars, "GATHERER") + " Rac");
+        if (count(chars, "GATHERER") > 0) parts.add(count(chars, "GATHERER") + " Gat");
         if (!p.tribe.buildings.isEmpty())  parts.add(p.tribe.buildings.size() + " Edi");
-        return parts.isEmpty() ? "(vuota)" : String.join(" | ", parts);
+        return parts.isEmpty() ? "(empty)" : String.join(" | ", parts);
     }
 
     private static long count(List<CardDto> cards, String type) {
@@ -290,12 +290,12 @@ public class BoardRenderer implements GameStateRenderer {
         if (phase == null) return "—";
         return switch (phase) {
             case "SETUP"                -> "Setup";
-            case "COLOR_CHOOSING_PHASE" -> "Scelta Colori";
-            case "PLACEMENT"            -> "Posizionamento Totem";
-            case "ACTION"               -> "Risoluzione Azioni";
-            case "PRE_END_OF_ROUND"     -> "Pre-Fine Round";
-            case "END_OF_ROUND"         -> "Fine Round";
-            case "END_OF_GAME"          -> "Fine Partita";
+            case "COLOR_CHOOSING_PHASE" -> "Color choosing";
+            case "PLACEMENT"            -> "Totem placement";
+            case "ACTION"               -> "Actions resolution";
+            case "PRE_END_OF_ROUND"     -> "Pre-end of Round";
+            case "END_OF_ROUND"         -> "End of Round";
+            case "END_OF_GAME"          -> "Game over";
             default                     -> phase;
         };
     }

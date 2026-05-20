@@ -1,4 +1,4 @@
-package integration;
+/*package integration;
 
 import network.server.core.VirtualView;
 import shared.dto.LobbyDto;
@@ -39,4 +39,4 @@ public class FakeVirtualView implements VirtualView {
     @Override
     public void close() {
     }
-}
+}*/
