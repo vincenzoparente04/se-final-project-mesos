@@ -60,7 +60,7 @@ public class SocketVirtualView implements VirtualView {
     private volatile boolean closed = false;
     private final LivenessSentinel sentinel;
 
-    public SocketVirtualView(String playerName, Socket socket, ObjectOutputStream out) {
+    public SocketVirtualView(String playerName, Socket socket, ObjectOutputStream out, LobbyManager lobbyManager) {
         this.playerName = playerName;
         this.socket = socket;
         this.out = out;
@@ -69,10 +69,11 @@ public class SocketVirtualView implements VirtualView {
             t.setDaemon(true);
             return t;
         });
+
         this.sentinel = new LivenessSentinel(
                 "server-" + playerName,
                 SEND_INTERVAL_MS, CHECK_INTERVAL_MS, TIMEOUT_MS,
-                () -> send(new HeartbeatMessage()),
+                () -> sendHeartbeat(),
                 () -> lobbyManager.onDisconnect(playerName));
     }
 
@@ -122,6 +123,12 @@ public class SocketVirtualView implements VirtualView {
     }
 
     @Override
+    public void sendHeartbeat() {
+        if (closed) return;
+        senderExecutor.submit(() -> rawSend(new HeartbeatMessage()));
+    }
+
+    @Override
     public String getPlayerName() {
         return playerName;
     }
@@ -132,7 +139,8 @@ public class SocketVirtualView implements VirtualView {
     }
 
     /** Aggiorna il timestamp di liveness: da chiamare solo all'arrivo di un HeartbeatCommand. */
-    void notifyInbound() {
+    @Override
+    public void notifyInbound() {
         sentinel.notifyInbound();
     }
 

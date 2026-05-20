@@ -152,7 +152,8 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
 
     @Override
     public void visit(HeartbeatMessage msg) {
-        // No-op: la liveness è già aggiornata da notifyInbound() nel loop del SocketClientThread.
+        // Canale di liveness isolato: solo HeartbeatMessage aggiorna il watchdog client-side.
+        if (sentinel != null) sentinel.notifyInbound();
     }
 
     @Override
@@ -165,15 +166,6 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
         sentinel.start();
 
         new Thread(new SocketClientThread(in, this), "socket-reader-" + playerName).start();
-
-        this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "heartbeat-sender-" + playerName);
-            t.setDaemon(true);
-            return t;
-        });
-        this.heartbeatScheduler.scheduleAtFixedRate(
-                () -> send(new HeartbeatCommand(playerName)),
-                HEARTBEAT_INTERVAL_MS, HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
     // ─── Game commands ────────────────────────────────────────

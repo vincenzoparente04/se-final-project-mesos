@@ -59,9 +59,7 @@ public class RmiVirtualView implements VirtualView {
         this.sentinel = new LivenessSentinel(
                 "server-" + playerName,
                 SEND_INTERVAL_MS, CHECK_INTERVAL_MS, TIMEOUT_MS,
-                () -> senderExecutor.submit(() -> {
-                    try { callback.onHeartbeat(); } catch (RemoteException e) { handleDisconnect(); }
-                }),
+                this::sendHeartbeat,
                 () -> lobbyManager.onDisconnect(playerName));
     }
 
@@ -82,7 +80,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendEventResolved(EventResolutionDto resolution) {
-        if (closed) return;
+        if (closed.get()) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onEventResolved(resolution);
@@ -94,7 +92,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendGameOver(List<String> winners, EndGameScoringDto scoring) {
-        if (closed) return;
+        if (closed.get()) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onGameOver(winners, scoring);
@@ -153,6 +151,18 @@ public class RmiVirtualView implements VirtualView {
     }
 
     @Override
+    public void sendHeartbeat() {
+        if (closed.get()) return;
+        senderExecutor.submit(() -> {
+            try {
+                callback.onHeartbeat();
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
     public String getPlayerName() {
         return playerName;
     }
@@ -163,7 +173,8 @@ public class RmiVirtualView implements VirtualView {
     }
 
     /** Aggiorna il timestamp di liveness: da chiamare solo all'arrivo di un HeartbeatCommand. */
-    void notifyInbound() {
+    @Override
+    public void notifyInbound() {
         sentinel.notifyInbound();
     }
 

@@ -435,12 +435,10 @@ public class LobbyManager implements LobbyCommandVisitor {
      * <p>Invoked from a JVM shutdown hook in {@code ServerMain}.
      */
     public synchronized void shutdown() {
-        heartbeatScanner.shutdownNow();
         new java.util.HashSet<>(activeGames.values()).forEach(GameController::shutdown);
         connectedPlayers.values().forEach(e -> e.getView().close());
         lobbies.clear();
         activeGames.clear();
         connectedPlayers.clear();
-        lastHeartbeat.clear();
     }
 }

@@ -29,6 +29,8 @@ public interface VirtualView {
      */
     void sendGameOver(List<String> winners, EndGameScoringDto scoring);
 
+    void sendHeartbeat();
+
     String getPlayerName();
 
     /**
@@ -39,4 +41,6 @@ public interface VirtualView {
     void activateLiveness();
 
     void close();
+
+    void notifyInbound();
 }

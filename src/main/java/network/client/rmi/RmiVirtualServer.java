@@ -25,6 +25,7 @@ import network.client.core.LocalGameState;
 import network.client.core.VirtualServer;
 import network.client.core.ClientStateListener;
 import network.server.rmi.GameServerRemote;
+import shared.liveness.LivenessSentinel;
 
 
 /**
@@ -66,6 +67,7 @@ public class RmiVirtualServer implements VirtualServer {
 
     private String playerName;
     private ClientCallbackImpl callback;
+    private ClientStateListener listener;
     private ExecutorService commandExecutor;
     private LivenessSentinel sentinel;
 
@@ -113,6 +115,7 @@ public class RmiVirtualServer implements VirtualServer {
             return false;
         }
 
+        this.listener = listener;
         this.playerName = name;
         this.callback = tempCallback;
         return true;
@@ -132,7 +135,7 @@ public class RmiVirtualServer implements VirtualServer {
                 () -> submitAsync(new HeartbeatCommand(playerName)),
                 this::onConnectionLost);
         sentinel.start();
-        // Da ora in poi tutte le callback del ClientCallbackImpl notificano il sentinel.
+        //
         inboundNotifier.set(sentinel::notifyInbound);
     }
 

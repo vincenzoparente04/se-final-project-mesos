@@ -1,5 +1,6 @@
 package network.server.socket;
 
+import network.server.core.VirtualView;
 import shared.command.ClientCommand;
 import shared.command.ClientCommandVisitor;
 import shared.command.gameCommand.GameCommand;
@@ -18,7 +19,7 @@ public class SocketClientHandler implements Runnable {
 
     // Tipizzato come SocketVirtualView (non VirtualView) per accedere
     // al metodo package-private notifyInbound() senza cast.
-    private final SocketVirtualView virtualView;
+    private final VirtualView virtualView;
     private final ObjectInputStream in;
     private final LobbyManager lobbyManager;
     private volatile BlockingQueue<GameCommand> gameQueue = null;

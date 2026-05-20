@@ -27,8 +27,6 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
 
 
     private final ClientCommandVisitor dispatcher = new ClientCommandVisitor() {
-
-    private final CommandDispatcher dispatcher = new CommandDispatcher() {
         @Override
         public void visit(LobbyCommand cmd) throws Exception {
             cmd.accept(lobbyManager);
@@ -64,6 +62,9 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
         RmiVirtualView view = new RmiVirtualView(playerName, callback, lobbyManager);
         boolean connectionSuccessful = lobbyManager.addRmiPlayer(new RmiPlayerEntry(view, this));
         if (connectionSuccessful) {
+            // Register the view so the HeartbeatCommand dispatcher can route
+            // liveness notifications back to the right sentinel.
+            rmiViews.put(playerName, view);
             System.out.println("RMI connection from " + host);
         }
         return connectionSuccessful;

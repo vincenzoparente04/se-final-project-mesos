@@ -45,13 +45,10 @@ public class HuntEventCard extends EventCard {
             String details = "%d hunters → %+d food, %+d prestige"
                     .formatted(hunters, foodAfter - foodBefore, prestigeAfter - prestigeBefore);
 
-            deltas.add(new PlayerEventDeltaDto(p.getName(),
-                    foodBefore, foodAfter, prestigeBefore, prestigeAfter, details));
+            deltas.add(new PlayerEventDeltaDto(p.getName(), foodBefore, foodAfter, prestigeBefore, prestigeAfter, details));
         }
 
-        return new EventResolutionDto(
-                EventType.HUNT.name(), this.getEra().name(), this.getId(),
-                "Hunt event - " + this.getEra().name(),
-                deltas);
+        return new EventResolutionDto(EventType.HUNT.name(), this.getEra().name(), this.getId(),
+                "Hunt event - " + this.getEra().name(), deltas);
     }
 }

@@ -7,6 +7,7 @@ public interface ServerMessageVisitor {
     void visit(LobbyListMessage msg);
     void visit(LobbyStateMessage msg);
     void visit(GameStartingMessage msg);
+    void visit(HeartbeatMessage msg);
 
     /**
      * Default no-op so existing client implementations keep compiling.
