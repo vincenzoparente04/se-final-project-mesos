@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import ChooseColorCommand;
+import shared.command.gameCommand.ChooseColorCommand;
 
 import java.util.ArrayList;
 import java.util.List;

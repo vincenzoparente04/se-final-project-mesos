@@ -8,7 +8,8 @@ import java.io.Serializable;
  */
 public sealed interface ServerMessage extends Serializable
         permits StateMessage, ErrorMessage, GameOverMessage,
-                LobbyListMessage, LobbyStateMessage, GameStartingMessage {
+                LobbyListMessage, LobbyStateMessage, GameStartingMessage,
+                EventResolvedMessage {
 
     void accept(ServerMessageVisitor visitor);
 }

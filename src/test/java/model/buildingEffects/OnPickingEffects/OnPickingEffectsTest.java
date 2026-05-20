@@ -1,5 +1,6 @@
 package model.buildingEffects.OnPickingEffects;
 
+import model.cards.buildingCards.buildingEffects.onPickingEffects.OnPickingEffects;
 import model.player.Player;
 import org.junit.jupiter.api.Test;
 

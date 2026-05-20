@@ -2,6 +2,8 @@ package network.client.rmi;
 
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -54,10 +56,12 @@ public class ClientCallbackImpl extends UnicastRemoteObject implements ClientCal
     }
 
     @Override
-    public void onGameOver(String raw) throws RemoteException {
-        List<String> winners = raw == null || raw.isBlank()
-                ? Collections.emptyList()
-                : List.of(raw.split(","));
-        listener.onGameOver(winners);
+    public void onGameOver(List<String> winners, EndGameScoringDto scoring) throws RemoteException {
+        listener.onGameOver(winners != null ? winners : Collections.emptyList(), scoring);
+    }
+
+    @Override
+    public void onEventResolved(EventResolutionDto resolution) throws RemoteException {
+        listener.onEventResolved(resolution);
     }
 }

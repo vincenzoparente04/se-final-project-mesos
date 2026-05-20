@@ -1,4 +1,4 @@
-package model.buildingEffects.OnCharacterAcquiredEffects;
+package model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects;
 
 import model.cards.characterCards.InventorCard;
 import model.enums.InventionIcon;

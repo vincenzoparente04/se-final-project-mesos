@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-import network.NetworkUtil;
+import network.server.NetworkUtil;
 import network.server.rmi.GameServerRemote;
 import network.server.rmi.GameServerRemoteImpl;
 

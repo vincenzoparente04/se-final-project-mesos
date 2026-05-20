@@ -1,6 +1,6 @@
-package model.buildingEffects.EndGameEffects;
+package model.cards.buildingCards.buildingEffects.endGameEffects;
 
-import model.buildingEffects.BuildingEffect;
+import model.cards.buildingCards.buildingEffects.BuildingEffect;
 import model.player.Player;
 import model.player.Tribe;
 

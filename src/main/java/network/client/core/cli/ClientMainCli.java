@@ -1,6 +1,6 @@
 package network.client.core.cli;
 
-import network.NetworkUtil;
+import network.server.NetworkUtil;
 import network.client.core.*;
 import network.client.core.cli.view.BoardRenderer;
 import network.client.core.cli.view.GameStateRenderer;

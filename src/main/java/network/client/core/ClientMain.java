@@ -1,13 +1,8 @@
 package network.client.core;
 
 import javafx.application.Application;
-import javafx.application.Platform; //TODO: remove r 4,5,6,7
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
-import network.NetworkUtil;
-import view.LobbyViewController;
+import network.server.NetworkUtil;
 import view.MusicManager;
 import view.SceneRouter;
 

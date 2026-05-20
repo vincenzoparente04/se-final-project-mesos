@@ -1,6 +1,11 @@
 package network.client.core.cli.view;
 
 import shared.dto.*;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
+import shared.dto.event.PlayerEventDeltaDto;
+import shared.dto.event.PlayerScoringDeltaDto;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -308,5 +313,61 @@ public class BoardRenderer implements GameStateRenderer {
     private static String truncate(String s, int w) {
         if (s == null) return "";
         return s.length() <= w ? s : s.substring(0, w - 2) + "..";
+    }
+
+    // ─── Event resolution rendering ──────────────────────────────────────
+
+    private static final int EVENT_BOX_WIDTH = 70;
+
+    @Override
+    public void renderEvent(EventResolutionDto resolution, String localPlayerName) {
+        if (resolution == null) return;
+        System.out.println();
+        printBoxHeader(resolution.headline);
+        for (PlayerEventDeltaDto d : resolution.deltas) {
+            String marker = d.playerName.equals(localPlayerName) ? " ◄ (tu)" : "       ";
+            System.out.printf("  %-12s%s  food %d → %-3d  prestige %d → %-4d  (%s)%n",
+                    truncate(d.playerName, 12), marker,
+                    d.foodBefore, d.foodAfter,
+                    d.prestigeBefore, d.prestigeAfter,
+                    d.details == null ? "" : d.details);
+        }
+        System.out.println();
+    }
+
+    @Override
+    public void renderEndGameScoring(EndGameScoringDto scoring, List<String> winners, String localPlayerName) {
+        if (scoring == null) return;
+        System.out.println();
+        printBoxHeader("END-GAME SCORING");
+        // Column header
+        System.out.printf("  %-12s %-7s   %4s %4s %4s %4s %4s   %4s → %4s%n",
+                "Player", "", "Bld", "Art", "Inv", "BPP", "Eff", "PP", "PP");
+        for (PlayerScoringDeltaDto d : scoring.deltas) {
+            String marker = d.playerName.equals(localPlayerName) ? "◄ (tu)" : "      ";
+            System.out.printf("  %-12s %-7s   %+4d %+4d %+4d %+4d %+4d   %4d → %4d%n",
+                    truncate(d.playerName, 12), marker,
+                    d.buildersPoints, d.artistsPoints, d.inventorsPoints,
+                    d.buildingPrintedPoints, d.endGameBuildingEffectsPoints,
+                    d.prestigeBefore, d.prestigeAfter);
+        }
+        // Winners line
+        System.out.println();
+        String winnerLine = (winners == null || winners.isEmpty())
+                ? "GAME OVER — no winners"
+                : "GAME OVER — Winner(s): " + String.join(", ", winners);
+        System.out.println("  " + winnerLine);
+        System.out.println();
+    }
+
+    private static void printBoxHeader(String title) {
+        String t = title == null ? "" : title;
+        int innerWidth = EVENT_BOX_WIDTH - 2;
+        int pad = Math.max(0, innerWidth - t.length());
+        int left = pad / 2;
+        int right = pad - left;
+        System.out.println("╔" + "═".repeat(innerWidth) + "╗");
+        System.out.println("║" + " ".repeat(left) + t + " ".repeat(right) + "║");
+        System.out.println("╚" + "═".repeat(innerWidth) + "╝");
     }
 }

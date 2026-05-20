@@ -2,6 +2,8 @@ package network.client.core;
 
 import javafx.application.Platform;
 import shared.dto.LobbyDto;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
 import view.SceneRouter;
 import view.ViewController;
 import view.widgets.ErrorToast;
@@ -61,8 +63,19 @@ public class ClientStateListenerGui implements ClientStateListener {
     }
 
     @Override
-    public void onGameOver(List<String> winners) {
+    public void onEventResolved(EventResolutionDto resolution) {
+        // TODO (UI team): show event-resolution overlay with the per-player deltas.
+        // The DTO already contains everything needed: resolution.headline,
+        // resolution.eventType, resolution.era, resolution.deltas (food/prestige
+        // before/after + formatted details string per player).
+    }
+
+    @Override
+    public void onGameOver(List<String> winners, EndGameScoringDto scoring) {
         Platform.runLater(() -> {
+            // TODO (UI team): if scoring != null, show end-game scoring breakdown
+            // (scoring.deltas: builders/artists/inventors/buildings/effects per
+            // player + prestigeBefore/After) before/together with the winners screen.
             if (router.localState() == null || router.localState().snapshot() == null) {
                 router.toWinner(List.of(), winners);
                 return;

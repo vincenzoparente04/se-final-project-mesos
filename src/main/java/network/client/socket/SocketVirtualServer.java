@@ -3,15 +3,15 @@ package network.client.socket;
 import network.client.core.LocalGameState;
 import network.client.core.VirtualServer;
 import network.client.core.ClientStateListener;
-import ChooseColorCommand;
+import shared.command.gameCommand.ChooseColorCommand;
 import shared.command.ClientCommand;
 import shared.command.lobbyCommand.CreateLobbyCommand;
-import DrawCardCommand;
-import EndTurnCommand;
+import shared.command.gameCommand.DrawCardCommand;
+import shared.command.gameCommand.EndTurnCommand;
 import shared.command.lobbyCommand.JoinLobbyCommand;
 import shared.command.lobbyCommand.LeaveCommand;
 import shared.command.lobbyCommand.ListLobbiesCommand;
-import PlaceTotemCommand;
+import shared.command.gameCommand.PlaceTotemCommand;
 import shared.command.lobbyCommand.HeartbeatCommand;
 import shared.dto.LobbyDto;
 import shared.message.*;
@@ -117,7 +117,13 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
     @Override
     public void visit(GameOverMessage msg) {
         connectionResponse = true;
-        listener.onGameOver(msg.winners());
+        listener.onGameOver(msg.winners(), msg.scoring());
+    }
+
+    @Override
+    public void visit(EventResolvedMessage msg) {
+        connectionResponse = true;
+        listener.onEventResolved(msg.resolution());
     }
 
     @Override

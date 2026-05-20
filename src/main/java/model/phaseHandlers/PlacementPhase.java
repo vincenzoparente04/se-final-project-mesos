@@ -6,7 +6,7 @@ import model.board.OfferTile;
 import model.enums.GamePhase;
 import model.enums.TotemLocation;
 import model.player.Player;
-import PlaceTotemCommand;
+import shared.command.gameCommand.PlaceTotemCommand;
 
 import java.util.List;
 

@@ -2,11 +2,11 @@ package model.phaseHandlers;
 
 import model.enums.GamePhase;
 import model.player.Player;
-import ChooseColorCommand;
-import DrawCardCommand;
-import EndTurnCommand;
-import GameCommandVisitor;
-import PlaceTotemCommand;
+import shared.command.gameCommand.ChooseColorCommand;
+import shared.command.gameCommand.DrawCardCommand;
+import shared.command.gameCommand.EndTurnCommand;
+import shared.command.gameCommand.GameCommandVisitor;
+import shared.command.gameCommand.PlaceTotemCommand;
 
 public interface GamePhaseHandler extends GameCommandVisitor {
 

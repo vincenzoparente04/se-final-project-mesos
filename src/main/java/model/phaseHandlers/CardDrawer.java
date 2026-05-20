@@ -1,7 +1,7 @@
 package model.phaseHandlers;
 
 import model.board.OfferTileAction.OfferTileAction;
-import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
+import model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects.OnAcquireBuildingEffect;
 import model.cards.Card;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.characterCards.CharacterCard;

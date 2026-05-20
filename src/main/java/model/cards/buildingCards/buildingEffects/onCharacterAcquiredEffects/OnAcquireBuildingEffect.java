@@ -1,6 +1,6 @@
-package model.buildingEffects.OnCharacterAcquiredEffects;
+package model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects;
 
-import model.buildingEffects.BuildingEffect;
+import model.cards.buildingCards.buildingEffects.BuildingEffect;
 import model.player.Player;
 
 public abstract class OnAcquireBuildingEffect implements BuildingEffect {

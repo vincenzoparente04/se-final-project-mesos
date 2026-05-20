@@ -1,8 +1,8 @@
 package model.player;
 
-import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
-import model.buildingEffects.OnCharacterAcquiredEffects.OnAcquireBuildingEffect;
-import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
+import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
+import model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects.OnAcquireBuildingEffect;
+import model.cards.buildingCards.buildingEffects.onEventEffects.OnEventBuildingEffect;
 import model.cards.buildingCards.BuildingCard;
 import model.cards.characterCards.ArtistCard;
 import model.cards.characterCards.BuilderCard;

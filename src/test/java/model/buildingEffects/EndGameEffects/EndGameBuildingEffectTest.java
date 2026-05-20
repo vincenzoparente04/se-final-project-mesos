@@ -1,5 +1,6 @@
 package model.buildingEffects.EndGameEffects;
 
+import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
 import model.cards.characterCards.HunterCard;
 import model.enums.Era;
 import model.player.Player;

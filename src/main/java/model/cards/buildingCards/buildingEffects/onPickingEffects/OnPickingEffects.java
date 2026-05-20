@@ -1,6 +1,6 @@
-package model.buildingEffects.OnPickingEffects;
+package model.cards.buildingCards.buildingEffects.onPickingEffects;
 
-import model.buildingEffects.BuildingEffect;
+import model.cards.buildingCards.buildingEffects.BuildingEffect;
 import model.player.Player;
 
 import java.util.function.Consumer;

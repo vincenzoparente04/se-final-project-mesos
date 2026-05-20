@@ -8,9 +8,9 @@ import model.player.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import DrawCardCommand;
-import EndTurnCommand;
-import PlaceTotemCommand;
+import shared.command.gameCommand.DrawCardCommand;
+import shared.command.gameCommand.EndTurnCommand;
+import shared.command.gameCommand.PlaceTotemCommand;
 
 import java.util.List;
 

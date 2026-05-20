@@ -7,4 +7,11 @@ public interface ServerMessageVisitor {
     void visit(LobbyListMessage msg);
     void visit(LobbyStateMessage msg);
     void visit(GameStartingMessage msg);
+
+    /**
+     * Default no-op so existing client implementations keep compiling.
+     * Override once the client task starts using the event-resolved data
+     * to render the explanatory screen.
+     */
+    default void visit(EventResolvedMessage msg) {}
 }

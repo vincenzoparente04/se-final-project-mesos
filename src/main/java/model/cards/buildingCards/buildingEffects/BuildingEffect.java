@@ -1,4 +1,4 @@
-package model.buildingEffects;
+package model.cards.buildingCards.buildingEffects;
 
 import model.player.Player;
 

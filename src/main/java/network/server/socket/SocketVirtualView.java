@@ -3,7 +3,10 @@ package network.server.socket;
 import network.server.core.VirtualView;
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
 import shared.message.ErrorMessage;
+import shared.message.EventResolvedMessage;
 import shared.message.GameOverMessage;
 import shared.message.GameStartingMessage;
 import shared.message.LobbyListMessage;
@@ -54,9 +57,21 @@ public class SocketVirtualView implements VirtualView {
     public void sendState(GameStateDto dto) {
         if (closed) return;
         senderExecutor.submit(() -> rawSend(new StateMessage(dto)));
-        if (dto.winners != null && !dto.winners.isEmpty()) {
-            senderExecutor.submit(() -> rawSend(new GameOverMessage(dto.winners)));
-        }
+        // Game-over is no longer auto-emitted here: the phase/controller
+        // calls sendGameOver(...) explicitly so that the winners ship with
+        // the scoring breakdown.
+    }
+
+    @Override
+    public void sendEventResolved(EventResolutionDto resolution) {
+        if (closed) return;
+        senderExecutor.submit(() -> rawSend(new EventResolvedMessage(resolution)));
+    }
+
+    @Override
+    public void sendGameOver(List<String> winners, EndGameScoringDto scoring) {
+        if (closed) return;
+        senderExecutor.submit(() -> rawSend(new GameOverMessage(winners, scoring)));
     }
 
     @Override

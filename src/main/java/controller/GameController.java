@@ -327,13 +327,23 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                     .findFirst()
                     .orElse(null);
 
+            List<String> winnerNames;
             if (winner == null) {
                 // Edge: nessuno è più connesso (race con disconnect dell'ultimo).
+                // EndOfGamePhase.onEnter() farà il broadcast del game-over con
+                // lo scoring calcolato sui punti correnti.
                 model.setPhase(new EndOfGamePhase(model));
-            } else {
-                model.setWinners(List.of(winner));
+                model.setGameOver();
+                model.notifyChange();
+                return;
             }
+            model.setWinners(List.of(winner));
             model.setGameOver();
+            // Game-over d'ufficio (forfait): no end-game scoring breakdown.
+            winnerNames = List.of(winner);
+            for (VirtualView v : model.getViews()) {
+                v.sendGameOver(winnerNames, null);
+            }
             model.notifyChange();
         }
     };

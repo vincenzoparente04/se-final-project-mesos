@@ -2,6 +2,8 @@ package network.server.rmi;
 
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -37,9 +39,33 @@ public class RmiVirtualView implements VirtualView {
         senderExecutor.submit(() -> {
             try {
                 callback.onState(dto);
-                if (dto.winners != null && !dto.winners.isEmpty()) {
-                    callback.onGameOver(String.join(",", dto.winners));
-                }
+                // Game-over is no longer auto-emitted from state: the phase
+                // (or the suspension-timeout handler) calls sendGameOver(...)
+                // explicitly so the scoring breakdown ships with the winners.
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
+    public void sendEventResolved(EventResolutionDto resolution) {
+        if (closed) return;
+        senderExecutor.submit(() -> {
+            try {
+                callback.onEventResolved(resolution);
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
+    public void sendGameOver(List<String> winners, EndGameScoringDto scoring) {
+        if (closed) return;
+        senderExecutor.submit(() -> {
+            try {
+                callback.onGameOver(winners, scoring);
             } catch (RemoteException e) {
                 handleDisconnect();
             }
