@@ -13,15 +13,16 @@
 
         <top>
             <HBox fx:id="topBar" alignment="CENTER_LEFT" spacing="14" styleClass="mesos-topbar-minimal"
-                minHeight="30" prefHeight="30">
+                  minHeight="36" prefHeight="36" maxHeight="36">
                 <Label fx:id="phaseLabel" styleClass="mesos-label-bold"/>
                 <Label text="·" styleClass="mesos-label"/>
                 <Label fx:id="roundLabel" styleClass="mesos-label"/>
                 <Label text="" HBox.hgrow="ALWAYS"/>
                 <Button fx:id="rulesButton" text="📖" onAction="#onOpenRules"
-                        styleClass="mesos-music-icon-btn"/>
+                        minHeight="36" maxHeight="Infinity" styleClass="mesos-music-icon-btn"/>
                 <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"
-                        opacity="0" mouseTransparent="true" styleClass="mesos-button"
+                        opacity="0" mouseTransparent="true" maxHeight="Infinity"
+                        styleClass="mesos-button"
                         style="-fx-padding: 4 16 4 16; -fx-font-size: 12;"/>
             </HBox>
         </top>

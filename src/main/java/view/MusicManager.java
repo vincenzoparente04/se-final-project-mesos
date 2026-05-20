@@ -91,8 +91,6 @@ public class MusicManager {
 
     public boolean isPaused() { return paused; }
 
-    public boolean isPlaying() { return player != null && !paused; }
-
     /** Returns the display name of the currently playing track (no extension). */
     public String getCurrentTrackName() {
         if (trackList == null || currentIndex < 0 || currentIndex >= trackList.length) return "";
@@ -100,13 +98,6 @@ public class MusicManager {
         int dot = name.lastIndexOf('.');
         return dot > 0 ? name.substring(0, dot) : name;
     }
-
-    /** Number of tracks in the loaded folder. */
-    public int getTrackCount() {
-        return trackList == null ? 0 : trackList.length;
-    }
-
-    public int getCurrentIndex() { return currentIndex; }
 
     // ── Internal ─────────────────────────────────────────────────────────────
 

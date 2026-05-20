@@ -114,5 +114,6 @@ public class MusicPlayerWidget extends HBox {
         String name = mm.getCurrentTrackName();
         trackLabel.setText(name.isEmpty() ? "—" : name);
         pauseBtn.setText(mm.isPaused() ? "▶" : "⏸");
+        setVolume(volBar.getProgress());
     }
 }

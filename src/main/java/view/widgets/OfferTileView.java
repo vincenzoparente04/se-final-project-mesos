@@ -72,6 +72,10 @@ public class OfferTileView extends StackPane {
 
         setMinSize(calculatedWidth, tileHeight);
         setPrefSize(calculatedWidth, tileHeight);
+        setMaxSize(calculatedWidth, tileHeight);
+        // Restrict hit-testing to the tile's rectangular bounds so that any totem
+        // rendered with a negative top-margin cannot expand the pick region upward.
+        setPickOnBounds(true);
 
         if (clickable && tile.occupantName == null) {
             setStyle("-fx-cursor: hand;");

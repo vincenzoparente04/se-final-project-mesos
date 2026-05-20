@@ -287,7 +287,14 @@
 .mesos-player-marker-current {
     -fx-border-color: -mesos-glow;
     -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(241,196,15,0.55), 14, 0.45, 0, 0);
+    /* border-radius must be restated here: JavaFX drops the value from
+       mesos-player-marker when border-width is overridden in this rule. */
+    -fx-border-radius: 12;
+    /* radius=12 matches background-radius so the glow hugs the rounded corners.
+       spread=0.15 keeps the Gaussian falloff smooth so the shadow naturally
+       follows the shape instead of boxing it.
+       offsetY=6 pushes the glow downward so it doesn't bleed into the topBar. */
+    -fx-effect: dropshadow(gaussian, rgba(241,196,15,0.9), 12, 0.15, 0, 6);
 }
 .mesos-player-name {
     -fx-text-fill: -mesos-cream;
