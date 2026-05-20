@@ -300,22 +300,29 @@ public class LobbyManager implements LobbyCommandVisitor {
     public synchronized void onDisconnect(String playerName) {
         if (!connectedPlayers.containsKey(playerName)) return;
 
-        // Ferma sentinel e canale di trasporto prima di rimuovere il player,
-        // così un eventuale secondo timeout non trova più il player registrato.
-        VirtualView view = connectedPlayers.get(playerName).getView();
-        view.close();
-
-        PlayerEntry entry = connectedPlayers.remove(playerName);
-        if (entry != null) entry.getView().close();
-
+        // 1) Impila il PlayerDisconnectedCommand PRIMA di chiudere la view.
+        //    Quando questo metodo viene invocato dal thread del sentinel
+        //    server-side (callback onTimeoutAction), il successivo
+        //    view.close() chiama sentinel.stop() → executor.shutdownNow()
+        //    che invoca Thread.interrupt() sul thread corrente: una
+        //    queue.put() chiamata dopo verrebbe rifiutata immediatamente
+        //    con InterruptedException, perdendo l'evento e impedendo al
+        //    game thread di attivare la logica di disconnect / sospensione.
         GameController controller = activeGames.get(playerName);
-
-        // TODO: vedere cosa serve per completare la logica di riconnessione/proclamazione vincitori
         if (controller != null) {
             enqueue(controller.getQueue(), new PlayerDisconnectedCommand(playerName));
         }
-        // Era in lobby (o solo connesso, non in nessuna lobby): trova la lobby
-        // specifica, rimuovi il player, notifica solo quella lobby.
+
+        // 2) Rimuovi il player dal registry e chiudi la view. Da qui in poi
+        //    il flag interrupt del thread chiamante può essere settato dal
+        //    sentinel.stop() interno a view.close(): le operazioni
+        //    successive (HashMap.remove, lookup lobby) non sono
+        //    interrompibili quindi proseguono regolarmente.
+        PlayerEntry entry = connectedPlayers.remove(playerName);
+        if (entry != null) entry.getView().close();
+
+        // 3) Era in lobby (o solo connesso, non in nessuna lobby): trova la
+        //    lobby specifica, rimuovi il player, notifica solo quella lobby.
         Lobby hostingLobby = lobbies.values().stream()
                 .filter(l -> l.containsPlayer(playerName))
                 .findFirst()
