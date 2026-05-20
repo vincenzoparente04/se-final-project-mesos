@@ -278,6 +278,6 @@ public class ClientMainCli {
     // ─── Helpers ───────────────────────────────────────────────
     
     private static String helpLine() {
-        return "lobbies | create <n> | join <id> | color <COLOR> | totem <LETTER> | draw <ID> | end | leave | state | tribes | quit";
+        return "lobbies | create <n> | join <id> | leave | quit";
     }
 }
