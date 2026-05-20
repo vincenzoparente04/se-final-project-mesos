@@ -174,7 +174,7 @@
                             <appendAssemblyId>false</appendAssemblyId>
                             <archive>
                                 <manifest>
-                                    <mainClass>network.server.ServerMain</mainClass>
+                                    <mainClass>network.server.core.ServerMain</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>
@@ -194,7 +194,7 @@
                             <appendAssemblyId>false</appendAssemblyId>
                             <archive>
                                 <manifest>
-                                    <mainClass>network.client.cli.ClientMainCLi</mainClass>
+                                    <mainClass>network.client.core.cli.ClientMainCLi</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>
