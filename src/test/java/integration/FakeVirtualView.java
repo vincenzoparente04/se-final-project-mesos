@@ -32,6 +32,11 @@ public class FakeVirtualView implements VirtualView {
     }
 
     @Override
+    public void activateLiveness() {
+
+    }
+
+    @Override
     public void close() {
     }
 }

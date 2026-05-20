@@ -56,7 +56,7 @@ public class BoardGameAreaController implements ViewController {
     private LocalGameState lastState;
     private Stage stage;
     private BoardSelfPanelController selfPanel;
-    private double userScale = 1.0;
+    private double userScale = 0.88;
 
     public void init(SceneRouter router, StackPane overlayRoot, BoardSelfPanelController selfPanel) {
         this.router = router;
@@ -69,6 +69,7 @@ public class BoardGameAreaController implements ViewController {
     }
 
     private double cardWidth(boolean resolving) {
+
 
         double stageW = stage != null ? stage.getWidth()  : 1280;
         double stageH = stage != null ? stage.getHeight() : 800;
@@ -84,7 +85,7 @@ public class BoardGameAreaController implements ViewController {
         double othersH  = othersBar.getHeight()  > 0 ? othersBar.getHeight()  : 90;
         double centralH = centralBox.getHeight() > 0 ? centralBox.getHeight() : 120;
         double selfH    = selfPanel != null ? selfPanel.panelHeight() : 180;
-        double availH   = Math.max(stageH - othersH - centralH - selfH - 70, 0);
+        double availH   = Math.max(stageH - othersH - centralH - selfH - 90, 0);
         double wFromHeight = (availH / 2.0) / CARD_ASPECT;
 
         double base = Math.max(Math.min(wFromWidth, wFromHeight), 30);

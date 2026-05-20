@@ -36,6 +36,12 @@ public class CardView extends StackPane {
             iv.setFitWidth(width);
             iv.setFitHeight(height);
             iv.setPreserveRatio(true);
+
+            Rectangle clip = new Rectangle(width, height);
+            clip.setArcWidth(36);
+            clip.setArcHeight(36);
+            iv.setClip(clip);
+
             getChildren().add(iv);
         } else {
             Rectangle r = new Rectangle(width, height, fallbackColor(card));

@@ -38,6 +38,10 @@ public class DeckView extends StackPane {
                 iv.setFitWidth(cardWidth);
                 iv.setFitHeight(cardHeight);
                 iv.setPreserveRatio(true);
+                Rectangle clip = new Rectangle(cardWidth, cardHeight);
+                clip.setArcWidth(36);
+                clip.setArcHeight(36);
+                iv.setClip(clip);
                 layer.getChildren().add(iv);
             } else {
                 Rectangle r = new Rectangle(cardWidth, cardHeight, Color.DARKSLATEGRAY);
