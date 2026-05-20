@@ -14,6 +14,7 @@ import shared.command.lobbyCommand.ListLobbiesCommand;
 import shared.command.gameCommand.PlaceTotemCommand;
 import shared.command.lobbyCommand.HeartbeatCommand;
 import shared.dto.LobbyDto;
+import shared.liveness.LivenessSentinel;
 import shared.message.*;
 
 import java.io.IOException;
@@ -22,9 +23,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Socket implementation of {@link VirtualServer} proxy.
@@ -35,16 +33,23 @@ import java.util.concurrent.TimeUnit;
  *       Object{Input,Output}Streams. No game-layer wiring happens here.</li>
  *   <li>{@link #tryRegisterName(String, LocalGameState, ClientStateListener)}
  *       performs the name handshake. Reusable across rejections.</li>
- *   <li>{@link #start()} spawns the reader thread and the heartbeat scheduler.</li>
+ *   <li>{@link #start()} spawns the reader thread and il sentinel di liveness bidirezionale.</li>
  * </ol>
  */
 public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor {
 
     /** Timeout for reading the server's response to a name attempt. */
-    private static final int NAME_NEGOTIATION_TIMEOUT_MS = 5_000;
+    private static final int NAME_NEGOTIATION_TIMEOUT_MS = 50_000;
 
-    /** Periodo di invio heartbeat: deve essere < del timeout server (6s). */
-    private static final long HEARTBEAT_INTERVAL_MS = 2_000L;
+    /**
+     * Intervalli del sentinel client-side socket.
+     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling
+     * e ritardi temporanei dovuti a messaggi applicativi grandi che impegnano il sender.
+     * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
+     */
+    private static final long SEND_INTERVAL_MS  = 2_000L;
+    private static final long CHECK_INTERVAL_MS = 5_000L;
+    private static final long TIMEOUT_MS        = 15_000L;
 
     private final Socket socket;
     private final ObjectOutputStream out;
@@ -55,7 +60,7 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
     private LocalGameState localState;
     private ClientStateListener listener;
     private List<LobbyDto> bufferedLobbyList;
-    private ScheduledExecutorService heartbeatScheduler;
+    private LivenessSentinel sentinel;
 
     private boolean connectionResponse;
 
@@ -146,7 +151,19 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
     }
 
     @Override
+    public void visit(HeartbeatMessage msg) {
+        // No-op: la liveness è già aggiornata da notifyInbound() nel loop del SocketClientThread.
+    }
+
+    @Override
     public void start() {
+        this.sentinel = new LivenessSentinel(
+                "client-" + playerName,
+                SEND_INTERVAL_MS, CHECK_INTERVAL_MS, TIMEOUT_MS,
+                () -> send(new HeartbeatCommand(playerName)),
+                this::close);
+        sentinel.start();
+
         new Thread(new SocketClientThread(in, this), "socket-reader-" + playerName).start();
 
         this.heartbeatScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -219,13 +236,19 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
-            if (heartbeatScheduler != null) heartbeatScheduler.shutdownNow();
+            if (sentinel != null) sentinel.stop();
             try { socket.close(); } catch (IOException ignored) {}
+            if (listener != null) listener.onDisconnected();
+            System.exit(0);
         }
     }
 
+    /** Aggiorna il timestamp di liveness: chiamato dal {@link SocketClientThread} ad ogni messaggio. */
+    void notifyInbound() {
+        if (sentinel != null) sentinel.notifyInbound();
+    }
+
     void onDisconnected() {
-        closed.set(true);
-        listener.onDisconnected();
+        close();
     }
 }

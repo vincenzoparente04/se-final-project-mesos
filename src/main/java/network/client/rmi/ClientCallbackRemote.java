@@ -30,4 +30,7 @@ public interface ClientCallbackRemote extends Remote {
 
     /** One-shot notification of a resolved event card (end-of-round / end-of-game). */
     void onEventResolved(EventResolutionDto resolution) throws RemoteException;
+
+    /** Heartbeat server→client. Il ricevitore aggiorna il sentinel di liveness e non fa altro. */
+    void onHeartbeat() throws RemoteException;
 }
