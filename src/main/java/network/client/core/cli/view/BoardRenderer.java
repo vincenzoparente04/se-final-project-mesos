@@ -239,17 +239,17 @@ public class BoardRenderer implements GameStateRenderer {
     private static String formatTribeSummary(PlayerDto p) {
         if (p.tribe == null) return "—";
         List<CardDto> chars = p.tribe.characterCards;
-        if (chars.isEmpty() && p.tribe.buildings.isEmpty()) return "(vuota)";
+        if (chars.isEmpty() && p.tribe.buildings.isEmpty()) return "(empty)";
 
         List<String> parts = new ArrayList<>();
-        if (count(chars, "HUNTER")   > 0) parts.add(count(chars, "HUNTER")   + " Cac");
-        if (count(chars, "SHAMAN")   > 0) parts.add(count(chars, "SHAMAN")   + " Sci(" + countStars(chars) + "★)");
-        if (count(chars, "BUILDER")  > 0) parts.add(count(chars, "BUILDER")  + " Cos(-" + totalBuilderDiscount(chars) + "f)");
+        if (count(chars, "HUNTER")   > 0) parts.add(count(chars, "HUNTER")   + " Hun");
+        if (count(chars, "SHAMAN")   > 0) parts.add(count(chars, "SHAMAN")   + " Sha(" + countStars(chars) + "★)");
+        if (count(chars, "BUILDER")  > 0) parts.add(count(chars, "BUILDER")  + " Bui(-" + totalBuilderDiscount(chars) + "f)");
         if (count(chars, "ARTIST")   > 0) parts.add(count(chars, "ARTIST")   + " Art");
         if (count(chars, "INVENTOR") > 0) parts.add(count(chars, "INVENTOR") + " Inv");
-        if (count(chars, "GATHERER") > 0) parts.add(count(chars, "GATHERER") + " Rac");
+        if (count(chars, "GATHERER") > 0) parts.add(count(chars, "GATHERER") + " Gat");
         if (!p.tribe.buildings.isEmpty())  parts.add(p.tribe.buildings.size() + " Edi");
-        return parts.isEmpty() ? "(vuota)" : String.join(" | ", parts);
+        return parts.isEmpty() ? "(empty)" : String.join(" | ", parts);
     }
 
     private static long count(List<CardDto> cards, String type) {
