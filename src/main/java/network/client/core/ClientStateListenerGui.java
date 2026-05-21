@@ -4,12 +4,12 @@ import javafx.application.Platform;
 import shared.dto.LobbyDto;
 import shared.dto.event.EndGameScoringDto;
 import shared.dto.event.EventResolutionDto;
-import shared.dto.event.PlayerEventDeltaDto;
 import shared.dto.event.PlayerScoringDeltaDto;
 import view.SceneRouter;
 import view.ViewController;
 import view.widgets.ErrorToast;
 import view.widgets.EventOverlay;
+import view.widgets.EventResolutionOverlay;
 
 import java.util.List;
 
@@ -67,12 +67,8 @@ public class ClientStateListenerGui implements ClientStateListener {
 
     @Override
     public void onEventResolved(EventResolutionDto resolution) {
-        // Debug-only in-window overlay: shows the same per-player data the
-        // CLI renders. Will be replaced by a proper themed overlay by the
-        // UI team.
         if (resolution == null) return;
-        Platform.runLater(() ->
-                EventOverlay.show(router.currentRoot(), resolution.headline, formatEvent(resolution)));
+        Platform.runLater(() -> EventResolutionOverlay.enqueue(router.currentRoot(), resolution));
     }
 
     @Override
@@ -104,19 +100,6 @@ public class ClientStateListenerGui implements ClientStateListener {
     }
 
     // ─── Formatters (debug-quality, line-based) ─────────────────────────
-
-    private static String formatEvent(EventResolutionDto resolution) {
-        StringBuilder sb = new StringBuilder();
-        for (PlayerEventDeltaDto d : resolution.deltas) {
-            sb.append(String.format(
-                    "%s  food %d → %d  prestige %d → %d  (%s)%n",
-                    d.playerName,
-                    d.foodBefore, d.foodAfter,
-                    d.prestigeBefore, d.prestigeAfter,
-                    d.details == null ? "" : d.details));
-        }
-        return sb.toString();
-    }
 
     private static String formatScoring(EndGameScoringDto scoring) {
         StringBuilder sb = new StringBuilder();

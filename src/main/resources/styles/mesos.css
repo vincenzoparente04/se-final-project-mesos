@@ -569,3 +569,115 @@
     -fx-text-alignment: center;
     -fx-effect: dropshadow(gaussian, rgba(20,6,4,0.9), 6, 0.4, 0, 1);
 }
+
+/* ── Event resolution overlay ────────────────────────────────────── */
+
+.mesos-event-backdrop {
+    -fx-background-color: rgba(10, 5, 4, 0.80);
+}
+
+.mesos-event-slab {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.75), 48, 0.4, 0, 10);
+}
+
+.mesos-event-header {
+    -fx-padding: 18 22 14 22;
+}
+
+.mesos-event-title {
+    -fx-font-family: -mesos-font-display;
+    -fx-text-fill: #1a0a06;
+    -fx-font-size: 22;
+    -fx-font-weight: bold;
+}
+
+.mesos-event-era {
+    -fx-text-fill: -mesos-ember;
+    -fx-font-size: 11;
+    -fx-font-weight: bold;
+}
+
+.mesos-event-badge {
+    -fx-background-color: -mesos-ember;
+    -fx-text-fill: white;
+    -fx-font-size: 11;
+    -fx-font-weight: bold;
+    -fx-padding: 3 9 3 9;
+    -fx-background-radius: 20;
+    -fx-label-padding: 0;
+}
+
+.mesos-event-sep {
+    -fx-background-color: rgba(200, 64, 26, 0.45);
+}
+
+.mesos-event-player-row {
+    -fx-padding: 9 22 9 22;
+    -fx-border-color: transparent transparent rgba(0, 0, 0, 0.10) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.mesos-event-player-name {
+    -fx-text-fill: #1a0a06;
+    -fx-font-size: 13;
+    -fx-font-weight: bold;
+}
+
+.mesos-event-stat-value {
+    -fx-text-fill: #2a1208;
+    -fx-font-size: 13;
+    -fx-font-weight: bold;
+}
+
+.mesos-event-delta-pos {
+    -fx-text-fill: #1a7a2e;
+    -fx-font-size: 12;
+    -fx-font-weight: bold;
+}
+
+.mesos-event-delta-neg {
+    -fx-text-fill: #a01818;
+    -fx-font-size: 12;
+    -fx-font-weight: bold;
+}
+
+.mesos-event-delta-zero {
+    -fx-text-fill: #7a6050;
+    -fx-font-size: 12;
+}
+
+.mesos-event-details {
+    -fx-text-fill: #5a3a28;
+    -fx-font-size: 11;
+    -fx-font-style: italic;
+    -fx-padding: 0 0 0 6;
+}
+
+.mesos-event-progress {
+    -fx-pref-height: 4;
+    -fx-max-height: 4;
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+.mesos-event-progress > .track {
+    -fx-background-color: rgba(0, 0, 0, 0.12);
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.mesos-event-progress > .bar {
+    -fx-background-color: linear-gradient(to right, -mesos-ember, -mesos-ember-bright);
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.mesos-event-footer {
+    -fx-padding: 4 14 10 14;
+}
+
+.mesos-event-tap-hint {
+    -fx-text-fill: rgba(80, 40, 20, 0.45);
+    -fx-font-size: 10;
+    -fx-font-style: italic;
+}
