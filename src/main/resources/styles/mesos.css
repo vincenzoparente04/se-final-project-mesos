@@ -681,3 +681,56 @@
     -fx-font-size: 10;
     -fx-font-style: italic;
 }
+
+/* ── Winner / end-game scoring table ─────────────────────────────── */
+
+.mesos-winner-header {
+    -fx-padding: 4 0 4 0;
+    -fx-border-color: transparent transparent -mesos-ember transparent;
+    -fx-border-width: 0 0 1.5 0;
+    -fx-opacity: 0.75;
+}
+
+.mesos-winner-header-cell {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 11;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+.mesos-winner-row {
+    -fx-padding: 7 0 7 0;
+    -fx-border-color: transparent transparent rgba(244,226,194,0.10) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.mesos-winner-row-first {
+    -fx-background-color: rgba(200, 64, 26, 0.12);
+    -fx-background-radius: 6;
+}
+
+.mesos-winner-rank {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 12;
+    -fx-alignment: center;
+}
+
+.mesos-winner-delta-pos {
+    -fx-text-fill: #6edd88;
+    -fx-font-weight: bold;
+    -fx-font-size: 12;
+    -fx-alignment: center;
+}
+
+.mesos-winner-delta-neg {
+    -fx-text-fill: #e06060;
+    -fx-font-weight: bold;
+    -fx-font-size: 12;
+    -fx-alignment: center;
+}
+
+.mesos-winner-delta-zero {
+    -fx-text-fill: -mesos-cream-muted;
+    -fx-font-size: 12;
+    -fx-alignment: center;
+}

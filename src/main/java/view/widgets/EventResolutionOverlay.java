@@ -30,14 +30,29 @@ public final class EventResolutionOverlay {
     private record PendingEvent(StackPane root, EventResolutionDto dto) {}
 
     private static final Deque<PendingEvent> queue = new ArrayDeque<>();
-    private static StackPane         activeRoot    = null;
+    private static StackPane         activeRoot     = null;
     private static StackPane         activeBackdrop = null;
-    private static PauseTransition   activeDwell   = null;
+    private static PauseTransition   activeDwell    = null;
     private static Timeline          activeProgress = null;
+    private static Runnable          onQueueDrained = null;
 
     private EventResolutionOverlay() {}
 
-    // Public API
+    // ── Public API ───────────────────────────────────────────────────────────
+
+    public static boolean isQueueEmpty() {
+        return queue.isEmpty() && activeBackdrop == null;
+    }
+
+    /**
+     * One-shot callback fired on the JavaFX thread when the last overlay closes
+     * and the queue is empty. If the queue is already empty, fires immediately.
+     */
+    public static void setOnQueueDrained(Runnable callback) {
+        if (isQueueEmpty()) { callback.run(); return; }
+        onQueueDrained = callback;
+    }
+
     public static void enqueue(StackPane root, EventResolutionDto dto) {
         if (root == null || dto == null) return;
         queue.add(new PendingEvent(root, dto));
@@ -67,7 +82,15 @@ public final class EventResolutionOverlay {
 
     private static void showNext() {
         PendingEvent next = queue.poll();
-        if (next == null) { activeRoot = null; return; }
+        if (next == null) {
+            activeRoot = null;
+            if (onQueueDrained != null) {
+                Runnable cb = onQueueDrained;
+                onQueueDrained = null;
+                cb.run();
+            }
+            return;
+        }
 
         StackPane root = next.root();
         EventResolutionDto dto = next.dto();
@@ -104,9 +127,9 @@ public final class EventResolutionOverlay {
 
     //Panel builder -----------------------------------------------------
 
-    private static final double SLAB_W = 1040;   // stone-slab image width
+    private static final double SLAB_W = 1240;   // stone-slab image width
     private static final double CONTENT_W = 460;   // text area carved into the slab
-
+    
     private static StackPane buildPanel(EventResolutionDto dto, int remaining) {
         //STONE SLAB
         StackPane slab = new StackPane();
@@ -257,9 +280,13 @@ public final class EventResolutionOverlay {
 
         String deltaText;
         String deltaStyle;
-        if (delta > 0)      { deltaText = "(+" + delta + ")"; deltaStyle = "mesos-event-delta-pos"; }
-        else if (delta < 0) { deltaText = "("  + delta + ")"; deltaStyle = "mesos-event-delta-neg"; }
-        else                { deltaText = "(—)";               deltaStyle = "mesos-event-delta-zero"; }
+        if (delta > 0) {
+            deltaText = "(+" + delta + ")"; deltaStyle = "mesos-event-delta-pos";
+        }else if (delta < 0) {
+            deltaText = "("  + delta + ")"; deltaStyle = "mesos-event-delta-neg";
+        }else {
+            deltaText = "(—)"; deltaStyle = "mesos-event-delta-zero";
+        }
 
         Label dl = new Label(deltaText);
         dl.getStyleClass().add(deltaStyle);
@@ -268,39 +295,39 @@ public final class EventResolutionOverlay {
         return box;
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // Helpers ----------------------------------------------------------
 
     private static String iconForEvent(String type) {
         if (type == null) return "star.png";
         return switch (type) {
-            case "HUNT"            -> "Hunter.png";
+            case "HUNT" -> "Hunter.png";
             case "CAVE_PAINTINGS"  -> "Artist.png";
             case "SHAMANIC_RITUAL" -> "Shaman.png";
-            case "SUSTENANCE"      -> "food.png";
-            case "NASCONDINO"      -> "Inventor.png";
-            default                -> "star.png";
+            case "SUSTENANCE" -> "food.png";
+            case "NASCONDINO" -> "Inventor.png";
+            default -> "star.png";
         };
     }
 
     private static String prettyEventType(String type) {
         if (type == null) return "Event";
         return switch (type) {
-            case "HUNT"            -> "Hunt";
+            case "HUNT" -> "Hunt";
             case "CAVE_PAINTINGS"  -> "Cave Paintings";
             case "SHAMANIC_RITUAL" -> "Shamanic Ritual";
-            case "SUSTENANCE"      -> "Sustenance";
-            case "NASCONDINO"      -> "Hide and Seek";
-            default                -> type;
+            case "SUSTENANCE" -> "Sustenance";
+            case "NASCONDINO" -> "Hide and Seek";
+            default -> type;
         };
     }
 
     private static String prettyEra(String era) {
         if (era == null) return "";
         return switch (era) {
-            case "ERA_I"   -> "Era I";
+            case "ERA_I" -> "Era I";
             case "ERA_II"  -> "Era II";
             case "ERA_III" -> "Era III";
-            default        -> era;
+            default -> era;
         };
     }
 }

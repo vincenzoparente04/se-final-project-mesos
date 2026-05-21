@@ -13,10 +13,6 @@ import view.SceneRouter;
  */
 public class ClientMain extends Application {
 
-    private static ConnectionProtocol transport;
-    private static String host;
-    private static int port;
-    private static String playerName; //CI SERVE O NON CISERVE ?
     private VirtualServer virtualServer;
     private LocalGameState localState;
     private ClientStateListenerGui listener;
@@ -28,27 +24,6 @@ public class ClientMain extends Application {
         String localHost = NetworkUtil.detectLocalIPv4();
         System.setProperty("java.rmi.server.hostname", localHost);
         System.out.println("RMI export hostname: " + localHost);
-
-        /*
-        if (args.length < 3) {
-            printUsage();
-            return;
-        }
-
-        String first = args[0].toLowerCase();
-        if (first.equals("socket") || first.equals("rmi")) {
-            if (args.length < 4) { printUsage(); return; }
-            transport  = ConnectionProtocol.from(args[0]);
-            host       = args[1];
-            port       = Integer.parseInt(args[2]);
-            playerName = args[3];
-        } else {
-            //<host> <port> <playerName>
-            transport  = ConnectionProtocol.SOCKET;
-            host       = args[0];
-            port       = Integer.parseInt(args[1]);
-            playerName = args[2];
-        }*/
 
         launch(args);
     }

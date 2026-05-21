@@ -12,6 +12,7 @@ import network.client.core.LocalGameState;
 import network.client.core.VirtualServer;
 import shared.dto.LobbyDto;
 import shared.dto.PlayerDto;
+import shared.dto.event.EndGameScoringDto;
 
 import java.io.IOException;
 import java.util.List;
@@ -90,6 +91,11 @@ public class SceneRouter {
     public void toWinner(List<PlayerDto> players, List<String> winners) {
         load("/org/example/mesos/winner-view.fxml");
         currentViewController.showWinners(players, winners);
+    }
+
+    public void toWinner(List<PlayerDto> players, List<String> winners, EndGameScoringDto scoring) {
+        load("/org/example/mesos/winner-view.fxml");
+        currentViewController.showWinners(players, winners, scoring);
     }
 
     // FXML loading ---------------------------------------------------------------

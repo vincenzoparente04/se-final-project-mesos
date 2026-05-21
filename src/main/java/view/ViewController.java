@@ -3,6 +3,7 @@ package view;
 import network.client.core.LocalGameState;
 import shared.dto.LobbyDto;
 import shared.dto.PlayerDto;
+import shared.dto.event.EndGameScoringDto;
 
 import java.util.List;
 
@@ -22,4 +23,8 @@ public interface ViewController {
     default void showLobbyState(LobbyDto lobby) {}
 
     default void showWinners(List<PlayerDto> players, List<String> winners) {}
+
+    default void showWinners(List<PlayerDto> players, List<String> winners, EndGameScoringDto scoring) {
+        showWinners(players, winners);
+    }
 }
