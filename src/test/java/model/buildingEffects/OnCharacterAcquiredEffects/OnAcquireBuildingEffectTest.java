@@ -1,5 +1,6 @@
 package model.buildingEffects.OnCharacterAcquiredEffects;
 
+import model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects.OnAcquireBuildingEffect;
 import model.player.Player;
 import org.junit.jupiter.api.Test;
 

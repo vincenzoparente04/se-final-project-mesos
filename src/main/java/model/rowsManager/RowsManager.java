@@ -9,6 +9,7 @@ import model.factories.TribeCardFactory;
 import model.player.Player;
 import model.rowsManager.deck.BuildingDeck;
 import model.rowsManager.deck.TribeDeck;
+import shared.dto.event.EventResolutionDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,9 +78,9 @@ public class RowsManager {
      * then it calls the resolve method of each EventCard, passing the list of players as parameter, so that the EventCard can apply its effect on the players.
      * @param players
      */
-    public void resolveEvents(List<Player> players){
+    public List<EventResolutionDto> resolveEvents(List<Player> players){
         eventResolver.sortEvents(bottomRowTribe);
-        eventResolver.resolve(players);
+        return eventResolver.resolve(players);
     }
 
     /**
@@ -88,9 +89,9 @@ public class RowsManager {
      * <b>NOTE: </b> to create the list of all cards present on the board it puts bottomRow cards first because maybe there could be some ERA_II card
      * @param players
      */
-    public void resolveAllEvents(List<Player> players){
+    public List<EventResolutionDto> resolveAllEvents(List<Player> players){
         eventResolver.sortEvents(getAllTribeCardsOnBoard());
-        eventResolver.resolve(players);
+        return eventResolver.resolve(players);
     }
 
     /**

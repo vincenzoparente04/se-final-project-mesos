@@ -8,7 +8,7 @@ import model.phaseHandlers.GamePhaseHandler;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 import network.server.core.VirtualView;
-import shared.command.GameCommand;
+import shared.command.gameCommand.GameCommand;
 import shared.dto.GameStateDto;
 
 import java.util.ArrayList;

@@ -107,9 +107,15 @@ public class TurnOrderTileView extends StackPane {
             totemLayer.getChildren().add(cell);
         }
 
+        // Totems are decorative — they must not absorb mouse events
+        totemLayer.setMouseTransparent(true);
         getChildren().add(totemLayer);
 
         setMinSize(tileWidth, tileHeight);
         setPrefSize(tileWidth, tileHeight);
+        setMaxSize(tileWidth, tileHeight);
+        // Restrict hit-testing to the tile's own rectangular bounds so that totem
+        // cells placed at negative layoutY cannot expand the pick region upward.
+        setPickOnBounds(true);
     }
 }

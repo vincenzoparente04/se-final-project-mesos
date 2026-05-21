@@ -4,6 +4,8 @@ import network.client.core.ClientStateListener;
 import network.client.core.LocalGameState;
 import network.client.core.cli.view.GameStateRenderer;
 import shared.dto.*;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
 
 import java.util.List;
 
@@ -68,14 +70,25 @@ public class ClientStateListenerCli implements ClientStateListener {
     }
 
     @Override
-    public synchronized void onGameOver(List<String> winners) {
-        System.out.println("\n" + "═".repeat(48));
-        if (winners.isEmpty()) {
-            System.out.println("  GAME OVER — no winners.");
+    public synchronized void onEventResolved(EventResolutionDto resolution) {
+        renderer.renderEvent(resolution, localPlayerName);
+        System.out.print("> ");
+    }
+
+    @Override
+    public synchronized void onGameOver(List<String> winners, EndGameScoringDto scoring) {
+        if (scoring != null) {
+            renderer.renderEndGameScoring(scoring, winners, localPlayerName);
         } else {
-            System.out.println("  GAME OVER — Winner(s): " + String.join(", ", winners));
+            // forfait (suspension timeout): solo annuncio dei winners
+            System.out.println("\n" + "═".repeat(48));
+            if (winners == null || winners.isEmpty()) {
+                System.out.println("  GAME OVER — no winners.");
+            } else {
+                System.out.println("  GAME OVER — Winner(s): " + String.join(", ", winners));
+            }
+            System.out.println("═".repeat(48));
         }
-        System.out.println("═".repeat(48));
     }
 
     @Override

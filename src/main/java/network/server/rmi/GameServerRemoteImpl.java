@@ -9,28 +9,41 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import network.client.rmi.ClientCallbackRemote;
 import network.server.core.LobbyManager;
+import shared.command.gameCommand.GameCommand;
+import shared.command.lobbyCommand.HeartbeatCommand;
+import shared.command.lobbyCommand.LobbyCommand;
 
 public class GameServerRemoteImpl extends UnicastRemoteObject implements GameServerRemote {
 
     private final LobbyManager lobbyManager;
     private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues = new ConcurrentHashMap<>();
+    /**
+     * Mappa playerName → RmiVirtualView per il dispatch del HeartbeatCommand.
+     * Accesso package-private a {@link RmiVirtualView#notifyInbound()} senza passare
+     * dall'interfaccia {@code VirtualView} (che non espone il metodo per design).
+     */
+    private final ConcurrentHashMap<String, RmiVirtualView> rmiViews =
+            new ConcurrentHashMap<>();
 
-    private final CommandDispatcher dispatcher = new CommandDispatcher() {
+
+    private final ClientCommandVisitor dispatcher = new ClientCommandVisitor() {
         @Override
-        public void onLobbyCommand(LobbyCommand cmd) throws Exception {
+        public void visit(LobbyCommand cmd) throws Exception {
             cmd.accept(lobbyManager);
         }
 
         @Override
-        public void onGameCommand(GameCommand cmd) throws InterruptedException {
+        public void visit(GameCommand cmd) throws InterruptedException {
             BlockingQueue<GameCommand> queue = gameQueues.get(cmd.getPlayerName());
             if (queue == null) return;
             queue.put(cmd);
         }
 
         @Override
-        public void onHeartbeatCommand(HeartbeatCommand cmd) {
-            lobbyManager.onHeartbeatReceived(cmd.playerName());
+        public void visit(HeartbeatCommand cmd) {
+            // Canale di liveness isolato: solo HeartbeatCommand aggiorna il watchdog server-side.
+            RmiVirtualView view = rmiViews.get(cmd.playerName());
+            if (view != null) view.notifyInbound();
         }
     };
 
@@ -49,6 +62,9 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
         RmiVirtualView view = new RmiVirtualView(playerName, callback, lobbyManager);
         boolean connectionSuccessful = lobbyManager.addRmiPlayer(new RmiPlayerEntry(view, this));
         if (connectionSuccessful) {
+            // Register the view so the HeartbeatCommand dispatcher can route
+            // liveness notifications back to the right sentinel.
+            rmiViews.put(playerName, view);
             System.out.println("RMI connection from " + host);
         }
         return connectionSuccessful;

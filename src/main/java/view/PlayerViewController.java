@@ -7,8 +7,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.layout.StackPane;
 import shared.dto.CardDto;
 import shared.dto.PlayerDto;
@@ -32,7 +32,7 @@ public class PlayerViewController implements ViewController {
     @FXML private Label nameLabel;
     @FXML private HBox foodBox;
     @FXML private StackPane ppBox;
-    @FXML private FlowPane chipsBar;
+    @FXML private VBox chipsBar;
 
     private PlayerDto player;
     private boolean isSelf;
@@ -88,8 +88,21 @@ public class PlayerViewController implements ViewController {
             }
         }
 
-        addIconChip(counts, "HUNTER",   "Hunter.png");
-        addIconChip(counts, "BUILDER",  "Builder.png");
+        // Row 1: HUNTER · BUILDER
+        HBox row1 = new HBox(4);
+        row1.setAlignment(Pos.CENTER_LEFT);
+        addIconChipTo(row1, counts, "HUNTER",  "Hunter.png");
+        addIconChipTo(row1, counts, "BUILDER", "Builder.png");
+
+        // Row 2: ARTIST · INVENTOR
+        HBox row2 = new HBox(4);
+        row2.setAlignment(Pos.CENTER_LEFT);
+        addIconChipTo(row2, counts, "ARTIST",   "Artist.png");
+        addIconChipTo(row2, counts, "INVENTOR", "Inventor.png");
+
+        // Row 3: SHAMAN (with stars)
+        HBox row3 = new HBox(4);
+        row3.setAlignment(Pos.CENTER_LEFT);
         if (counts.getOrDefault("SHAMAN", 0) > 0) {
             HBox chip = buildIconChip("Shaman.png", "×" + counts.get("SHAMAN"));
             if (totalStars > 0) {
@@ -103,22 +116,28 @@ public class PlayerViewController implements ViewController {
                 }
                 chip.getChildren().add(new Label("×" + totalStars));
             }
-            chipsBar.getChildren().add(chip);
+            row3.getChildren().add(chip);
         }
-        addIconChip(counts, "ARTIST",   "Artist.png");
-        addIconChip(counts, "INVENTOR", "Inventor.png");
-        addIconChip(counts, "GATHERER", "Gatherer.png");
 
+        // Row 4: GATHERER · buildings
+        HBox row4 = new HBox(4);
+        row4.setAlignment(Pos.CENTER_LEFT);
+        addIconChipTo(row4, counts, "GATHERER", "Gatherer.png");
         int buildings = tribe.buildings != null ? tribe.buildings.size() : 0;
         if (buildings > 0) {
-            chipsBar.getChildren().add(buildTextChip("⌂ ×" + buildings));
+            row4.getChildren().add(buildTextChip("⌂ ×" + buildings));
         }
+
+        if (!row1.getChildren().isEmpty()) chipsBar.getChildren().add(row1);
+        if (!row2.getChildren().isEmpty()) chipsBar.getChildren().add(row2);
+        if (!row3.getChildren().isEmpty()) chipsBar.getChildren().add(row3);
+        if (!row4.getChildren().isEmpty()) chipsBar.getChildren().add(row4);
     }
 
-    private void addIconChip(Map<String, Integer> counts, String type, String iconFile) {
+    private void addIconChipTo(HBox row, Map<String, Integer> counts, String type, String iconFile) {
         int n = counts.getOrDefault(type, 0);
         if (n == 0) return;
-        chipsBar.getChildren().add(buildIconChip(iconFile, "×" + n));
+        row.getChildren().add(buildIconChip(iconFile, "×" + n));
     }
 
     private HBox buildIconChip(String iconFile, String text) {

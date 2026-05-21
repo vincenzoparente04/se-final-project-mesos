@@ -4,7 +4,7 @@ import model.cards.buildingCards.BuildingCard;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;
-import model.buildingEffects.BuildingEffect;
+import model.cards.buildingCards.buildingEffects.BuildingEffect;
 import model.rowsManager.CardVisitor;
 
 import org.junit.jupiter.api.BeforeEach;

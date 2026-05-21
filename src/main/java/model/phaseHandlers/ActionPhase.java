@@ -7,8 +7,8 @@ import model.enums.GamePhase;
 import model.board.OfferTileAction.OfferTileAction;
 import model.player.Player;
 import model.rowsManager.RowsManager;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
+import shared.command.gameCommand.DrawCardCommand;
+import shared.command.gameCommand.EndTurnCommand;
 
 
 public class ActionPhase implements GamePhaseHandler {

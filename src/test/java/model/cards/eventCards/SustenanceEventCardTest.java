@@ -1,6 +1,6 @@
 package model.cards.eventCards;
 
-import model.buildingEffects.OnEventEffects.OnEventBuildingEffect;
+import model.cards.buildingCards.buildingEffects.onEventEffects.OnEventBuildingEffect;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;

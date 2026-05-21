@@ -1,10 +1,11 @@
 package network.server.socket;
 
+import network.server.core.VirtualView;
 import shared.command.ClientCommand;
-import shared.command.CommandDispatcher;
-import shared.command.GameCommand;
-import shared.command.LobbyCommand;
-import shared.command.HeartbeatCommand;
+import shared.command.ClientCommandVisitor;
+import shared.command.gameCommand.GameCommand;
+import shared.command.lobbyCommand.LobbyCommand;
+import shared.command.lobbyCommand.HeartbeatCommand;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -13,23 +14,24 @@ import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 
 import network.server.core.LobbyManager;
-import network.server.core.VirtualView;
 
 public class SocketClientHandler implements Runnable {
 
+    // Tipizzato come SocketVirtualView (non VirtualView) per accedere
+    // al metodo package-private notifyInbound() senza cast.
     private final VirtualView virtualView;
     private final ObjectInputStream in;
     private final LobbyManager lobbyManager;
     private volatile BlockingQueue<GameCommand> gameQueue = null;
 
-    private final CommandDispatcher dispatcher = new CommandDispatcher() {
+    private final ClientCommandVisitor dispatcher = new ClientCommandVisitor() {
         @Override
-        public void onLobbyCommand(LobbyCommand cmd) throws Exception {
+        public void visit(LobbyCommand cmd) throws Exception {
             cmd.accept(lobbyManager);
         }
 
         @Override
-        public void onGameCommand(GameCommand cmd) throws InterruptedException {
+        public void visit(GameCommand cmd) throws InterruptedException {
             BlockingQueue<GameCommand> queue = gameQueue;
             if (queue == null) {
                 virtualView.sendError("not_in_game");
@@ -39,8 +41,9 @@ public class SocketClientHandler implements Runnable {
         }
 
         @Override
-        public void onHeartbeatCommand(HeartbeatCommand cmd) {
-            lobbyManager.onHeartbeatReceived(cmd.playerName());
+        public void visit(HeartbeatCommand cmd) {
+            // Canale di liveness isolato: solo HeartbeatCommand aggiorna il watchdog.
+            virtualView.notifyInbound();
         }
     };
 

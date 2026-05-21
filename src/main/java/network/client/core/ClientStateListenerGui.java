@@ -2,9 +2,12 @@ package network.client.core;
 
 import javafx.application.Platform;
 import shared.dto.LobbyDto;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
 import view.SceneRouter;
 import view.ViewController;
 import view.widgets.ErrorToast;
+import view.widgets.EventResolutionOverlay;
 
 import java.util.List;
 
@@ -61,13 +64,24 @@ public class ClientStateListenerGui implements ClientStateListener {
     }
 
     @Override
-    public void onGameOver(List<String> winners) {
+    public void onEventResolved(EventResolutionDto resolution) {
+        if (resolution == null) return;
+        Platform.runLater(() -> EventResolutionOverlay.enqueue(router.currentRoot(), resolution));
+    }
+
+    @Override
+    public void onGameOver(List<String> winners, EndGameScoringDto scoring) {
         Platform.runLater(() -> {
-            if (router.localState() == null || router.localState().snapshot() == null) {
-                router.toWinner(List.of(), winners);
-                return;
-            }
-            router.toWinner(router.localState().getPlayers(), winners);
+            List<shared.dto.PlayerDto> players =
+                    (router.localState() != null && router.localState().snapshot() != null)
+                    ? router.localState().getPlayers()
+                    : List.of();
+
+            Runnable navigate = () -> router.toWinner(players, winners, scoring);
+
+            // Wait for any queued event overlays (the 2 end-of-game events) to finish
+            // before navigating to the winner screen.
+            EventResolutionOverlay.setOnQueueDrained(navigate);
         });
     }
 

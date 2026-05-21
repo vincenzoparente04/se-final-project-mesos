@@ -1,7 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
+import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
 import model.rowsManager.RowsManager;
 import model.player.Player;
 import model.player.Tribe;

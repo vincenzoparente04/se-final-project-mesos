@@ -1,5 +1,6 @@
 package model.buildingEffects.OnEventEffects;
 
+import model.cards.buildingCards.buildingEffects.onEventEffects.SustenanceDiscountEffect;
 import model.cards.characterCards.ArtistCard;
 import model.cards.characterCards.HunterCard;
 import model.enums.Era;

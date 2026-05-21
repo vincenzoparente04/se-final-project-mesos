@@ -1,5 +1,6 @@
 package model.buildingEffects.OnEventEffects;
 
+import model.cards.buildingCards.buildingEffects.onEventEffects.ArtistBonusForCavePaintings;
 import model.cards.characterCards.ArtistCard;
 import model.enums.Era;
 import model.player.Player;
