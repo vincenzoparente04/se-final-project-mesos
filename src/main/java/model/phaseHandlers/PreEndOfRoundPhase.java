@@ -73,6 +73,14 @@ public class PreEndOfRoundPhase implements GamePhaseHandler {
     }
 
     @Override
+    public void skipCurrentPlayerTurn()
+    {
+        activePlayer = null;
+        model.setPhase(new EndOfRoundPhase(model));
+        this.model.notifyChange();
+    }
+
+    @Override
     public GamePhase getPhase() { return GamePhase.PRE_END_OF_ROUND; }
 
     @Override
