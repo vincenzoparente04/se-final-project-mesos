@@ -7,6 +7,7 @@ import model.enums.Era;
 import model.player.Player;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.dto.event.EventResolutionDto;
 
 import java.util.List;
 
@@ -25,8 +26,10 @@ class EventCardTest {
         }
 
         @Override
-        public void resolve(List<Player> players) {
-            // No-op test implementation.
+        public EventResolutionDto resolve(List<Player> players) {
+            // No-op test implementation: return an empty DTO.
+            return new EventResolutionDto("TEST", getEra().name(), getId(),
+                    "test event", List.of());
         }
     }
 

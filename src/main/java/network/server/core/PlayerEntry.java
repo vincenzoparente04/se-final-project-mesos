@@ -2,7 +2,7 @@ package network.server.core;
 
 import java.util.concurrent.BlockingQueue;
 
-import shared.command.GameCommand;
+import shared.command.gameCommand.GameCommand;
 
 /**
  * Server-side representation of a connected player, transport-agnostic.

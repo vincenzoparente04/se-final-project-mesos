@@ -1,6 +1,8 @@
 package network.client.core;
 
 import shared.dto.LobbyDto;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
 
 import java.util.List;
 
@@ -19,6 +21,16 @@ public interface ClientStateListener {
     void onLobbyState(LobbyDto lobby);
     void onGameStarting();
     void onError(String message);
-    void onGameOver(List<String> winners);
+
+    /** One-shot notification: an event card has been resolved server-side. */
+    void onEventResolved(EventResolutionDto resolution);
+
+    /**
+     * Game-over notification. {@code scoring} is {@code null} when the
+     * end-game scoring breakdown is not applicable (e.g. suspension-timeout
+     * forfeit).
+     */
+    void onGameOver(List<String> winners, EndGameScoringDto scoring);
+
     void onDisconnected();
 }

@@ -2,9 +2,10 @@ package shared.message;
 
 import java.io.Serializable;
 
-public sealed interface ServerMessage extends Serializable
-        permits StateMessage, ErrorMessage, GameOverMessage,
-                LobbyListMessage, LobbyStateMessage, GameStartingMessage {
 
-    void accept(ServerMessageHandler handler);
+/**
+ * Message originated by the server and sent from the server to the client.
+ */
+public interface ServerMessage extends Serializable {
+    void accept(ServerMessageVisitor visitor);
 }

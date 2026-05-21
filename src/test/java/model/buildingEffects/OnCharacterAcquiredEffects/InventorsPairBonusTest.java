@@ -1,5 +1,6 @@
 package model.buildingEffects.OnCharacterAcquiredEffects;
 
+import model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects.InventorsPairBonus;
 import model.cards.characterCards.InventorCard;
 import model.enums.Era;
 import model.enums.InventionIcon;

@@ -2,11 +2,15 @@ package network.server.rmi;
 
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
+import shared.liveness.LivenessSentinel;
 
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import network.client.rmi.ClientCallbackRemote;
 import network.server.core.LobbyManager;
@@ -14,11 +18,34 @@ import network.server.core.VirtualView;
 
 public class RmiVirtualView implements VirtualView {
 
+    /**
+     * Periodo di invio heartbeat server→client.
+     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling.
+     */
+    /**
+     * Intervalli del sentinel server-side RMI.
+     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling
+     * e ritardi temporanei dovuti a messaggi applicativi grandi che impegnano il sender.
+     * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
+     */
+    private static final long SEND_INTERVAL_MS  = 2_000L;
+    private static final long CHECK_INTERVAL_MS = 5_000L;
+    private static final long TIMEOUT_MS        = 15_000L;
+
     private final String playerName;
     private final ClientCallbackRemote callback;
     private final LobbyManager lobbyManager;
     private final ExecutorService senderExecutor;
-    private volatile boolean closed = false;
+    private final LivenessSentinel sentinel;
+
+    /**
+     * Garantisce che la pipeline di chiusura (sentinel + executor) venga eseguita al più
+     * una volta, anche in presenza di race tra {@link #close()} e {@link #handleDisconnect()}.
+     * Usare CAS invece di {@code synchronized} evita un potenziale deadlock con il lock di
+     * {@link LobbyManager} quando quest'ultimo chiama {@code close()} dall'interno di
+     * {@code onDisconnect}.
+     */
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     public RmiVirtualView(String playerName, ClientCallbackRemote callback, LobbyManager lobbyManager) {
         this.playerName = playerName;
@@ -29,17 +56,46 @@ public class RmiVirtualView implements VirtualView {
             t.setDaemon(true);
             return t;
         });
+        this.sentinel = new LivenessSentinel(
+                "server-" + playerName,
+                SEND_INTERVAL_MS, CHECK_INTERVAL_MS, TIMEOUT_MS,
+                this::sendHeartbeat,
+                () -> lobbyManager.onDisconnect(playerName));
     }
 
     @Override
     public void sendState(GameStateDto dto) {
-        if (closed) return;
+        if (closed.get()) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onState(dto);
-                if (dto.winners != null && !dto.winners.isEmpty()) {
-                    callback.onGameOver(String.join(",", dto.winners));
-                }
+                // Game-over is no longer auto-emitted from state: the phase
+                // (or the suspension-timeout handler) calls sendGameOver(...)
+                // explicitly so the scoring breakdown ships with the winners.
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
+    public void sendEventResolved(EventResolutionDto resolution) {
+        if (closed.get()) return;
+        senderExecutor.submit(() -> {
+            try {
+                callback.onEventResolved(resolution);
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
+    public void sendGameOver(List<String> winners, EndGameScoringDto scoring) {
+        if (closed.get()) return;
+        senderExecutor.submit(() -> {
+            try {
+                callback.onGameOver(winners, scoring);
             } catch (RemoteException e) {
                 handleDisconnect();
             }
@@ -48,7 +104,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendError(String message) {
-        if (closed) return;
+        if (closed.get()) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onError(message);
@@ -60,7 +116,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendLobbyList(List<LobbyDto> lobbies) {
-        if (closed) return;
+        if (closed.get()) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onLobbyList(lobbies);
@@ -72,7 +128,7 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendLobbyState(LobbyDto lobby) {
-        if (closed) return;
+        if (closed.get()) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onLobbyState(lobby);
@@ -84,10 +140,22 @@ public class RmiVirtualView implements VirtualView {
 
     @Override
     public void sendGameStarting() {
-        if (closed) return;
+        if (closed.get()) return;
         senderExecutor.submit(() -> {
             try {
                 callback.onGameStarting();
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
+    public void sendHeartbeat() {
+        if (closed.get()) return;
+        senderExecutor.submit(() -> {
+            try {
+                callback.onHeartbeat();
             } catch (RemoteException e) {
                 handleDisconnect();
             }
@@ -100,16 +168,26 @@ public class RmiVirtualView implements VirtualView {
     }
 
     @Override
-    public synchronized void close() {
-        if(closed) return;
-        closed = true;
+    public void activateLiveness() {
+        sentinel.start();
+    }
 
+    /** Aggiorna il timestamp di liveness: da chiamare solo all'arrivo di un HeartbeatCommand. */
+    @Override
+    public void notifyInbound() {
+        sentinel.notifyInbound();
+    }
+
+    @Override
+    public void close() {
+        if (!closed.compareAndSet(false, true)) return;
+        sentinel.stop();
         senderExecutor.shutdownNow();
     }
 
-    private synchronized void handleDisconnect() {
-        if (closed) return;
-        closed = true;
+    private void handleDisconnect() {
+        if (!closed.compareAndSet(false, true)) return;
+        sentinel.stop();
         senderExecutor.shutdownNow();
         lobbyManager.onDisconnect(playerName);
     }

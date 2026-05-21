@@ -2,9 +2,14 @@ package network.client.core;
 
 import javafx.application.Platform;
 import shared.dto.LobbyDto;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
+import shared.dto.event.PlayerEventDeltaDto;
+import shared.dto.event.PlayerScoringDeltaDto;
 import view.SceneRouter;
 import view.ViewController;
 import view.widgets.ErrorToast;
+import view.widgets.EventOverlay;
 
 import java.util.List;
 
@@ -61,8 +66,27 @@ public class ClientStateListenerGui implements ClientStateListener {
     }
 
     @Override
-    public void onGameOver(List<String> winners) {
+    public void onEventResolved(EventResolutionDto resolution) {
+        // Debug-only in-window overlay: shows the same per-player data the
+        // CLI renders. Will be replaced by a proper themed overlay by the
+        // UI team.
+        if (resolution == null) return;
+        Platform.runLater(() ->
+                EventOverlay.show(router.currentRoot(), resolution.headline, formatEvent(resolution)));
+    }
+
+    @Override
+    public void onGameOver(List<String> winners, EndGameScoringDto scoring) {
         Platform.runLater(() -> {
+            // Debug overlay with the end-game scoring breakdown (if any).
+            // Will be replaced by a proper end-game screen by the UI team.
+            if (scoring != null) {
+                String header = (winners == null || winners.isEmpty())
+                        ? "GAME OVER — no winners"
+                        : "GAME OVER — Winner(s): " + String.join(", ", winners);
+                EventOverlay.show(router.currentRoot(), header, formatScoring(scoring));
+            }
+
             if (router.localState() == null || router.localState().snapshot() == null) {
                 router.toWinner(List.of(), winners);
                 return;
@@ -77,5 +101,34 @@ public class ClientStateListenerGui implements ClientStateListener {
             ErrorToast.show(router.currentRoot(), "Disconnected from server");
             router.toNetworkSetup();
         });
+    }
+
+    // ─── Formatters (debug-quality, line-based) ─────────────────────────
+
+    private static String formatEvent(EventResolutionDto resolution) {
+        StringBuilder sb = new StringBuilder();
+        for (PlayerEventDeltaDto d : resolution.deltas) {
+            sb.append(String.format(
+                    "%s  food %d → %d  prestige %d → %d  (%s)%n",
+                    d.playerName,
+                    d.foodBefore, d.foodAfter,
+                    d.prestigeBefore, d.prestigeAfter,
+                    d.details == null ? "" : d.details));
+        }
+        return sb.toString();
+    }
+
+    private static String formatScoring(EndGameScoringDto scoring) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%-12s  %4s %4s %4s %4s %4s   %4s → %4s%n",
+                "Player", "Bld", "Art", "Inv", "BPP", "Eff", "PP", "PP"));
+        for (PlayerScoringDeltaDto d : scoring.deltas) {
+            sb.append(String.format("%-12s  %+4d %+4d %+4d %+4d %+4d   %4d → %4d%n",
+                    d.playerName,
+                    d.buildersPoints, d.artistsPoints, d.inventorsPoints,
+                    d.buildingPrintedPoints, d.endGameBuildingEffectsPoints,
+                    d.prestigeBefore, d.prestigeAfter));
+        }
+        return sb.toString();
     }
 }

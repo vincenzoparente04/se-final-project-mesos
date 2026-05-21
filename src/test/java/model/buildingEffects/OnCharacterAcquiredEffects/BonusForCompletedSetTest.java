@@ -1,5 +1,6 @@
 package model.buildingEffects.OnCharacterAcquiredEffects;
 
+import model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects.BonusForCompletedSet;
 import model.cards.characterCards.ArtistCard;
 import model.cards.characterCards.BuilderCard;
 import model.cards.characterCards.GathererCard;

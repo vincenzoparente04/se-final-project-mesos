@@ -5,8 +5,8 @@ import model.cards.Card;
 import model.enums.GamePhase;
 import model.player.Player;
 import model.rowsManager.RowsManager;
-import shared.command.DrawCardCommand;
-import shared.command.EndTurnCommand;
+import shared.command.gameCommand.DrawCardCommand;
+import shared.command.gameCommand.EndTurnCommand;
 
 import java.util.Optional;
 

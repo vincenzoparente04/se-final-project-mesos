@@ -4,7 +4,7 @@ import java.util.concurrent.BlockingQueue;
 
 import network.server.core.PlayerEntry;
 import network.server.core.VirtualView;
-import shared.command.GameCommand;
+import shared.command.gameCommand.GameCommand;
 
 /**
  * RMI implementation of {@link PlayerEntry}. The game queue set by the

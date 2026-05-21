@@ -5,6 +5,10 @@ import model.enums.Era;
 import model.enums.GamePhase;
 import model.player.Player;
 import model.rowsManager.RowsManager;
+import network.server.core.VirtualView;
+import shared.dto.event.EventResolutionDto;
+
+import java.util.List;
 
 public class EndOfRoundPhase implements GamePhaseHandler {
 
@@ -15,15 +19,22 @@ public class EndOfRoundPhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote This method resolves all events on the board, checks for era changes, and transitions
-     * to the next phase (either PlacementPhase or EndOfGamePhase) based on whether the game is over.
-     * It also notifies observers of any changes that occur during this process.
+     * @implNote This method resolves all events on the board, broadcasts one
+     * {@code EventResolvedMessage} per resolved event card (so the client can
+     * show an explanatory screen), checks for era changes, and transitions
+     * to the next phase (either PlacementPhase or EndOfGamePhase) based on
+     * whether the game is over.
      */
     @Override
     public void onEnter() {
         RowsManager rowsManager = model.getRowsManager();
-        rowsManager.resolveEvents(model.getPlayers());
-        model.notifyChange();
+        List<EventResolutionDto> resolutions = rowsManager.resolveEvents(model.getPlayers());
+        for (EventResolutionDto r : resolutions) {
+            for (VirtualView v : model.getViews()) {
+                v.sendEventResolved(r);
+            }
+        }
+        // model.notifyChange();
 
         model.incrementRound();
 

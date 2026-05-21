@@ -4,7 +4,7 @@ import model.GameModel;
 import model.enums.GamePhase;
 import model.enums.TotemColor;
 import model.player.Player;
-import shared.command.ChooseColorCommand;
+import shared.command.gameCommand.ChooseColorCommand;
 
 import java.util.EnumSet;
 import java.util.List;
