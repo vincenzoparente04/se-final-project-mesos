@@ -80,7 +80,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                 return t;
             });
     private ScheduledFuture<?> suspensionTimeoutFuture = null;
-    private static final long SUSPENSION_TIMEOUT_SECONDS = 30;
+    private static final long SUSPENSION_TIMEOUT_SECONDS = 60;
 
     /**
      * Test-only constructor: receives a pre-built {@link GameModel} and does

@@ -98,8 +98,7 @@ public class ClientMain extends Application {
         ConnectionProtocol protocol = ConnectionProtocol.valueOf(transport.toUpperCase());
 
             try {
-                virtualServer = VirtualServerFactory.connect(
-                        protocol, host, port);
+                virtualServer = VirtualServerFactory.connect(protocol, host, port);
 
                 router.connectionEstablished();
             } catch (Exception ex) {

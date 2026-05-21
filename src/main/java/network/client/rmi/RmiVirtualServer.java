@@ -85,6 +85,8 @@ public class RmiVirtualServer implements VirtualServer {
         this.host = host;
         Registry registry = LocateRegistry.getRegistry(host, rmiPort);
         this.serverStub = (GameServerRemote) registry.lookup(SERVICE_NAME);
+
+        // TODO
     }
 
     @Override
