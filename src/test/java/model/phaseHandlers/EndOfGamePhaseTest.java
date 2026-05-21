@@ -1,6 +1,7 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
 import model.rowsManager.RowsManager;
 import model.player.Player;
 import model.player.Tribe;
@@ -74,10 +75,9 @@ public class EndOfGamePhaseTest {
         //verify (first the order of operations, then the points calculations, then the winner)
 		var order = inOrder(rowsManager, model);
 		order.verify(rowsManager, times(1)).resolveAllEvents(players);
-		order.verify(model, times(1)).notifyChange("final_events_resolved");
-		order.verify(model, times(1)).notifyChange("endgame_scoring_complete");
-		order.verify(model, times(1)).notifyChange("game_over:p1");
-		verify(model, never()).notifyChange("game_over:p2");
+		order.verify(model, times(1)).notifyChange();
+		order.verify(model, times(1)).notifyChange();
+		order.verify(model, times(1)).notifyChange();
 
 		verify(p1, times(1)).addPrestigePoints(3);
 		verify(p1, times(1)).addPrestigePoints(10);
@@ -85,9 +85,8 @@ public class EndOfGamePhaseTest {
 		verify(p1, times(1)).addPrestigePoints(8);
 		verify(p1, never()).addPrestigePoints(99); //ahahah
 
-		verify(p2, times(1)).addPrestigePoints(2);
+		verify(p2, times(2)).addPrestigePoints(2); //for builders and inventors
 		verify(p2, times(1)).addPrestigePoints(0);
-		verify(p2, times(1)).addPrestigePoints(2);
 		verify(p2, times(1)).addPrestigePoints(5);
 		verify(p2, never()).addPrestigePoints(99);
 
@@ -122,12 +121,29 @@ public class EndOfGamePhaseTest {
 		phase.onEnter();
 
 		verify(rowsManager, times(1)).resolveAllEvents(players);
-		verify(model, times(1)).notifyChange("final_events_resolved");
-		verify(model, times(1)).notifyChange("endgame_scoring_complete");
-		verify(model, times(1)).notifyChange("game_over:p2");
-		verify(model, never()).notifyChange("game_over:p1");
+		verify(model, times(3)).notifyChange();
 		assertEquals(1, phase.getWinners().size());
 		assertSame(p2, phase.getWinners().getFirst());
+	}
+
+	@Test
+	@DisplayName("onEnter applies every EndGameBuildingEffect for each player")
+	void onEnterAppliesEndGameBuildingEffects() {
+		Player p1 = mock(Player.class);
+		Tribe t1 = mock(Tribe.class);
+		EndGameBuildingEffect effect1 = mock(EndGameBuildingEffect.class);
+		EndGameBuildingEffect effect2 = mock(EndGameBuildingEffect.class);
+
+		when(model.getPlayers()).thenReturn(List.of(p1));
+		when(p1.getName()).thenReturn("p1");
+		when(p1.getTribe()).thenReturn(t1);
+		when(t1.getEndGameBuildingEffects()).thenReturn(List.of(effect1, effect2));
+		when(p1.getPrestigePoints()).thenReturn(10);
+
+		phase.onEnter();
+
+		verify(effect1, times(1)).applyEffect(p1);
+		verify(effect2, times(1)).applyEffect(p1);
 	}
 
 	@Test
@@ -157,11 +173,7 @@ public class EndOfGamePhaseTest {
 		phase.onEnter();
 
 		verify(rowsManager, times(1)).resolveAllEvents(players);
-		verify(model, times(1)).notifyChange("final_events_resolved");
-		verify(model, times(1)).notifyChange("endgame_scoring_complete");
-		verify(model, times(1)).notifyChange("game_over:p1, p2");
-		verify(model, never()).notifyChange("game_over:p1");
-		verify(model, never()).notifyChange("game_over:p2");
+		verify(model, times(3)).notifyChange();
 		assertEquals(2, phase.getWinners().size());
 		assertSame(p1, phase.getWinners().get(0));
 		assertSame(p2, phase.getWinners().get(1));

@@ -1,0 +1,263 @@
+@startuml client_view
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+' ═══════════════════════════════════════════════════════
+'  network.client
+' ═══════════════════════════════════════════════════════
+package "network.client" {
+
+    class ClientMain <<Application>> {
+        - router : SceneRouter
+        + start(Stage) : void
+        + stop() : void
+    }
+
+    class LocalGameState {
+        - latest : AtomicReference<GameStateDto>
+        + update(GameStateDto) : void
+        + snapshot() : GameStateDto
+        + getPhase() : String
+        + getPlayers() : List<PlayerDto>
+        + isGameOver() : boolean
+    }
+
+    interface ClientStateListener {
+        + onGameStateUpdated(LocalGameState) : void
+        + onLobbyList(List<LobbyDto>) : void
+        + onLobbyState(LobbyDto) : void
+        + onGameStarting() : void
+        + onError(String) : void
+        + onGameOver(List<String>) : void
+        + onDisconnected() : void
+    }
+
+    class ClientStateListenerGui {
+        - router : SceneRouter
+        + onGameStateUpdated(LocalGameState) : void
+        + onLobbyList(List<LobbyDto>) : void
+        + onLobbyState(LobbyDto) : void
+        + onGameStarting() : void
+        + onError(String) : void
+        + onGameOver(List<String>) : void
+        + onDisconnected() : void
+    }
+
+    interface VirtualServer {
+        + sendChooseColor(String) : void
+        + sendPlaceTotem(char) : void
+        + sendDrawCard(int) : void
+        + sendEndTurn() : void
+        + sendCreateLobby(int) : void
+        + sendJoinLobby(String) : void
+        + sendListLobbies() : void
+        + sendLeaveCommand() : void
+        + close() : void
+    }
+
+    class VirtualServerFactory <<utility>> {
+        + {static} create(ConnectionProtocol, String, int,\n  String, LocalGameState, ClientStateListener) : VirtualServer
+    }
+
+    enum ConnectionProtocol {
+        SOCKET
+        RMI
+    }
+}
+
+' ═══════════════════════════════════════════════════════
+'  view
+' ═══════════════════════════════════════════════════════
+package "view" {
+
+    class SceneRouter {
+        - stage : Stage
+        - localState : LocalGameState
+        - virtualServer : VirtualServer
+        - playerName : String
+        - currentController : Object
+        - currentRoot : StackPane
+        - pendingErrorHandler : Consumer<String>
+        - pendingLobbyListHandler : Consumer<List<LobbyDto>>
+        + toSplash() : void
+        + toNick() : void
+        + toLobby() : void
+        + toWaiting(LobbyDto) : void
+        + toTotemPick() : void
+        + toBoard() : void
+        + toWinner(List<PlayerDto>, List<String>) : void
+        + onNextError(Consumer<String>) : void
+        + onNextLobbyList(Consumer<List<LobbyDto>>) : void
+        + dispatchError(String) : boolean
+        + dispatchLobbyList(List<LobbyDto>) : boolean
+        + showDisconnectOverlay() : void
+    }
+
+    class SplashViewController {
+        - router : SceneRouter
+        + bind(SceneRouter) : void
+    }
+
+    class NickViewController {
+        - router : SceneRouter
+        + bind(SceneRouter) : void
+        - onConnect() : void
+    }
+
+    class LobbyViewController {
+        - router : SceneRouter
+        + bind(SceneRouter) : void
+        + showLobbies(List<LobbyDto>) : void
+    }
+
+    class WaitingViewController {
+        - router : SceneRouter
+        + bind(SceneRouter, LobbyDto) : void
+        + update(LobbyDto) : void
+    }
+
+    class TotemPickViewController {
+        - router : SceneRouter
+        + bind(SceneRouter) : void
+        + update(LocalGameState) : void
+    }
+
+    class BoardViewController {
+        - router : SceneRouter
+        + bind(SceneRouter) : void
+        + update(LocalGameState) : void
+    }
+
+    class WinnerViewController {
+        - router : SceneRouter
+        + bind(SceneRouter, List<PlayerDto>, List<String>) : void
+    }
+
+    class PlayerViewController {
+        + {static} load(PlayerDto, boolean, boolean) : PlayerViewController
+        + root() : Parent
+        + player() : PlayerDto
+    }
+
+    class TribePopupController {
+        + {static} show(Window, PlayerDto) : void
+    }
+}
+
+' ═══════════════════════════════════════════════════════
+'  view.widgets
+' ═══════════════════════════════════════════════════════
+package "view.widgets" {
+
+    class CardView extends StackPane {
+        + CardView(CardDto, boolean)
+        + CardView(CardDto, boolean, double, double)
+    }
+
+    class CardZoomOverlay <<utility>> {
+        + {static} show(StackPane, CardDto) : void
+    }
+
+    class DeckView extends StackPane {
+        + DeckView(String backImageFilename)
+    }
+
+    class OfferTileView extends StackPane {
+        + OfferTileView(OfferTileDto, Map<String,PlayerDto>,\n  boolean, Consumer<Character>)
+    }
+
+    class TurnOrderTileView extends StackPane {
+        + TurnOrderTileView(List<TurnOrderSlotDto>, Map<String,PlayerDto>)
+    }
+
+    class TotemView extends StackPane {
+        + TotemView(String colorName, double size)
+    }
+
+    class ErrorToast <<utility>> {
+        + {static} show(StackPane, String) : void
+    }
+
+    class DisconnectOverlay <<utility>> {
+        + {static} show(StackPane, Stage) : void
+    }
+
+    class CreateLobbyDialog extends Stage {
+        + showAndWait(Window) : Optional<Integer>
+    }
+}
+
+' ═══════════════════════════════════════════════════════
+'  Relazioni — network.client
+' ═══════════════════════════════════════════════════════
+
+ClientStateListenerGui ..|> ClientStateListener
+ClientStateListenerGui --> SceneRouter : router
+
+ClientMain ..> SceneRouter         : creates
+ClientMain ..> LocalGameState      : creates
+ClientMain ..> ClientStateListenerGui : creates
+
+VirtualServerFactory ..> VirtualServer      : <<creates>>
+VirtualServerFactory ..> ConnectionProtocol : uses
+
+' ═══════════════════════════════════════════════════════
+'  Relazioni — SceneRouter
+' ═══════════════════════════════════════════════════════
+
+SceneRouter --> LocalGameState     : localState
+SceneRouter --> VirtualServer      : virtualServer
+SceneRouter --> ClientStateListener : listener
+SceneRouter ..> DisconnectOverlay  : uses
+
+' ═══════════════════════════════════════════════════════
+'  Relazioni — Controllers → SceneRouter
+' ═══════════════════════════════════════════════════════
+
+SplashViewController       --> SceneRouter : router
+NickViewController         --> SceneRouter : router
+LobbyViewController        --> SceneRouter : router
+WaitingViewController      --> SceneRouter : router
+TotemPickViewController    --> SceneRouter : router
+BoardViewController        --> SceneRouter : router
+WinnerViewController       --> SceneRouter : router
+
+NickViewController ..> VirtualServerFactory : uses
+
+' ═══════════════════════════════════════════════════════
+'  Relazioni — ClientStateListenerGui → Controllers
+'  (dipendenze di dispatch, non riferimenti permanenti)
+' ═══════════════════════════════════════════════════════
+
+ClientStateListenerGui ..> BoardViewController     : dispatches update
+ClientStateListenerGui ..> TotemPickViewController : dispatches update
+ClientStateListenerGui ..> LobbyViewController     : dispatches lobbies
+ClientStateListenerGui ..> WaitingViewController   : dispatches lobby state
+
+' ═══════════════════════════════════════════════════════
+'  Relazioni — Controllers → Widgets
+' ═══════════════════════════════════════════════════════
+
+BoardViewController ..> CardView           : uses
+BoardViewController ..> CardZoomOverlay    : uses
+BoardViewController ..> OfferTileView      : uses
+BoardViewController ..> TurnOrderTileView  : uses
+BoardViewController ..> DeckView           : uses
+BoardViewController ..> PlayerViewController : loads
+
+LobbyViewController  ..> CreateLobbyDialog : uses
+LobbyViewController  ..> ErrorToast        : uses
+
+TribePopupController ..> CardView          : uses
+TribePopupController ..> CardZoomOverlay   : uses
+TribePopupController ..> TotemView         : uses
+
+PlayerViewController ..> TotemView         : uses
+
+OfferTileView        ..> TotemView         : uses
+TurnOrderTileView    ..> TotemView         : uses
+
+@enduml

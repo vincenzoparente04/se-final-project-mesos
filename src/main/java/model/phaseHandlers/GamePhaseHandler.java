@@ -1,32 +1,38 @@
 package model.phaseHandlers;
 
-import model.GameModel;
 import model.enums.GamePhase;
-import model.enums.TotemColor;
 import model.player.Player;
+import shared.command.gameCommand.ChooseColorCommand;
+import shared.command.gameCommand.DrawCardCommand;
+import shared.command.gameCommand.EndTurnCommand;
+import shared.command.gameCommand.GameCommandVisitor;
+import shared.command.gameCommand.PlaceTotemCommand;
 
-public abstract class GamePhaseHandler {
+public interface GamePhaseHandler extends GameCommandVisitor {
 
-    protected final GameModel model;
+    GamePhase getPhase();
+    Player getCurrentPlayer();
 
-    public GamePhaseHandler(GameModel model) {
-        this.model = model;
+    default void onEnter() {}
+    default void skipCurrentPlayerTurn() {}
+
+    @Override
+    default void visit(ChooseColorCommand cmd) throws Exception {
+        throw new IllegalStateException("Cannot choose color in phase " + getPhase());
     }
 
-    public void onEnter() {}
-
-    public void chooseColor(Player player, TotemColor color) {}
-
-    public void placeTotem(Player player, char tileId) {}
-
-    public void drawCard(int cardId) {
-        throw new IllegalStateException(
-                "Cannot draw card during " + getPhase()
-        );
+    @Override
+    default void visit(PlaceTotemCommand cmd) throws Exception {
+        throw new IllegalStateException("Cannot place totem in phase " + getPhase());
     }
 
-    public void endTurn() {}
+    @Override
+    default void visit(DrawCardCommand cmd) throws Exception {
+        throw new IllegalStateException("Cannot draw card in phase " + getPhase());
+    }
 
-    public abstract GamePhase getPhase();
-    public abstract Player getCurrentPlayer();
+    @Override
+    default void visit(EndTurnCommand cmd) throws Exception {
+        throw new IllegalStateException("Cannot end turn in phase " + getPhase());
+    }
 }

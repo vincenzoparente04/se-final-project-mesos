@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import model.cards.TribeCard;
-import model.cards.charachterCards.*;
+import model.cards.characterCards.*;
 import model.cards.eventCards.*;
 import model.enums.Era;
 import model.enums.InventionIcon;
@@ -184,7 +184,7 @@ public class TribeCardFactory {
         return cards;
     }
 
-    private static List<TribeCard> createEvents(JsonArray array, List<TribeCard> regularCards, List<TribeCard> finalEvents) {
+    private static void createEvents(JsonArray array, List<TribeCard> regularCards, List<TribeCard> finalEvents) {
         List<TribeCard> cards = new ArrayList<>();
         for (JsonElement el : array) {
             JsonObject json = el.getAsJsonObject();
@@ -210,7 +210,6 @@ public class TribeCardFactory {
             if (isFinal) finalEvents.add(card);
             else         regularCards.add(card);
         }
-        return cards;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────

@@ -4,17 +4,16 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import model.buildingEffects.BuildingEffect;
-import model.buildingEffects.OnPickingEffects.OnPickingEffects;
-import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
-import model.buildingEffects.OnCharacterAcquiredEffects.BonusForCompletedSet;
-import model.buildingEffects.OnCharacterAcquiredEffects.InventorsPairBonus;
-import model.buildingEffects.OnEventEffects.ArtistBonusForCavePaintings;
-import model.buildingEffects.OnEventEffects.HunterBonusForHuntEvent;
-import model.buildingEffects.OnEventEffects.SustenanceDiscountEffect;
+import model.cards.buildingCards.buildingEffects.BuildingEffect;
+import model.cards.buildingCards.buildingEffects.onPickingEffects.OnPickingEffects;
+import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
+import model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects.BonusForCompletedSet;
+import model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects.InventorsPairBonus;
+import model.cards.buildingCards.buildingEffects.onEventEffects.ArtistBonusForCavePaintings;
+import model.cards.buildingCards.buildingEffects.onEventEffects.HunterBonusForHuntEvent;
+import model.cards.buildingCards.buildingEffects.onEventEffects.SustenanceDiscountEffect;
 import model.cards.buildingCards.BuildingCard;
 import model.enums.Era;
-import model.player.Player;
 import model.player.Tribe;
 
 import java.io.InputStream;
@@ -53,7 +52,7 @@ public class BuildingCardFactory {
             BuildingEffect effect = createEffect(effectId);
 
             // Assicurati che il costruttore di BuildingCard accetti backImage come ultimo parametro
-            cards.add(new BuildingCard(id, era, minPlayers, foodCost, endGamePoints, effect, image, backImage));
+            cards.add(new BuildingCard(id, era, minPlayers, foodCost, endGamePoints, effect, effectId, image, backImage));
         }
 
         return cards;

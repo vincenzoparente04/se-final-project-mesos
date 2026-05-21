@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns:fx="http://javafx.com/fxml"
+      fx:id="rootBar"
+      fx:controller="view.board.BoardSelfPanelController"
+      spacing="20" alignment="CENTER_LEFT" styleClass="mesos-self-bar"
+      minHeight="165" prefHeight="165">
+
+    <StackPane fx:id="selfPlayerSlot"/>
+
+    <VBox spacing="4">
+        <HBox fx:id="selfTribeSlot" spacing="14" alignment="CENTER_LEFT"/>
+    </VBox>
+
+    <VBox spacing="4">
+        <HBox fx:id="selfBuildingsSlot" spacing="6" alignment="CENTER_LEFT"/>
+    </VBox>
+
+
+</HBox>

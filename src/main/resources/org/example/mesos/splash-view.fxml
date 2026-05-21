@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.SplashViewController">
+
+    <ImageView fitWidth="${rootPane.width}" fitHeight="${rootPane.height}"
+               preserveRatio="false" mouseTransparent="true">
+        <image><Image url="@/images/wallpapers/splash.jpg"/></image>
+    </ImageView>
+
+    <Label fx:id="pressAnyKeyLabel" text="PRESS ANY KEY TO START"
+           styleClass="mesos-press-any-key"
+           StackPane.alignment="BOTTOM_CENTER">
+        <StackPane.margin><Insets bottom="36"/></StackPane.margin>
+    </Label>
+
+</StackPane>

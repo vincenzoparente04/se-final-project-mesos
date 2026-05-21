@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.board.BoardViewController">
+
+    <BorderPane>
+
+        <top>
+            <HBox fx:id="topBar" alignment="CENTER_LEFT" spacing="14" styleClass="mesos-topbar-minimal"
+                  minHeight="36" prefHeight="36" maxHeight="36">
+                <Label fx:id="phaseLabel" styleClass="mesos-label-bold"/>
+                <Label text="·" styleClass="mesos-label"/>
+                <Label fx:id="roundLabel" styleClass="mesos-label"/>
+                <Label text="" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="rulesButton" text="📖" onAction="#onOpenRules"
+                        minHeight="36" maxHeight="Infinity" styleClass="mesos-music-icon-btn"/>
+                <Button fx:id="endTurnButton" text="End turn" onAction="#onEndTurn"
+                        opacity="0" mouseTransparent="true" maxHeight="Infinity"
+                        styleClass="mesos-button"
+                        style="-fx-padding: 4 16 4 16; -fx-font-size: 12;"/>
+            </HBox>
+        </top>
+
+        <center>
+            <fx:include fx:id="gameArea" source="board-game-area-view.fxml"/>
+        </center>
+
+        <bottom>
+            <fx:include fx:id="selfPanel" source="board-self-panel-view.fxml"/>
+        </bottom>
+
+    </BorderPane>
+
+</StackPane>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="view.PlayerViewController">
+    <HBox alignment="CENTER_LEFT" spacing="8" styleClass="mesos-player-marker">
+        <VBox alignment="CENTER" spacing="3">
+            <StackPane fx:id="totemSlot"/>
+            <Label fx:id="nameLabel" styleClass="mesos-player-name"/>
+            <HBox alignment="CENTER" spacing="6">
+                <HBox fx:id="foodBox" alignment="CENTER" spacing="3"/>
+                <StackPane fx:id="ppBox"/>
+            </HBox>
+        </VBox>
+        <VBox fx:id="chipsBar" spacing="3" alignment="TOP_LEFT"/>
+    </HBox>
+</StackPane>

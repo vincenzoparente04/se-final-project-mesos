@@ -12,14 +12,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class EndOfRoundPhaseTest {
 
@@ -59,9 +54,9 @@ public class EndOfRoundPhaseTest {
 		// Assert: verify correct sequence of operations
 		var order = inOrder(rowsManager, model);
 		order.verify(rowsManager).resolveEvents(players);
-		order.verify(model).notifyChange("events_resolved");
-		order.verify(rowsManager).endRound(2);
+		order.verify(model).notifyChange();
 		order.verify(model).incrementRound();
+		order.verify(rowsManager).endRound(2);
 
 		// Verify no era change occurred and PlacementPhase is set
 		verify(rowsManager, never()).changeEra();
@@ -88,7 +83,7 @@ public class EndOfRoundPhaseTest {
 		phase.onEnter();
 
 		// Assert: verify era change notification and board update
-		verify(model).notifyChange("era_changed:" + Era.ERA_II);
+		verify(model, times(2)).notifyChange();
 		verify(rowsManager).changeEra();
 		verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 	}
@@ -111,9 +106,8 @@ public class EndOfRoundPhaseTest {
 		// Act: call onEnter
 		phase.onEnter();
 
-		// Assert: verify EndOfGamePhase is set and round is NOT incremented
+		// Assert: verify EndOfGamePhase is set
 		verify(model).setPhase(argThat(handler -> handler instanceof EndOfGamePhase));
-		verify(model, never()).incrementRound();
 		verify(model, never()).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 	}
 
@@ -134,5 +128,13 @@ public class EndOfRoundPhaseTest {
 	void getCurrentPlayerReturnsNull() {
 		assertNull(phase.getCurrentPlayer());
 	}
+
+    @Test
+    @DisplayName("skipCurrentPlayerTurn is a no-op during EndOfRoundPhase")
+    void skipCurrentPlayerTurnIsNoOp() {
+        // EndOfRoundPhase has no active player to skip, so the default no-op
+        // inherited from GamePhaseHandler is the intended behaviour.
+        assertDoesNotThrow(() -> phase.skipCurrentPlayerTurn());
+    }
 
 }

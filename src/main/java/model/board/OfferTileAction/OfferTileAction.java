@@ -17,4 +17,6 @@ public interface OfferTileAction {
 
     // Ritorna true se tutti i contatori sono a 0
     boolean isFinished();
+
+    void accept(OfferTileActionVisitor visitor);
 }

@@ -6,14 +6,16 @@ import model.player.Player;
 // Box for the totem
 public class OfferTile {
     private final char letter;
-    private final OfferTileAction action;  // number of cards to pick and form which row
-    private final int foodBonus;           // 0 if no bonus
+    private final OfferTileAction action;
+    private final String frontImage;
+    private final String backImage;
     private Player occupant;                // null if free
 
-    public OfferTile(char letter, OfferTileAction action, int foodBonus) {
+    public OfferTile(char letter, OfferTileAction action, String frontImage, String backImage) {
         this.letter = letter;
         this.action = action;
-        this.foodBonus = foodBonus;
+        this.frontImage = frontImage;
+        this.backImage = backImage;
     }
 
     public boolean isOccupied(){
@@ -34,10 +36,6 @@ public class OfferTile {
 
     public OfferTileAction getAction() {
         return action;
-    }
-
-    public int getFoodBonus() {
-        return foodBonus;
     }
 
     public char getLetter() {

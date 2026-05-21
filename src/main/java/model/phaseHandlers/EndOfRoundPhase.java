@@ -5,41 +5,53 @@ import model.enums.Era;
 import model.enums.GamePhase;
 import model.player.Player;
 import model.rowsManager.RowsManager;
+import network.server.core.VirtualView;
+import shared.dto.event.EventResolutionDto;
 
-public class EndOfRoundPhase extends GamePhaseHandler {
+import java.util.List;
+
+public class EndOfRoundPhase implements GamePhaseHandler {
+
+    private final GameModel model;
 
     public EndOfRoundPhase(GameModel model) {
-        super(model);
+        this.model = model;
     }
 
     /**
-     * @implNote This method resolves all events on the board, checks for era changes, and transitions
-     * to the next phase (either PlacementPhase or EndOfGamePhase) based on whether the game is over.
-     * It also notifies observers of any changes that occur during this process.
+     * @implNote This method resolves all events on the board, broadcasts one
+     * {@code EventResolvedMessage} per resolved event card (so the client can
+     * show an explanatory screen), checks for era changes, and transitions
+     * to the next phase (either PlacementPhase or EndOfGamePhase) based on
+     * whether the game is over.
      */
     @Override
-    public void onEnter(){
+    public void onEnter() {
         RowsManager rowsManager = model.getRowsManager();
-        rowsManager.resolveEvents(model.getPlayers());
-        model.notifyChange("events_resolved");
+        List<EventResolutionDto> resolutions = rowsManager.resolveEvents(model.getPlayers());
+        for (EventResolutionDto r : resolutions) {
+            for (VirtualView v : model.getViews()) {
+                v.sendEventResolved(r);
+            }
+        }
+        // model.notifyChange();
+
+        model.incrementRound();
+
+        if (model.isGameOver()) {
+            model.setPhase(new EndOfGamePhase(model));
+            return;
+        }
 
         Era currentEra = model.getCurrentEra();
-
         rowsManager.endRound(model.getPlayerCount());
-        model.getBoard().endRound(model.getPlayerCount());
 
         if (model.getCurrentEra().compareTo(currentEra) != 0) {
-            model.notifyChange("era_changed:" + model.getCurrentEra());
+            model.notifyChange();
             rowsManager.changeEra();
         }
 
-        // TODO QUALCUNO DEVE CONTROLLA' CHE IL MAZZO NON SIA FINITO DAJE REGA SVEGLIA
-        if (model.isGameOver()) {
-            model.setPhase(new EndOfGamePhase(model));
-        } else {
-            model.incrementRound();
-            model.setPhase(new PlacementPhase(model));
-        }
+        model.setPhase(new PlacementPhase(model));
     }
 
     @Override

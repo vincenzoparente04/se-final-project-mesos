@@ -1,21 +1,19 @@
 package model.board;
 
+import model.factories.BoardFactory;
 import model.player.Player;
 
+import java.util.List;
+import java.util.Collections;
+
 public class Board {
-    private final OfferTrack offerTrack;
-    private final TurnOrderTile turnOrderTile;
+    private OfferTrack offerTrack;
+    private TurnOrderTile turnOrderTile;
 
-
-
-    public Board() {  // TODO: check how we want to construct the board
-        this.offerTrack = new OfferTrack();
-        this.turnOrderTile = new TurnOrderTile();
-    }
-
-    public void setup(int playerCount){
-        turnOrderTile.setup(playerCount);
-        offerTrack.setup(playerCount);
+    public Board(int playerCount) {
+        BoardFactory.BoardComponents components = BoardFactory.createComponents(playerCount);
+        this.offerTrack = new OfferTrack(components.offerTiles());
+        this.turnOrderTile = new TurnOrderTile(components.turnOrderSlots(), components.turnOrderTileImage());
     }
 
     /**
@@ -25,6 +23,7 @@ public class Board {
      * @throws Exception
      */
     public void placeTotem(Player player, OfferTile offerTile) {
+        turnOrderTile.freeSlot(player);
         offerTrack.placeTotem(player, offerTile);
     }
 
@@ -56,6 +55,37 @@ public class Board {
     }
 
     public Player getNextPlayerOnOfferTrack() {
-        return offerTrack.getNextPlayer();
+        return offerTrack != null ? offerTrack.getNextPlayer() : null;
+    }
+
+    /**
+     * Removes the player's totem from the offer track and places it on the
+     * first free turn-order slot, applying that slot's food/prestige effect.
+     * This is the single call that ends an action turn atomically.
+     */
+    public void returnTotemToTurnOrder(Player player) {
+        offerTrack.removeTotem(player);
+        turnOrderTile.returnTotemAndResolveEffects(player);
+    }
+    /**
+     * Removes the player's totem from the offer track and places it on the
+     * first free turn-order slot, applying that slot's food/prestige effect.
+     * This is the single call that ends an action turn atomically.
+     */
+    public void disconnectedReturnTotemToTurnOrder(Player player) {
+        offerTrack.removeTotem(player);
+        turnOrderTile.disconnectedReturnTotemAndResolveEffects(player);
+    }
+
+    public List<Player> getTurnOrder() {
+        return turnOrderTile.getTurnOrder();
+    }
+
+    public List<OfferTile> getOfferTiles() {
+        return offerTrack.getTiles();
+    }
+
+    public List<TurnOrderSlot> getTurnOrderSlots() {
+        return turnOrderTile.getSlots();
     }
 }

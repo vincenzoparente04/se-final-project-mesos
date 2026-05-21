@@ -17,8 +17,7 @@ public class Player {
     private boolean shamanicDoublePrestige = false;
     private boolean extraFoodOnTotemReturn = false;
     private boolean extraDraw = false;
-
-// setters e getters per tutti e tre
+    private boolean online;
 
     public Player(String name) {
         this.name = name;
@@ -27,42 +26,56 @@ public class Player {
         this.tribe = new Tribe();
         this.totemLocation = TotemLocation.TURN_ORDER_TILE; // default location at the start of the game
         this.color = null;
+        this.online = true;
     }
 
-    // -- food --
+    // food handlers
     public int getFood(){ return food; }
     public void addFood(int amount){ food += amount; }
-
-    // viene passato il cibo e il moltiplicatore di aura da pagare (se non ho abbastanza cibo), il metodo
-    // controlla se ho abbastanza cibo -> false allora toglie tutto il cibo disponibile e chiama remove aura
-    // usando il moltiplicatore per le restanti risorse da togliere
-    // quando devo pagare solo cibo il multiplier = 0
-    public void removeFood(int amount, int prestigePointsMultiplier) {
-        int temp = getFood();
-        if(amount <= temp) { food -= amount; }
-        else {
-            food -= temp;
-            removePrestigePoints((amount - temp) * prestigePointsMultiplier);
-        }
-
+    /**
+     * Removes food from the player, clamped at 0. Use when no prestige penalty applies.
+     */
+    public void removeFood(int amount) {
+        food = Math.max(0, food - amount);
     }
 
-    // -- prestige points --
-    public int getPrestigePoints(){ return prestigePoints; }
-    public void addPrestigePoints(int amount){ prestigePoints += amount; }
-    public void removePrestigePoints(int amount){ prestigePoints -= amount; }
 
+    // prestige points handlers
+    public int getPrestigePoints() { return prestigePoints; }
+    public void addPrestigePoints(int amount) { prestigePoints += amount; }
+    public void removePrestigePoints(int amount) { prestigePoints -= amount; }
+    /**
+     * Removes food from the player. If food is insufficient, the deficit is converted
+     * to prestige point loss using the given multiplier.
+     */
+    public void removeFoodWithPrestigePenalty(int amount, int prestigeMultiplier) {
+        int available = food;
+        if (amount <= available) {
+            food -= amount;
+        } else {
+            food = 0;
+            removePrestigePoints((amount - available) * prestigeMultiplier);
+        }
+    }
 
-    // The Tribe is directly exposed: the Controller queries it and adds cards through
-    // tribe.addCharacter() or tribe.addBuilding()
     public Tribe getTribe(){ return tribe; }
 
     // boolean getters
-    public boolean hasShamanicImmunity() { return shamanicImmunity; }
-    public boolean hasShamanicDoublePrestige() { return shamanicDoublePrestige; }
-    public boolean hasShamanicBonusIcons() { return shamanicBonusStars; }
-    public boolean hasExtraFoodOnTotemReturn() { return extraFoodOnTotemReturn; }
-    public boolean hasExtraDraw() { return extraDraw; }
+    public boolean hasShamanicImmunity() {
+        return shamanicImmunity;
+    }
+    public boolean hasShamanicDoublePrestige() {
+        return shamanicDoublePrestige;
+    }
+    public boolean hasShamanicBonusIcons() {
+        return shamanicBonusStars;
+    }
+    public boolean hasExtraFoodOnTotemReturn() {
+        return extraFoodOnTotemReturn;
+    }
+    public boolean hasExtraDraw() {
+        return extraDraw;
+    }
 
     // boolean setters
     public void setShamanicImmunity(boolean shamanicImmunity) {
@@ -81,12 +94,30 @@ public class Player {
         this.extraDraw = extraDraw;
     }
 
-    public String getName(){ return name; }
-    public TotemColor getColor() { return color; }
-    public TotemLocation getLocation() { return totemLocation; }
+    public String getName() {
+        return name;
+    }
+    public TotemColor getColor() {
+        return color;
+    }
+    public TotemLocation getLocation() {
+        return totemLocation;
+    }
 
-    public void setLocation(TotemLocation location){
+    public void setLocation(TotemLocation location) {
         this.totemLocation = location;
     }
-    public void setColor(TotemColor color) { this.color = color; }
+    public void setColor(TotemColor color) {
+        this.color = color;
+    }
+
+    public boolean isConnected(){
+        return this.online;
+    }
+    public void setConnected(){
+        this.online = true;
+    }
+    public void setDisconnected(){
+        this.online = false;
+    }
 }

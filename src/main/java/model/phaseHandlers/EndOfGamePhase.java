@@ -1,23 +1,26 @@
 package model.phaseHandlers;
 
 import model.GameModel;
-import model.buildingEffects.EndGameEffects.EndGameBuildingEffect;
-import model.cards.eventCards.EventCard;
+import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
 import model.enums.GamePhase;
 import model.player.Player;
 import model.player.Tribe;
+import network.server.core.VirtualView;
+import shared.dto.event.EndGameScoringDto;
+import shared.dto.event.EventResolutionDto;
+import shared.dto.event.PlayerScoringDeltaDto;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
-public class EndOfGamePhase extends GamePhaseHandler {
+public class EndOfGamePhase implements GamePhaseHandler {
 
-    private Player winner;
-    private List<Player> winners; // in case it's a draw
+    private final GameModel model;
+    private List<Player> winners;
+    private EndGameScoringDto scoring; // built in calculateEndGameScoring(), shipped from onEnter()
 
     public EndOfGamePhase(GameModel model) {
-        super(model);
+        this.model = model;
     }
 
     /**
@@ -30,47 +33,75 @@ public class EndOfGamePhase extends GamePhaseHandler {
         calculateEndGameScoring();
         determineWinner();
 
-        model.notifyChange("game_over:" + formatWinners());
+        List<String> winnerNames = winners.stream().map(Player::getName).toList();
+        model.setWinners(winnerNames);
+
+        // Explicit game-over broadcast carrying both winners and scoring
+        // (the state message no longer auto-emits the GameOverMessage).
+        for (VirtualView v : model.getViews()) {
+            v.sendGameOver(winnerNames, scoring);
+        }
+        // model.notifyChange();
     }
 
     /**
      * @implNote Unlike normal rounds, the final round resolves events
-     * from BOTH the top and bottom rows.
+     * from BOTH the top and bottom rows. One {@code EventResolvedMessage}
+     * is broadcast per resolved card so the client can show what happened.
      * Sustenance must be resolved last as usual.
      */
     private void resolveAllVisibleEvents() {
-        model.getRowsManager().resolveAllEvents(model.getPlayers());
-        model.notifyChange("final_events_resolved");
+        List<EventResolutionDto> resolutions = model.getRowsManager().resolveAllEvents(model.getPlayers());
+        for (EventResolutionDto r : resolutions) {
+            for (VirtualView v : model.getViews()) {
+                v.sendEventResolved(r);
+            }
+        }
+        // model.notifyChange();
     }
 
     /**
-     * @implNote  Calculates end-game prestige points for each player.
-     * Each scoring source is handled by the Tribe, which already
-     * has the typed lists and query methods needed.
+     * @implNote  Calculates end-game prestige points for each player. Builds
+     * the {@link EndGameScoringDto} with the per-player breakdown so it can
+     * be shipped together with the winners in the {@code GameOverMessage}.
      */
     private void calculateEndGameScoring() {
+        List<PlayerScoringDeltaDto> deltas = new ArrayList<>();
+
         for (Player player : model.getPlayers()) {
             Tribe tribe = player.getTribe();
+            int prestigeBefore = player.getPrestigePoints();
 
-            // PP from Builders
-            player.addPrestigePoints(tribe.calculateBuildersEndGamePoints());
+            int buildersPts        = tribe.calculateBuildersEndGamePoints();
+            int artistsPts         = tribe.calculateArtistEndGamePoints();
+            int inventorsPts       = tribe.calculateInventorEndGamePoints();
+            int buildingPrintedPts = tribe.calculateBuildingPrintedPoints();
 
-            // 10 PP for every 2 Artists
-            player.addPrestigePoints(tribe.calculateArtistEndGamePoints());
+            player.addPrestigePoints(buildersPts);
+            player.addPrestigePoints(artistsPts);
+            player.addPrestigePoints(inventorsPts);
+            player.addPrestigePoints(buildingPrintedPts);
 
-            // Inventors × distinct invention icons
-            player.addPrestigePoints(tribe.calculateInventorEndGamePoints());
-
-            // Buildings: printed PP + endgame effects
-            player.addPrestigePoints(tribe.calculateBuildingPrintedPoints());
-
-            // end game builging effects
-            for (EndGameBuildingEffect effect : player.getTribe().getEndGameBuildingEffects()) {
+            int prestigeBeforeEffects = player.getPrestigePoints();
+            for (EndGameBuildingEffect effect : tribe.getEndGameBuildingEffects()) {
                 effect.applyEffect(player);
             }
+            int endGameEffectsPts = player.getPrestigePoints() - prestigeBeforeEffects;
+
+            int prestigeAfter = player.getPrestigePoints();
+            String details = "Builders %+d, Artists %+d, Inventors %+d, Buildings %+d, Effects %+d"
+                    .formatted(buildersPts, artistsPts, inventorsPts, buildingPrintedPts, endGameEffectsPts);
+
+            deltas.add(new PlayerScoringDeltaDto(
+                    player.getName(),
+                    prestigeBefore, prestigeAfter,
+                    buildersPts, artistsPts, inventorsPts,
+                    buildingPrintedPts, endGameEffectsPts,
+                    details));
         }
 
-        model.notifyChange("endgame_scoring_complete");
+        this.scoring = new EndGameScoringDto(deltas);
+        // model.notifyChange();
     }
 
     /**
@@ -103,20 +134,6 @@ public class EndOfGamePhase extends GamePhaseHandler {
         winners = tied.stream()
                 .filter(p -> p.getFood() == maxFood)
                 .toList();
-    }
-
-    /**
-     * @implNote Returns the name(s) of the winner(s)
-     * @return Winners's name
-     */
-    private String formatWinners() {
-        if (winners.size() == 1) {
-            return winners.getFirst().getName();
-        }
-        return winners.stream()
-                .map(Player::getName)
-                .reduce((a, b) -> a + ", " + b)
-                .orElse("");
     }
 
     public List<Player> getWinners() {

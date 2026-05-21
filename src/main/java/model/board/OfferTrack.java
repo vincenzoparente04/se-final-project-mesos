@@ -6,17 +6,14 @@ import model.player.Player;
 import java.util.List;
 
 public class OfferTrack {
-    private final List<OfferTile> tiles;  // listed from A to G
+    private List<OfferTile> tiles;  // listed from A to G
 
-    public void setup(int playerCount){
+    public OfferTrack(List<OfferTile> tiles) {
+        this.tiles = tiles; // lista già filtrata e ordinata dalla factory
     }
-    // configura le caselle corrette per il numero di giocatori
 
     /**
      * @implNote Checks if the tile is occupied, if so throws an exception. It places the totem on the tile and set its location.
-     * @param player
-     * @param offerTile
-     * @throws Exception
      */
     public void placeTotem(Player player, OfferTile offerTile) {
         offerTile.placeTotem(player);
@@ -25,7 +22,6 @@ public class OfferTrack {
 
     /**
      * @implNote Find the correct tile based on the char passed by the view to the controller
-     * @param letter
      * @return
      */
     public OfferTile getTileByLetter(char letter) {
@@ -33,6 +29,10 @@ public class OfferTrack {
                 .filter(tile -> tile.getLetter() == letter)
                 .findFirst()
                 .orElse(null);
+    }
+
+    public List<OfferTile> getTiles() {
+        return tiles;
     }
 
     public Player getNextPlayer() {
@@ -51,9 +51,14 @@ public class OfferTrack {
                 .orElse(null);
     }
 
-
-
-
-    public OfferTile getTile(char letter) {}
-    public List<OfferTile> getAvailableTiles(){}     // with no Totem on top
+    /**
+     * Removes the player's totem from whichever offer tile they occupy.
+     * Called at the end of each action turn before moving to the turn order tile.
+     */
+    public void removeTotem(Player player) {
+        OfferTile tile = getOccupiedTileByPlayer(player);
+        if (tile != null) {
+            tile.removeTotem();
+        }
+    }
 }

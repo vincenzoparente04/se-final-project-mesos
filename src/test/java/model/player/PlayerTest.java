@@ -28,21 +28,21 @@ class PlayerTest {
         int initialPrestigePoints = player.getPrestigePoints();
 
         // Act
-        player.removeFood(5, 0);
+        player.removeFood(5);
 
         // Assert
         assertEquals(5, player.getFood(), "Should have 5 food remaining after removing 5 from 10");
         assertEquals(initialPrestigePoints, player.getPrestigePoints(), "Prestige points should not change");
     }
 
-    @DisplayName("removeFood - removes all available food if not enough")
+    @DisplayName("removeFood - clamps at 0 when amount exceeds available food")
     @Test
     void removeFoodWhenNotEnoughFood() {
         // Arrange
         player.addFood(3);
 
         // Act
-        player.removeFood(5, 1);
+        player.removeFood(5);
 
         // Assert
         assertEquals(0, player.getFood(), "Should have 0 food remaining after removing 5 from 3");
@@ -55,46 +55,62 @@ class PlayerTest {
         player.addFood(5);
 
         // Act
-        player.removeFood(5, 0);
+        player.removeFood(5);
 
         // Assert
         assertEquals(0, player.getFood(), "Should have 0 food remaining after removing 5 from 5");
     }
 
-    @DisplayName("removeFood - does not convert to prestige points with multiplier 0")
+    @DisplayName("removeFood - does not affect prestige points")
     @Test
-    void removeFoodWithZeroMultiplier() {
+    void removeFoodNeverChangesPrestigePoints() {
         // Arrange
         player.addFood(2);
         player.addPrestigePoints(10);
         int initialPrestigePoints = player.getPrestigePoints();
 
         // Act
-        player.removeFood(5, 0);
+        player.removeFood(5);
 
         // Assert
         assertEquals(0, player.getFood(), "Should have 0 food remaining");
         assertEquals(initialPrestigePoints, player.getPrestigePoints(),
-                "Prestige points should not change with multiplier 0");
+                "removeFood should never change prestige points");
     }
 
-    @DisplayName("removeFood - converts correctly with a high multiplier")
+    @DisplayName("removeFoodWithPrestigePenalty - converts correctly with a high multiplier")
     @Test
-    void removeFoodWithHighMultiplier() {
+    void removeFoodWithPrestigePenaltyConvertsCorrectly() {
         // Arrange
         player.addFood(2);
         player.addPrestigePoints(20);
         int initialPrestigePoints = player.getPrestigePoints();
 
         // Act
-        player.removeFood(7, 3);
+        player.removeFoodWithPrestigePenalty(7, 3);
 
         // Assert
-        // 2 food removed, 5 remaining to be paid
-        // 5 * 3 (multiplier) = 15 prestige points removed
+        // 2 food removed, 5 remaining to be paid → 5 * 3 = 15 prestige points removed
         assertEquals(0, player.getFood(), "Should have 0 food remaining");
         assertEquals(initialPrestigePoints - 15, player.getPrestigePoints(),
-                "Should remove 15 prestige points (5 food * 3 multiplier)");
+                "Should remove 15 prestige points (5 food deficit * 3 multiplier)");
+    }
+
+    @DisplayName("removeFoodWithPrestigePenalty - removes only food when amount is within available food")
+    @Test
+    void removeFoodWithPrestigePenaltyNoDeficitDoesNotAffectPrestige() {
+        // Arrange
+        player.addFood(10);
+        player.addPrestigePoints(20);
+        int initialPrestigePoints = player.getPrestigePoints();
+
+        // Act
+        player.removeFoodWithPrestigePenalty(5, 3);
+
+        // Assert
+        assertEquals(5, player.getFood(), "Should have 5 food remaining");
+        assertEquals(initialPrestigePoints, player.getPrestigePoints(),
+                "Prestige points should not change when food is sufficient");
     }
 
     @Test
@@ -220,9 +236,18 @@ class PlayerTest {
     @DisplayName("setLocation and getLocation - sets and gets location")
     void setAndGetLocation() {
         // Act
-        player.setLocation(TotemLocation.FIRST_PLAYER_TILE);
+        player.setLocation(TotemLocation.TURN_ORDER_TILE);
 
         // Assert
-        assertEquals(TotemLocation.FIRST_PLAYER_TILE, player.getLocation(), "Should set and get location correctly");
+        assertEquals(TotemLocation.TURN_ORDER_TILE, player.getLocation(), "Should set and get location correctly");
+    }
+
+    @Test
+    @DisplayName("setConnection and setDisconnected")
+    void setConnectionAndDisconnected() {
+        player.setConnected();
+        assertTrue(player.isConnected(), "Player should be connected");
+        player.setDisconnected();
+        assertFalse(player.isConnected(), "Player should be disconnected");
     }
 }

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="view.LobbyViewController">
+
+    <ImageView fitWidth="${rootPane.width}" fitHeight="${rootPane.height}"
+               preserveRatio="false" mouseTransparent="true">
+        <image><Image url="@/images/wallpapers/walla.jpg"/></image>
+    </ImageView>
+
+    <BorderPane>
+
+        <top>
+            <VBox alignment="CENTER" spacing="4" style="-fx-padding: 22 0 14 0;">
+                <Label text="Open Lobbies" styleClass="mesos-title-small"/>
+                <Label fx:id="playerNameLabel" styleClass="mesos-hint"/>
+            </VBox>
+        </top>
+
+        <center>
+            <VBox spacing="0" style="-fx-padding: 0 80 0 80;">
+                <StackPane VBox.vgrow="ALWAYS">
+                    <ListView fx:id="lobbyListView" styleClass="mesos-listview"/>
+                    <Label fx:id="statusLabel" styleClass="mesos-lobby-empty-hint"
+                           StackPane.alignment="CENTER" mouseTransparent="true"/>
+                </StackPane>
+            </VBox>
+        </center>
+
+        <bottom>
+            <HBox alignment="CENTER" spacing="16" style="-fx-padding: 22;">
+                <Button text="Refresh" onAction="#onRefresh"
+                        styleClass="mesos-button-secondary"/>
+                <Button text="Create new lobby" onAction="#onCreate"
+                        styleClass="mesos-button"/>
+            </HBox>
+        </bottom>
+
+    </BorderPane>
+
+</StackPane>

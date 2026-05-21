@@ -13,11 +13,12 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class RowsManagerTest {
+class  RowsManagerTest {
 
     private RowsManager rowsManager;
 
@@ -109,21 +110,22 @@ class RowsManagerTest {
     }
 
     @Test
-    @DisplayName("findCardById finds card in top row tribe first")
+    @DisplayName("findCardById finds card in top row tribe")
     void findCardByIdFindsCardInTopRowTribe() {
         TribeCard tribeCard = mock(TribeCard.class);
         when(tribeCard.getId()).thenReturn(1);
         topRowTribe.add(tribeCard);
 
-        Card result = rowsManager.findCardById(1);
+        Optional<Card> result = rowsManager.findCardById(1);
 
-        assertSame(tribeCard, result);
+        assertTrue(result.isPresent());
+        assertSame(tribeCard, result.get());
     }
 
     @Test
-    @DisplayName("findCardById returns null when card does not exist")
-    void findCardByIdReturnsNullWhenMissing() {
-        assertNull(rowsManager.findCardById(404));
+    @DisplayName("findCardById returns empty when card does not exist")
+    void findCardByIdReturnsEmptyWhenMissing() {
+        assertTrue(rowsManager.findCardById(404).isEmpty());
     }
 
     @Test
@@ -161,7 +163,7 @@ class RowsManagerTest {
 
         assertFalse(rowsManager.topRowContainsCard(77));
         assertFalse(rowsManager.bottomRowContainsCard(77));
-        assertNull(rowsManager.findCardById(77));
+        assertTrue(rowsManager.findCardById(77).isEmpty());
     }
 
     @Test
@@ -175,7 +177,8 @@ class RowsManagerTest {
         bottomRowTribe.add(bottom2);
         topRowTribe.add(top1);
 
-        List<TribeCard> result = rowsManager.getAllCardsOnBoard();
+        List<TribeCard> result = rowsManager.getAllTribeCardsOnBoard();
+        //TODO: what about the other cards (normal not tribe)? before it was called as getAllCardsOnBoard but list was <TribeCard>
 
         assertEquals(3, result.size());
         assertSame(bottom1, result.get(0));
@@ -189,7 +192,8 @@ class RowsManagerTest {
         TribeCard bottom = mock(TribeCard.class);
         bottomRowTribe.add(bottom);
 
-        List<TribeCard> result = rowsManager.getAllCardsOnBoard();
+        List<TribeCard> result = rowsManager.getAllTribeCardsOnBoard();
+        //TODO: what about the other cards (normal not tribe)?
         result.clear();
 
         assertEquals(1, bottomRowTribe.size());
@@ -218,10 +222,7 @@ class RowsManagerTest {
         rowsManager.endRound(2);
 
         assertEquals(List.of(top1, top2), bottomRowTribe);
-
-        // Questo assert descrive il comportamento ATTUALE della classe,
-        // che non svuota topRowTribe prima di aggiungere le nuove carte.
-        assertEquals(List.of(top1, top2, drawn1, drawn2, drawn3, drawn4, drawn5, drawn6), topRowTribe);
+        assertEquals(List.of(drawn1, drawn2, drawn3, drawn4, drawn5, drawn6), topRowTribe);
 
         verify(tribeDeck).drawMultiple(6);
     }
@@ -261,9 +262,7 @@ class RowsManagerTest {
         rowsManager.changeEra();
 
         assertEquals(List.of(top1), bottomRowBuilding);
-
-        // Anche qui: comportamento ATTUALE, non ideale.
-        assertEquals(List.of(top1, era2a, era2b), topRowBuilding);
+        assertEquals(List.of(era2a, era2b), topRowBuilding);
 
         verify(buildingDeckEraII).isEmpty();
         verify(buildingDeckEraII).drawAll();
@@ -284,19 +283,13 @@ class RowsManagerTest {
         rowsManager.changeEra();
 
         assertEquals(List.of(top1), bottomRowBuilding);
-        assertEquals(List.of(top1, era3a), topRowBuilding);
+        assertEquals(List.of(era3a), topRowBuilding);
 
         verify(buildingDeckEraII).isEmpty();
         verify(buildingDeckEraIII).drawAll();
         verify(buildingDeckEraII, never()).drawAll();
     }
 
-    @Test
-    @DisplayName("setup throws NullPointerException when lists and decks are not initialized")
-    void setupThrowsWhenInternalStateIsUninitialized() {
-        RowsManager rawManager = new RowsManager();
-        assertThrows(NullPointerException.class, () -> rawManager.setup(3));
-    }
 
     @Test
     @DisplayName("getTribeDeck returns internal tribe deck")
@@ -308,6 +301,24 @@ class RowsManagerTest {
     @DisplayName("resolveEvents delegates to resolver without throwing when bottom row has no events")
     void resolveEventsDoesNotThrowWithEmptyBottomRow() {
         assertDoesNotThrow(() -> rowsManager.resolveEvents(List.of(mock(Player.class))));
+    }
+
+    @Test
+    @DisplayName("resolveAllEvents delegates to resolver with all tribe cards from both rows")
+    void resolveAllEventsDelegatesWithAllBoardTribeCards() throws Exception {
+        EventResolver eventResolver = mock(EventResolver.class);
+        setField(rowsManager, "eventResolver", eventResolver);
+
+        TribeCard bottom = mock(TribeCard.class);
+        TribeCard top = mock(TribeCard.class);
+        bottomRowTribe.add(bottom);
+        topRowTribe.add(top);
+
+        List<Player> players = List.of(mock(Player.class));
+        rowsManager.resolveAllEvents(players);
+
+        verify(eventResolver).sortEvents(List.of(bottom, top));
+        verify(eventResolver).resolve(players);
     }
 
     private static void setField(Object target, String fieldName, Object value) throws Exception {

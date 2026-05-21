@@ -7,7 +7,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TribeDeck {
-    private Deque<TribeCard> cards;
+    private Deque<TribeCard> cards = new ArrayDeque<>();
+    //private Deque<TribeCard> cards;
+
     private Era currentEra;
 
     // -- setup --
@@ -25,9 +27,7 @@ public class TribeDeck {
      * @param finalEvents   the 2 Final Event cards, placed at the bottom in any order
      * @param playerCount   number of players in the game (2–5)
      */
-    public void initializeDeck(List<TribeCard> regularCards,
-                               List<TribeCard> finalEvents,
-                               int playerCount) {
+    public void initializeDeck(List<TribeCard> regularCards, List<TribeCard> finalEvents, int playerCount) {
 
         // Discard cards not eligible for this player count.
         // Final Events always have minPlayers == 2 so they are always included.
@@ -45,11 +45,14 @@ public class TribeDeck {
         Collections.shuffle(eraI);
         Collections.shuffle(eraII);
         Collections.shuffle(eraIII);
-        Collections.shuffle(finalEvents);
+        List<TribeCard> shuffledFinalEvents = new ArrayList<>(finalEvents);
+        Collections.shuffle(shuffledFinalEvents);
+        //Collections.shuffle(finalEvents);
 
         // Assemble: Era I on top, Final Events at the very bottom
         cards = new ArrayDeque<>();
-        for (TribeCard c : finalEvents)               cards.addLast(c);
+        for (TribeCard c : shuffledFinalEvents)       cards.addLast(c);
+        //for (TribeCard c : finalEvents)       cards.addLast(c);
         for (int i = eraIII.size() - 1; i >= 0; i--) cards.addFirst(eraIII.get(i));
         for (int i = eraII.size()  - 1; i >= 0; i--) cards.addFirst(eraII.get(i));
         for (int i = eraI.size()   - 1; i >= 0; i--) cards.addFirst(eraI.get(i));

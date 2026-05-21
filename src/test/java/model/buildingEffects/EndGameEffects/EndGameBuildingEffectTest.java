@@ -1,6 +1,7 @@
 package model.buildingEffects.EndGameEffects;
 
-import model.cards.charachterCards.HunterCard;
+import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
+import model.cards.characterCards.HunterCard;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;
@@ -26,8 +27,8 @@ class EndGameBuildingEffectTest {
     @Test
     void applyEffectAddsPrestigeUsingMultiplierAndGetter() {
         Player player = new Player("p1");
-        player.getTribe().addHunter(new HunterCard(1, Era.ERA_I, 2, false));
-        player.getTribe().addHunter(new HunterCard(2, Era.ERA_I, 2, false));
+        player.getTribe().addHunter(new HunterCard(1, Era.ERA_I, 2, false, "test/front.png" , "test/front.png"));
+        player.getTribe().addHunter(new HunterCard(2, Era.ERA_I, 2, false, "test/front.png" , "test/front.png"));
 
         EndGameBuildingEffect effect = new EndGameBuildingEffect(3, Tribe::getHunterCount);
         effect.applyEffect(player);

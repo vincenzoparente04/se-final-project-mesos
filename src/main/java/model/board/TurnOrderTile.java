@@ -6,9 +6,13 @@ import model.player.Player;
 import java.util.List;
 
 public class TurnOrderTile {
-    private final int playerCount;
-    private final List<TurnOrderSlot> slots;
-    // gli slot vengono costruiti nel costruttori in base al numero di giocatori
+    private List<TurnOrderSlot> slots;
+    private String imagePath;
+
+    public TurnOrderTile(List<TurnOrderSlot> slots, String image) {
+        this.slots = slots;
+        this.imagePath = image;
+    }
 
     /**
      * @implNote Places the player's totem on the first free slot of the TurnOrderTile and applies the effect of that slot.
@@ -17,8 +21,26 @@ public class TurnOrderTile {
      * of the slot, which may involve granting food bonuses or other benefits based on the specific implementation of the TurnOrderSlot class.
      * @param player
      */
+    /**
+     * Clears the slot currently occupied by the given player, making it available
+     * for future use. Called when the player moves their totem to the offer track.
+     */
+    public void freeSlot(Player player) {
+        slots.stream()
+                .filter(s -> player.equals(s.getOccupant()))
+                .findFirst()
+                .ifPresent(TurnOrderSlot::removeTotem);
+    }
+
     public void returnTotemAndResolveEffects(Player player){
         TurnOrderSlot slot = getFirstFreeSlot();
+        slot.placeTotem(player);
+        player.setLocation(TotemLocation.TURN_ORDER_TILE);
+        slot.applyEffect();
+    }
+
+    public void disconnectedReturnTotemAndResolveEffects(Player player){
+        TurnOrderSlot slot = getLastFreeSlot();
         slot.placeTotem(player);
         player.setLocation(TotemLocation.TURN_ORDER_TILE);
         slot.applyEffect();
@@ -36,8 +58,17 @@ public class TurnOrderTile {
                 .orElseThrow();
     }
 
-    // SERVE???
-    //public void placeTotemAtSlot(Player player, int index){}
+    /**
+     * @implNote Finds the first free slot on the TurnOrderTile. It filters the list of slots to find the
+     * first one that is free (i.e., has no occupant) and returns it. If no free slot is found, it throws an exception.
+     * @return
+     */
+    private TurnOrderSlot getLastFreeSlot() {
+        return slots.stream()
+                .filter(TurnOrderSlot::isFree)
+                .reduce((first, second) -> second) //get last free slot
+                .orElseThrow();
+    }
 
     /**
      * @implNote Returns the list of players in the order determined by the occupied slots.
@@ -50,13 +81,5 @@ public class TurnOrderTile {
 
     public List<TurnOrderSlot> getSlots() {
         return slots;
-    }
-
-    public void setup(int playerCount) {
-        // costruisce gli slot con i bonus corretti per playerCount
-        // es. per 3 giocatori:
-        // slot 0 → foodBonus=3, isLast=false
-        // slot 1 → foodBonus=1, isLast=false
-        // slot 2 → foodBonus=0, isLast=true
     }
 }

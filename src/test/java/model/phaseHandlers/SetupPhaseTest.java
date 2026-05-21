@@ -4,6 +4,7 @@ import model.GameModel;
 import model.board.Board;
 import model.board.TurnOrderSlot;
 import model.board.TurnOrderTile;
+import model.enums.GamePhase;
 import model.enums.TotemLocation;
 import model.player.Player;
 import model.rowsManager.RowsManager;
@@ -19,6 +20,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -89,8 +91,7 @@ public class SetupPhaseTest {
 
         phase.onEnter();
 
-        var order = inOrder(board, rowsManager, model);
-        order.verify(board).setup(5);
+        var order = inOrder(rowsManager, model);
         order.verify(rowsManager).setup(5);
         order.verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 
@@ -154,8 +155,7 @@ public class SetupPhaseTest {
 
         phase.onEnter();
 
-        var order = inOrder(board, rowsManager, p4, p2, p1, p3, model);
-        order.verify(board).setup(4);
+        var order = inOrder(rowsManager, p4, p2, p1, p3, model);
         order.verify(rowsManager).setup(4);
         order.verify(p4).addFood(2);
         order.verify(p2).addFood(3);
@@ -246,6 +246,19 @@ public class SetupPhaseTest {
         verify(fourth).addFood(4);
         verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
     }
+
+    @Test
+    @DisplayName("getPhase returns SETUP")
+    void getPhaseReturnsSetup() {
+        assertEquals(GamePhase.SETUP, phase.getPhase());
+    }
+
+    /*
+    @Test
+    @DisplayName("getCurrentPlayer returns null during SetupPhase (no active player)")
+    void getCurrentPlayerReturnsNull() {
+        assertNull(phase.getCurrentPlayer());
+    }*/
 
     @Test
     @DisplayName("randomizeTurnOrder throws when there are more players than available slots")

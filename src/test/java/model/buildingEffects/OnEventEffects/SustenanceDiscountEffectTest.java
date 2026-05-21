@@ -1,7 +1,8 @@
 package model.buildingEffects.OnEventEffects;
 
-import model.cards.charachterCards.ArtistCard;
-import model.cards.charachterCards.HunterCard;
+import model.cards.buildingCards.buildingEffects.onEventEffects.SustenanceDiscountEffect;
+import model.cards.characterCards.ArtistCard;
+import model.cards.characterCards.HunterCard;
 import model.enums.Era;
 import model.player.Player;
 import model.player.Tribe;
@@ -14,9 +15,9 @@ class SustenanceDiscountEffectTest {
     @Test
     void applyOnSustenanceUsesGivenGetterAndMultiplier() {
         Player player = new Player("p1");
-        player.getTribe().addArtist(new ArtistCard(1, Era.ERA_I, 2));
-        player.getTribe().addArtist(new ArtistCard(2, Era.ERA_I, 2));
-        player.getTribe().addHunter(new HunterCard(3, Era.ERA_I, 2, false));
+        player.getTribe().addArtist(new ArtistCard(1, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
+        player.getTribe().addArtist(new ArtistCard(2, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
+        player.getTribe().addHunter(new HunterCard(3, Era.ERA_I, 2, false, "test/front.png" , "test/front.png"));
 
         SustenanceDiscountEffect effect = new SustenanceDiscountEffect(3, Tribe::getArtistCount);
 

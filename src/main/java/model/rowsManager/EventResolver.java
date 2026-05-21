@@ -1,15 +1,13 @@
 package model.rowsManager;
 
 import model.cards.buildingCards.BuildingCard;
-import model.cards.charachterCards.BuilderCard;
-import model.rowsManager.CardVisitor;
 import model.cards.TribeCard;
-import model.cards.charachterCards.CharacterCard;
+import model.cards.characterCards.CharacterCard;
 import model.cards.eventCards.EventCard;
 import model.cards.eventCards.SustenanceEventCard;
 import model.player.Player;
+import shared.dto.event.EventResolutionDto;
 
-import javax.swing.plaf.basic.BasicButtonUI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,24 +35,29 @@ public class EventResolver implements CardVisitor {
     public void sortEvents(List<TribeCard> tribeCards) {
         eventsToResolve.clear();
         sustenanceToResolve.clear();
-        
+
         for (TribeCard card : tribeCards) {
             card.accept(this);
         }
-        
+
         // Add sustenance events at the end
         eventsToResolve.addAll(sustenanceToResolve);
     }
 
     /**
-     * Resolves all events in the sorted list by calling their resolve method.
+     * Resolves all events in the sorted list and returns one
+     * {@link EventResolutionDto} per event card resolved (in resolution
+     * order). The DTOs are forwarded by the phase to the client via
+     * {@code EventResolvedMessage}.
      *
      * @param players the list of players affected by the events
      */
-    public void resolve(List<Player> players) {
+    public List<EventResolutionDto> resolve(List<Player> players) {
+        List<EventResolutionDto> resolutions = new ArrayList<>();
         for (EventCard event : eventsToResolve) {
-            event.resolve(players);
+            resolutions.add(event.resolve(players));
         }
+        return resolutions;
     }
 
     @Override
@@ -77,4 +80,3 @@ public class EventResolver implements CardVisitor {
         // There are no building cards in tribe rows
     }
 }
-

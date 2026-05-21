@@ -1,6 +1,7 @@
 package model.buildingEffects.OnEventEffects;
 
-import model.cards.charachterCards.ArtistCard;
+import model.cards.buildingCards.buildingEffects.onEventEffects.ArtistBonusForCavePaintings;
+import model.cards.characterCards.ArtistCard;
 import model.enums.Era;
 import model.player.Player;
 import org.junit.jupiter.api.Test;
@@ -12,9 +13,9 @@ class ArtistBonusForCavePaintingsTest {
     @Test
     void applyOnCavePaintingsAddsFoodPerArtist() {
         Player player = new Player("p1");
-        player.getTribe().addArtist(new ArtistCard(1, Era.ERA_I, 2));
-        player.getTribe().addArtist(new ArtistCard(2, Era.ERA_I, 2));
-        player.getTribe().addArtist(new ArtistCard(3, Era.ERA_I, 2));
+        player.getTribe().addArtist(new ArtistCard(1, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
+        player.getTribe().addArtist(new ArtistCard(2, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
+        player.getTribe().addArtist(new ArtistCard(3, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
 
         ArtistBonusForCavePaintings effect = new ArtistBonusForCavePaintings(1);
         effect.applyOnCavePaintings(player);
