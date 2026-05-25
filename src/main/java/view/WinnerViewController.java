@@ -42,32 +42,64 @@ public class WinnerViewController implements SceneController {
 
     @Override
     public void showWinners(List<PlayerDto> players, List<String> winners, EndGameScoringDto scoring) {
-        List<PlayerDto> ordered = new ArrayList<>(players);
-        ordered.sort(Comparator.comparingInt((PlayerDto p) -> p.prestigePoints).reversed());
+        
+        List<PlayerDto> actualPlayers = players != null ? players : router.localState().getPlayers();
+        
+        if (scoring != null) {
+            List<PlayerScoringDeltaDto> ordered = scoring.deltas;
+            ordered.sort(Comparator.comparingInt((PlayerScoringDeltaDto p) -> p.prestigeAfter).reversed());
+            
+            int topScore = ordered.isEmpty() ? 0 : ordered.get(0).prestigeAfter;
+            List<String> calculatedWinners = new ArrayList<>();
+            if (!ordered.isEmpty()) {
+                for (PlayerScoringDeltaDto p : ordered) {
+                    if (p.prestigeAfter == topScore) {
+                        calculatedWinners.add(p.playerName);
+                    }
+                }
+            }
 
-        if (winners != null && !winners.isEmpty()) {
-            winnerNameLabel.setText(String.join("  •  ", winners));
-            PlayerDto top = ordered.isEmpty() ? null : ordered.get(0);
-            winnerScoreLabel.setText(top != null ? top.prestigePoints + " PP" : "");
-        } else if (!ordered.isEmpty()) {
-            winnerNameLabel.setText(ordered.get(0).name);
-            winnerScoreLabel.setText(ordered.get(0).prestigePoints + " PP");
-        }
+            if (!calculatedWinners.isEmpty()) {
+                winnerNameLabel.setText(String.join("  •  ", calculatedWinners));
+                winnerScoreLabel.setText(ordered.get(0).prestigeAfter + " PP");
+            }
 
-        rankingBox.getChildren().clear();
+            rankingBox.getChildren().clear();
 
-        Map<String, PlayerScoringDeltaDto> scoringByName = scoring != null
-                ? scoring.deltas.stream().collect(Collectors.toMap(d -> d.playerName, d -> d))
-                : Map.of();
+            Map<String, PlayerScoringDeltaDto> scoringByName = scoring.deltas.stream()
+                    .collect(Collectors.toMap(d -> d.playerName, d -> d));
 
-        if (!scoringByName.isEmpty()) {
-            rankingBox.getChildren().add(buildTableHeader());
-        }
+            if (!scoringByName.isEmpty()) {
+                rankingBox.getChildren().add(buildTableHeader());
+            }
 
-        int rank = 1;
-        for (PlayerDto p : ordered) {
-            PlayerScoringDeltaDto delta = scoringByName.get(p.name);
-            rankingBox.getChildren().add(buildRow(rank++, p, delta));
+            Map<String, PlayerDto> playerInfos = actualPlayers.stream()
+                    .collect(Collectors.toMap(p -> p.name, p -> p));
+
+            int rank = 1;
+            for (PlayerScoringDeltaDto d : ordered) {
+                PlayerDto p = playerInfos.get(d.playerName);
+                if (p != null) {
+                    rankingBox.getChildren().add(buildRow(rank++, p, d));
+                }
+            }
+        } else {
+            if (winners != null && !winners.isEmpty()) {
+                winnerNameLabel.setText(String.join("  •  ", winners));
+                PlayerDto top = actualPlayers.stream()
+                        .filter(p -> p.name.equals(winners.get(0)))
+                        .findFirst().orElse(null);
+                winnerScoreLabel.setText(top != null ? top.prestigePoints + " PP" : "");
+            }
+            rankingBox.getChildren().clear();
+            
+            List<PlayerDto> orderedPlayers = new ArrayList<>(actualPlayers);
+            orderedPlayers.sort(Comparator.comparingInt((PlayerDto p) -> p.prestigePoints).reversed());
+
+            int rank = 1;
+            for (PlayerDto p : orderedPlayers) {
+                rankingBox.getChildren().add(buildRow(rank++, p, null));
+            }
         }
     }
 
@@ -79,15 +111,15 @@ public class WinnerViewController implements SceneController {
         header.getStyleClass().add("mesos-winner-header");
 
         header.getChildren().addAll(
-                headerCell("#",    32),
-                headerCell("",     30),   // totem placeholder
+                headerCell("#",32),
+                headerCell("",30),   // totem placeholder
                 headerCell("Player", 160),
-                headerCell("Builders",  70),
-                headerCell("Artist",  70),
-                headerCell("Inventor",  70),
-                headerCell("building PP",   70),
-                headerCell("building special PP",   70),
-                headerCell("Total",   80)
+                headerCell("Builders",70),
+                headerCell("Artist", 70),
+                headerCell("Inventor", 70),
+                headerCell("building PP", 70),
+                headerCell("building special PP",70),
+                headerCell("Total", 80)
         );
         return header;
     }
