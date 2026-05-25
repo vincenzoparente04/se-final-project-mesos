@@ -27,6 +27,11 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onGameStateUpdated(LocalGameState state) {
         Platform.runLater(() -> {
+            // RMI reconnect
+            if (router.applyPendingReconnectIfNeeded()) {
+                router.currentController().update(state);
+                return;
+            }
             ViewController currCntrl = router.currentController();
             currCntrl.update(state);
         });
@@ -79,8 +84,7 @@ public class ClientStateListenerGui implements ClientStateListener {
 
             Runnable navigate = () -> router.toWinner(players, winners, scoring);
 
-            // Wait for any queued event overlays (the 2 end-of-game events) to finish
-            // before navigating to the winner screen.
+            // Wait for any queued event overlays (the 2 end-of-game events) to finish before navigating to the winner screen.
             EventResolutionOverlay.setOnQueueDrained(navigate);
         });
     }

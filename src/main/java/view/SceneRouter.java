@@ -38,6 +38,12 @@ public class SceneRouter {
     private NickViewController nickViewController;
     private SceneController currentViewController;
 
+    /**
+     * Set when setupSession() cannot determine reconnect status synchronously (RMI case).
+     * The first onGameStateUpdated() will clear it and navigate to the correct screen.
+     */
+    private boolean pendingGameReconnect = false;
+
     public SceneRouter(Stage stage, LocalGameState localState, ClientMain main) {
         this.clientMain = main;
         this.stage = stage;
@@ -59,14 +65,17 @@ public class SceneRouter {
     // Navigation---------------------------------------------------------------
 
     public void toSplash() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/splash-view.fxml");
     }
 
     public void toNetworkSetup() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/network-setup-view.fxml");
     }
 
     public void toNick() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/nick-view.fxml");
     }
 
@@ -76,15 +85,18 @@ public class SceneRouter {
     }
 
     public void toWaiting(LobbyDto lobby) {
+        pendingGameReconnect = false;
         load("/org/example/mesos/waiting-view.fxml");
         currentViewController.setLobby(lobby);
     }
 
     public void toTotemPick() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/totem-pick-view.fxml");
     }
 
     public void toBoard() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/board/board-view.fxml");
     }
 
@@ -146,19 +158,38 @@ public class SceneRouter {
     public void setupSession(String name, VirtualServer vs) {
         this.session = new ClientSession(name, vs);
         Platform.runLater(() -> {
-            //Socket Reconnection Case : navigate to the right screen
-            //if localState updated we need to reconnect
             if (localState.snapshot() != null) {
-                String phase = localState.getPhase();
-                if (phase != null && phase.contains("COLOR_CHOOSING_PHASE")) {
-                    toTotemPick();
-                } else {
-                    toBoard();
-                }
+                // Socket reconnect: state was populated synchronously during handshake.
+                navigateByPhase();
             } else {
+                // Fresh connection or RMI reconnect: go to lobby for now.
+                // If a game state arrives immediately after (RMI reconnect), the
+                // pendingGameReconnect flag will redirect us to the correct screen.
                 toLobby();
+                pendingGameReconnect = true;
             }
         });
+    }
+
+    /**
+     * Called by onGameStateUpdated() to handle the deferred RMI reconnect routing.
+     * Returns true if it navigated (caller should skip the normal update() call and
+     * instead update the new controller).
+     */
+    public boolean applyPendingReconnectIfNeeded() {
+        if (!pendingGameReconnect) return false;
+        pendingGameReconnect = false;
+        navigateByPhase();
+        return true;
+    }
+
+    private void navigateByPhase() {
+        String phase = localState.getPhase();
+        if (phase != null && phase.contains("COLOR_CHOOSING_PHASE")) {
+            toTotemPick();
+        } else {
+            toBoard();
+        }
     }
 
     public void connectionErrorHandling(String message) {
