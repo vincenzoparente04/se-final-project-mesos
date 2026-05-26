@@ -222,6 +222,7 @@ public class LobbyManager implements LobbyCommandVisitor {
         lobby.addPlayer(entry);
         lobby.broadcastState();
         startIfFull(lobby);
+        broadcastLobbyListToBrowsers();
     }
 
     /**
@@ -336,6 +337,7 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (hostingLobby.isEmpty()) {
             lobbies.remove(hostingLobby.getId());
         }
+
         broadcastLobbyListToBrowsers();
     }
 
@@ -372,6 +374,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             leavingView.sendError("LEFT_LOBBY:success");
             leavingView.sendLobbyList(currentLobbyList());
         }
+
         broadcastLobbyListToBrowsers();
     }
 
