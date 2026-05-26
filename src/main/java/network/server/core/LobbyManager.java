@@ -1,6 +1,7 @@
 package network.server.core;
 
 import controller.GameController;
+import database.DatabaseConfig;
 import shared.command.*;
 import shared.command.lobbyCommand.*;
 import shared.dto.LobbyDto;
@@ -59,7 +60,11 @@ public class LobbyManager implements LobbyCommandVisitor {
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
     /** @apiNote @GuardedBy("this") */
     private final Map<String, GameController> activeGames = new HashMap<>(); // <PlayerName, GameController>
+    private final DatabaseConfig dbConfig;
 
+    public LobbyManager(DatabaseConfig dbConfig) {
+        this.dbConfig = dbConfig;
+    }
 
 
     // Socket entry point ───────────────────────────────────

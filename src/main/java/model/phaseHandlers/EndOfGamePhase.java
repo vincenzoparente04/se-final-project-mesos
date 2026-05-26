@@ -1,5 +1,6 @@
 package model.phaseHandlers;
 
+import database.*;
 import model.GameModel;
 import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
 import model.enums.GamePhase;
@@ -10,6 +11,7 @@ import shared.dto.event.EndGameScoringDto;
 import shared.dto.event.EventResolutionDto;
 import shared.dto.event.PlayerScoringDeltaDto;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,8 @@ public class EndOfGamePhase implements GamePhaseHandler {
     private final GameModel model;
     private List<Player> winners;
     private EndGameScoringDto scoring; // built in calculateEndGameScoring(), shipped from onEnter()
+    private MatchDAO matchDAO; // initialized in onEnter() after DatabaseManager sets up the DB
+    private boolean dbOn;
 
     public EndOfGamePhase(GameModel model) {
         this.model = model;
@@ -36,12 +40,15 @@ public class EndOfGamePhase implements GamePhaseHandler {
         List<String> winnerNames = winners.stream().map(Player::getName).toList();
         model.setWinners(winnerNames);
 
+        dbOn = updateDB(); //TODO DA USARE PER CAPIRE SE MOSTRARE IL PULSANTE PER RICEVERE LA CLASSIFICA
+        getStandingPosition();
+
+
         // Explicit game-over broadcast carrying both winners and scoring
         // (the state message no longer auto-emits the GameOverMessage).
         for (VirtualView v : model.getViews()) {
             v.sendGameOver(winnerNames, scoring);
         }
-        // model.notifyChange();
     }
 
     /**
@@ -134,6 +141,44 @@ public class EndOfGamePhase implements GamePhaseHandler {
         winners = tied.stream()
                 .filter(p -> p.getFood() == maxFood)
                 .toList();
+    }
+
+    public boolean updateDB() {
+        try {
+            DatabaseManager.initializeDatabase(model.getDbConfig());
+            this.matchDAO = new MatchDAO();
+
+            List<ScoreRecord> recordsToSave = new ArrayList<>();
+            for (Player p : model.getPlayers()) {
+                //TODO capire come vogliamo calcolare i punti
+                boolean isWinner = winners.contains(p);
+                recordsToSave.add(new ScoreRecord(p.getName(), isWinner, model.getPlayerCount()));
+            }
+            // Synchronized call. Game thread stop here until db end updating
+            matchDAO.saveMatch(recordsToSave);
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Database error during db update: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public void getStandingPosition(){
+        // top 10
+        List<ScoreRecord> topTen = matchDAO.getTopScores(model.getPlayerCount(), 10);
+        System.out.println("Top Ten: " + topTen);
+
+        // player standing position
+        for (Player p : model.getPlayers()) {
+            int standingPosition = matchDAO.getPlayerRank(model.getPlayerCount(), p.getName());
+
+            // Ora hai tutto ciò che serve:
+            // - 'topTen' (la classifica da mostrare a schermo)
+            // - 'posizioneAssoluta' (il posizionamento specifico di questo singolo player)
+
+            //TODO PROVVISIORIO PER TESTARE
+            System.out.println(p.getName() + " -> Classifica ottenuta. La tua posizione è: " + standingPosition + "°");
+        }
     }
 
     public List<Player> getWinners() {

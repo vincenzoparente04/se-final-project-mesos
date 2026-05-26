@@ -1,11 +1,14 @@
 package network.server.core;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import database.DatabaseConfig;
 import network.server.NetworkUtil;
 import network.server.rmi.GameServerRemote;
 import network.server.rmi.GameServerRemoteImpl;
@@ -34,7 +37,20 @@ public class ServerMain {
     private static final int SOCKET_PORT = 9999;
     private static final int RMI_PORT = 1099;
 
-    public static void main(String[] args) {
+
+    public static void main(String[] args) throws IOException {
+        DatabaseConfig dbConfig = acquireConfiguration();
+
+        if (dbConfig.enabled()) {
+            System.out.println("\nDb parameters saved");
+            System.out.println("  Complete URL: " + dbConfig.url());
+            System.out.println("  User:         " + dbConfig.user());
+
+        } else {
+            System.out.println("\nStarting server without database functionality.");
+        }
+        System.out.println();
+
         // Advertise a LAN-reachable IP to remote RMI peers; without this the
         // exported stubs would carry 127.0.0.1 (default of getLocalHost()) and
         // remote clients would not be able to invoke them.
@@ -42,7 +58,7 @@ public class ServerMain {
         System.setProperty("java.rmi.server.hostname", host);
         System.out.println("RMI export hostname: " + host);
 
-        LobbyManager lobby = new LobbyManager();
+        LobbyManager lobby = new LobbyManager(dbConfig);
 
         // TODO: vedi se necessario
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -52,6 +68,69 @@ public class ServerMain {
 
         startRmiRegistry(lobby);
         startSocketAcceptor(lobby);
+    }
+
+    /**
+     * Interactively prompts the user for database configuration.
+     * Returns a DatabaseConfig with the selected or default parameters.
+     */
+    private static DatabaseConfig acquireConfiguration() throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+        System.out.println("╔═══════════════════════════════════════╗");
+        System.out.println("║  Mesos Game Server - Configuration    ║");
+        System.out.println("╚═══════════════════════════════════════╝\n");
+
+        boolean useDb = askDatabaseUsage(reader);
+
+        if (!useDb) {
+            return new DatabaseConfig(false, "", "", "");
+        }
+
+        System.out.println("\n--- Database settings ---");
+        String url = askWithDefault(reader, "URL", "jdbc:mysql://localhost:3306/Mesos_db");
+        String user = askWithDefault(reader, "User", "mesos_admin");
+        String password = askWithDefault(reader, "Password", "PriParOrsPan");
+
+        System.out.println("\n✓ configuration completed!");
+        return new DatabaseConfig(true, url, user, password);
+    }
+
+    /**
+     * Prompts for database usage with validation.
+     */
+    private static boolean askDatabaseUsage(BufferedReader reader) throws IOException {
+        while (true) {
+            System.out.print("Do you want to use database functionality? [y/n] (default: no): ");
+            String input = reader.readLine().trim().toLowerCase();
+
+            if (input.isEmpty() || input.equals("no") || input.equals("n")) {
+                System.out.println("✓ Database: Disabled");
+                return false;
+            }
+
+            if (input.equals("yes") || input.equals("y")) {
+                System.out.println("✓ Database: Enabled");
+                return true;
+            }
+
+            System.out.println("✗ Invalid choice. Retry.\n");
+        }
+    }
+
+    /**
+     * Prompts for a specific database parameter with a sensible default.
+     */
+    private static String askWithDefault(BufferedReader reader, String prompt, String defaultValue) throws IOException {
+        while (true) {
+            System.out.print("Insert " + prompt + " (default: " + defaultValue + "): ");
+            String input = reader.readLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("✓ " + prompt + ": " + defaultValue);
+                return defaultValue;
+            }
+            return input;
+        }
     }
 
 
