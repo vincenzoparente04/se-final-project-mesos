@@ -344,7 +344,6 @@ public final class GameController implements Runnable, ClientCommandVisitor {
             for (VirtualView v : model.getViews()) {
                 v.sendGameOver(winnerNames, null);
             }
-            model.notifyChange();
         }
     };
 

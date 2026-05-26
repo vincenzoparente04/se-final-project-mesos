@@ -200,11 +200,11 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>clientMainCLi</finalName>
+                            <finalName>clientMainCLI</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                             <archive>
                                 <manifest>
-                                    <mainClass>network.client.core.cli.ClientMainCLi</mainClass>
+                                    <mainClass>network.client.core.cli.ClientMainCli</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

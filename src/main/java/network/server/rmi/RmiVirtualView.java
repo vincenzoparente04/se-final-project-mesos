@@ -188,7 +188,7 @@ public class RmiVirtualView implements VirtualView {
     private void handleDisconnect() {
         if (!closed.compareAndSet(false, true)) return;
         sentinel.stop();
-        senderExecutor.shutdownNow();
         lobbyManager.onDisconnect(playerName);
+        senderExecutor.shutdownNow();
     }
 }
