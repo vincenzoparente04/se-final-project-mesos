@@ -72,6 +72,12 @@ public class PlacementPhase implements GamePhaseHandler {
             currentPlayer = turnOrder.get(currentIndex);
             model.notifyChange();
         } else {
+            for(Player p: model.getPlayers()) {
+                if (!p.isConnected()) {
+                    model.getBoard().getTurnOrder().remove(p);
+                    model.getBoard().disconnectedReturnTotemToTurnOrder(p);
+                }
+            }
             // all totems placed → move to action phase
             model.setPhase(new ActionPhase(model));
             model.notifyChange();
