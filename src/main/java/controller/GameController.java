@@ -289,7 +289,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                 suspended = false;
                 model.setPhase(new EndOfGamePhase(model));
                 model.setGameOver();
-                model.notifyChange();
+                // model.notifyChange(); // TODO: forse si può levare
             }
         }
 
