@@ -343,10 +343,6 @@ public class LobbyManager implements LobbyCommandVisitor {
 
     // ─── LEAVE command handlers ────────────────────────────────────────
 
-    private boolean isPlayerInEndGame(String playerName) {
-        return (activeGames.containsKey(playerName) && activeGames.get(playerName).isGameOver());
-    }
-
     private boolean isPlayerInLobby(String playerName) {
         return lobbies.values().stream()
                 .flatMap(l -> l.getPlayers().stream())
