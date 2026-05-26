@@ -77,7 +77,7 @@ public class TotemPickViewController implements SceneController {
 
         //TODO: self.color --> green color does not exist. Should be purple
         if (iHavePicked) {
-            hintLabel.setText("You picked " + self.color + ". Waiting for the others…");
+            hintLabel.setText("Waiting for the others…");
         } else if (isMyTurn) {
             hintLabel.setText("Pick a colour for your totem.");
         }
