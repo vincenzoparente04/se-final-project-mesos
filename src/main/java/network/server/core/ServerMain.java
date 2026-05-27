@@ -46,10 +46,16 @@ public class ServerMain {
             System.out.println("  Complete URL: " + dbConfig.url());
             System.out.println("  User:         " + dbConfig.user());
 
+            boolean dbReady = setupDatabaseEnvironment(dbConfig);
+            if (!dbReady) {
+                System.err.println("Unable to start the database infrastructure. Starting server without database functionality."); //TODO: VOGLIO CHE SE NON VA A BUON FINE MI STARTA IL SERVER MA SENZA LA FUNZINALITà DB
+                database.DatabaseManager.disable(); // Disables DB functionality for the rest of the server lifecycle
+            }
+
         } else {
             System.out.println("\nStarting server without database functionality.");
+            database.DatabaseManager.disable();
         }
-        System.out.println();
 
         // Advertise a LAN-reachable IP to remote RMI peers; without this the
         // exported stubs would carry 127.0.0.1 (default of getLocalHost()) and
@@ -58,7 +64,7 @@ public class ServerMain {
         System.setProperty("java.rmi.server.hostname", host);
         System.out.println("RMI export hostname: " + host);
 
-        LobbyManager lobby = new LobbyManager(dbConfig);
+        LobbyManager lobby = new LobbyManager();
 
         // TODO: vedi se necessario
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -130,6 +136,58 @@ public class ServerMain {
                 return defaultValue;
             }
             return input;
+        }
+    }
+
+    /**
+     * Handles the "Happy Path" flow and the possible interactive fallback for DB creation.
+     * Returns true if the environment is ready, false in case of a critical error.
+     */
+    private static boolean setupDatabaseEnvironment(DatabaseConfig dbConfig) {
+        try {
+            // 1. Optimistic Attempt
+            database.DatabaseManager.initializeDatabase(dbConfig);
+            return true;
+
+        } catch (java.sql.SQLException e) {
+            int errorCode = e.getErrorCode();
+            String sqlState = e.getSQLState();
+
+            // Communication error (e.g., MySQL not running)
+            if ("08S01".equals(sqlState)) {
+                System.err.println("\n✗ CRITICAL ERROR: Unable to contact MySQL.");
+                System.err.println("  Details: Make sure the MySQL service is running on the correct port.");
+                return false;
+            }
+
+            // 1049 (Unknown database) or 1045 (Access denied)
+            if (errorCode == 1049 || errorCode == 1045) {
+                System.out.println("\n⚠ Database environment not found or insufficient permissions.");
+                System.out.println("  Initial configuration is required. Administrator privileges (e.g., root) will be requested.");
+
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                    String rootUser = askWithDefault(reader, "Admin User", "root");
+
+                    System.out.print("Insert Admin Password: ");
+                    String rootPass = reader.readLine().trim();
+
+                    // 2. Fallback: Executes the setup with the provided privileges
+                    database.DatabaseManager.setupEnvironmentWithRoot(rootUser, rootPass, dbConfig);
+
+                    // 3. Retry standard initialization (it must work now)
+                    database.DatabaseManager.initializeDatabase(dbConfig);
+                    return true;
+
+                } catch (Exception ex) {
+                    System.err.println("\n✗ ERROR during administrative setup: " + ex.getMessage());
+                    return false;
+                }
+            }
+
+            // Other unhandled errors
+            System.err.println("\n✗ Unexpected SQL ERROR: " + e.getMessage());
+            return false;
         }
     }
 

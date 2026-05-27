@@ -1,6 +1,8 @@
 package model.phaseHandlers;
 
 import model.GameModel;
+import model.board.OfferTileAction.DrawCardsAction;
+import model.board.OfferTileAction.OfferTileAction;
 import model.cards.Card;
 import model.enums.GamePhase;
 import model.player.Player;
@@ -29,10 +31,17 @@ public class PreEndOfRoundPhase implements GamePhaseHandler {
                 .findFirst()
                 .orElse(null);
 
-        if (activePlayer == null) {
+        // Checking if there is any legal move for the player with the extra draw action. If not, we skip directly to the EndOfRoundPhase.
+        // offer tile action created to represent the extra draw action
+        OfferTileAction extraDrawAction = new DrawCardsAction(1, 0);
+        RowsManager rowsManager = model.getRowsManager();
+        MoveChecker moveChecker = new MoveChecker(activePlayer, extraDrawAction, rowsManager);
+
+        if (activePlayer == null || !(moveChecker.checkLegalMoves(rowsManager.getAllCardsOnBoard()))) {
             model.setPhase(new EndOfRoundPhase(model));
             return;
         }
+
         model.notifyChange();
     }
 

@@ -20,11 +20,13 @@ public class EndOfGamePhase implements GamePhaseHandler {
     private final GameModel model;
     private List<Player> winners;
     private EndGameScoringDto scoring; // built in calculateEndGameScoring(), shipped from onEnter()
-    private MatchDAO matchDAO; // initialized in onEnter() after DatabaseManager sets up the DB
-    private boolean dbOn;
+    private MatchDAO matchDAO;
+    private boolean suspendedGame; // if true, it means that the game ended due to a player disconnection, so we skip end-game scoring and DB saving
 
-    public EndOfGamePhase(GameModel model) {
+    public EndOfGamePhase(GameModel model, List<Player> winners, boolean suspendedGame) {
         this.model = model;
+        this.winners = winners;
+        this.suspendedGame = suspendedGame;
     }
 
     /**
@@ -33,22 +35,78 @@ public class EndOfGamePhase implements GamePhaseHandler {
      */
     @Override
     public void onEnter() {
-        resolveAllVisibleEvents();
-        calculateEndGameScoring();
-        determineWinner();
+        if (!suspendedGame) {
+            resolveAllVisibleEvents();
+            calculateEndGameScoring();
+            determineWinner();
 
-        List<String> winnerNames = winners.stream().map(Player::getName).toList();
-        model.setWinners(winnerNames);
+            List<String> winnerNames = winners.stream().map(Player::getName).toList();
+            model.setWinners(winnerNames);
 
-        dbOn = updateDB(); //TODO DA USARE PER CAPIRE SE MOSTRARE IL PULSANTE PER RICEVERE LA CLASSIFICA
-        getStandingPosition();
+            for (VirtualView v : model.getViews()) {
+                v.sendGameOver(winnerNames, scoring);
+            }
 
+            if (database.DatabaseManager.isEnabled()) {
+                processDatabaseAsync();
+            } else {
+                System.out.println("[SERVER] DB functionality disabled.");
+            }
 
-        // Explicit game-over broadcast carrying both winners and scoring
-        // (the state message no longer auto-emits the GameOverMessage).
-        for (VirtualView v : model.getViews()) {
-            v.sendGameOver(winnerNames, scoring);
+        }else {
+
+            List<String> winnerNames = winners.stream().map(Player::getName).toList();
+            model.setWinners(winnerNames);
+            scoring = new EndGameScoringDto(new ArrayList<>()); // empty scoring since the game was suspended, so no points are calculated
+
+            for (VirtualView v : model.getViews()) {
+                v.sendGameOver(winnerNames, scoring);
+            }
         }
+    }
+
+    /**
+     * This method handle match scores saving and standings receiving with a separate thread to avoid server block
+     */
+    private void processDatabaseAsync() {
+        this.matchDAO = new MatchDAO();
+
+        List<ScoreRecord> recordsToSave = new ArrayList<>();
+        for (Player p : model.getPlayers()) {
+            recordsToSave.add(new ScoreRecord(
+                    p.getName(),
+                    p.getPrestigePoints(),
+                    model.getPlayerCount(),
+                    null
+            ));
+        }
+
+        new Thread(() -> {
+            try {
+                matchDAO.saveMatch(recordsToSave);
+                System.out.println("[DB] Match scores saved.");
+
+                List<ScoreRecord> topStanding = matchDAO.getTopScores(model.getPlayerCount(), 20);
+                System.out.println("Top standing updated: " + topStanding);
+
+                for (Player p : model.getPlayers()) {
+                    int standingPosition = matchDAO.getPlayerRank(model.getPlayerCount(), p.getName(), p.getPrestigePoints());
+
+                    VirtualView playerView = model.getViews().stream()
+                            .filter(v -> v.getPlayerName().equals(p.getName()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (playerView != null) {
+                        //playerView.sendLeaderboard(topStanding, standingPosition); //TODO FARE IL COMANDO DI AGGIORNAMENTO CLASSIFICA
+                    }
+
+                    System.out.println("[DB-TEST] " + p.getName() + " -> absolute position is: " + standingPosition + "°");
+                }
+            } catch (Exception e) {
+                System.err.println("[DB] Error during async operation: " + e.getMessage());
+            }
+        }, "db-async-thread").start();
     }
 
     /**
@@ -143,43 +201,6 @@ public class EndOfGamePhase implements GamePhaseHandler {
                 .toList();
     }
 
-    public boolean updateDB() {
-        try {
-            DatabaseManager.initializeDatabase(model.getDbConfig());
-            this.matchDAO = new MatchDAO();
-
-            List<ScoreRecord> recordsToSave = new ArrayList<>();
-            for (Player p : model.getPlayers()) {
-                //TODO capire come vogliamo calcolare i punti
-                boolean isWinner = winners.contains(p);
-                recordsToSave.add(new ScoreRecord(p.getName(), isWinner, model.getPlayerCount()));
-            }
-            // Synchronized call. Game thread stop here until db end updating
-            matchDAO.saveMatch(recordsToSave);
-            return true;
-        } catch (SQLException e) {
-            System.err.println("Database error during db update: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public void getStandingPosition(){
-        // top 10
-        List<ScoreRecord> topTen = matchDAO.getTopScores(model.getPlayerCount(), 10);
-        System.out.println("Top Ten: " + topTen);
-
-        // player standing position
-        for (Player p : model.getPlayers()) {
-            int standingPosition = matchDAO.getPlayerRank(model.getPlayerCount(), p.getName());
-
-            // Ora hai tutto ciò che serve:
-            // - 'topTen' (la classifica da mostrare a schermo)
-            // - 'posizioneAssoluta' (il posizionamento specifico di questo singolo player)
-
-            //TODO PROVVISIORIO PER TESTARE
-            System.out.println(p.getName() + " -> Classifica ottenuta. La tua posizione è: " + standingPosition + "°");
-        }
-    }
 
     public List<Player> getWinners() {
         return winners;
