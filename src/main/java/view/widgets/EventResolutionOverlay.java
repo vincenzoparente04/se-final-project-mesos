@@ -11,6 +11,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import shared.dto.event.EventResolutionDto;
 import shared.dto.event.PlayerEventDeltaDto;
+import view.TribePopupController;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -23,22 +24,22 @@ import java.util.Deque;
  */
 public final class EventResolutionOverlay {
 
-    private static final double DWELL_SECONDS  = 12.0;
-    private static final double FADE_IN_MS     = 300;
-    private static final double FADE_OUT_MS    = 200;
+    private static final double DWELL_SECONDS = 12.0;
+    private static final double FADE_IN_MS = 300;
+    private static final double FADE_OUT_MS = 200;
 
     private record PendingEvent(StackPane root, EventResolutionDto dto) {}
 
     private static final Deque<PendingEvent> queue = new ArrayDeque<>();
-    private static StackPane         activeRoot     = null;
-    private static StackPane         activeBackdrop = null;
-    private static PauseTransition   activeDwell    = null;
-    private static Timeline          activeProgress = null;
-    private static Runnable          onQueueDrained = null;
+    private static StackPane activeRoot = null;
+    private static StackPane activeBackdrop = null;
+    private static PauseTransition activeDwell = null;
+    private static Timeline activeProgress = null;
+    private static Runnable onQueueDrained = null;
 
     private EventResolutionOverlay() {}
 
-    // ── Public API ───────────────────────────────────────────────────────────
+    //Public API
 
     public static boolean isQueueEmpty() {
         return queue.isEmpty() && activeBackdrop == null;
@@ -91,6 +92,8 @@ public final class EventResolutionOverlay {
             }
             return;
         }
+
+        TribePopupController.closeIfOpen();
 
         StackPane root = next.root();
         EventResolutionDto dto = next.dto();

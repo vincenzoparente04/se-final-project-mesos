@@ -40,7 +40,6 @@ import java.util.Map;
 public class BoardGameAreaController implements ViewController {
 
     private static final double CARD_ASPECT      = 122.0 / 84.0;
-    private static final double RESOLVED_SCALE  = 120.0 / 84.0;
     /** Fallback tile-height ratio used only before the first card-size computation. */
     private static final double TILE_H_RATIO    = 0.10;
     /** Fixed overhead: topBar(36) + inner-VBox padding(22) + inner-VBox spacing(28). */
@@ -132,13 +131,13 @@ public class BoardGameAreaController implements ViewController {
     }
 
     /** Returns the card width for the current render, using the cache. */
-    private double cardWidth(boolean resolving) {
+    private double cardWidth() {
         double base = (cachedCardW > 0) ? cachedCardW : computeBaseCardWidth();
-        return resolving ? base * RESOLVED_SCALE * userScale : base * userScale;
+        return base * userScale;
     }
 
-    private double cardHeight(boolean resolving) {
-        return cardWidth(resolving) * CARD_ASPECT;
+    private double cardHeight() {
+        return cardWidth() * CARD_ASPECT;
     }
 
     /** Total cards in the fuller row (upper = topTribe+topBuilding, lower = bottomTribe+bottomBuilding). */
@@ -246,9 +245,8 @@ public class BoardGameAreaController implements ViewController {
 
         updatePlayersBar(state.getPlayers(), me, state.getCurrentPlayerName());
         updateCentralBox(state, playersByName, phase, isMyTurn);
-        boolean resolving = isEndOfRoundPhase(phase);
-        updateRowsBox(upperRowsBox, state.getTopRowTribe(), state.getTopRowBuilding(), phase, isMyTurn, false);
-        updateRowsBox(lowerRowsBox, state.getBottomRowTribe(), state.getBottomRowBuilding(), phase, isMyTurn, resolving);
+        updateRowsBox(upperRowsBox, state.getTopRowTribe(), state.getTopRowBuilding(), phase, isMyTurn);
+        updateRowsBox(lowerRowsBox, state.getBottomRowTribe(), state.getBottomRowBuilding(), phase, isMyTurn);
         updateDecks(state.getCurrentEra());
 
         // After the very first render, schedule ONE re-measure once the layout
@@ -322,13 +320,12 @@ public class BoardGameAreaController implements ViewController {
     private void updateRowsBox(HBox box,
                                List<CardDto> tribeCards,
                                List<CardDto> buildingCards,
-                               String phase, boolean isMyTurn,
-                               boolean resolving) {
+                               String phase, boolean isMyTurn) {
         box.getChildren().clear();
         box.setAlignment(Pos.CENTER);
 
-        double w = cardWidth(resolving);
-        double h = cardHeight(resolving);
+        double w = cardWidth();
+        double h = cardHeight();
 
         box.getChildren().add(buildRow(tribeCards, phase, isMyTurn, w, h));
         box.getChildren().add(buildRow(buildingCards, phase, isMyTurn, w, h));
@@ -362,8 +359,8 @@ public class BoardGameAreaController implements ViewController {
         int eraNum = eraNumber(era);
         int eraNumBuilding = eraNum + 1;
 
-        double cw = cardWidth(false);
-        double ch = cardHeight(false);
+        double cw = cardWidth();
+        double ch = cardHeight();
 
         //TODO: remove dead label code
         Label tribeLbl = new Label("");

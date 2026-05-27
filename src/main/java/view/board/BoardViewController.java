@@ -78,7 +78,7 @@ public class BoardViewController implements SceneController {
         phaseLabel.setText(formatPhase(phase));
         roundLabel.setText("Round " + state.getCurrentRound());
 
-        boolean showEnd = "ACTION".equals(phase) && isMyTurn;
+        boolean showEnd = ("ACTION".equals(phase) || "PRE_END_OF_ROUND".equals(phase)) && isMyTurn;
         endTurnButton.setOpacity(showEnd ? 1.0 : 0.0);
         endTurnButton.setMouseTransparent(!showEnd);
     }

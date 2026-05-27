@@ -43,8 +43,16 @@ public class TribePopupController implements ViewController {
     @FXML private VBox  buildingsBox;
 
     private Stage stage;
-    /** A separate root we attach card-zoom overlays to. */
     private StackPane overlayRoot;
+
+    private static Stage openStage = null;
+
+    public static void closeIfOpen() {
+        if (openStage != null) {
+            openStage.close();
+            openStage = null;
+        }
+    }
 
     public static void show(Window owner, PlayerDto target) {
         try {
@@ -65,6 +73,8 @@ public class TribePopupController implements ViewController {
                     TribePopupController.class.getResource("/styles/mesos.css").toExternalForm());
             st.setScene(scene);
             ctrl.stage = st;
+            openStage = st;
+            st.setOnHidden(e -> { if (openStage == st) openStage = null; });
 
             // Center on owner window
             st.setX(owner.getX() + owner.getWidth()  / 2 - 420);
