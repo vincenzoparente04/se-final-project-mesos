@@ -258,19 +258,21 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                 return;
             }
             p.setDisconnected();
+
             for (VirtualView v : model.getViews()) {
                 if (!v.getPlayerName().equals(cmd.getPlayerName())) {
                     v.sendError("Player_disconnected:" + cmd.getPlayerName());
                 }
             }
             model.removeView(cmd.getPlayerName());
+
             GamePhaseHandler phaseHandler = model.getPhaseHandler();
             if (phaseHandler != null && phaseHandler.getCurrentPlayer() != null
                     && phaseHandler.getCurrentPlayer().getName().equals(cmd.getPlayerName())) {
                 phaseHandler.skipCurrentPlayerTurn();
             }
 
-            // ─── Sospensione: scatta quando rimane un solo connesso ────────
+            // ─── Suspension: when only a player remains connected ────────
             long connected = countConnected();
             if (connected == 1 && !suspended) {
                 suspended = true;
