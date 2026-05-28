@@ -5,7 +5,6 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
-import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -58,7 +57,7 @@ public class BoardGameAreaController implements ViewController {
     private BoardSelfPanelController selfPanel;
     private double userScale = 0.88;
 
-    // ── Layout cache ──────────────────────────────────────────────────────────
+    // Layout cache
     /** Cached base card width (without userScale). -1 means "needs recompute". */
     private double cachedCardW    = -1;
     /** Card count that was used for the last cachedCardW computation. */
@@ -79,7 +78,7 @@ public class BoardGameAreaController implements ViewController {
         rescaleCMD();
     }
 
-    // ── Scene-size helpers (prefer overlayRoot to avoid Windows decoration issues) ──
+    //  Scene-size helpers (prefer overlayRoot to avoid Windows decoration issues)
 
     private double effectiveW() {
         double w = (overlayRoot != null && overlayRoot.getWidth() > 1)
@@ -104,24 +103,24 @@ public class BoardGameAreaController implements ViewController {
         return base * (110.0 / 84.0);
     }
 
-    // ── Card-width computation (call only when cache must be refreshed) ───────
+    // Card-width computation (call only when cache must be refreshed)
 
     private double computeBaseCardWidth() {
         double w = effectiveW();
         double h = effectiveH();
 
         // Opportunistically update cached panel heights from live measurements
-        if (othersBar.getHeight()  > 0) cachedOthersH  = othersBar.getHeight();
+        if (othersBar.getHeight() > 0) cachedOthersH = othersBar.getHeight();
         if (centralBox.getHeight() > 0) cachedCentralH = centralBox.getHeight();
 
-        double othersH  = cachedOthersH  > 0 ? cachedOthersH  : h * 0.10;
+        double othersH = cachedOthersH  > 0 ? cachedOthersH  : h * 0.10;
         double centralH = cachedCentralH > 0 ? cachedCentralH : h * 0.18;
-        double selfH    = selfPanel != null ? selfPanel.panelHeight() : 165.0;
+        double selfH = selfPanel != null ? selfPanel.panelHeight() : 165.0;
 
         // Horizontal: fit n cards into the row width
-        double rowW    = w - 220 - 70;
-        int    n       = Math.max(maxCardsInAnyRow(), 1);
-        double wFromW  = (rowW - 6.0 * (n - 1) - 40) / n;
+        double rowW = w - 220 - 70;
+        int n = Math.max(maxCardsInAnyRow(), 1);
+        double wFromW = (rowW - 6.0 * (n - 1) - 40) / n;
 
         // Vertical: 2 rows share the available height
         double availH  = Math.max(h - OVERHEAD_H - othersH - centralH - selfH, 0);
@@ -151,8 +150,6 @@ public class BoardGameAreaController implements ViewController {
     /**
      * Listens to window resize and triggers a card-size recompute + re-render.
      * Debounced at 120 ms to avoid flooding during live drag-resize.
-     * No infinite loop risk: the listener fires on stage property changes only,
-     * not on layout changes caused by our own renders.
      */
     private void rescale() {
         PauseTransition debounce = new PauseTransition(Duration.millis(120));
@@ -180,7 +177,7 @@ public class BoardGameAreaController implements ViewController {
     }
 
     /**
-     *  Add CMD+/- to resize the gui dimensions
+     *  CMD+/- to resize the gui dimensions
      */
     private void rescaleCMD(){
         overlayRoot.sceneProperty().addListener((obs, old, scene) -> {
@@ -228,8 +225,6 @@ public class BoardGameAreaController implements ViewController {
     public void update(LocalGameState state) {
         this.lastState = state;
 
-        // Invalidate card-size cache only when the number of cards changes.
-        // All other game-state updates reuse the cached size → no oscillation.
         int newMax = maxCardsInAnyRow();
         if (newMax != cachedMaxCards) {
             cachedMaxCards = newMax;
@@ -249,8 +244,6 @@ public class BoardGameAreaController implements ViewController {
         updateRowsBox(lowerRowsBox, state.getBottomRowTribe(), state.getBottomRowBuilding(), phase, isMyTurn);
         updateDecks(state.getCurrentEra());
 
-        // After the very first render, schedule ONE re-measure once the layout
-        // pass has completed. This corrects the initial size calculated with fallbacks.
         if (needsInitialMeasure) {
             needsInitialMeasure = false;
             Platform.runLater(() -> {
@@ -275,8 +268,6 @@ public class BoardGameAreaController implements ViewController {
             boolean isCurrent = p.name.equals(currentPlayer);
             PlayerViewController pvc = PlayerViewController.load(p, false, isCurrent);
             Parent node = pvc.root();
-            // Confine picking to the node's own layout bounds so that any CSS glow/shadow
-            // that bleeds upward cannot accidentally intercept topBar button events.
             node.setPickOnBounds(true);
             node.setOnMouseClicked(e -> TribePopupController.show(overlayRoot.getScene().getWindow(), p));
             othersBar.getChildren().add(node);
@@ -362,21 +353,12 @@ public class BoardGameAreaController implements ViewController {
         double cw = cardWidth();
         double ch = cardHeight();
 
-        //TODO: remove dead label code
-        Label tribeLbl = new Label("");
-        tribeLbl.getStyleClass().add("mesos-section-label");
-        Label buildLbl = new Label("");
-        buildLbl.getStyleClass().add("mesos-section-label");
-
-        VBox td = new VBox(4, tribeLbl, new DeckView("BackEra" + eraNum + ".png", cw, ch));
-        td.setAlignment(Pos.CENTER);
-        if(eraNumBuilding < 4){
-            VBox bd = new VBox(4, buildLbl, new DeckView(buildingBackForEra(eraNumBuilding), cw, ch));
-            bd.setAlignment(Pos.CENTER);
-
+        DeckView td = new DeckView("BackEra" + eraNum + ".png", cw, ch);
+        if (eraNumBuilding < 4) {
+            DeckView bd = new DeckView(buildingBackForEra(eraNumBuilding), cw, ch);
             decksBox.getChildren().addAll(td, bd);
-        }else{
-            decksBox.getChildren().addAll(td);
+        } else {
+            decksBox.getChildren().add(td);
         }
 
     }
@@ -414,16 +396,4 @@ public class BoardGameAreaController implements ViewController {
         return m;
     }
 
-    static String prettyType(String type) {
-        if (type == null) return "?";
-        return switch (type) {
-            case "HUNTER" -> "Hunters";
-            case "BUILDER" -> "Builders";
-            case "SHAMAN" -> "Shamans";
-            case "ARTIST" -> "Artists";
-            case "INVENTOR" -> "Inventors";
-            case "GATHERER" -> "Gatherers";
-            default -> type;
-        };
-    }
 }

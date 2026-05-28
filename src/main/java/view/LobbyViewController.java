@@ -58,12 +58,14 @@ public class LobbyViewController implements SceneController {
         if(state.getPhase().contains("COLOR_CHOOSING_PHASE")) {
             router.toTotemPick();
         } else{
+            if (state.isGameOver()) {
+                router.toWinner(state.getPlayers(), state.getWinners());
+                return;
+            }
             router.toBoard();
         }
 
-        if (state.isGameOver()) {
-            router.toWinner(state.getPlayers(), state.getWinners());
-        }
+
     }
 
     public void showLobbies(List<LobbyDto> lobbies) {
@@ -101,25 +103,29 @@ public class LobbyViewController implements SceneController {
     }
 
     private static final class LobbyCell extends ListCell<LobbyDto> {
+        private final Label nameLabel = new Label();
+        private final Label playersLabel = new Label();
+        private final javafx.scene.layout.HBox hbox;
+
+        LobbyCell() {
+            nameLabel.getStyleClass().add("mesos-label-bold");
+            nameLabel.setStyle("-fx-font-size: 48;");
+            playersLabel.getStyleClass().add("mesos-label");
+            hbox = new javafx.scene.layout.HBox(50, nameLabel, playersLabel);
+            hbox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        }
+
         @Override
         protected void updateItem(LobbyDto lobby, boolean empty) {
             super.updateItem(lobby, empty);
             setText(null);
             if (empty || lobby == null) {
                 setGraphic(null);
-                return;
+            } else {
+                nameLabel.setText(lobby.name());
+                playersLabel.setText(lobby.currentPlayers() + " / " + lobby.maxPlayers() + " players");
+                setGraphic(hbox);
             }
-            javafx.scene.control.Label name = new javafx.scene.control.Label(lobby.name());
-            name.getStyleClass().add("mesos-label-bold");
-            name.setStyle("-fx-font-size: 16;");
-
-            javafx.scene.control.Label players = new javafx.scene.control.Label(
-                    lobby.currentPlayers() + " / " + lobby.maxPlayers() + " players");
-            players.getStyleClass().add("mesos-hint");
-
-            javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(2, name, players);
-            vbox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            setGraphic(vbox);
         }
     }
 }

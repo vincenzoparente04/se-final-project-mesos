@@ -46,7 +46,7 @@ public class WinnerViewController implements SceneController {
         List<PlayerDto> actualPlayers = players != null ? players : router.localState().getPlayers();
         
         if (scoring != null) {
-            List<PlayerScoringDeltaDto> ordered = scoring.deltas;
+            List<PlayerScoringDeltaDto> ordered = new ArrayList<>(scoring.deltas);
             ordered.sort(Comparator.comparingInt((PlayerScoringDeltaDto p) -> p.prestigeAfter).reversed());
             
             int topScore = ordered.isEmpty() ? 0 : ordered.get(0).prestigeAfter;

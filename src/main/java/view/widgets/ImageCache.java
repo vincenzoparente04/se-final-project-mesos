@@ -3,8 +3,8 @@ package view.widgets;
 import javafx.scene.image.Image;
 
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Application-wide cache for JavaFX Image objects.
@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public class ImageCache {
 
-    private static final Map<String, Image> cache = new HashMap<>();
+    private static final Map<String, Image> cache = new ConcurrentHashMap<>();
 
     public static Image get(String resourcePath) {
         return cache.computeIfAbsent(resourcePath, path -> {

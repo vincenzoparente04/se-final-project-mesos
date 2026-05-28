@@ -13,6 +13,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import view.widgets.CardFormatter;
 import javafx.stage.Window;
 import shared.dto.CardDto;
 import shared.dto.PlayerDto;
@@ -125,7 +126,7 @@ public class TribePopupController implements ViewController {
 
         for (Map.Entry<String, List<CardDto>> e : grouped.entrySet()) {
             if (e.getValue().isEmpty()) continue;
-            charactersBox.getChildren().add(buildGroup(prettyType(e.getKey()), e.getValue()));
+            charactersBox.getChildren().add(buildGroup(CardFormatter.prettyType(e.getKey()), e.getValue()));
         }
     }
 
@@ -157,7 +158,7 @@ public class TribePopupController implements ViewController {
             v.setOnMouseClicked(e -> CardZoomOverlay.show(overlayRoot, c));
             cell.getChildren().add(v);
 
-            String meta = buildCardMeta(c);
+            String meta = CardFormatter.buildCardMeta(c);
             if (meta != null && !meta.isBlank()) {
                 Label m = new Label(meta);
                 m.getStyleClass().add("mesos-card-meta");
@@ -170,33 +171,6 @@ public class TribePopupController implements ViewController {
         }
         group.getChildren().add(row);
         return group;
-    }
-
-    private static String buildCardMeta(CardDto c) {
-        StringBuilder sb = new StringBuilder();
-        if (c.details != null && !c.details.isBlank()) sb.append(c.details);
-        if (c.foodCost > 0) {
-            if (sb.length() > 0) sb.append(" • ");
-            sb.append("cost ").append(c.foodCost);
-        }
-        if (c.endGamePoints > 0) {
-            if (sb.length() > 0) sb.append(" • ");
-            sb.append("+").append(c.endGamePoints).append("PP");
-        }
-        return sb.toString();
-    }
-
-    private static String prettyType(String type) {
-        if (type == null) return "?";
-        return switch (type) {
-            case "HUNTER" -> "Hunters";
-            case "BUILDER" -> "Builders";
-            case "SHAMAN" -> "Shamans";
-            case "ARTIST" -> "Artists";
-            case "INVENTOR" -> "Inventors";
-            case "GATHERER" -> "Gatherers";
-            default -> type;
-        };
     }
 
     @FXML

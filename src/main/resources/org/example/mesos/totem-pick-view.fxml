@@ -26,8 +26,6 @@
 
         <HBox fx:id="colorRow" alignment="CENTER" spacing="20"/>
 
-        <Label fx:id="statusLabel" styleClass="mesos-label"/>
-
         <VBox fx:id="othersBox" alignment="CENTER" spacing="6"/>
 
     </VBox>

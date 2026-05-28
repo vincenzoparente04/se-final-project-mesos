@@ -15,16 +15,6 @@ import java.io.InputStream;
  */
 public class CardView extends StackPane {
 
-    /* TODO: ELIMINATE DEAD CODE
-    public static final double DEFAULT_WIDTH  = 90;
-    public static final double DEFAULT_HEIGHT = 130;
-
-    public CardView(CardDto card, boolean faceUp) {
-        this(card, faceUp, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-    }
-     */
-
-
     public CardView(CardDto card, boolean faceUp, double width, double height) {
         String filename = faceUp ? card.ImagePath : card.backImagePath;
         String dir = faceUp ? "FrontCards" : "BackCards";
@@ -37,16 +27,9 @@ public class CardView extends StackPane {
             iv.setFitHeight(height);
             iv.setPreserveRatio(true);
 
-            // With preserveRatio=true and both fit dimensions set, JavaFX scales the
-            // image to fit *within* the box, so the rendered image may be narrower than
-            // fitWidth (portrait cards always fill fitHeight and fall short of fitWidth).
-            // A clip sized to (fitWidth × fitHeight) therefore leaves the right edge
-            // outside the actual image, making the right corners appear square while
-            // the left ones are correctly rounded.
-            // Fix: size the clip to the actual rendered pixel dimensions.
-            double scale   = Math.min(width / img.getWidth(), height / img.getHeight());
-            double clipW   = img.getWidth()  * scale;
-            double clipH   = img.getHeight() * scale;
+            double scale = Math.min(width / img.getWidth(), height / img.getHeight());
+            double clipW = img.getWidth()  * scale;
+            double clipH = img.getHeight() * scale;
 
             Rectangle clip = new Rectangle(clipW, clipH);
             clip.setArcWidth(36);
