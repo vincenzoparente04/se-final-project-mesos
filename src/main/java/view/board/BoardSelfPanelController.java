@@ -56,14 +56,18 @@ public class BoardSelfPanelController implements ViewController {
 
     /** Appends a spacer + SummaryCard thumbnail anchored to the far right of the self panel. */
     private void attachSummaryCard() {
-        Image img = ImageCache.get("/images/SummaryCard.png");
-        if (img == null) return;
+        Image summary = ImageCache.get("/images/FrontCards/FrontCard22.png");
+        Image sumBack = ImageCache.get("/images/BackCards/ExplanationCard.png");
+        if (summary == null) return;
 
-        ImageView thumb = new ImageView(img);
+        // Build the image array
+        Image[] slides =new Image[]{summary, sumBack};
+
+        ImageView thumb = new ImageView(summary);
         thumb.setFitHeight(SELF_CARD_H);
         thumb.setPreserveRatio(true);
         thumb.setStyle("-fx-cursor: hand;");
-        thumb.setOnMouseClicked(e -> SummaryCardOverlay.show(overlayRoot, img));
+        thumb.setOnMouseClicked(e -> SummaryCardOverlay.show(overlayRoot, slides));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);

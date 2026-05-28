@@ -97,7 +97,6 @@ public final class EventResolutionOverlay {
 
         StackPane root = next.root();
         EventResolutionDto dto = next.dto();
-        int remaining = queue.size();   // how many more are still waiting
 
         StackPane backdrop = new StackPane();
         backdrop.getStyleClass().add("mesos-event-backdrop");
@@ -105,7 +104,7 @@ public final class EventResolutionOverlay {
         backdrop.setOnMouseClicked(e -> advance());
         backdrop.setPickOnBounds(true);
 
-        StackPane slab = buildPanel(dto, remaining);
+        StackPane slab = buildPanel(dto);
         backdrop.getChildren().add(slab);
 
         root.getChildren().add(backdrop);
@@ -133,7 +132,7 @@ public final class EventResolutionOverlay {
     private static final double SLAB_W = 1240;   // stone-slab image width
     private static final double CONTENT_W = 460;   // text area carved into the slab
     
-    private static StackPane buildPanel(EventResolutionDto dto, int remaining) {
+    private static StackPane buildPanel(EventResolutionDto dto) {
         //STONE SLAB
         StackPane slab = new StackPane();
         slab.getStyleClass().add("mesos-event-slab");
@@ -157,7 +156,7 @@ public final class EventResolutionOverlay {
         content.setMaxHeight(Region.USE_PREF_SIZE);
         StackPane.setAlignment(content, Pos.CENTER);
 
-        content.getChildren().add(buildHeader(dto, remaining));
+        content.getChildren().add(buildHeader(dto));
 
         Region sep = new Region();
         sep.getStyleClass().add("mesos-event-sep");
@@ -200,7 +199,7 @@ public final class EventResolutionOverlay {
         return slab;
     }
 
-    private static HBox buildHeader(EventResolutionDto dto, int remaining) {
+    private static HBox buildHeader(EventResolutionDto dto) {
         HBox header = new HBox(12);
         header.getStyleClass().add("mesos-event-header");
         header.setAlignment(Pos.CENTER_LEFT);
@@ -226,11 +225,6 @@ public final class EventResolutionOverlay {
         titleBox.getChildren().addAll(title, eraLabel);
         header.getChildren().add(titleBox);
 
-        if (remaining > 0) {
-            Label badge = new Label("+" + remaining + " more");
-            badge.getStyleClass().add("mesos-event-badge");
-            header.getChildren().add(badge);
-        }
 
         return header;
     }
