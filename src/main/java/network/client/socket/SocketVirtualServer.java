@@ -126,6 +126,12 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
     }
 
     @Override
+    public void visit(LeaderboardMessage msg) {
+        connectionResponse = true;
+        listener.onLeaderboardUpdate(msg.leaderboard(), msg.rankPosition(), msg.points());
+    }
+
+    @Override
     public void visit(EventResolvedMessage msg) {
         connectionResponse = true;
         listener.onEventResolved(msg.resolution());
@@ -155,6 +161,7 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
         // Canale di liveness isolato: solo HeartbeatMessage aggiorna il watchdog client-side.
         if (sentinel != null) sentinel.notifyInbound();
     }
+
 
     @Override
     public void start() {

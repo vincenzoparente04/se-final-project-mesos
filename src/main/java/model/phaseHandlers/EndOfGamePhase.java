@@ -43,12 +43,8 @@ public class EndOfGamePhase implements GamePhaseHandler {
             List<String> winnerNames = winners.stream().map(Player::getName).toList();
             model.setWinners(winnerNames);
 
-            for (VirtualView v : model.getViews()) {
-                v.sendGameOver(winnerNames, scoring);
-            }
-
             if (database.DatabaseManager.isEnabled()) {
-                processDatabaseAsync();
+                processDatabaseAsync(winnerNames);
             } else {
                 System.out.println("[SERVER] DB functionality disabled.");
             }
@@ -68,7 +64,7 @@ public class EndOfGamePhase implements GamePhaseHandler {
     /**
      * This method handle match scores saving and standings receiving with a separate thread to avoid server block
      */
-    private void processDatabaseAsync() {
+    private void processDatabaseAsync(List<String> winnerNames) {
         this.matchDAO = new MatchDAO();
 
         List<ScoreRecord> recordsToSave = new ArrayList<>();
@@ -98,11 +94,16 @@ public class EndOfGamePhase implements GamePhaseHandler {
                             .orElse(null);
 
                     if (playerView != null) {
-                        //playerView.sendLeaderboard(topStanding, standingPosition); //TODO FARE IL COMANDO DI AGGIORNAMENTO CLASSIFICA
+                        playerView.sendLeaderboard(topStanding, standingPosition, p.getPrestigePoints());
                     }
 
                     System.out.println("[DB-TEST] " + p.getName() + " -> absolute position is: " + standingPosition + "°");
                 }
+
+                for (VirtualView v : model.getViews()) {
+                    v.sendGameOver(winnerNames, scoring);
+                }
+
             } catch (Exception e) {
                 System.err.println("[DB] Error during async operation: " + e.getMessage());
             }
