@@ -35,7 +35,7 @@ public class ActionPhase implements GamePhaseHandler {
             if (currentPlayer == null) break;  // No more players
             if (!currentPlayer.isConnected()) {
                 // Skip disconnected player and return their totem to the turn order
-                board.returnTotemToTurnOrder(currentPlayer);
+                board.disconnectedReturnTotemToTurnOrder(currentPlayer);
             }
         } while (!currentPlayer.isConnected());
 

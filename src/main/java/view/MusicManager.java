@@ -2,29 +2,40 @@ package view;
 
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
-import javafx.util.Duration;
 
-import java.io.File;
-import java.net.URL;
-import java.nio.file.Paths;
-import java.util.Arrays;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
- * Singleton that owns the background music MediaPlayer.
- * Supports play/pause, next/prev, volume, and track-change callbacks.
+ * Singleton responsible for background music playback.
+ * <p>
+ * Loads audio files from the resources folder via {@link Class#getResourceAsStream},
+ * ensuring compatibility both when running from the IDE (filesystem classpath)
+ * and from a JAR (zip-internal classpath). Files are extracted to a temporary
+ * directory since {@link javafx.scene.media.Media} only accepts {@code file://} URIs.
+ * </p>
+ * <p>
+ * The resources folder must contain an index file {@code tracks.txt} that
+ * lists one filename per line (e.g. {@code intro.mp3}).
+ * </p>
  */
 public class MusicManager {
 
     private static MusicManager instance;
 
+    /** file:// URIs of the tracks extracted to the temp directory, ready for JavaFX Media. */
+    private String[] trackUris = new String[0];
+
     private MediaPlayer player;
     private final Random random = new Random();
 
-    private File[] trackList;
-    private int currentIndex = -1;
-    private boolean paused = false;
-    private String currentFolder;
+    private int     currentIndex = -1;
+    private boolean paused       = false;
+    private String  currentFolder;
 
     private Runnable onTrackChange;
 
@@ -35,7 +46,9 @@ public class MusicManager {
         return instance;
     }
 
-    /** Called by the UI to be notified whenever the playing track changes. */
+    // ── UI Callback ──────────────────────────────────────────────────────────
+
+    /** Registers a callback invoked whenever the current track changes. */
     public void setOnTrackChange(Runnable callback) {
         this.onTrackChange = callback;
     }
@@ -44,33 +57,35 @@ public class MusicManager {
 
     public void playRandom(String resourceFolder) {
         loadTracks(resourceFolder);
-        if (trackList == null || trackList.length == 0) return;
-        currentIndex = random.nextInt(trackList.length);
-        playFile(trackList[currentIndex].toURI().toString());
+        if (trackUris.length == 0) return;
+        currentIndex = random.nextInt(trackUris.length);
+        playUri(trackUris[currentIndex]);
     }
 
     public void playNext() {
-        if (trackList == null || trackList.length == 0) return;
-        currentIndex = (currentIndex + 1) % trackList.length;
-        playFile(trackList[currentIndex].toURI().toString());
+        if (trackUris.length == 0) return;
+        if (trackUris.length == 1) {
+            playUri(trackUris[0]);
+            return;
+        }
+        int next;
+        do {
+            next = random.nextInt(trackUris.length);
+        } while (next == currentIndex); // avoid replaying the current track
+        currentIndex = next;
+        playUri(trackUris[currentIndex]);
     }
 
     public void playPrev() {
-        if (trackList == null || trackList.length == 0) return;
-        currentIndex = (currentIndex - 1 + trackList.length) % trackList.length;
-        playFile(trackList[currentIndex].toURI().toString());
+        if (trackUris.length == 0) return;
+        currentIndex = (currentIndex - 1 + trackUris.length) % trackUris.length;
+        playUri(trackUris[currentIndex]);
     }
 
-    /** Toggles between paused and playing. */
     public void pauseResume() {
         if (player == null) return;
-        if (paused) {
-            player.play();
-            paused = false;
-        } else {
-            player.pause();
-            paused = true;
-        }
+        if (paused) { player.play(); } else { player.pause(); }
+        paused = !paused;
         fireTrackChange();
     }
 
@@ -91,53 +106,88 @@ public class MusicManager {
 
     public boolean isPaused() { return paused; }
 
-    /** Returns the display name of the currently playing track (no extension). */
+    /** Returns the display name of the currently playing track without its file extension. */
     public String getCurrentTrackName() {
-        if (trackList == null || currentIndex < 0 || currentIndex >= trackList.length) return "";
-        String name = trackList[currentIndex].getName();
-        int dot = name.lastIndexOf('.');
-        return dot > 0 ? name.substring(0, dot) : name;
+        if (trackUris.length == 0 || currentIndex < 0) return "";
+        try {
+            // URI.getPath() automatically decodes percent-encoding: %20 → space, %27 → ' etc.
+            String path = new java.net.URI(trackUris[currentIndex]).getPath();
+            String filename = path.substring(path.lastIndexOf('/') + 1);
+            int dot = filename.lastIndexOf('.');
+            return dot > 0 ? filename.substring(0, dot) : filename;
+        } catch (java.net.URISyntaxException e) {
+            System.err.println("[MusicManager] Malformed URI: " + e.getMessage());
+            return "";
+        }
     }
 
-    // ── Internal ─────────────────────────────────────────────────────────────
+    // ── Internal logic ───────────────────────────────────────────────────────
 
+    /**
+     * Loads tracks from {@code resourceFolder} using an index file ({@code tracks.txt}).
+     * Audio files are extracted to a temporary directory to allow playback
+     * via {@link Media} both from the IDE and from a JAR.
+     *
+     * @param resourceFolder path relative to the classpath root (e.g. {@code "music"})
+     */
     private void loadTracks(String resourceFolder) {
-        if (resourceFolder.equals(currentFolder) && trackList != null) return;
+        if (resourceFolder.equals(currentFolder) && trackUris.length > 0) return;
         currentFolder = resourceFolder;
 
-        URL folderUrl = getClass().getResource("/" + resourceFolder);
-        if (folderUrl == null) {
-            System.err.println("[MusicManager] folder not found: " + resourceFolder);
-            trackList = new File[0];
-            return;
+        String indexPath = "/" + resourceFolder + "/tracks.txt";
+        List<String> uriList = new ArrayList<>();
+
+        try (InputStream indexStream = getClass().getResourceAsStream(indexPath)) {
+            if (indexStream == null) {
+                System.err.println("[MusicManager] Index file not found: " + indexPath
+                        + " — make sure tracks.txt exists under resources/" + resourceFolder);
+                trackUris = new String[0];
+                return;
+            }
+
+            // Create a temporary directory for audio files extracted from the JAR
+            Path tempDir = Files.createTempDirectory("mesos_music_");
+            tempDir.toFile().deleteOnExit();
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(indexStream))) {
+                String filename;
+                while ((filename = reader.readLine()) != null) {
+                    filename = filename.trim();
+                    if (filename.isEmpty() || filename.startsWith("#")) continue;
+
+                    String resourcePath = "/" + resourceFolder + "/" + filename;
+                    try (InputStream audioStream = getClass().getResourceAsStream(resourcePath)) {
+                        if (audioStream == null) {
+                            System.err.println("[MusicManager] Track not found on classpath: " + resourcePath);
+                            continue;
+                        }
+                        // Extract the audio file into the temporary directory
+                        File tempFile = tempDir.resolve(filename).toFile();
+                        tempFile.deleteOnExit();
+                        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                            audioStream.transferTo(fos);
+                        }
+                        uriList.add(tempFile.toURI().toString());
+                        System.out.println("[MusicManager] Track loaded: " + filename);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("[MusicManager] Error while loading tracks: " + e.getMessage());
         }
-        File folder;
-        try {
-            folder = Paths.get(folderUrl.toURI()).toFile();
-        } catch (Exception e) {
-            System.err.println("[MusicManager] cannot resolve folder URI: " + e.getMessage());
-            trackList = new File[0];
-            return;
-        }
-        File[] files = folder.listFiles(f ->
-                f.isFile() && f.getName().matches(".*\\.(mp3|wav|aac|m4a|ogg)"));
-        if (files == null || files.length == 0) {
-            System.err.println("[MusicManager] no audio files in: " + resourceFolder);
-            trackList = new File[0];
-            return;
-        }
-        Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-        trackList = files;
+
+        trackUris = uriList.toArray(new String[0]);
+        System.out.println("[MusicManager] Total tracks loaded: " + trackUris.length);
     }
 
-    private void playFile(String uri) {
+    private void playUri(String uri) {
         stop();
         paused = false;
         Media media = new Media(uri);
         player = new MediaPlayer(media);
         player.setOnEndOfMedia(this::playNext);
         player.play();
-        System.out.println("[MusicManager] playing: " + getCurrentTrackName());
+        System.out.println("[MusicManager] Now playing: " + getCurrentTrackName());
         fireTrackChange();
     }
 
