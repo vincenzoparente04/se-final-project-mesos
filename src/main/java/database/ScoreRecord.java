@@ -1,5 +1,6 @@
 package database;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -12,4 +13,4 @@ import java.time.LocalDateTime;
  * @param date        The timestamp when the match concluded, used for sorting and historical records.
  * @implNote Java Record (Immutable DTO)
  */
-public record ScoreRecord(String nickname, int score, int playerCount, LocalDateTime date) {}
+public record ScoreRecord(String nickname, int score, int playerCount, LocalDateTime date) implements Serializable {}

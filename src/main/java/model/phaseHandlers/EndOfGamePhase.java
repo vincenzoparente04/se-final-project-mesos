@@ -63,6 +63,10 @@ public class EndOfGamePhase implements GamePhaseHandler {
 
     /**
      * This method handle match scores saving and standings receiving with a separate thread to avoid server block
+     * @param winnerNames needed to send game over messages
+     * @implNote it creates a list of {@link ScoreRecord}, one for each player.
+     * Then a thread starts, and it updates the db, get the top of the standing and the player match score position.
+     * Last, for each client, it sends a {@link shared.message.LeaderboardMessage} to notify the client with the updated standings and it sends a {@link shared.message.GameOverMessage}.
      */
     private void processDatabaseAsync(List<String> winnerNames) {
         this.matchDAO = new MatchDAO();
@@ -80,10 +84,7 @@ public class EndOfGamePhase implements GamePhaseHandler {
         new Thread(() -> {
             try {
                 matchDAO.saveMatch(recordsToSave);
-                System.out.println("[DB] Match scores saved.");
-
                 List<ScoreRecord> topStanding = matchDAO.getTopScores(model.getPlayerCount(), 20);
-                System.out.println("Top standing updated: " + topStanding);
 
                 for (Player p : model.getPlayers()) {
                     int standingPosition = matchDAO.getPlayerRank(model.getPlayerCount(), p.getName(), p.getPrestigePoints());
@@ -96,16 +97,15 @@ public class EndOfGamePhase implements GamePhaseHandler {
                     if (playerView != null) {
                         playerView.sendLeaderboard(topStanding, standingPosition, p.getPrestigePoints());
                     }
-
-                    System.out.println("[DB-TEST] " + p.getName() + " -> absolute position is: " + standingPosition + "°");
                 }
-
                 for (VirtualView v : model.getViews()) {
                     v.sendGameOver(winnerNames, scoring);
                 }
-
             } catch (Exception e) {
-                System.err.println("[DB] Error during async operation: " + e.getMessage());
+                for (VirtualView v : model.getViews()) {
+                    v.sendGameOver(winnerNames, scoring);
+                    v.sendError("[DB] Error during async operation: " + e.getMessage());
+                }
             }
         }, "db-async-thread").start();
     }

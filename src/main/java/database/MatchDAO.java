@@ -86,13 +86,14 @@ public class MatchDAO {
      * @param nickname The player name.
      * @param points The score achieved by the player in this match.
      * @return The 1-based rank position of the player.
-     * @implNote This method counts how many players have a strictly higher score in the same player count mode.
+     * @implNote This method counts how many players have an equal or higher score in the same player count mode.
+     * This works because if there are two players with the same score, it takes the last one added, so the one just finished.
      */
     public int getPlayerRank(int playerCount, String nickname, int points) {
         String sql =
-                "SELECT COUNT(*) + 1 AS rank_position " +
+                "SELECT COUNT(*) AS rank_position " +
                 "FROM match_archive " +
-                "WHERE player_count = ? AND score > ? ";
+                "WHERE player_count = ? AND score >= ? ";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

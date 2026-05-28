@@ -86,11 +86,19 @@ public class ClientStateListenerCli implements ClientStateListener {
 
             if (this.scoreRecord != null) {
                 System.out.println("\nTop 20 Leaderboard : " + scoreRecord.getFirst().playerCount() + " players matches");
+                System.out.println("  " + "─".repeat(61));
+                System.out.printf("  %-4s|%-20s|%-7s|%-20s%n", "Pos", "Player", "Score", "Date");
+                System.out.println("  " + "─".repeat(61));
+
                 int i = 1;
                 for (ScoreRecord record : scoreRecord) {
-                    System.out.printf("  %d. %s — %d points %s%n", i, record.nickname(), record.score(), record.date());
+                    System.out.printf("%4d | %-20s | %7d | %-20s%n", i, record.nickname(), record.score(), record.date());
                     i++;
                 }
+                System.out.println("  " + "─".repeat(61));
+                System.out.print("  Your Result: Ranked " + rankPosition + "° with " +  points + " points\n");
+                System.out.println("state | quit | leave");
+                System.out.print("> ");
             }
         } else {
             // forfait (suspension timeout): solo annuncio dei winners
