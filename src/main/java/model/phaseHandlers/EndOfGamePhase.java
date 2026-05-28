@@ -46,7 +46,9 @@ public class EndOfGamePhase implements GamePhaseHandler {
             if (database.DatabaseManager.isEnabled()) {
                 processDatabaseAsync(winnerNames);
             } else {
-                System.out.println("[SERVER] DB functionality disabled.");
+                for (VirtualView v : model.getViews()) {
+                    v.sendGameOver(winnerNames, scoring);
+                }
             }
 
         }else {
