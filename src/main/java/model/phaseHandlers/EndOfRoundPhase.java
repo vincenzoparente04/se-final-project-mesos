@@ -39,7 +39,7 @@ public class EndOfRoundPhase implements GamePhaseHandler {
         model.incrementRound();
 
         if (model.isGameOver()) {
-            model.setPhase(new EndOfGamePhase(model));
+            model.setPhase(new EndOfGamePhase(model, null, false));
             return;
         }
 

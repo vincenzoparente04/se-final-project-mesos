@@ -1,5 +1,6 @@
 package network.client.core.cli;
 
+import database.ScoreRecord;
 import network.client.core.ClientStateListener;
 import network.client.core.LocalGameState;
 import network.client.core.cli.view.GameStateRenderer;
@@ -12,6 +13,9 @@ import java.util.List;
 public class ClientStateListenerCli implements ClientStateListener {
     private final String localPlayerName;
     private final GameStateRenderer renderer;
+    private List<ScoreRecord> scoreRecord = null;
+    private int rankPosition;
+    private int points;
 
     public ClientStateListenerCli(String localPlayerName, GameStateRenderer renderer) {
         this.localPlayerName = localPlayerName;
@@ -79,6 +83,23 @@ public class ClientStateListenerCli implements ClientStateListener {
     public synchronized void onGameOver(List<String> winners, EndGameScoringDto scoring) {
         if (scoring != null) {
             renderer.renderEndGameScoring(scoring, winners, localPlayerName);
+
+            if (this.scoreRecord != null) {
+                System.out.println("\nTop 20 Leaderboard : " + scoreRecord.getFirst().playerCount() + " players matches");
+                System.out.println("  " + "─".repeat(61));
+                System.out.printf("  %-4s|%-20s|%-7s|%-20s%n", "Pos", "Player", "Score", "Date");
+                System.out.println("  " + "─".repeat(61));
+
+                int i = 1;
+                for (ScoreRecord record : scoreRecord) {
+                    System.out.printf("%4d | %-20s | %7d | %-20s%n", i, record.nickname(), record.score(), record.date());
+                    i++;
+                }
+                System.out.println("  " + "─".repeat(61));
+                System.out.print("  Your Result: Ranked " + rankPosition + "° with " +  points + " points\n");
+                System.out.println("state | quit | leave");
+                System.out.print("> ");
+            }
         } else {
             // forfait (suspension timeout): solo annuncio dei winners
             System.out.println("\n" + "═".repeat(48));
@@ -89,6 +110,13 @@ public class ClientStateListenerCli implements ClientStateListener {
             }
             System.out.println("═".repeat(48));
         }
+    }
+
+    @Override
+    public void onLeaderboardUpdate(List<ScoreRecord> leaderboard, int rankPosition, int points) {
+        this.scoreRecord = leaderboard;
+        this.rankPosition = rankPosition;
+        this.points = points;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package network.client.rmi;
 
+import database.ScoreRecord;
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
 import shared.dto.event.EndGameScoringDto;
@@ -70,6 +71,11 @@ public class ClientCallbackImpl extends UnicastRemoteObject implements ClientCal
     @Override
     public void onGameOver(List<String> winners, EndGameScoringDto scoring) throws RemoteException {
         listener.onGameOver(winners != null ? winners : Collections.emptyList(), scoring);
+    }
+
+    @Override
+    public void onLeaderboardUpdate(List<ScoreRecord> leaderboard, int rankPosition, int points) throws RemoteException{
+        listener.onLeaderboardUpdate(leaderboard, rankPosition, points);
     }
 
     @Override

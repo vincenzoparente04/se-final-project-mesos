@@ -289,7 +289,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                 // quando un eventuale player riconnesso farà LeaveCommand.
                 cancelSuspensionTimer();
                 suspended = false;
-                model.setPhase(new EndOfGamePhase(model));
+                model.setPhase(new EndOfGamePhase(model, null, true));
                 model.setGameOver();
                 // model.notifyChange(); // TODO: forse si può levare
             }
@@ -323,9 +323,8 @@ public final class GameController implements Runnable, ClientCommandVisitor {
             if (!suspended) return;
             suspended = false;
 
-            String winner = model.getPlayers().stream()
+            Player winner = model.getPlayers().stream()
                     .filter(Player::isConnected)
-                    .map(Player::getName)
                     .findFirst()
                     .orElse(null);
 
@@ -334,18 +333,20 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                 // Edge: nessuno è più connesso (race con disconnect dell'ultimo).
                 // EndOfGamePhase.onEnter() farà il broadcast del game-over con
                 // lo scoring calcolato sui punti correnti.
-                model.setPhase(new EndOfGamePhase(model));
+                model.setPhase(new EndOfGamePhase(model, null, true));
                 model.setGameOver();
                 model.notifyChange();
                 return;
             }
-            model.setWinners(List.of(winner));
+            //model.setWinners(List.of(winner));
+            model.setPhase(new EndOfGamePhase(model, List.of(winner), true));
             model.setGameOver();
             // Game-over d'ufficio (forfait): no end-game scoring breakdown.
-            winnerNames = List.of(winner);
-            for (VirtualView v : model.getViews()) {
-                v.sendGameOver(winnerNames, null);
-            }
+            //winnerNames = List.of(winner);
+            //for (VirtualView v : model.getViews()) {
+            //    v.sendGameOver(winnerNames, null);
+            //}
+            model.notifyChange();
         }
     };
 

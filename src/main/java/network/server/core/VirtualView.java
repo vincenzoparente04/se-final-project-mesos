@@ -1,5 +1,6 @@
 package network.server.core;
 
+import database.ScoreRecord;
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
 import shared.dto.event.EndGameScoringDto;
@@ -28,6 +29,8 @@ public interface VirtualView {
      * forfeit case).
      */
     void sendGameOver(List<String> winners, EndGameScoringDto scoring);
+
+    void sendLeaderboard(List<ScoreRecord> leaderboard, int rankPosition, int points);
 
     void sendHeartbeat();
 

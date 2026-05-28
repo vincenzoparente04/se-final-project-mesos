@@ -1,11 +1,14 @@
 package network.server.core;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import database.DatabaseConfig;
 import network.server.NetworkUtil;
 import network.server.rmi.GameServerRemote;
 import network.server.rmi.GameServerRemoteImpl;
@@ -34,7 +37,26 @@ public class ServerMain {
     private static final int SOCKET_PORT = 9999;
     private static final int RMI_PORT = 1099;
 
-    public static void main(String[] args) {
+
+    public static void main(String[] args) throws IOException {
+        DatabaseConfig dbConfig = acquireConfiguration();
+
+        if (dbConfig.enabled()) {
+            System.out.println("\nDb parameters saved");
+            System.out.println("  Complete URL: " + dbConfig.url());
+            System.out.println("  User:         " + dbConfig.user());
+
+            boolean dbReady = setupDatabaseEnvironment(dbConfig);
+            if (!dbReady) {
+                System.err.println("Unable to start the database infrastructure. Starting server without database functionality."); //TODO: VOGLIO CHE SE NON VA A BUON FINE MI STARTA IL SERVER MA SENZA LA FUNZINALITà DB
+                database.DatabaseManager.disable(); // Disables DB functionality for the rest of the server lifecycle
+            }
+
+        } else {
+            System.out.println("\nStarting server without database functionality.");
+            database.DatabaseManager.disable();
+        }
+
         // Advertise a LAN-reachable IP to remote RMI peers; without this the
         // exported stubs would carry 127.0.0.1 (default of getLocalHost()) and
         // remote clients would not be able to invoke them.
@@ -52,6 +74,121 @@ public class ServerMain {
 
         startRmiRegistry(lobby);
         startSocketAcceptor(lobby);
+    }
+
+    /**
+     * Interactively prompts the user for database configuration.
+     * Returns a DatabaseConfig with the selected or default parameters.
+     */
+    private static DatabaseConfig acquireConfiguration() throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+        System.out.println("╔═══════════════════════════════════════╗");
+        System.out.println("║  Mesos Game Server - Configuration    ║");
+        System.out.println("╚═══════════════════════════════════════╝\n");
+
+        boolean useDb = askDatabaseUsage(reader);
+
+        if (!useDb) {
+            return new DatabaseConfig(false, "", "", "");
+        }
+
+        System.out.println("\n--- Database settings ---");
+        String url = askWithDefault(reader, "URL", "jdbc:mysql://localhost:3306/Mesos_db");
+        String user = askWithDefault(reader, "User", "mesos_admin");
+        String password = askWithDefault(reader, "Password", "PriParOrsPan");
+
+        System.out.println("\n✓ configuration completed!");
+        return new DatabaseConfig(true, url, user, password);
+    }
+
+    /**
+     * Prompts for database usage with validation.
+     */
+    private static boolean askDatabaseUsage(BufferedReader reader) throws IOException {
+        while (true) {
+            System.out.print("Do you want to use database functionality? [y/n] (default: no): ");
+            String input = reader.readLine().trim().toLowerCase();
+
+            if (input.isEmpty() || input.equals("no") || input.equals("n")) {
+                System.out.println("✓ Database: Disabled");
+                return false;
+            }
+
+            if (input.equals("yes") || input.equals("y")) {
+                System.out.println("✓ Database: Enabled");
+                return true;
+            }
+
+            System.out.println("✗ Invalid choice. Retry.\n");
+        }
+    }
+
+    /**
+     * Prompts for a specific database parameter with a sensible default.
+     */
+    private static String askWithDefault(BufferedReader reader, String prompt, String defaultValue) throws IOException {
+        while (true) {
+            System.out.print("Insert " + prompt + " (default: " + defaultValue + "): ");
+            String input = reader.readLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("✓ " + prompt + ": " + defaultValue);
+                return defaultValue;
+            }
+            return input;
+        }
+    }
+
+    /**
+     * Handles the "Happy Path" flow and the possible interactive fallback for DB creation.
+     * Returns true if the environment is ready, false in case of a critical error.
+     */
+    private static boolean setupDatabaseEnvironment(DatabaseConfig dbConfig) {
+        try {
+            // 1. Optimistic Attempt
+            database.DatabaseManager.initializeDatabase(dbConfig);
+            return true;
+
+        } catch (java.sql.SQLException e) {
+            int errorCode = e.getErrorCode();
+            String sqlState = e.getSQLState();
+
+            // Communication error (e.g., MySQL not running)
+            if ("08S01".equals(sqlState)) {
+                System.err.println("\n✗ CRITICAL ERROR: Unable to contact MySQL.");
+                System.err.println("  Details: Make sure the MySQL service is running on the correct port.");
+                return false;
+            }
+
+            // 1049 (Unknown database) or 1045 (Access denied)
+            if (errorCode == 1049 || errorCode == 1045) {
+                System.out.println("\n⚠ Database environment not found or insufficient permissions.");
+                System.out.println("  Initial configuration is required. Administrator privileges (e.g., root) will be requested.");
+
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                    String rootUser = askWithDefault(reader, "Admin User", "root");
+
+                    System.out.print("Insert Admin Password: ");
+                    String rootPass = reader.readLine().trim();
+
+                    // 2. Fallback: Executes the setup with the provided privileges
+                    database.DatabaseManager.setupEnvironmentWithRoot(rootUser, rootPass, dbConfig);
+
+                    // 3. Retry standard initialization (it must work now)
+                    database.DatabaseManager.initializeDatabase(dbConfig);
+                    return true;
+
+                } catch (Exception ex) {
+                    System.err.println("\n✗ ERROR during administrative setup: " + ex.getMessage());
+                    return false;
+                }
+            }
+
+            // Other unhandled errors
+            System.err.println("\n✗ Unexpected SQL ERROR: " + e.getMessage());
+            return false;
+        }
     }
 
 

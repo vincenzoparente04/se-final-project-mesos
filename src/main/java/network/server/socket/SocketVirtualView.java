@@ -1,5 +1,6 @@
 package network.server.socket;
 
+import database.ScoreRecord;
 import network.server.core.LobbyManager;
 import network.server.core.VirtualView;
 import shared.dto.GameStateDto;
@@ -7,15 +8,7 @@ import shared.dto.LobbyDto;
 import shared.dto.event.EndGameScoringDto;
 import shared.dto.event.EventResolutionDto;
 import shared.liveness.LivenessSentinel;
-import shared.message.ErrorMessage;
-import shared.message.EventResolvedMessage;
-import shared.message.GameOverMessage;
-import shared.message.GameStartingMessage;
-import shared.message.HeartbeatMessage;
-import shared.message.LobbyListMessage;
-import shared.message.LobbyStateMessage;
-import shared.message.ServerMessage;
-import shared.message.StateMessage;
+import shared.message.*;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -96,6 +89,12 @@ public class SocketVirtualView implements VirtualView {
     public void sendGameOver(List<String> winners, EndGameScoringDto scoring) {
         if (closed) return;
         senderExecutor.submit(() -> rawSend(new GameOverMessage(winners, scoring)));
+    }
+
+    @Override
+    public void sendLeaderboard(List<ScoreRecord> leaderboard, int rankPosition, int points) {
+        if (closed) return;
+        senderExecutor.submit(() -> rawSend(new LeaderboardMessage(leaderboard, rankPosition, points)));
     }
 
     @Override
