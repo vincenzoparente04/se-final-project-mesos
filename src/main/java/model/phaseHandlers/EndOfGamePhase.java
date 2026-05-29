@@ -15,6 +15,31 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the final phase of the game, executing the teardown sequence
+ * and finalizing the match statistics.
+ * <p>
+ * This handler encapsulates the end-game routine which includes resolving all
+ * remaining visible event cards, calculating a detailed breakdown of each player's
+ * final prestige points (incorporating character types and building effects), and
+ * determining the winner(s) using a food-based tie-breaking mechanism if necessary.
+ * </p>
+ * <p>
+ * The behavior of this phase adapts dynamically based on its initialization state:
+ * <ul>
+ * <li><b>Standard Termination:</b> Processes full end-game scoring, broadcasts
+ * event and scoring data to all clients, and asynchronously persists match
+ * records to the database if the database layer is enabled.</li>
+ * <li><b>Suspended Game (Abnormal Termination):</b> Triggered when all players disconnect.
+ * It bypasses all scoring calculations and database
+ * operations, immediate broadcasting a clean game-over status with empty scores
+ * to ensure proper client-side cleanup.</li>
+ * </ul>
+ * </p>
+ * @see GamePhaseHandler
+ * @see database.MatchDAO
+ * @see shared.dto.event.EndGameScoringDto
+ */
 public class EndOfGamePhase implements GamePhaseHandler {
 
     private final GameModel model;

@@ -10,6 +10,29 @@ import shared.dto.event.EventResolutionDto;
 
 import java.util.List;
 
+/**
+ * Represents the transitional phase executed at the end of each game round,
+ * responsible for standard event resolution and phase branching.
+ * <p>
+ * Upon activation, this handler triggers the routine event resolution logic,
+ * broadcasting individual updates to all connected virtual views to allow clients
+ * to render intermediate resolution states. Following resolution, it increments
+ * the global round counter and evaluates the match termination conditions.
+ * </p>
+ * <p>
+ * This phase determines the next state of the game by branching into one of two paths:
+ * <ul>
+ * <li><b>Match Continuation:</b> If terminal conditions are not met, checks for era transitions (notifying observers upon change),
+ * and routes the state machine into the next {@code PlacementPhase}.</li>
+ * <li><b>Match Termination:</b> If the game is flagged as over, it immediately triggers
+ * a transition into a standard {@code EndOfGamePhase}.</li>
+ * </ul>
+ * </p>
+ * @see GamePhaseHandler
+ * @see model.rowsManager.RowsManager
+ * @see model.phaseHandlers.PlacementPhase
+ * @see model.phaseHandlers.EndOfGamePhase
+ */
 public class EndOfRoundPhase implements GamePhaseHandler {
 
     private final GameModel model;
