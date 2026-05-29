@@ -26,8 +26,8 @@ public class SocketClientHandler implements Runnable {
 
     private final ClientCommandVisitor dispatcher = new ClientCommandVisitor() {
         @Override
-        public void visit(LobbyCommand cmd) throws Exception {
-            cmd.accept(lobbyManager);
+        public void visit(LobbyCommand cmd) {
+            lobbyManager.submit(cmd);
         }
 
         @Override

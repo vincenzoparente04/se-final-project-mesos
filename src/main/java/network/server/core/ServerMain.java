@@ -65,6 +65,7 @@ public class ServerMain {
         System.out.println("RMI export hostname: " + host);
 
         LobbyManager lobby = new LobbyManager();
+        lobby.start();
 
         // TODO: vedi se necessario
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -212,8 +213,9 @@ public class ServerMain {
 
     /**
      * Opens the TCP listening socket and enters the accept loop. For each
-     * incoming connection spawns a thread that delegates the full handshake + client
-     * setup to {@link LobbyManager#openSocketConnection(Socket)}.
+     * incoming connection spawns a per-connection thread that runs a
+     * {@link ConnectionHandshaker}; the acceptor thread itself never performs
+     * handshake I/O, so a slow or hostile client cannot stall new connections.
      * <p>
      * This method blocks for the lifetime of the server: it returns only if
      * the listening socket itself is closed or fails.
@@ -226,7 +228,7 @@ public class ServerMain {
             while (true) {
                 Socket client = serverSocket.accept();
                 System.out.println("Socket connection from " + client.getInetAddress());
-                Thread t = new Thread(() -> lobby.openSocketConnection(client),"socket-handshake-" + client.getPort());
+                Thread t = new Thread(new ConnectionHandshaker(client, lobby), "socket-handshake-" + client.getPort());
                 t.setDaemon(true);
                 t.start();
             }

@@ -1,5 +1,6 @@
 package integration;
 
+import database.ScoreRecord;
 import network.server.core.VirtualView;
 import shared.dto.LobbyDto;
 import shared.dto.event.EndGameScoringDto;
@@ -37,6 +38,14 @@ public class FakeVirtualView implements VirtualView {
     }
 
     @Override
+    public void sendLeaderboard(List<ScoreRecord> leaderboard, int rankPosition, int points) {
+    }
+
+    @Override
+    public void sendHeartbeat() {
+    }
+
+    @Override
     public String getPlayerName() {
         return null;
     }
@@ -44,6 +53,10 @@ public class FakeVirtualView implements VirtualView {
     @Override
     public void activateLiveness() {
 
+    }
+
+    @Override
+    public void notifyInbound() {
     }
 
     @Override

@@ -1,152 +1,225 @@
 package network.server.core;
 
 import controller.GameController;
-import database.DatabaseConfig;
+import network.server.socket.SocketClientHandler;
+import network.server.socket.SocketPlayerEntry;
+import network.server.socket.SocketVirtualView;
 import shared.command.*;
 import shared.command.lobbyCommand.*;
 import shared.dto.LobbyDto;
 
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-
-import network.server.rmi.RmiPlayerEntry;
-import network.server.socket.SocketClientHandler;
-import network.server.socket.SocketPlayerEntry;
-import network.server.socket.SocketVirtualView;
-import shared.message.ConnectMessage;
-import shared.message.ErrorMessage;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Central registry for all client sessions on the server. This class manages three orthogonal concerns:
  * <ul>
- *   <li>handshake for socket connections and registry of the ({@link #connectedPlayers});</li>
+ *   <li>registry of the connected players ({@link #connectedPlayers});</li>
  *   <li>lobbies waiting to fill up ({@link #lobbies});</li>
  *   <li>games currently being played ({@link #activeGames}).</li>
  * </ul>
- * It is the single entry point for both transports: socket clients arrive via
- * {@link #openSocketConnection(Socket)}, RMI clients via {@link #addRmiPlayer(RmiPlayerEntry)}.
- * It dispatches the lobby-menu commands ({@code LIST}, {@code CREATE}, {@code JOIN}) using the visitor
- * pattern over {@link LobbyCommand}.
  *
- * <h2>Threading model</h2>
- * One instance is shared by every transport thread (socket acceptor workers,
- * RMI dispatcher threads, individual client handler threads). Every public method
- * that touches the three maps is {@code synchronized}.
+ * <h2>Threading model — coda/attore (mirror del {@link GameController})</h2>
+ * Il {@code LobbyManager} è un attore: possiede una singola
+ * {@code BlockingQueue<LobbyCommand>} e un unico {@code lobby-thread} che la
+ * consuma in {@link #run()} con {@code cmd.accept(this)}. <strong>Tutte</strong>
+ * le mutazioni delle tre mappe avvengono su questo thread, quindi le mappe sono
+ * {@code HashMap}/{@code LinkedHashMap} semplici senza alcun lock: la
+ * serializzazione della coda È la mutua esclusione.
+ * <p>
+ * Gli endpoint di rete (RMI dispatcher, socket handler, sentinel di liveness)
+ * non chiamano mai i {@code visit(...)} direttamente: impilano i comandi via
+ * {@link #submit(LobbyCommand)} / {@link #onDisconnect(String)} (pattern
+ * "tell", fire-and-forget). Le sole operazioni sincrone sono le registrazioni
+ * ({@link #submitSocketRegistration}/{@link #submitRmiRegistration}), che usano
+ * il pattern "ask": il chiamante blocca su un {@link CompletableFuture} che il
+ * lobby-thread completa con il verdetto ACCEPT/REJECT. Il lobby-thread non
+ * blocca mai: il check-e-registra del nome è un lookup O(1) atomico, eliminando
+ * la race TOCTOU sui nomi duplicati.
+ *
+ * <h2>Niente I/O sul lobby-thread</h2>
+ * L'I/O di handshake socket vive nel {@link ConnectionHandshaker} (sul thread
+ * per-connessione). Le sole attese bloccanti residue ({@code view.close()} con
+ * il drain del sender, {@code controller.shutdown()} con la {@code join} del
+ * game-thread) sono delegate a un piccolo executor {@code lobby-io}, così che
+ * il lobby-thread torni subito a servire la coda.
  *
  * <h2>What this class does NOT do</h2>
  * It never reads or writes the game model. When a lifecycle event affects a
- * running session (disconnect, reconnect, leave-from-endgame), the
- * {@code LobbyManager} simply impila il corrispondente {@link LobbyCommand}
- * sulla coda della session e ritorna subito: la mutazione del model è eseguita
- * dal game thread del {@code GameController}, mai dal LobbyManager.
- *
- * <h2>I/O outside the lock</h2>
- * Network I/O performed during the socket handshake is deliberately kept
- * outside the synchronized block so that a slow or hostile client cannot block
- * other clients from joining. Only the final registration step takes the lock.
+ * running session (disconnect, reconnect, leave-from-endgame), il
+ * {@code LobbyManager} impila il corrispondente {@link LobbyCommand} sulla coda
+ * della session e ritorna subito: la mutazione del model è eseguita dal game
+ * thread del {@code GameController}, mai dal LobbyManager.
  */
-public class LobbyManager implements LobbyCommandVisitor {
-
-    private static final int CONNECT_TIMEOUT_MS = 50_000;
+public class LobbyManager implements Runnable, LobbyCommandVisitor {
 
     private final Map<String, Lobby> lobbies = new LinkedHashMap<>(); // <id, lobby>
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
-    /** @apiNote @GuardedBy("this") */
     private final Map<String, GameController> activeGames = new HashMap<>(); // <PlayerName, GameController>
 
+    private final BlockingQueue<LobbyCommand> queue = new LinkedBlockingQueue<>();
+    private final Thread lobbyThread;
+    private volatile boolean running = true;
 
-    // Socket entry point ───────────────────────────────────
-    public void openSocketConnection(Socket socket) {
+    /**
+     * Executor a thread singolo per le sole attese di terminazione di thread
+     * locali ({@code view.close()}, {@code controller.shutdown()}): attese di
+     * thread propri, senza rete né lock altrui, ma che fermerebbero la coda se
+     * eseguite sul lobby-thread.
+     */
+    private final ExecutorService lobbyIo = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "lobby-io");
+        t.setDaemon(true);
+        return t;
+    });
+
+    public LobbyManager() {
+        this.lobbyThread = new Thread(this, "lobby-thread");
+        this.lobbyThread.setDaemon(true);
+    }
+
+    /** Avvia il lobby-thread. Da chiamare una volta dopo la costruzione. */
+    public void start() {
+        lobbyThread.start();
+    }
+
+    // ─── API pubblica enqueue-only ────────────────────────────────────────
+
+    /** Impila un comando di menu (fire-and-forget). Usata dai dispatcher di rete. */
+    public void submit(LobbyCommand cmd) {
         try {
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-            out.flush();
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-
-            // Name-negotiation loop: keep reading ConnectMessage attempts until
-            // one is accepted (the socket stays open across rejections so the
-            // client can retry without re-establishing the transport).
-            while (true) {
-                try {
-                    socket.setSoTimeout(CONNECT_TIMEOUT_MS);
-                    ConnectMessage connect = (ConnectMessage) in.readObject();
-                    socket.setSoTimeout(0);
-
-                    String playerName = connect.playerName();
-                    SocketVirtualView view = new SocketVirtualView(playerName, socket, out, this);
-
-                    synchronized (this) {
-                        if (nameAlreadyTaken(playerName)) {
-                            // Send the rejection directly through the existing
-                            // output stream; do NOT close the socket.
-                            sendHandshakeError(out, "name_already_taken:" + playerName);
-                            continue;
-                        }
-
-                        SocketClientHandler handler = new SocketClientHandler(view, in, this);
-                        SocketPlayerEntry entry = new SocketPlayerEntry(playerName, in, view, handler);
-
-                        registerPlayer(playerName, entry);
-
-                        Thread t = new Thread(handler, "client-" + playerName);
-                        t.setDaemon(true);
-                        t.start();
-                    }
-                    return;
-                } catch (java.net.SocketTimeoutException e) {
-                    // Timeout durante la lettura di ConnectMessage: invia errore e chiude
-                    try {
-                        sendHandshakeError(out, "connection_timeout:no_connect_message_received");
-                    } catch (IOException ignored) {}
-                    return;  // Chiudi la connessione
-                }
-            }
-        } catch (IOException | ClassNotFoundException e) {
-            closeSocket(socket);
+            queue.put(cmd);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
     }
 
     /**
-     * Writes an {@link ErrorMessage} directly through the handshake's output
-     * stream. Used to reject a name attempt without spinning up a full
-     * {@link SocketVirtualView}.
+     * Punto d'ingresso unico di disconnessione, invocato dagli endpoint di rete
+     * e dai sentinel di liveness. Ora si limita a impilare un
+     * {@link LobbyDisconnectCommand}: il corpo gira sul lobby-thread, quindi non
+     * serve più l'hack sull'ordine "enqueue-prima-di-close" che evitava
+     * l'interrupt del thread del sentinel.
      */
-    private void sendHandshakeError(ObjectOutputStream out, String message) throws IOException {
-        synchronized (out) {
-            out.reset();
-            out.writeObject(new ErrorMessage(message));
-            out.flush();
-        }
+    public void onDisconnect(String playerName) {
+        submit(new LobbyDisconnectCommand(playerName));
     }
 
     /**
-     * Registers a new joined RMI player. Symmetric to {@link #openSocketConnection(Socket)}:
-     * rejects duplicate names, triggers reconnection if the name belongs to an active game,
-     * otherwise adds the player to {@link #connectedPlayers} and primes their lobby
-     * list.
+     * Registrazione socket "ask": impila la richiesta e ritorna il future che il
+     * lobby-thread completerà con il verdetto. La view/handler/entry e il thread
+     * reader sono costruiti dal lobby-thread <strong>solo</strong> se il nome è
+     * libero (vedi {@link #visit(RegisterSocketPlayerCommand)}) → niente leak del
+     * sender executor su REJECT, e socket lasciato aperto per il retry.
      *
-     * @return {@code true} if the player was accepted (or reconnected),
-     *         {@code false} if the name was already taken. On rejection the
-     *         caller is responsible for any cleanup of the exported callback.
+     * @return future completato con {@code true} (ACCEPT, reader già avviato) o
+     *         {@code false} (REJECT, nome occupato)
      */
-    public synchronized boolean addRmiPlayer(RmiPlayerEntry entry) {
-        if (nameAlreadyTaken(entry.getName())) {
-            return false;
+    public CompletableFuture<Boolean> submitSocketRegistration(String playerName, Socket socket, ObjectInputStream in, ObjectOutputStream out) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        submit(new RegisterSocketPlayerCommand(playerName, socket, in, out, future));
+        return future;
+    }
+
+    /**
+     * Registrazione RMI "ask". L'{@link PlayerEntry} è già costruito dal
+     * {@code GameServerRemoteImpl}; il future veicola il verdetto.
+     */
+    public CompletableFuture<Boolean> submitRmiRegistration(PlayerEntry entry) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        submit(new RegisterRmiPlayerCommand(entry.getName(), entry, future));
+        return future;
+    }
+
+    // ─── Lobby-thread loop ────────────────────────────────────────────────
+
+    @Override
+    public void run() {
+        while (running) {
+            try {
+                LobbyCommand cmd = queue.take();
+                cmd.accept(this);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (Exception e) {
+                // A handler-level exception must never kill the lobby thread.
+                System.err.println("[lobby-thread] unexpected error: " + e);
+            }
         }
-        registerPlayer(entry.getName(), entry);
-        return true;
+    }
+
+    // ─── Registrazioni (sul lobby-thread) ─────────────────────────────────
+
+    /**
+     * Check-e-registra atomico per il socket. Se il nome è libero costruisce
+     * view/handler/entry e avvia il thread reader (tutte operazioni non
+     * bloccanti: {@code Thread.start()} ritorna subito), poi completa il future.
+     * La costruzione avviene <strong>dopo</strong> il check, così un nome
+     * rifiutato non alloca alcuna {@link SocketVirtualView}. Il future è
+     * completato <strong>sempre</strong> (anche su eccezione di costruzione),
+     * così che l'handshaker non resti bloccato fino al timeout.
+     */
+    @Override
+    public void visit(RegisterSocketPlayerCommand cmd) {
+        String name = cmd.playerName();
+        CompletableFuture<Boolean> future = cmd.future();
+        try {
+            if (nameAlreadyTaken(name)) {
+                future.complete(false);
+                return;
+            }
+            SocketVirtualView view = new SocketVirtualView(name, cmd.socket(), cmd.out(), this);
+            SocketClientHandler handler = new SocketClientHandler(view, cmd.in(), this);
+            SocketPlayerEntry entry = new SocketPlayerEntry(name, cmd.in(), view, handler);
+
+            registerPlayer(name, entry);
+
+            Thread t = new Thread(handler, "client-" + name);
+            t.setDaemon(true);
+            t.start();
+
+            future.complete(true);
+        } catch (RuntimeException e) {
+            future.completeExceptionally(e);
+        }
+    }
+
+    /**
+     * Check-e-registra atomico per l'RMI. L'{@link PlayerEntry} è già costruito
+     * dal {@code GameServerRemoteImpl} e non c'è alcun thread reader da avviare
+     * (il dispatch RMI è guidato dal runtime), quindi qui basta registrare.
+     */
+    @Override
+    public void visit(RegisterRmiPlayerCommand cmd) {
+        CompletableFuture<Boolean> future = cmd.future();
+        try {
+            if (nameAlreadyTaken(cmd.playerName())) {
+                future.complete(false);
+                return;
+            }
+            registerPlayer(cmd.playerName(), cmd.entry());
+            future.complete(true);
+        } catch (RuntimeException e) {
+            future.completeExceptionally(e);
+        }
     }
 
     /**
      * Common registration path for both socket and RMI: handles the
      * reconnection case (player name already in an active game) and the
-     * brand-new connection case. Caller must hold the monitor.
+     * brand-new connection case. Runs only on the lobby-thread.
      */
     private void registerPlayer(String playerName, PlayerEntry entry) {
         connectedPlayers.put(playerName, entry);
@@ -161,16 +234,16 @@ public class LobbyManager implements LobbyCommandVisitor {
         }
     }
 
-    // LobbyCommandVisitor –––––––––––––––––––––––––––––––––––––––––––––
+    // ─── LobbyCommandVisitor: comandi di menu ─────────────────────────────
 
     @Override
-    public synchronized void visit(ListLobbiesCommand cmd) {
+    public void visit(ListLobbiesCommand cmd) {
         VirtualView view = getView(cmd.playerName());
         if (view != null) view.sendLobbyList(currentLobbyList());
     }
 
     @Override
-    public synchronized void visit(CreateLobbyCommand cmd) {
+    public void visit(CreateLobbyCommand cmd) {
         PlayerEntry entry = connectedPlayers.get(cmd.playerName());
         if (entry == null) return;
 
@@ -183,7 +256,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             entry.getView().sendError("invalid player number: must be between 2 and 5");
             return;
         }
-  
+
         if (playerAlreadyInLobby(cmd.playerName())) {
             entry.getView().sendError("already_in_lobby");
             return;
@@ -198,7 +271,7 @@ public class LobbyManager implements LobbyCommandVisitor {
     }
 
     @Override
-    public synchronized void visit(JoinLobbyCommand cmd) {
+    public void visit(JoinLobbyCommand cmd) {
         PlayerEntry entry = connectedPlayers.get(cmd.playerName());
         if (entry == null) return;
 
@@ -233,14 +306,13 @@ public class LobbyManager implements LobbyCommandVisitor {
      *   <li>player in an {@code END_OF_GAME} session: the command is impilato
      *       sulla coda della session, dove il controller pulir&agrave; il model;
      *       il LobbyManager rimuove l'entry da {@code activeGames} e, se non
-     *       resta nessun player connesso per quella session, shutta la session;</li>
+     *       resta nessun player connesso per quella session, shutta la session
+     *       (delegando la {@code join} bloccante a {@code lobby-io});</li>
      *   <li>player non in lobby n&eacute; in partita: errore inline.</li>
      * </ul>
      */
-
-    // TODO da rivedere perché forse è meglio un listener
     @Override
-    public synchronized void visit(LeaveCommand cmd) {
+    public void visit(LeaveCommand cmd) {
         String playerName = cmd.getPlayerName();
         GameController controller = activeGames.get(playerName);
 
@@ -254,9 +326,9 @@ public class LobbyManager implements LobbyCommandVisitor {
             if (!stillHasConnected) {
                 // L'ultimo player connesso ha lasciato: rimuovi anche eventuali
                 // stragglers (player disconnessi che non hanno mai inviato
-                // LeaveCommand) e chiudi il controller.
+                // LeaveCommand) e chiudi il controller fuori dal lobby-thread.
                 activeGames.values().removeIf(c -> c == controller);
-                controller.shutdown();
+                lobbyIo.submit(controller::shutdown);
             }
 
             VirtualView leavingView = getView(playerName);
@@ -276,54 +348,28 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (view != null) view.sendError("LEAVE_INVALID");
     }
 
-    // Game start
-
-    private void startIfFull(Lobby lobby) {
-        if (!lobby.isFull()) return;
-
-        lobby.notifyGameStarting();
-        lobbies.remove(lobby.getId());
-
-        List<PlayerEntry> players = lobby.getPlayers();
-        GameController controller = new GameController(players);
-        controller.start();
-        players.forEach(p -> activeGames.put(p.getName(), controller));
-    }
-
     /**
-     * Single disconnect entry point. Called by the network endpoints
-     * ({@code SocketClientHandler} finally block, {@code RmiVirtualView}
-     * send failure) and by the heartbeat scanner. Updates the LobbyManager's
-     * local state, closes the outbound view, and — if the player was in a
-     * running game — impila un {@link PlayerDisconnectedCommand} sulla coda
-     * della session per delegare al controller la pulizia del model.
+     * Pipeline di disconnessione, eseguita sul lobby-thread. Se il player era in
+     * partita impila un {@link PlayerDisconnectedCommand} sulla coda della
+     * session; rimuove l'entry e chiude la view (close bloccante delegato a
+     * {@code lobby-io}); aggiorna l'eventuale lobby ospitante.
      */
-    public synchronized void onDisconnect(String playerName) {
+    @Override
+    public void visit(LobbyDisconnectCommand cmd) {
+        String playerName = cmd.playerName();
         if (!connectedPlayers.containsKey(playerName)) return;
 
-        // 1) Impila il PlayerDisconnectedCommand PRIMA di chiudere la view.
-        //    Quando questo metodo viene invocato dal thread del sentinel
-        //    server-side (callback onTimeoutAction), il successivo
-        //    view.close() chiama sentinel.stop() → executor.shutdownNow()
-        //    che invoca Thread.interrupt() sul thread corrente: una
-        //    queue.put() chiamata dopo verrebbe rifiutata immediatamente
-        //    con InterruptedException, perdendo l'evento e impedendo al
-        //    game thread di attivare la logica di disconnect / sospensione.
         GameController controller = activeGames.get(playerName);
         if (controller != null) {
             enqueue(controller.getQueue(), new PlayerDisconnectedCommand(playerName));
         }
 
-        // 2) Rimuovi il player dal registry e chiudi la view. Da qui in poi
-        //    il flag interrupt del thread chiamante può essere settato dal
-        //    sentinel.stop() interno a view.close(): le operazioni
-        //    successive (HashMap.remove, lookup lobby) non sono
-        //    interrompibili quindi proseguono regolarmente.
         PlayerEntry entry = connectedPlayers.remove(playerName);
-        if (entry != null) entry.getView().close();
+        if (entry != null) {
+            VirtualView view = entry.getView();
+            lobbyIo.submit(view::close);
+        }
 
-        // 3) Era in lobby (o solo connesso, non in nessuna lobby): trova la
-        //    lobby specifica, rimuovi il player, notifica solo quella lobby.
         Lobby hostingLobby = lobbies.values().stream()
                 .filter(l -> l.containsPlayer(playerName))
                 .findFirst()
@@ -341,7 +387,21 @@ public class LobbyManager implements LobbyCommandVisitor {
         broadcastLobbyListToBrowsers();
     }
 
-    // ─── LEAVE command handlers ────────────────────────────────────────
+    // ─── Game start ───────────────────────────────────────────────────────
+
+    private void startIfFull(Lobby lobby) {
+        if (!lobby.isFull()) return;
+
+        lobby.notifyGameStarting();
+        lobbies.remove(lobby.getId());
+
+        List<PlayerEntry> players = lobby.getPlayers();
+        GameController controller = new GameController(players);
+        controller.start();
+        players.forEach(p -> activeGames.put(p.getName(), controller));
+    }
+
+    // ─── LEAVE command handlers ─────────────────────────────────────────────
 
     private boolean isPlayerInLobby(String playerName) {
         return lobbies.values().stream()
@@ -414,10 +474,6 @@ public class LobbyManager implements LobbyCommandVisitor {
                 .toList();
     }
 
-    private void closeSocket(Socket socket) {
-        try { socket.close(); } catch (IOException ignored) {}
-    }
-
     /**
      * Helper to put a command on a session queue without leaking the
      * {@code InterruptedException}: restore the interrupt flag and proceed.
@@ -434,17 +490,27 @@ public class LobbyManager implements LobbyCommandVisitor {
     // ─── Ordered shutdown ──────────────────────────────────────────────
 
     /**
-     * Stop the heartbeat scanner, drain every active game session, close all
+     * Stop the lobby thread, drain every active game session, close all
      * outbound views and clear every internal map. After this call returns
      * the LobbyManager is no longer usable and the JVM can exit cleanly.
      *
-     * <p>Invoked from a JVM shutdown hook in {@code ServerMain}.
+     * <p>Invocato da uno shutdown hook in {@code ServerMain} (thread diverso dal
+     * lobby-thread). Ferma e {@code join}a prima il lobby-thread così che da qui
+     * in poi questo thread sia il solo ad accedere alle mappe (nessuna race).
      */
-    public synchronized void shutdown() {
-        new java.util.HashSet<>(activeGames.values()).forEach(GameController::shutdown);
+    public void shutdown() {
+        running = false;
+        lobbyThread.interrupt();
+        try {
+            lobbyThread.join(2000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+        new HashSet<>(activeGames.values()).forEach(GameController::shutdown);
         connectedPlayers.values().forEach(e -> e.getView().close());
         lobbies.clear();
         activeGames.clear();
         connectedPlayers.clear();
+        lobbyIo.shutdownNow();
     }
 }
