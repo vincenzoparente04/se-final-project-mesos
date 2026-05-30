@@ -1,5 +1,6 @@
 package network.server.rmi;
 
+import database.ScoreRecord;
 import shared.dto.GameStateDto;
 import shared.dto.LobbyDto;
 import shared.dto.event.EndGameScoringDto;
@@ -96,6 +97,18 @@ public class RmiVirtualView implements VirtualView {
         senderExecutor.submit(() -> {
             try {
                 callback.onGameOver(winners, scoring);
+            } catch (RemoteException e) {
+                handleDisconnect();
+            }
+        });
+    }
+
+    @Override
+    public void sendLeaderboard(List<ScoreRecord> leaderboard, int rankPosition, int points) {
+        if (closed.get()) return;
+        senderExecutor.submit(() -> {
+            try {
+                callback.onLeaderboardUpdate(leaderboard, rankPosition, points);
             } catch (RemoteException e) {
                 handleDisconnect();
             }

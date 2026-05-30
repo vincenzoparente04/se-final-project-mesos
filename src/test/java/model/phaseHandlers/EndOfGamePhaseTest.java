@@ -30,7 +30,7 @@ public class EndOfGamePhaseTest {
 	void setUp() {
 		model = mock(GameModel.class);
 		rowsManager = mock(RowsManager.class);
-		phase = new EndOfGamePhase(model);
+		phase = new EndOfGamePhase(model, null, false);
 
 		when(model.getRowsManager()).thenReturn(rowsManager);
 	}

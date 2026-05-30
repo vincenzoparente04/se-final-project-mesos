@@ -1,5 +1,6 @@
 package model.phaseHandlers;
 
+import database.*;
 import model.GameModel;
 import model.cards.buildingCards.buildingEffects.endGameEffects.EndGameBuildingEffect;
 import model.enums.GamePhase;
@@ -10,17 +11,47 @@ import shared.dto.event.EndGameScoringDto;
 import shared.dto.event.EventResolutionDto;
 import shared.dto.event.PlayerScoringDeltaDto;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the final phase of the game, executing the teardown sequence
+ * and finalizing the match statistics.
+ * <p>
+ * This handler encapsulates the end-game routine which includes resolving all
+ * remaining visible event cards, calculating a detailed breakdown of each player's
+ * final prestige points (incorporating character types and building effects), and
+ * determining the winner(s) using a food-based tie-breaking mechanism if necessary.
+ * </p>
+ * <p>
+ * The behavior of this phase adapts dynamically based on its initialization state:
+ * <ul>
+ * <li><b>Standard Termination:</b> Processes full end-game scoring, broadcasts
+ * event and scoring data to all clients, and asynchronously persists match
+ * records to the database if the database layer is enabled.</li>
+ * <li><b>Suspended Game (Abnormal Termination):</b> Triggered when all players disconnect.
+ * It bypasses all scoring calculations and database
+ * operations, immediate broadcasting a clean game-over status with empty scores
+ * to ensure proper client-side cleanup.</li>
+ * </ul>
+ * </p>
+ * @see GamePhaseHandler
+ * @see database.MatchDAO
+ * @see shared.dto.event.EndGameScoringDto
+ */
 public class EndOfGamePhase implements GamePhaseHandler {
 
     private final GameModel model;
     private List<Player> winners;
     private EndGameScoringDto scoring; // built in calculateEndGameScoring(), shipped from onEnter()
+    private MatchDAO matchDAO;
+    private boolean suspendedGame; // if true, it means that the game ended due to a player disconnection, so we skip end-game scoring and DB saving
 
-    public EndOfGamePhase(GameModel model) {
+    public EndOfGamePhase(GameModel model, List<Player> winners, boolean suspendedGame) {
         this.model = model;
+        this.winners = winners;
+        this.suspendedGame = suspendedGame;
     }
 
     /**
@@ -29,19 +60,81 @@ public class EndOfGamePhase implements GamePhaseHandler {
      */
     @Override
     public void onEnter() {
-        resolveAllVisibleEvents();
-        calculateEndGameScoring();
-        determineWinner();
+        if (!suspendedGame) {
+            resolveAllVisibleEvents();
+            calculateEndGameScoring();
+            determineWinner();
 
-        List<String> winnerNames = winners.stream().map(Player::getName).toList();
-        model.setWinners(winnerNames);
+            List<String> winnerNames = winners.stream().map(Player::getName).toList();
+            model.setWinners(winnerNames);
 
-        // Explicit game-over broadcast carrying both winners and scoring
-        // (the state message no longer auto-emits the GameOverMessage).
-        for (VirtualView v : model.getViews()) {
-            v.sendGameOver(winnerNames, scoring);
+            if (database.DatabaseManager.isEnabled()) {
+                processDatabaseAsync(winnerNames);
+            } else {
+                for (VirtualView v : model.getViews()) {
+                    v.sendGameOver(winnerNames, scoring);
+                }
+            }
+
+        }else {
+
+            List<String> winnerNames = winners.stream().map(Player::getName).toList();
+            model.setWinners(winnerNames);
+            scoring = new EndGameScoringDto(new ArrayList<>()); // empty scoring since the game was suspended, so no points are calculated
+
+            for (VirtualView v : model.getViews()) {
+                v.sendGameOver(winnerNames, scoring);
+            }
         }
-        // model.notifyChange();
+    }
+
+    /**
+     * This method handle match scores saving and standings receiving with a separate thread to avoid server block
+     * @param winnerNames needed to send game over messages
+     * @implNote it creates a list of {@link ScoreRecord}, one for each player.
+     * Then a thread starts, and it updates the db, get the top of the standing and the player match score position.
+     * Last, for each client, it sends a {@link shared.message.LeaderboardMessage} to notify the client with the updated standings and it sends a {@link shared.message.GameOverMessage}.
+     */
+    private void processDatabaseAsync(List<String> winnerNames) {
+        this.matchDAO = new MatchDAO();
+
+        List<ScoreRecord> recordsToSave = new ArrayList<>();
+        for (Player p : model.getPlayers()) {
+            recordsToSave.add(new ScoreRecord(
+                    p.getName(),
+                    p.getPrestigePoints(),
+                    model.getPlayerCount(),
+                    null
+            ));
+        }
+
+        new Thread(() -> {
+            try {
+                matchDAO.saveMatch(recordsToSave);
+                List<ScoreRecord> topStanding = matchDAO.getTopScores(model.getPlayerCount(), 20);
+
+                for (Player p : model.getPlayers()) {
+                    int standingPosition = matchDAO.getPlayerRank(model.getPlayerCount(), p.getName(), p.getPrestigePoints());
+
+                    VirtualView playerView = model.getViews().stream()
+                            .filter(v -> v.getPlayerName().equals(p.getName()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (playerView != null) {
+                        playerView.sendLeaderboard(topStanding, standingPosition, p.getPrestigePoints());
+                    }
+                }
+                for (VirtualView v : model.getViews()) {
+                    v.sendGameOver(winnerNames, scoring);
+                }
+            } catch (Exception e) {
+                for (VirtualView v : model.getViews()) {
+                    v.sendGameOver(winnerNames, scoring);
+                    v.sendError("[DB] Error during async operation: " + e.getMessage());
+                }
+            }
+        }, "db-async-thread").start();
     }
 
     /**
@@ -135,6 +228,7 @@ public class EndOfGamePhase implements GamePhaseHandler {
                 .filter(p -> p.getFood() == maxFood)
                 .toList();
     }
+
 
     public List<Player> getWinners() {
         return winners;

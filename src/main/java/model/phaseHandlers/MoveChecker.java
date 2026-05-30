@@ -26,6 +26,9 @@ public class MoveChecker implements CardVisitor {
         this.rowsManager = rowsManager;
     }
 
+    /**
+     * @return true if there is a drawable character card
+     */
     public boolean checkForcedMoves(List<TribeCard> allTribeCardsOnBoard) {
         for (TribeCard card : allTribeCardsOnBoard) {
             if (result) {return true;} //if result is already true, it means that the player has at least one legal move, so we can stop checking
@@ -36,6 +39,9 @@ public class MoveChecker implements CardVisitor {
         return result;
     }
 
+    /**
+     * @return true if there is a drawable card
+     */
     public boolean checkLegalMoves(List<Card> allCardsOnBoard) {
         for (Card card : allCardsOnBoard) {
             if (result) {return true;} //if result is already true, it means that the player has at least one legal move, so we can stop checking

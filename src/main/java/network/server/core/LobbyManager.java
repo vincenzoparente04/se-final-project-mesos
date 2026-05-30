@@ -1,6 +1,7 @@
 package network.server.core;
 
 import controller.GameController;
+import database.DatabaseConfig;
 import shared.command.*;
 import shared.command.lobbyCommand.*;
 import shared.dto.LobbyDto;
@@ -59,7 +60,6 @@ public class LobbyManager implements LobbyCommandVisitor {
     private final Map<String, PlayerEntry> connectedPlayers = new HashMap<>(); // <PlayerName, PlayerEntry>
     /** @apiNote @GuardedBy("this") */
     private final Map<String, GameController> activeGames = new HashMap<>(); // <PlayerName, GameController>
-
 
 
     // Socket entry point ───────────────────────────────────
@@ -222,6 +222,7 @@ public class LobbyManager implements LobbyCommandVisitor {
         lobby.addPlayer(entry);
         lobby.broadcastState();
         startIfFull(lobby);
+        broadcastLobbyListToBrowsers();
     }
 
     /**
@@ -336,14 +337,11 @@ public class LobbyManager implements LobbyCommandVisitor {
         if (hostingLobby.isEmpty()) {
             lobbies.remove(hostingLobby.getId());
         }
+
         broadcastLobbyListToBrowsers();
     }
 
     // ─── LEAVE command handlers ────────────────────────────────────────
-
-    private boolean isPlayerInEndGame(String playerName) {
-        return (activeGames.containsKey(playerName) && activeGames.get(playerName).isGameOver());
-    }
 
     private boolean isPlayerInLobby(String playerName) {
         return lobbies.values().stream()
@@ -372,6 +370,7 @@ public class LobbyManager implements LobbyCommandVisitor {
             leavingView.sendError("LEFT_LOBBY:success");
             leavingView.sendLobbyList(currentLobbyList());
         }
+
         broadcastLobbyListToBrowsers();
     }
 

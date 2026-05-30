@@ -1,5 +1,6 @@
 package network.client.core;
 
+import database.ScoreRecord;
 import javafx.application.Platform;
 import shared.dto.LobbyDto;
 import shared.dto.event.EndGameScoringDto;
@@ -87,6 +88,11 @@ public class ClientStateListenerGui implements ClientStateListener {
             // Wait for any queued event overlays (the 2 end-of-game events) to finish before navigating to the winner screen.
             EventResolutionOverlay.setOnQueueDrained(navigate);
         });
+    }
+
+    @Override
+    public void onLeaderboardUpdate(List<ScoreRecord> leaderboard, int rankPosition, int points) {
+        //TODO: DAJE ROCCO FAMOLO BELLO ME RACCOMANNO
     }
 
     @Override

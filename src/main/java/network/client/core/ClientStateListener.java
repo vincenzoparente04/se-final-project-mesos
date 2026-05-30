@@ -1,9 +1,11 @@
 package network.client.core;
 
+import database.ScoreRecord;
 import shared.dto.LobbyDto;
 import shared.dto.event.EndGameScoringDto;
 import shared.dto.event.EventResolutionDto;
 
+import java.rmi.RemoteException;
 import java.util.List;
 
 /**
@@ -31,6 +33,8 @@ public interface ClientStateListener {
      * forfeit).
      */
     void onGameOver(List<String> winners, EndGameScoringDto scoring);
+
+    void onLeaderboardUpdate(List<ScoreRecord> leaderboard, int rankPosition, int points);
 
     void onDisconnected();
 }
