@@ -1,6 +1,7 @@
 package view;
 
 import network.client.core.ClientMain;
+import database.ScoreRecord;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -43,6 +44,11 @@ public class SceneRouter {
      * The first onGameStateUpdated() will clear it and navigate to the correct screen.
      */
     private boolean pendingGameReconnect = false;
+
+    // Leaderboard data may arrive before or after the winner screen is shown
+    private List<ScoreRecord> pendingLeaderboard;
+    private int pendingLeaderboardRank;
+    private int pendingLeaderboardPoints;
 
     public SceneRouter(Stage stage, LocalGameState localState, ClientMain main) {
         this.clientMain = main;
@@ -103,11 +109,29 @@ public class SceneRouter {
     public void toWinner(List<PlayerDto> players, List<String> winners) {
         load("/org/example/mesos/winner-view.fxml");
         currentViewController.showWinners(players, winners);
+        applyPendingLeaderboardIfWinner();
     }
 
     public void toWinner(List<PlayerDto> players, List<String> winners, EndGameScoringDto scoring) {
         load("/org/example/mesos/winner-view.fxml");
         currentViewController.showWinners(players, winners, scoring);
+        applyPendingLeaderboardIfWinner();
+    }
+
+    /** Called by the network listener when DB leaderboard data arrives (async). */
+    public void offerLeaderboard(List<ScoreRecord> lb, int rank, int pts) {
+        pendingLeaderboard = lb;
+        pendingLeaderboardRank = rank;
+        pendingLeaderboardPoints = pts;
+        applyPendingLeaderboardIfWinner();
+    }
+
+    private void applyPendingLeaderboardIfWinner() {
+        if (pendingLeaderboard == null) return;
+        if (currentViewController instanceof WinnerViewController w) {
+            w.applyLeaderboard(pendingLeaderboard, pendingLeaderboardRank, pendingLeaderboardPoints);
+            pendingLeaderboard = null;
+        }
     }
 
     // FXML loading ---------------------------------------------------------------

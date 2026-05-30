@@ -38,11 +38,8 @@ public class BoardViewController implements SceneController {
         gameAreaController.init(router, rootPane, selfPanelController);
         selfPanelController.init(router, rootPane);
 
-        // Insert MusicPlayerWidget before endTurnButton so order is: 📖 → ♪ → End turn
         MusicPlayerWidget musicWidget = new MusicPlayerWidget();
-        // minHeight=36 forces the widget to overflow the topBar's 18px content area
-        // (9px top/bottom padding) so its clickable area spans the full bar height,
-        // matching the behaviour of rulesButton (minHeight="36" in FXML).
+
         musicWidget.setMinHeight(36);
         musicWidget.setMaxHeight(Double.MAX_VALUE);
         int endTurnIdx = topBar.getChildren().indexOf(endTurnButton);

@@ -1,7 +1,9 @@
 package view;
 
+import database.ScoreRecord;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -9,6 +11,7 @@ import javafx.scene.layout.VBox;
 import shared.dto.PlayerDto;
 import shared.dto.event.EndGameScoringDto;
 import shared.dto.event.PlayerScoringDeltaDto;
+import view.widgets.LeaderboardOverlay;
 import view.widgets.TotemView;
 
 import java.util.ArrayList;
@@ -23,8 +26,13 @@ public class WinnerViewController implements SceneController {
     @FXML private Label winnerNameLabel;
     @FXML private Label winnerScoreLabel;
     @FXML private VBox rankingBox;
+    @FXML private Button leaderboardBtn;
 
     private SceneRouter router;
+
+    private List<ScoreRecord> leaderboardData;
+    private int leaderboardRank;
+    private int leaderboardPoints;
 
     @Override
     public void bind(SceneRouter router) {
@@ -197,7 +205,22 @@ public class WinnerViewController implements SceneController {
         return l;
     }
 
+    /** Called by SceneRouter when DB leaderboard data arrives (may be before or after showWinners). */
+    public void applyLeaderboard(List<ScoreRecord> data, int rank, int points) {
+        leaderboardData = data;
+        leaderboardRank = rank;
+        leaderboardPoints = points;
+        if (leaderboardBtn != null) leaderboardBtn.setDisable(false);
+    }
+
     public StackPane root() { return rootPane; }
+
+    @FXML
+    private void onLeaderboard() {
+        if (leaderboardData == null || leaderboardData.isEmpty()) return;
+        String myName = router.playerName();
+        LeaderboardOverlay.show(rootPane, leaderboardData, leaderboardRank, leaderboardPoints, myName);
+    }
 
     @FXML
     private void onBack() {

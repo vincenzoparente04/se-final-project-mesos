@@ -92,7 +92,7 @@ public class ClientStateListenerGui implements ClientStateListener {
 
     @Override
     public void onLeaderboardUpdate(List<ScoreRecord> leaderboard, int rankPosition, int points) {
-        //TODO: DAJE ROCCO FAMOLO BELLO ME RACCOMANNO
+        Platform.runLater(() -> router.offerLeaderboard(leaderboard, rankPosition, points));
     }
 
     @Override

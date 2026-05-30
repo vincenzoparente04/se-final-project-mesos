@@ -57,7 +57,7 @@ public class ClientMain extends Application {
         router.setListener(listener);
 
         primaryStage.setTitle("Mesos");
-        MusicManager.getInstance().playRandom("music/scaricamusicayoutube");
+        //MusicManager.getInstance().playRandom("music/scaricamusicayoutube");
         router.toSplash();
     }
 

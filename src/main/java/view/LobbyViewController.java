@@ -47,6 +47,8 @@ public class LobbyViewController implements SceneController {
         });
 
         statusLabel.setText("Loading…");
+
+        MusicManager.getInstance().playRandom("music/scaricamusicayoutube");
     }
 
     public StackPane root() { return rootPane; }
@@ -109,7 +111,7 @@ public class LobbyViewController implements SceneController {
 
         LobbyCell() {
             nameLabel.getStyleClass().add("mesos-label-bold");
-            nameLabel.setStyle("-fx-font-size: 48;");
+            nameLabel.setStyle("-fx-font-size: 32;");
             playersLabel.getStyleClass().add("mesos-label");
             hbox = new javafx.scene.layout.HBox(50, nameLabel, playersLabel);
             hbox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
