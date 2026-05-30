@@ -5,12 +5,17 @@ import model.cards.Card;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 
+/**
+ * Corresponds to the "Draw Cards" action on offer tiles. When a player steps on an offer tile with this action,
+ * they can draw a specified number of cards from the top and bottom rows. The action is finished when the player
+ * has drawn the maximum allowed cards from both rows.
+ */
 public class DrawCardsAction implements OfferTileAction {
-    // --- DEFINIZIONE (Valori base immutabili della tessera) ---
+    // --- Definied by rules, indicate the allowed draw from each row ---
     private final int maxTopRowDraws;
     private final int maxBottomRowDraws;
 
-    // --- STATO DELL'ESECUZIONE (Mutabile durante il turno) ---
+    // --- These two variables indicate the state of the action ---
     private int currentTopRowDraws;
     private int currentBottomRowDraws;
 
@@ -21,20 +26,24 @@ public class DrawCardsAction implements OfferTileAction {
 
     @Override
     public void onEnterAction(Player player, GameModel model) {
-        // Ogni volta che un giocatore entra in questa azione,
-        // i contatori ripartono da zero.
+        // When the action starts, we reset the counters to 0
         this.currentTopRowDraws = 0;
         this.currentBottomRowDraws = 0;
     }
 
+    /**
+     * Identifies if a player can still draw from top or bottom rows.
+     *
+     * @param card to be drawn
+     * @param rowsManager
+     * @return a boolean indicating if the card can be drawn.
+     */
     @Override
     public boolean canDraw(Card card, RowsManager rowsManager) {
-        // La carta si trova nella riga superiore e non ho ancora raggiunto il limite
         if (rowsManager.topRowContainsCard(card.getId())) {
             return currentTopRowDraws < maxTopRowDraws;
         }
 
-        // La carta si trova nella riga inferiore e non ho ancora raggiunto il limite
         if (rowsManager.bottomRowContainsCard(card.getId())) {
             return currentBottomRowDraws < maxBottomRowDraws;
         }
@@ -42,9 +51,16 @@ public class DrawCardsAction implements OfferTileAction {
         return false;
     }
 
+
+    /**
+     * Increments the variables which keep track of how much cards have
+     * been already drawn.
+     *
+     * @param card To be drawn.
+     * @param rowsManager
+     */
     @Override
     public void performDraw(Card card, RowsManager rowsManager) {
-        // Aggiorna il contatore giusto in base a dove si trovava la carta
         if (rowsManager.topRowContainsCard(card.getId())) {
             currentTopRowDraws++;
         } else if (rowsManager.bottomRowContainsCard(card.getId())) {
@@ -52,9 +68,13 @@ public class DrawCardsAction implements OfferTileAction {
         }
     }
 
+    /**
+     * Checks if the action is finished, when the player has drawn the maximum allowed cards from both rows.
+     *
+     * @return A boolean indicating if the action is finished.
+     */
     @Override
     public boolean isFinished() {
-        // L'azione si conlude quando i contatori hanno raggiunto il limite
         return (currentTopRowDraws >= maxTopRowDraws) &&
                 (currentBottomRowDraws >= maxBottomRowDraws);
     }

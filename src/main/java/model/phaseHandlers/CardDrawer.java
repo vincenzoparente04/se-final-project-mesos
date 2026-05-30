@@ -11,6 +11,27 @@ import model.player.Player;
 import model.rowsManager.CardVisitor;
 import model.rowsManager.RowsManager;
 
+/**
+ * Executes the acquisition of a card from the board, managing the transfer
+ * of the card to the player's tribe and the application of associated costs and effects.
+ * * <p>Acting as a state-mutating <em>Visitor</em>, this class leverages double-dispatch
+ * to process different card types safely without explicit casting:
+ * <ul>
+ * <li><b>Character Cards:</b> Removed from the board, registered to the player's tribe,
+ * and immediately trigger any active {@link model.cards.buildingCards.buildingEffects.onCharacterAcquiredEffects.OnAcquireBuildingEffect}.</li>
+ * <li><b>Building Cards:</b> Validates the player's food reserves, deducts the
+ * appropriately discounted cost, removes the card from the board, and registers it.</li>
+ * <li><b>Event Cards:</b> Throws an {@link IllegalStateException} since event cards
+ * are resolved automatically by the game engine and cannot be manually drawn.</li>
+ * </ul>
+ * </p>
+ * <p>This handler gracefully adapts to contexts where a standard {@code OfferTileAction}
+ * is absent (e.g., during the end-of-round bonus draft), applying the base acquisition
+ * logic without tile-specific modifiers.
+ * </p>
+ * @see model.rowsManager.CardVisitor
+ * @see ActionPhase
+ */
 public class CardDrawer implements CardVisitor {
     private Player player;
     private RowsManager rowsManager;
@@ -23,17 +44,25 @@ public class CardDrawer implements CardVisitor {
     }
 
     /**
-     * @implNote Uses visitor pattern to customize the drawing process of the card based on its type.
-     * Character cards are added to the tribe and trigger OnAcquire effects,
-     * while building cards check for food cost and apply builder discounts before being added to the tribe.
-     * Event cards cannot be drawn and will throw an exception if attempted.
-     * @param card card to be drawn
+     * Initiates the double-dispatch mechanism to execute the type-specific
+     * drawing logic for the provided card.
+     * * @param card the {@link Card} instance to be acquired by the player.
      */
     public void drawCard(Card card) {
         card.accept(this);
     }
 
-
+    /**
+     * Executes the acquisition pipeline for a Character Card.
+     * <p>
+     * The process guarantees the following sequence:
+     * <p>1. Application of the current tile's draw action (if present).
+     * <p>2. Removal of the card from the board.
+     * <p>3. Registration of the card into the player's tribe.
+     * <p>4. Resolution of any active {@link OnAcquireBuildingEffect} triggered by this addition.
+     * </p>
+     * @param card the character card being acquired.
+     */
     @Override
     public void visit(CharacterCard card) {
         if (currentAction != null) { // null when called by PreEndOfRoundPhase (no tile action involved)
@@ -44,12 +73,22 @@ public class CardDrawer implements CardVisitor {
 
         card.registerToTribe(player);
 
-        // checks for OnAcquire effects
         for (OnAcquireBuildingEffect effect : player.getTribe().getOnAcquireBuildingEffects()) {
             effect.applyEffect(player);
         }
     }
 
+    /**
+     * Handles the transactional acquisition of a Building Card.
+     * <p>
+     * Acts by enforcing food availability pre-conditions.
+     * If the player possesses sufficient food (after applying any discounts),
+     * the cost is deducted, the card is removed from the board and registered to the player's tribe.
+     * </p>
+     * @param card the building card being acquired.
+     * @throws IllegalStateException if the player's food is strictly less than
+     * the card's discounted cost.
+     */
     @Override
     public void visit(BuildingCard card) {
         if (player.getFood() < card.getDiscountedCost(player)) {
@@ -66,12 +105,21 @@ public class CardDrawer implements CardVisitor {
         }
     }
 
-    // Event cards cannot be drawn by players
+    /**
+     * Rejects illegal acquisition attempts for Event Cards.
+     * @param card the event card targeted for drawing.
+     * @throws IllegalStateException always, as event cards can never be drawn.
+     */
     @Override
     public void visit(EventCard card) {
         throw new IllegalStateException("Event cards cannot be drawn.");
     }
 
+    /**
+     * Rejects illegal acquisition attempts for Sustenance Event Cards.
+     * @param card the event card targeted for drawing.
+     * @throws IllegalStateException always, as event cards can never be drawn.
+     */
     @Override
     public void visit(SustenanceEventCard card) {
         throw new IllegalStateException("Event cards cannot be drawn.");

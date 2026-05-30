@@ -12,8 +12,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * EventResolver is responsible for visiting and sorting event cards using the Visitor pattern.
- * It separates concerns by handling event resolution logic independently from the board management.
+ * A specialized stateful visitor responsible for sequencing
+ * and resolving event cards from a heterogeneous collection of tribe cards.
+ * <p>
+ * This class applies the <em>Visitor</em> design pattern to safely identify
+ * and extract different types of event cards without relying on type casting
+ * or {@code instanceof} checks. Its primary architectural responsibility is
+ * to enforce the strict game rule that all standard events must be resolved
+ * before any Sustenance events.
+ * </p>
+ * <p>
+ * <b>Usage Lifecycle:</b>
+ * <ol>
+ * <li>Call {@link #sortEvents(List)} to populate and order the internal resolution queues.</li>
+ * <li>Call {@link #resolve(List)} to trigger the effects and generate the data transfer objects (DTOs) for the clients.</li>
+ * </ol>
+ * </p>
+ * @see model.rowsManager.CardVisitor
+ * @see model.cards.eventCards.EventCard
+ * @see model.cards.eventCards.SustenanceEventCard
  */
 public class EventResolver implements CardVisitor {
     private List<EventCard> eventsToResolve;
@@ -25,10 +42,9 @@ public class EventResolver implements CardVisitor {
     }
 
     /**
-     * Sorts events from a list of tribe cards by type and era, moving sustenance events to the end.
-     * Uses the Visitor pattern to classify cards.
-     * @implNote EventResolver collects EventCard and SustenanceEventCard from a list of TribeCards, sorts them by type and era, and resolves them in the correct order.
-     * Sustenance events are resolved after all other events. It assumes that cards on the rows are already sorted by era (they keep the drawing order from tribe deck)
+     * EventResolver collects EventCard and SustenanceEventCard from a list of TribeCards, sorts them by type and
+     * era, and resolves them in the correct order. Sustenance events are resolved after all other events.
+     * It assumes that cards on the rows are already sorted by era (they keep the drawing order from tribe deck)
      *
      * @param tribeCards the cards to sort and filter for events
      */
@@ -45,12 +61,12 @@ public class EventResolver implements CardVisitor {
     }
 
     /**
-     * Resolves all events in the sorted list and returns one
-     * {@link EventResolutionDto} per event card resolved (in resolution
-     * order). The DTOs are forwarded by the phase to the client via
-     * {@code EventResolvedMessage}.
+     * Executes the sequential resolution of all previously sorted event cards,
+     * applying their programmatic effects to the provided list of players.
      *
-     * @param players the list of players affected by the events
+     * @param players the list of players in the game.
+     * @return an ordered list of {@link EventResolutionDto} representing the outcome
+     * of each resolved event, ready to be broadcasted to the clients.
      */
     public List<EventResolutionDto> resolve(List<Player> players) {
         List<EventResolutionDto> resolutions = new ArrayList<>();
