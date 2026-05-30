@@ -14,6 +14,7 @@ public interface GamePhaseHandler extends GameCommandVisitor {
     Player getCurrentPlayer();
 
     default void onEnter() {}
+
     default void skipCurrentPlayerTurn() {}
 
     @Override
