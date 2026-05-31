@@ -55,8 +55,13 @@ public class EndOfGamePhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote  This method resolves all visible events, calculates end-game scoring for each player,
-     * determines the winner, and notifies observers of the game over state and the winner(s).
+     * Initializes and executes the macro end-game sequence.
+     * <p>
+     * If the match concluded naturally, it triggers the resolution pipeline, computes final
+     * scores, and delegates loading the database to an asynchronous worker thread. In case of
+     * an abnormal suspension, it immediately broadcasts an empty scoring DTO to signal
+     * a clean client-side teardown.
+     * </p>
      */
     @Override
     public void onEnter() {
@@ -89,11 +94,15 @@ public class EndOfGamePhase implements GamePhaseHandler {
     }
 
     /**
-     * This method handle match scores saving and standings receiving with a separate thread to avoid server block
-     * @param winnerNames needed to send game over messages
-     * @implNote it creates a list of {@link ScoreRecord}, one for each player.
-     * Then a thread starts, and it updates the db, get the top of the standing and the player match score position.
-     * Last, for each client, it sends a {@link shared.message.LeaderboardMessage} to notify the client with the updated standings and it sends a {@link shared.message.GameOverMessage}.
+     * Offloads database persistence and leaderboard retrieval to a dedicated background thread.
+     * <p>
+     * This asynchronous design prevents the main game loop and the networking server from
+     * blocking during potentially slow I/O operations. Upon successful database interaction,
+     * it dispatches the updated global standings and the final game-over payload to all clients.
+     * </p>
+     *
+     * @param winnerNames the list of winning players' names, required to formulate
+     * the broadcasted game-over message.
      */
     private void processDatabaseAsync(List<String> winnerNames) {
         this.matchDAO = new MatchDAO();
@@ -138,10 +147,12 @@ public class EndOfGamePhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote Unlike normal rounds, the final round resolves events
-     * from BOTH the top and bottom rows. One {@code EventResolvedMessage}
-     * is broadcast per resolved card so the client can show what happened.
-     * Sustenance must be resolved last as usual.
+     * Resolves all remaining event cards currently present on both the top and bottom offer rows.
+     * <p>
+     * Deviating from standard round behavior, this ensures that all lingering game-state mutations
+     * (e.g., final sustenance or specific end-game modifiers) are rigorously applied before
+     * calculating the final prestige points. Each resolution broadcasts an update to the clients.
+     * </p>
      */
     private void resolveAllVisibleEvents() {
         List<EventResolutionDto> resolutions = model.getRowsManager().resolveAllEvents(model.getPlayers());
@@ -150,13 +161,22 @@ public class EndOfGamePhase implements GamePhaseHandler {
                 v.sendEventResolved(r);
             }
         }
-        // model.notifyChange();
     }
 
     /**
-     * @implNote  Calculates end-game prestige points for each player. Builds
-     * the {@link EndGameScoringDto} with the per-player breakdown so it can
-     * be shipped together with the winners in the {@code GameOverMessage}.
+     * Aggregates and calculates the final prestige points for every active player.
+     * <p>
+     * The calculation strategy incorporates disparate sources:
+     * <ul>
+     * <li>Character Card collections (Builders, Artists, Inventors).</li>
+     * <li>Intrinsic points printed on acquired Building Cards.</li>
+     * <li>Dynamic modifiers from active {@link EndGameBuildingEffect} instances.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * The results are structured into an {@link EndGameScoringDto} to provide the front-end
+     * with a transparent, per-category breakdown of how the final scores were achieved.
+     * </p>
      */
     private void calculateEndGameScoring() {
         List<PlayerScoringDeltaDto> deltas = new ArrayList<>();
@@ -194,12 +214,16 @@ public class EndOfGamePhase implements GamePhaseHandler {
         }
 
         this.scoring = new EndGameScoringDto(deltas);
-        // model.notifyChange();
     }
 
     /**
-     * @implNote  Determines the winner. In case of prestige points tie, it chooses between who has more food,
-     * and if still tied, it's a shared victory.
+     * Evaluates the final computed scores to identify the match winner(s), applying
+     * domain-specific tie-breaking rules.
+     * <p>
+     * The primary metric is the total accumulated prestige points. In the event of a tie,
+     * the system defers to the total food reserves held by the tied players. If food reserves
+     * are also identical, the victory is officially shared among them.
+     * </p>
      */
     private void determineWinner() {
         List<Player> players = model.getPlayers();
@@ -218,7 +242,6 @@ public class EndOfGamePhase implements GamePhaseHandler {
             return;
         }
 
-        // in case of tie calculates who has more food
         int maxFood = tied.stream()
                 .mapToInt(Player::getFood)
                 .max()
