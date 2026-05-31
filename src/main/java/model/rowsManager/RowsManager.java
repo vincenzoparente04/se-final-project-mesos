@@ -16,8 +16,37 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-//TODO: da capire come viene costruito il rows manager
-public class RowsManager {
+/**
+ * Manages the four card rows that form the central board offer, together with
+ * the underlying decks and event resolution logic.
+ *
+ * <p>The board is organised into two parallel offer tracks:
+ * <ul>
+ *   <li><b>Tribe track</b> — a top row and a bottom row of {@link TribeCard}s
+ *       drawn from a single {@link TribeDeck}.</li>
+ *   <li><b>Building track</b> — a top row and a bottom row of
+ *       {@link BuildingCard}s. Cards progress across three era-specific
+ *       {@link BuildingDeck}s: Era I fills the top row at setup, and each
+ *       era transition promotes the current top row to the bottom and loads
+ *       the next era deck into the top.</li>
+ * </ul>
+ *
+ * <p>Event cards embedded in the tribe rows are resolved through a dedicated
+ * {@link EventResolver}.
+ *
+ * <p>The typical lifecycle of this class across a game is:
+ * <ol>
+ *   <li>{@link #setup(int)} — called once during {@code SetupPhase} to
+ *       initialise decks and populate the starting rows.</li>
+ *   <li>{@link #resolveEvents(List)} — called each round by
+ *       {@code EndOfRoundPhase} to resolve events in the bottom tribe row.</li>
+ *   <li>{@link #endRound(int)} — called each round to rotate tribe rows.</li>
+ *   <li>{@link #changeEra()} — called when the era advances to rotate
+ *       building rows and load the next era deck.</li>
+ *   <li>{@link #resolveAllEvents(List)} — called once by
+ *       {@code EndOfGamePhase} to resolve all remaining events on the board.</li>
+ * </ol>
+ */public class RowsManager {
     private final List<TribeCard> topRowTribe;
     private final List<TribeCard> bottomRowTribe;
     private final List<BuildingCard> topRowBuilding;
@@ -45,35 +74,32 @@ public class RowsManager {
     }
 
     /**
-     * @implNote Initializes all decks and populates the starting rows (Setup, steps 3–6).
+     * Initializes all decks and populates the starting rows (Setup, steps 3–6).
      *
-     * 1. Creates all cards via the factories
-     * 2. Initializes each deck (filtering by playerCount, shuffling, selecting)
-     * 3. Draws the bottom row: playerCount + 1 tribe cards
-     * 4. Draws the top row:    playerCount + 4 tribe cards
-     * 5. Places all Era I building cards face up in the top row
+     * <p>1. Creates all cards via the factories;
+     * <p>2. Initializes each deck (filtering by playerCount, shuffling, selecting);
+     * <p>3. Draws the bottom row: playerCount + 1 tribe cards;
+     * <p>4. Draws the top row:    playerCount + 4 tribe cards;
+     * <p>5. Places all Era I building cards face up in the top row.
      *
      * @param playerCount number of players in the game (2–5)
      */
     public void setup(int playerCount) {
-        // create cards from JSON with factories
         TribeCardFactory.TribeCardCollection tribeCards = TribeCardFactory.createAll();
         List<BuildingCard> allBuildingCards = BuildingCardFactory.createAll();
 
-        // initialize decks --
         tribeDeck.initializeDeck(tribeCards.regularCards(), tribeCards.finalEvents(), playerCount);
         buildingDeckEraI.initializeDeck(allBuildingCards, playerCount);
         buildingDeckEraII.initializeDeck(allBuildingCards, playerCount);
         buildingDeckEraIII.initializeDeck(allBuildingCards, playerCount);
 
-        // populate starting rows --
         bottomRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 1));
         topRowTribe.addAll(tribeDeck.drawMultiple(playerCount + 4));
         topRowBuilding.addAll(buildingDeckEraI.drawAll());
     }
 
     /**
-     * @implNote this method is responsible for resolving the events present in the bottom row at the end of the round, it is called by the EndOfRoundPhaseHandler
+     * This method is responsible for resolving the events present in the bottom row at the end of the round, it is called by the EndOfRoundPhaseHandler
      * at first it collects all the EventCard in the bottom row. The EventResolver sorts events by type and era,
      * then it calls the resolve method of each EventCard, passing the list of players as parameter, so that the EventCard can apply its effect on the players.
      * @param players

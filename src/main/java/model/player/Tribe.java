@@ -10,8 +10,30 @@ import model.enums.InventionIcon;
 import java.util.*;
 import java.util.stream.Stream;
 
+
+/**
+ * Represents a player's tribe, acting as the in-game inventory of every
+ * {@link CharacterCard} and {@link BuildingCard} acquired during the match.
+ *
+ * <p>Character cards are partitioned by type into dedicated collections
+ * (artists, builders, gatherers, hunters, shamans) for fast type-specific
+ * access; inventors are further grouped by {@link InventionIcon} to support
+ * the scoring rule that rewards icon diversity. Building cards are kept in a
+ * single list, while their effects are mirrored into three separate registries
+ * — {@link OnAcquireBuildingEffect}, {@link OnEventBuildingEffect} and
+ * {@link EndGameBuildingEffect} — populated through the {@code registerSelf}
+ * callbacks of each effect at acquisition time.
+ *
+ * <p>The class also centralises all card-counting and end-game scoring
+ * formulas, exposing them as query methods so that {@link Player} and the
+ * end-of-game phase handler can compute prestige contributions without
+ * inspecting the underlying collections directly.
+ *
+ * <p>All collection getters return unmodifiable views to preserve
+ * encapsulation: mutations must go through the dedicated {@code add*} and
+ * {@code register*} methods.
+ */
 public class Tribe {
-    // 6 liste diverse per gestire i vari tipi di character card, più una lista per i building card
     private final List<ArtistCard> artists = new ArrayList<>();
     private final List<BuilderCard> builders = new ArrayList<>();
     private final List<GathererCard> gatherers = new ArrayList<>();
@@ -20,13 +42,10 @@ public class Tribe {
     private final List<ShamanCard> shamans = new ArrayList<>();
 
     private final List<BuildingCard> buildings = new ArrayList<>();
-
-    // 3 liste per effetti dei buildings
     private final List<EndGameBuildingEffect> endGameBuildingEffects = new ArrayList<>();
     private final List<OnAcquireBuildingEffect> onAcquireBuildingEffects = new ArrayList<>();
     private final List<OnEventBuildingEffect> onEventBuildingEffects = new ArrayList<>();
 
-    // metodi per aggiungere le carte alle varie liste
     public void addArtist(ArtistCard card) { artists.add(card); }
     public void addBuilder(BuilderCard card) { builders.add(card); }
     public void addGatherer(GathererCard card) { gatherers.add(card); }
@@ -40,7 +59,7 @@ public class Tribe {
         buildings.add(card);
     }
 
-    // registrazione — chiamati dai registerSelf degli effetti
+    // registration — called by the registerSelf of the effects
     public void registerOnEventEffect(OnEventBuildingEffect effect) {
         onEventBuildingEffects.add(effect);
     }
@@ -51,7 +70,6 @@ public class Tribe {
         endGameBuildingEffects.add(effect);
     }
 
-    // getters
     public List<ArtistCard> getArtists() { return Collections.unmodifiableList(artists); }
     public List<BuilderCard> getBuilders() { return Collections.unmodifiableList(builders); }
     public List<GathererCard> getGatherers() { return Collections.unmodifiableList(gatherers); }
@@ -80,7 +98,7 @@ public class Tribe {
         return Collections.unmodifiableList(all);
     }
 
-    // query methods — tutta la logica di conteggio vive qui
+    // query methods
     public int getHunterCount()         { return hunters.size(); }
     public int getArtistCount()         { return artists.size(); }
     public int getBuilderCount()        { return builders.size(); }
@@ -117,41 +135,29 @@ public class Tribe {
         return getGathererCount() * 3;
     }
 
+
+    // -- methods used for end game calculations --
+
     public int calculateBuildersEndGamePoints() {
         return builders.stream()
                 .mapToInt(BuilderCard::getPrestigePoints)
                 .sum();
     }
 
-    /**
-     * 10 PP for every 2 Artists in your tribe.
-     */
     public int calculateArtistEndGamePoints() {
         return (artists.size() / 2) * 10;
     }
 
-    /**
-     * PP equal to the number of Inventors multiplied by
-     * the number of different Invention icons on the respective cards.
-     */
-    // TODO da controllare
     public int calculateInventorEndGamePoints() {
         return getInventorCount() * getDistinctInventionIcons();
     }
 
-    /**
-     * PP from Buildings: the printed Prestige Points on each card.
-     * EndOfGameEffect bonuses are NOT calculated here — they are
-     * registered in the Player and called separately by EndOfGamePhase.
-     */
-    // TODO da unire le varie liste buildings in una sola
     public int calculateBuildingPrintedPoints() {
         return buildings.stream()
                 .mapToInt(BuildingCard::getEndGamePoints)
                 .sum();
     }
 
-    // capire meglio in base a come verrà usata
     public int countCompleteSets() {
         return Stream.of(
                 artists.size(),
