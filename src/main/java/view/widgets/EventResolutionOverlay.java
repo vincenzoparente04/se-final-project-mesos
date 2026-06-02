@@ -60,6 +60,17 @@ public final class EventResolutionOverlay {
         if (activeBackdrop == null) showNext();
     }
 
+    public static void reset() {
+        if (activeDwell != null) { activeDwell.stop(); activeDwell = null; }
+        if (activeProgress != null) { activeProgress.stop(); activeProgress = null; }
+        if (activeBackdrop != null && activeRoot != null)
+            activeRoot.getChildren().remove(activeBackdrop);
+        queue.clear();
+        activeRoot = null;
+        activeBackdrop = null;
+        onQueueDrained = null;
+    }
+
     // Internal flow
 
     /** Cancels current display and moves to the next queued event (or clears). */
@@ -300,7 +311,7 @@ public final class EventResolutionOverlay {
             case "HUNT" -> "Hunter.png";
             case "CAVE_PAINTINGS"  -> "Artist.png";
             case "SHAMANIC_RITUAL" -> "Shaman.png";
-            case "SUSTENANCE" -> "food.png";
+            case "SUSTENANCE" -> "Gatherer.png";
             case "NASCONDINO" -> "Inventor.png";
             default -> "star.png";
         };
@@ -310,10 +321,10 @@ public final class EventResolutionOverlay {
         if (type == null) return "Event";
         return switch (type) {
             case "HUNT" -> "Hunt";
-            case "CAVE_PAINTINGS"  -> "Cave Paintings";
+            case "CAVE_PAINTINGS" -> "Cave Paintings";
             case "SHAMANIC_RITUAL" -> "Shamanic Ritual";
             case "SUSTENANCE" -> "Sustenance";
-            case "NASCONDINO" -> "Hide and Seek";
+            case "NASCONDINO" -> "Nascondino";
             default -> type;
         };
     }

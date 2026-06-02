@@ -384,10 +384,6 @@ public class BoardGameAreaController implements ViewController {
         };
     }
 
-    private boolean isEndOfRoundPhase(String phase) {
-        return "END_OF_ROUND".equals(phase) || "PRE_END_OF_ROUND".equals(phase);
-    }
-
     // Utilities ---------------------------------------------------------------
 
     private static Map<String, PlayerDto> indexByName(List<PlayerDto> players) {

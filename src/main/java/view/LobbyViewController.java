@@ -81,10 +81,6 @@ public class LobbyViewController implements SceneController {
 
     // FXML handlers
 
-    @FXML
-    private void onRefresh() {
-        router.getVirtualServer().sendListLobbies();
-    }
 
     @FXML
     private void onCreate() {
@@ -102,6 +98,7 @@ public class LobbyViewController implements SceneController {
             return;
         }
         router.getVirtualServer().sendJoinLobby(selected.id());
+
     }
 
     private static final class LobbyCell extends ListCell<LobbyDto> {

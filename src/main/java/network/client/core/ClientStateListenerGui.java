@@ -40,7 +40,7 @@ public class ClientStateListenerGui implements ClientStateListener {
 
     @Override
     public void onWaiting(String rawWaitingMessage) {
-        // TODO: a che serve? cosa fa che non si può fare con onLobbyState?
+        // Not used by the GUI: lobby state updates are handled by onLobbyState.
     }
 
     @Override

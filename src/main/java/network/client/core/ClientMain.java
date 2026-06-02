@@ -8,8 +8,15 @@ import view.SceneRouter;
 
 /**
  * Entry point for the Mesos GUI client.
- *Boots straight into the splash screen — connection parameters are gathered
- *by the nick form, not by command-line arguments.
+ *Boots straight into the splash screen, and the SceneRouter handles all subsequent navigation. The main responsibilities of this class are:
+ * <ul>
+ *   <li>Setting the RMI export hostname to the local LAN IP address to ensure callbacks are reachable by the server.</li>
+ *   <li>Initializing the SceneRouter and ClientStateListenerGui to bridge network events to the UI.</li>
+ *   <li>Providing methods to establish the server connection and register the player's name, which are called by the SceneRouter during the connection flow.</li>
+ *   <li>Cleaning up resources on application shutdown, such as stopping music and closing the virtual server connection.</li>
+ * </ul>
+ * <p>
+ * The actual game logic and UI updates are handled by the SceneRouter and the controllers it manages, while this class serves as the bootstrap and high-level coordinator for the client application.
  */
 public class ClientMain extends Application {
 
@@ -35,16 +42,12 @@ public class ClientMain extends Application {
      * <p>
      * This method is called by JavaFX after the application is launched. It performs the following:
      * <ul>
-     *   <li>Loads the lobby-view.fxml and retrieves the LobbyViewController controller.</li>
-     *   <li>Initializes the lobby controller with the player name.</li>
-     *   <li>Creates a ClientStateListenerGui to wire network callbacks to UI updates.</li>
      *   <li>Creates a LocalGameState to hold the current game state snapshot.</li>
-     *   <li>Displays the lobby scene immediately (non-blocking).</li>
-     *   <li>Spawns a background thread to establish the network connection in parallel.</li>
+     *   <li>Creates the SceneRouter that is the navigation hub of the GUI.</li>
+     *   <li>Creates a ClientStateListenerGui to wire network callbacks to UI updates.</li>
+     *   <li>Asks the router to display the splash scene immediately.</li>
      * </ul>
      * <p>
-     * The UI remains responsive while the connection is being established on the background thread.
-     *
      * @param primaryStage the main Stage provided by JavaFX
      * @throws Exception if the FXML resource cannot be loaded
      */
@@ -54,13 +57,18 @@ public class ClientMain extends Application {
         router = new SceneRouter(primaryStage, localState, this);
 
         listener = new ClientStateListenerGui(router);
-        router.setListener(listener);
 
         primaryStage.setTitle("Mesos");
-        //MusicManager.getInstance().playRandom("music/scaricamusicayoutube");
         router.toSplash();
     }
 
+    /**
+     *  Cleans up resources when the application is closed. This includes:
+     * <ul>
+     *   <li>Stopping any music playback.</li>
+     *   <li>Closing the virtual server connection if it exists.</li>
+     * </ul>
+     */
     @Override
     public void stop() {
         MusicManager.getInstance().stop();
@@ -69,6 +77,12 @@ public class ClientMain extends Application {
         }
     }
 
+    /**
+     * Establishes the connection to the server.
+     * @param transport the protocol to use ("socket" or "rmi")
+     * @param host server hostname or IP
+     * @param port server port
+     */
     public void connect(String transport, String host, int port) {
         ConnectionProtocol protocol = ConnectionProtocol.valueOf(transport.toUpperCase());
 
@@ -81,6 +95,11 @@ public class ClientMain extends Application {
             }
     }
 
+    /**
+     * Attempts to register the player's name with the server. If successful, sets up the client session and starts receiving updates.
+     * If unsuccessful calls router.nickRejected() to show an error message and let the user retry with a different name.
+     * @param name player's name
+     */
     public void setName(String name){
 
         if(virtualServer.tryRegisterName(name, localState, listener)){

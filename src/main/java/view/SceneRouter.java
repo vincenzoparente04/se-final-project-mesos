@@ -8,12 +8,13 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import network.client.core.ClientSession;
-import network.client.core.ClientStateListener;
 import network.client.core.LocalGameState;
 import network.client.core.VirtualServer;
 import shared.dto.LobbyDto;
 import shared.dto.PlayerDto;
 import shared.dto.event.EndGameScoringDto;
+import view.widgets.ErrorToast;
+import view.widgets.EventResolutionOverlay;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,7 +30,6 @@ public class SceneRouter {
     private final ClientMain clientMain;
     private final Stage stage;
     private final LocalGameState localState;
-    private ClientStateListener listener;
 
     private ClientSession session;
 
@@ -58,9 +58,6 @@ public class SceneRouter {
 
     // Bindings set as the user progresses through screens ---------------------------------------------------------------
 
-    //TODO: leave only useful ones
-    public void setListener(ClientStateListener l) { this.listener = l; }
-    public ClientStateListener listener() { return listener; }
     public VirtualServer getVirtualServer() { return session != null ? session.virtualServer() : null; }
     public String playerName() { return session != null ? session.playerName() : null; }
     public LocalGameState localState() { return localState; }
@@ -86,6 +83,7 @@ public class SceneRouter {
     }
 
     public void toLobby() {
+        EventResolutionOverlay.reset();
         load("/org/example/mesos/lobby-view.fxml");
         if (getVirtualServer() != null) getVirtualServer().sendListLobbies();
     }
@@ -141,11 +139,13 @@ public class SceneRouter {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlResource));
             loader.load();
             SceneController ctrl = loader.getController();
-            this.currentViewController = ctrl;
             StackPane root = ctrl.root();
-            this.currentRoot = root;
 
-            currentViewController.bind(this);
+            // bind() before committing: if it throws, currentViewController/currentRoot stay valid
+            ctrl.bind(this);
+
+            this.currentViewController = ctrl;
+            this.currentRoot = root;
 
             Scene scene = stage.getScene();
             if (scene == null) {
@@ -157,9 +157,10 @@ public class SceneRouter {
                 scene.setRoot(root);
             }
             stage.show();
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Failed to load " + fxmlResource + ": " + e.getMessage());
             e.printStackTrace();
+            if (currentRoot != null) ErrorToast.show(currentRoot, "Failed to load screen");
         }
     }
 
