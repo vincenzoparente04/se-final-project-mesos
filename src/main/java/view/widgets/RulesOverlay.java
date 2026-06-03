@@ -1,8 +1,10 @@
 package view.widgets;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -31,24 +33,61 @@ import java.util.List;
 public final class RulesOverlay {
 
     private static final String RULES_PDF_PATH = "/images/mesos_rules_en.pdf";
-    private static final float  RENDER_DPI     = 150f;
-    private static final double PAGE_WIDTH     = 900.0;
+    private static final float RENDER_DPI = 150f;
+    private static final double PAGE_WIDTH = 900.0;
+
+    private static List<Image> cachedPages = null;
+    private static Task<List<Image>> loadingTask = null;
 
     private RulesOverlay() {}
 
     /**
-     * Shows the rules overlay on top of {@code root}.
-     * Must be called on the JavaFX Application Thread.
+     * Loads the pdf from the cache or builds the cache
      */
     public static void show(StackPane root) {
-        List<Image> pages = loadPages();
+        if (cachedPages != null) {
+            displayOverlay(root, cachedPages);
+            return;
+        }
+        if (loadingTask != null) return; // already loading case
 
-        // ── Backdrop ────────────────────────────────────────────────────────
+        // Full-screen loading overlay — same structure as the other overlays
+        StackPane loadingOverlay = new StackPane();
+        loadingOverlay.getStyleClass().add("mesos-card-zoom-backdrop");
+        Label spinnerLabel = new Label("Loading rules…");
+        spinnerLabel.getStyleClass().add("mesos-title-small");
+        loadingOverlay.getChildren().add(spinnerLabel);
+        root.getChildren().add(loadingOverlay);
+
+        loadingTask = new Task<>() {
+            @Override
+            protected List<Image> call() {
+                return loadPages();
+            }
+        };
+        loadingTask.setOnSucceeded(e -> {
+            root.getChildren().remove(loadingOverlay);
+            cachedPages = loadingTask.getValue();
+            loadingTask = null;
+            displayOverlay(root, cachedPages);
+        });
+        Thread t = new Thread(loadingTask);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /**
+     * Renders the rules PDF in a scrollable overlay on top of {@link view.board.BoardViewController}
+     * @param root the root StackPane of the BoardViewController, used as the parent for the overlay
+     * @param pages the PDF pages as JavaFX Images, pre-rendered by PDFBox in the background
+     */
+    private static void displayOverlay(StackPane root, List<Image> pages) {
+        // Backdrop
         StackPane backdrop = new StackPane();
         backdrop.getStyleClass().add("mesos-card-zoom-backdrop");
         backdrop.setUserData("rules-overlay");
 
-        // ── Pages stacked vertically in a ScrollPane ─────────────────────
+        // Pages stacked vertically in a ScrollPane
         VBox pageBox = new VBox(8);
         pageBox.setAlignment(Pos.CENTER);
         pageBox.setPadding(new Insets(12));
@@ -66,12 +105,12 @@ public final class RulesOverlay {
         scroll.setMaxHeight(750);
         scroll.getStyleClass().add("mesos-card-zoom-detail");
 
-        // ── Close button ────────────────────────────────────────────────────
+        // Close button
         Button closeBtn = new Button("✕");
         closeBtn.getStyleClass().add("mesos-music-icon-btn");
         closeBtn.setOnAction(e -> root.getChildren().remove(backdrop));
 
-        // ── Content wrapper ─────────────────────────────────────────────────
+        // Content wrapper
         StackPane content = new StackPane(scroll, closeBtn);
         StackPane.setAlignment(closeBtn, Pos.TOP_RIGHT);
         StackPane.setMargin(closeBtn, new Insets(6, 6, 0, 0));
@@ -86,8 +125,7 @@ public final class RulesOverlay {
         root.getChildren().add(backdrop);
     }
 
-    // ── Private helpers ────────────────────────────────────────────────────
-
+    // helpers
     /** Loads all PDF pages as JavaFX Images via PDFBox. Returns empty list on failure. */
     private static List<Image> loadPages() {
         List<Image> result = new ArrayList<>();

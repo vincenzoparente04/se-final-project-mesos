@@ -168,7 +168,7 @@ public class MusicManager {
                             audioStream.transferTo(fos);
                         }
                         uriList.add(tempFile.toURI().toString());
-                        System.out.println("[MusicManager] Track loaded: " + filename);
+                        //System.out.println("[MusicManager] Track loaded: " + filename);
                     }
                 }
             }

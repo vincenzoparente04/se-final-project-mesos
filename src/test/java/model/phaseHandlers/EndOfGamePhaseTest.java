@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -75,9 +76,8 @@ public class EndOfGamePhaseTest {
         //verify (first the order of operations, then the points calculations, then the winner)
 		var order = inOrder(rowsManager, model);
 		order.verify(rowsManager, times(1)).resolveAllEvents(players);
-		order.verify(model, times(1)).notifyChange();
-		order.verify(model, times(1)).notifyChange();
-		order.verify(model, times(1)).notifyChange();
+		order.verify(model, times(1)).notifyChange();   // push final PP before notifying the game-over
+		order.verify(model, times(1)).notifyEndGame();  // DB disabled in tests → broadcast straight away
 
 		verify(p1, times(1)).addPrestigePoints(3);
 		verify(p1, times(1)).addPrestigePoints(10);
@@ -121,7 +121,8 @@ public class EndOfGamePhaseTest {
 		phase.onEnter();
 
 		verify(rowsManager, times(1)).resolveAllEvents(players);
-		verify(model, times(3)).notifyChange();
+		verify(model, times(1)).notifyChange();
+		verify(model, times(1)).notifyEndGame();
 		assertEquals(1, phase.getWinners().size());
 		assertSame(p2, phase.getWinners().getFirst());
 	}
@@ -173,9 +174,37 @@ public class EndOfGamePhaseTest {
 		phase.onEnter();
 
 		verify(rowsManager, times(1)).resolveAllEvents(players);
-		verify(model, times(3)).notifyChange();
+		verify(model, times(1)).notifyChange();
+		verify(model, times(1)).notifyEndGame();
 		assertEquals(2, phase.getWinners().size());
 		assertSame(p1, phase.getWinners().get(0));
 		assertSame(p2, phase.getWinners().get(1));
+	}
+
+	@Test
+	@DisplayName("forfeit (suspended) game: skips scoring, sets null scoring, and notifies the game-over")
+	void onEnterForfeitNotifiesWithoutScoring() {
+		Player p1 = mock(Player.class);
+		when(p1.getName()).thenReturn("p1");
+
+		EndOfGamePhase forfeit = new EndOfGamePhase(model, List.of(p1), true);
+		forfeit.onEnter();
+
+		verify(rowsManager, never()).resolveAllEvents(anyList());
+		verify(model, times(1)).setWinners(List.of("p1"));
+		verify(model, times(1)).setEndGameScoring(null);
+		verify(model, times(1)).notifyChange();
+		verify(model, times(1)).notifyEndGame();
+	}
+
+	@Test
+	@DisplayName("forfeit with null winners does not throw and notifies an empty winners list")
+	void onEnterForfeitNullWinners() {
+		EndOfGamePhase forfeit = new EndOfGamePhase(model, null, true);
+		forfeit.onEnter();
+
+		verify(model, times(1)).setWinners(List.of());
+		verify(model, times(1)).setEndGameScoring(null);
+		verify(model, times(1)).notifyEndGame();
 	}
 }

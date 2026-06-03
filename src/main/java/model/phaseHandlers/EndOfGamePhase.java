@@ -13,7 +13,9 @@ import shared.dto.event.PlayerScoringDeltaDto;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents the final phase of the game, executing the teardown sequence
@@ -67,44 +69,46 @@ public class EndOfGamePhase implements GamePhaseHandler {
     public void onEnter() {
         if (!suspendedGame) {
             resolveAllVisibleEvents();
-            calculateEndGameScoring();
+            calculateEndGameScoring();   // sets this.scoring and mutates each player's PP
             determineWinner();
 
             List<String> winnerNames = winners.stream().map(Player::getName).toList();
             model.setWinners(winnerNames);
+            model.setEndGameScoring(scoring);
+            model.notifyChange();        // push final PP into client state so the winner screen orders correctly
 
             if (database.DatabaseManager.isEnabled()) {
-                processDatabaseAsync(winnerNames);
+                processDatabaseAsync();   // async: caches the leaderboard on the model, then notifyEndGame()
             } else {
-                for (VirtualView v : model.getViews()) {
-                    v.sendGameOver(winnerNames, scoring);
-                }
+                model.notifyEndGame();
             }
 
-        }else {
-
-            List<String> winnerNames = winners.stream().map(Player::getName).toList();
+        } else {
+            // Forfeit (suspension): no scoring breakdown. winners may be null when
+            // nobody is left connected.
+            List<String> winnerNames = winners == null
+                    ? new ArrayList<>()
+                    : winners.stream().map(Player::getName).toList();
             model.setWinners(winnerNames);
-            scoring = new EndGameScoringDto(new ArrayList<>()); // empty scoring since the game was suspended, so no points are calculated
-
-            for (VirtualView v : model.getViews()) {
-                v.sendGameOver(winnerNames, scoring);
-            }
+            model.setEndGameScoring(null);
+            model.notifyChange();
+            model.notifyEndGame();
         }
     }
 
     /**
-     * Offloads database persistence and leaderboard retrieval to a dedicated background thread.
-     * <p>
-     * This asynchronous design prevents the main game loop and the networking server from
-     * blocking during potentially slow I/O operations. Upon successful database interaction,
-     * it dispatches the updated global standings and the final game-over payload to all clients.
-     * </p>
-     *
-     * @param winnerNames the list of winning players' names, required to formulate
-     * the broadcasted game-over message.
+     * Persists the match scores and computes the standings on a separate thread to avoid
+     * blocking the game thread.
+     * @implNote it creates a list of {@link ScoreRecord}, one for each player, then a thread
+     * saves the match, reads the top-20 standing and each player's rank, and caches the result
+     * as a {@link GameModel.LeaderboardData} snapshot on the model via {@link GameModel#setLeaderboard}.
+     * Finally it calls {@link GameModel#notifyEndGame()} which broadcasts, per view, the
+     * personalised {@link shared.message.LeaderboardMessage} plus the {@link shared.message.GameOverMessage}.
+     * Caching on the model (instead of sending once) lets the end-game payload be re-sent on
+     * every reconnection. On error the leaderboard stays {@code null} and the game-over is sent
+     * without it.
      */
-    private void processDatabaseAsync(List<String> winnerNames) {
+    private void processDatabaseAsync() {
         this.matchDAO = new MatchDAO();
 
         List<ScoreRecord> recordsToSave = new ArrayList<>();
@@ -122,24 +126,18 @@ public class EndOfGamePhase implements GamePhaseHandler {
                 matchDAO.saveMatch(recordsToSave);
                 List<ScoreRecord> topStanding = matchDAO.getTopScores(model.getPlayerCount(), 20);
 
+                Map<String, Integer> rankByName = new HashMap<>();
                 for (Player p : model.getPlayers()) {
-                    int standingPosition = matchDAO.getPlayerRank(model.getPlayerCount(), p.getName(), p.getPrestigePoints());
-
-                    VirtualView playerView = model.getViews().stream()
-                            .filter(v -> v.getPlayerName().equals(p.getName()))
-                            .findFirst()
-                            .orElse(null);
-
-                    if (playerView != null) {
-                        playerView.sendLeaderboard(topStanding, standingPosition, p.getPrestigePoints());
-                    }
+                    rankByName.put(p.getName(),
+                            matchDAO.getPlayerRank(model.getPlayerCount(), p.getName(), p.getPrestigePoints()));
                 }
-                for (VirtualView v : model.getViews()) {
-                    v.sendGameOver(winnerNames, scoring);
-                }
+
+                model.setLeaderboard(new GameModel.LeaderboardData(topStanding, rankByName));
+                model.notifyEndGame();
             } catch (Exception e) {
+                // Leaderboard stays null: the game-over still goes out without it.
+                model.notifyEndGame();
                 for (VirtualView v : model.getViews()) {
-                    v.sendGameOver(winnerNames, scoring);
                     v.sendError("[DB] Error during async operation: " + e.getMessage());
                 }
             }

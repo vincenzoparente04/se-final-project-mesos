@@ -5,14 +5,17 @@ import model.enums.Era;
 import model.enums.GamePhase;
 import model.phaseHandlers.ColorChoosingPhase;
 import model.phaseHandlers.GamePhaseHandler;
+import database.ScoreRecord;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 import network.server.core.VirtualView;
 import shared.command.gameCommand.GameCommand;
 import shared.dto.GameStateDto;
+import shared.dto.event.EndGameScoringDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Authoritative game state. Owns the players, the board, the row manager and
@@ -35,6 +38,24 @@ public class GameModel {
     private List<Player> players = new ArrayList<>();
     private volatile int currentRound = 1;
     private List<String> winners = new ArrayList<>();
+
+    /**
+     * End-game results owned by the model so they survive a reconnection and can
+     * be re-sent on demand (see {@link #notifyEndGame()}).
+     * <p>
+     * {@code endGameScoring} is written only on the game thread (in
+     * {@code EndOfGamePhase.onEnter}, before the DB thread is even started) and is
+     * {@code null} for the suspension/forfeit case. {@code leaderboard} is the only
+     * end-game field written off the game thread (by the async DB thread): it is
+     * published as a single immutable {@link LeaderboardData} snapshot through a
+     * {@code volatile} reference, so a reader sees either {@code null} or the fully
+     * built snapshot — never a partial state.
+     */
+    private EndGameScoringDto endGameScoring;
+    private volatile LeaderboardData leaderboard;
+
+    /** Immutable snapshot of the DB leaderboard, atomically publishable. */
+    public record LeaderboardData(List<ScoreRecord> top, Map<String, Integer> rankByName) {}
 
     private volatile GamePhaseHandler currentPhaseHandler;
     private final List<VirtualView> views;
@@ -91,6 +112,33 @@ public class GameModel {
     }
 
     /**
+     * Broadcast the end-game payload to every registered view: the (personalised)
+     * leaderboard if available, followed by the game-over with the scoring
+     * breakdown. Re-sent on reconnection so a returning player rebuilds the final
+     * screen. Performs no mutation (reads fields + I/O on a defensive copy of the
+     * views), so it is safe to call from the game thread or the async DB thread.
+     */
+    public void notifyEndGame() {
+        LeaderboardData leaderboard = this.leaderboard;
+        for (VirtualView v : new ArrayList<>(views)) {
+            if (leaderboard != null) {
+                int rank = leaderboard.rankByName().getOrDefault(v.getPlayerName(), 0);
+                int points = prestigeByName(v.getPlayerName());
+                v.sendLeaderboard(leaderboard.top(), rank, points);
+            }
+            v.sendGameOver(winners, endGameScoring);
+        }
+    }
+
+    private int prestigeByName(String name) {
+        return players.stream()
+                .filter(p -> p.getName().equals(name))
+                .findFirst()
+                .map(Player::getPrestigePoints)
+                .orElse(0);
+    }
+
+    /**
      * Replace the view associated with {@code playerName}. If no view exists
      * for that player the new view is simply appended.
      *
@@ -142,6 +190,27 @@ public class GameModel {
     /** @apiNote @CalledOnGameThreadOnly */
     public void setWinners(List<String> winnerNames) {
         this.winners = winnerNames;
+    }
+
+    /** @apiNote @CalledOnGameThreadOnly */
+    public void setEndGameScoring(EndGameScoringDto scoring) {
+        this.endGameScoring = scoring;
+    }
+
+    public EndGameScoringDto getEndGameScoring() {
+        return endGameScoring;
+    }
+
+    /**
+     * Publish the DB leaderboard snapshot. May be called from the async DB thread;
+     * the {@code volatile} field guarantees a safe hand-off to the game thread.
+     */
+    public void setLeaderboard(LeaderboardData data) {
+        this.leaderboard = data;
+    }
+
+    public LeaderboardData getLeaderboard() {
+        return leaderboard;
     }
 
     // getters –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––

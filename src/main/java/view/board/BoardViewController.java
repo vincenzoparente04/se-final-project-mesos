@@ -30,7 +30,6 @@ public class BoardViewController implements SceneController {
     @FXML private BoardSelfPanelController selfPanelController;
 
     private SceneRouter router;
-    private boolean winnerShown = false;
 
     @Override
     public void bind(SceneRouter router) {
@@ -38,11 +37,8 @@ public class BoardViewController implements SceneController {
         gameAreaController.init(router, rootPane, selfPanelController);
         selfPanelController.init(router, rootPane);
 
-        // Insert MusicPlayerWidget before endTurnButton so order is: 📖 → ♪ → End turn
         MusicPlayerWidget musicWidget = new MusicPlayerWidget();
-        // minHeight=36 forces the widget to overflow the topBar's 18px content area
-        // (9px top/bottom padding) so its clickable area spans the full bar height,
-        // matching the behaviour of rulesButton (minHeight="36" in FXML).
+
         musicWidget.setMinHeight(36);
         musicWidget.setMaxHeight(Double.MAX_VALUE);
         int endTurnIdx = topBar.getChildren().indexOf(endTurnButton);
@@ -65,11 +61,8 @@ public class BoardViewController implements SceneController {
         updateStatusBar(state, phase, isMyTurn);
         gameAreaController.update(state);
         selfPanelController.update(state);
-
-        if (state.isGameOver() && !winnerShown) {
-            winnerShown = true;
-            router.toWinner(state.getPlayers(), state.getWinners());
-        }
+        // End-of-game navigation is driven exclusively by onGameOver (the authoritative
+        // payload with the scoring breakdown), so it is no longer triggered from here.
     }
 
     // ── Status bar ─────────────────────────────────────────────────────────
@@ -78,7 +71,7 @@ public class BoardViewController implements SceneController {
         phaseLabel.setText(formatPhase(phase));
         roundLabel.setText("Round " + state.getCurrentRound());
 
-        boolean showEnd = "ACTION".equals(phase) && isMyTurn;
+        boolean showEnd = ("ACTION".equals(phase) || "PRE_END_OF_ROUND".equals(phase)) && isMyTurn;
         endTurnButton.setOpacity(showEnd ? 1.0 : 0.0);
         endTurnButton.setMouseTransparent(!showEnd);
     }

@@ -61,7 +61,7 @@ public class ShamanicRitualEventCard extends EventCard {
 
         // 5. rimuovi punti al minimo (se diverso dal massimo)
         players.stream()
-                .filter(p -> iconCounts.get(p) == min && min != max)
+                .filter(p -> iconCounts.get(p) == min)
                 .filter(p -> !p.hasShamanicImmunity())
                 .forEach(p -> p.removePrestigePoints(loss));
 

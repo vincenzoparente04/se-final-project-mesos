@@ -28,6 +28,11 @@ public class ClientStateListenerGui implements ClientStateListener {
     @Override
     public void onGameStateUpdated(LocalGameState state) {
         Platform.runLater(() -> {
+            // RMI reconnect
+            if (router.applyPendingReconnectIfNeeded()) {
+                router.currentController().update(state);
+                return;
+            }
             ViewController currCntrl = router.currentController();
             currCntrl.update(state);
         });
@@ -35,7 +40,7 @@ public class ClientStateListenerGui implements ClientStateListener {
 
     @Override
     public void onWaiting(String rawWaitingMessage) {
-        // TODO: a che serve? cosa fa che non si può fare con onLobbyState?
+        // Not used by the GUI: lobby state updates are handled by onLobbyState.
     }
 
     @Override
@@ -80,15 +85,14 @@ public class ClientStateListenerGui implements ClientStateListener {
 
             Runnable navigate = () -> router.toWinner(players, winners, scoring);
 
-            // Wait for any queued event overlays (the 2 end-of-game events) to finish
-            // before navigating to the winner screen.
+            // Wait for any queued event overlays (the 2 end-of-game events) to finish before navigating to the winner screen.
             EventResolutionOverlay.setOnQueueDrained(navigate);
         });
     }
 
     @Override
     public void onLeaderboardUpdate(List<ScoreRecord> leaderboard, int rankPosition, int points) {
-        //TODO: DAJE ROCCO FAMOLO BELLO ME RACCOMANNO
+        Platform.runLater(() -> router.offerLeaderboard(leaderboard, rankPosition, points));
     }
 
     @Override

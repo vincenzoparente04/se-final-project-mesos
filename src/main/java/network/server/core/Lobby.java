@@ -31,6 +31,7 @@ public class Lobby {
 
     public void addPlayer(PlayerEntry entry) {
         players.add(entry);
+        broadcastState();
     }
 
     public void removePlayer(PlayerEntry entry) {

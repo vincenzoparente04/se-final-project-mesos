@@ -16,6 +16,7 @@ import shared.dto.PlayerDto;
 import view.PlayerViewController;
 import view.SceneRouter;
 import view.ViewController;
+import view.widgets.CardFormatter;
 import view.widgets.CardView;
 import view.widgets.CardZoomOverlay;
 import view.widgets.ImageCache;
@@ -35,7 +36,7 @@ public class BoardSelfPanelController implements ViewController {
     private static final double SELF_CARD_W = 90;
     private static final double SELF_CARD_H = 130;
 
-    @FXML private HBox     rootBar;
+    @FXML private HBox rootBar;
     @FXML private StackPane selfPlayerSlot;
     @FXML private HBox selfTribeSlot;
     @FXML private HBox selfBuildingsSlot;
@@ -56,14 +57,18 @@ public class BoardSelfPanelController implements ViewController {
 
     /** Appends a spacer + SummaryCard thumbnail anchored to the far right of the self panel. */
     private void attachSummaryCard() {
-        Image img = ImageCache.get("/images/SummaryCard.png");
-        if (img == null) return;
+        Image summary = ImageCache.get("/images/FrontCards/FrontCard22.png");
+        Image sumBack = ImageCache.get("/images/BackCards/ExplanationCard.png");
+        if (summary == null) return;
 
-        ImageView thumb = new ImageView(img);
+        // Build the image array
+        Image[] slides =new Image[]{summary, sumBack};
+
+        ImageView thumb = new ImageView(summary);
         thumb.setFitHeight(SELF_CARD_H);
         thumb.setPreserveRatio(true);
         thumb.setStyle("-fx-cursor: hand;");
-        thumb.setOnMouseClicked(e -> SummaryCardOverlay.show(overlayRoot, img));
+        thumb.setOnMouseClicked(e -> SummaryCardOverlay.show(overlayRoot, slides));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -72,9 +77,7 @@ public class BoardSelfPanelController implements ViewController {
 
     @Override
     public void update(LocalGameState state) {
-        String phase = state.getPhase();
         String me = router.playerName();
-        boolean isMyTurn = me != null && me.equals(state.getCurrentPlayerName());
 
         updateSelfPanel(state.getPlayers(), me, state.getCurrentPlayerName());
     }
@@ -135,7 +138,7 @@ public class BoardSelfPanelController implements ViewController {
         List<VBox> out = new java.util.ArrayList<>();
         for (Map.Entry<String, List<CardDto>> e : grouped.entrySet()) {
             if (e.getValue().isEmpty()) continue;
-            out.add(buildSingleGroup(BoardGameAreaController.prettyType(e.getKey()), e.getValue()));
+            out.add(buildSingleGroup(CardFormatter.prettyType(e.getKey()), e.getValue()));
         }
         return out;
     }
