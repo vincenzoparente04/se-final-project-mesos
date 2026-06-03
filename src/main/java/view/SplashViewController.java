@@ -12,7 +12,6 @@ import javafx.scene.layout.StackPane;
 public class SplashViewController implements SceneController {
 
     @FXML private StackPane rootPane;
-    @FXML private Label pressAnyKeyLabel; //TODO: remove?
 
     private SceneRouter router;
 

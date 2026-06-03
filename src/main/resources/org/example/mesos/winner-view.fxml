@@ -32,7 +32,9 @@
 
         <VBox fx:id="rankingBox" spacing="8" alignment="CENTER"/>
 
-        <HBox alignment="CENTER">
+        <HBox alignment="CENTER" spacing="16">
+            <Button fx:id="leaderboardBtn" text="Leaderboard" onAction="#onLeaderboard"
+                    styleClass="mesos-button-secondary" disable="true"/>
             <Button text="Back to lobby" onAction="#onBack" styleClass="mesos-button"/>
         </HBox>
     </VBox>

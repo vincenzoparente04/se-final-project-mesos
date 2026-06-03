@@ -15,16 +15,6 @@ import java.io.InputStream;
  */
 public class CardView extends StackPane {
 
-    /* TODO: ELIMINATE DEAD CODE
-    public static final double DEFAULT_WIDTH  = 90;
-    public static final double DEFAULT_HEIGHT = 130;
-
-    public CardView(CardDto card, boolean faceUp) {
-        this(card, faceUp, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-    }
-     */
-
-
     public CardView(CardDto card, boolean faceUp, double width, double height) {
         String filename = faceUp ? card.ImagePath : card.backImagePath;
         String dir = faceUp ? "FrontCards" : "BackCards";
@@ -37,7 +27,11 @@ public class CardView extends StackPane {
             iv.setFitHeight(height);
             iv.setPreserveRatio(true);
 
-            Rectangle clip = new Rectangle(width, height);
+            double scale = Math.min(width / img.getWidth(), height / img.getHeight());
+            double clipW = img.getWidth()  * scale;
+            double clipH = img.getHeight() * scale;
+
+            Rectangle clip = new Rectangle(clipW, clipH);
             clip.setArcWidth(36);
             clip.setArcHeight(36);
             iv.setClip(clip);
