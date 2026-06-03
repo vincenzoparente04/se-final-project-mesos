@@ -20,15 +20,6 @@ public class OfferTileView extends StackPane {
 
     public static final double TILE_HEIGHT = 110;
 
-    //TODO: Remove dead code
-    /*
-    public OfferTileView(OfferTileDto tile,
-                         Map<String, PlayerDto> playersByName,
-                         boolean clickable,
-                         Consumer<Character> onClick) {
-        this(tile, playersByName, clickable, onClick, TILE_HEIGHT);
-    }*/
-
     public OfferTileView(OfferTileDto tile,
                          Map<String, PlayerDto> playersByName,
                          boolean clickable,
@@ -73,8 +64,7 @@ public class OfferTileView extends StackPane {
         setMinSize(calculatedWidth, tileHeight);
         setPrefSize(calculatedWidth, tileHeight);
         setMaxSize(calculatedWidth, tileHeight);
-        // Restrict hit-testing to the tile's rectangular bounds so that any totem
-        // rendered with a negative top-margin cannot expand the pick region upward.
+
         setPickOnBounds(true);
 
         if (clickable && tile.occupantName == null) {

@@ -226,11 +226,11 @@ public class GameStateDtoBuilder {
                 case "on_hunt_bonus"              -> "Hunt:+1f+1PP";
                 case "on_cave_paintings_bonus"    -> "Cave:+1f/artist";
                 case "end_game_count_hunters"     -> "End:+3PP/hunter";
-                case "end_game_count_shamans"     -> "End:+3PP/shaman";
-                case "end_game_count_artists"     -> "End:+3PP/artist";
-                case "end_game_count_inventors"   -> "End:+3PP/inventor";
-                case "end_game_count_builders"    -> "End:+3PP/builder";
-                case "end_game_count_gatherers"   -> "End:+3PP/gatherer";
+                case "end_game_count_shamans"     -> "End:+4PP/shaman";
+                case "end_game_count_artists"     -> "End:+4PP/artist";
+                case "end_game_count_inventors"   -> "End:+2PP/inventor";
+                case "end_game_count_builders"    -> "End:+4PP/builder";
+                case "end_game_count_gatherers"   -> "End:+4PP/gatherer";
                 case "end_game_count_sets"        -> "End:+6PP/full set";
                 case "end_game_double_builders"   -> "End:x2 builder PP";
                 case "none"                       -> "";

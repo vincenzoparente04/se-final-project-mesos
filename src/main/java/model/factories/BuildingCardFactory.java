@@ -73,11 +73,11 @@ public class BuildingCardFactory {
             case "on_hunt_bonus" -> new HunterBonusForHuntEvent(1, 1);
             case "on_cave_paintings_bonus" -> new ArtistBonusForCavePaintings(1);
             case "end_game_count_hunters" -> new EndGameBuildingEffect(3, Tribe::getHunterCount);
-            case "end_game_count_shamans" -> new EndGameBuildingEffect(3, Tribe::getShamanCount);
-            case "end_game_count_artists" -> new EndGameBuildingEffect(3, Tribe::getArtistCount);
-            case "end_game_count_inventors" -> new EndGameBuildingEffect(3, Tribe::getInventorCount);
-            case "end_game_count_builders" -> new EndGameBuildingEffect(3, Tribe::getBuilderCount);
-            case "end_game_count_gatherers" -> new EndGameBuildingEffect(3, Tribe::getGathererCount);
+            case "end_game_count_shamans" -> new EndGameBuildingEffect(4, Tribe::getShamanCount);
+            case "end_game_count_artists" -> new EndGameBuildingEffect(4, Tribe::getArtistCount);
+            case "end_game_count_inventors" -> new EndGameBuildingEffect(2, Tribe::getInventorCount);
+            case "end_game_count_builders" -> new EndGameBuildingEffect(4, Tribe::getBuilderCount);
+            case "end_game_count_gatherers" -> new EndGameBuildingEffect(4, Tribe::getGathererCount);
             case "end_game_count_sets" -> new EndGameBuildingEffect(6, Tribe::countCompleteSets);
             case "end_game_double_builders" -> new EndGameBuildingEffect(1, Tribe::calculateBuildersEndGamePoints);
             case "none" -> new OnPickingEffects(p -> {});

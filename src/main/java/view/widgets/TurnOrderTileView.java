@@ -22,14 +22,7 @@ import java.util.Map;
  */
 public class TurnOrderTileView extends StackPane {
 
-    //TILE_WIDTH???
     public static final double TILE_HEIGHT = 110;
-    public static final double TILE_WIDTH  = TILE_HEIGHT * (300.0 / 463.0);
-
-    public TurnOrderTileView(List<TurnOrderSlotDto> slots,
-                             Map<String, PlayerDto> playersByName) {
-        this(slots, playersByName, TILE_HEIGHT);
-    }
 
     public TurnOrderTileView(List<TurnOrderSlotDto> slots,
                              Map<String, PlayerDto> playersByName,
@@ -48,28 +41,6 @@ public class TurnOrderTileView extends StackPane {
             r.setStroke(Color.web("#a04000"));
             getChildren().add(r);
         }
-
-        /*TODO: REMOVE DEAD CODE
-        VBox totems = new VBox(-10); // Negative spacing pushes them slightly together if needed, or adjust to match circles
-        totems.setAlignment(Pos.TOP_CENTER);
-        // Add padding to push the VBox down exactly to where the first circle starts on the image.
-        // We will adjust the top padding (e.g. 15% of the total height)
-        totems.setPadding(new javafx.geometry.Insets(TILE_HEIGHT * 0.15, 0, 0, 0)); 
-        
-        for (TurnOrderSlotDto slot : slots) {
-            StackPane cell = new StackPane();
-            // Match the height to the distance between circles on the card image
-            cell.setPrefSize(TILE_WIDTH, TILE_HEIGHT / slots.size() * 0.7); 
-            if (slot.occupantName != null) {
-                PlayerDto p = playersByName.get(slot.occupantName);
-                String color = p != null ? p.color : "WHITE";
-                cell.getChildren().add(new TotemView(color, 20)); // Size the totem to fit the circle
-            }
-            totems.getChildren().add(cell);
-        }
-        getChildren().add(totems);
-
-         */
 
         Pane totemLayer = new Pane();
         totemLayer.setPrefSize(tileWidth, tileHeight);
@@ -107,15 +78,12 @@ public class TurnOrderTileView extends StackPane {
             totemLayer.getChildren().add(cell);
         }
 
-        // Totems are decorative — they must not absorb mouse events
         totemLayer.setMouseTransparent(true);
         getChildren().add(totemLayer);
 
         setMinSize(tileWidth, tileHeight);
         setPrefSize(tileWidth, tileHeight);
         setMaxSize(tileWidth, tileHeight);
-        // Restrict hit-testing to the tile's own rectangular bounds so that totem
-        // cells placed at negative layoutY cannot expand the pick region upward.
         setPickOnBounds(true);
     }
 }

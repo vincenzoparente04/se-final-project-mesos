@@ -39,8 +39,6 @@
 
         <bottom>
             <HBox alignment="CENTER" spacing="16" style="-fx-padding: 22;">
-                <Button text="Refresh" onAction="#onRefresh"
-                        styleClass="mesos-button-secondary"/>
                 <Button text="Create new lobby" onAction="#onCreate"
                         styleClass="mesos-button"/>
             </HBox>

@@ -1,18 +1,20 @@
 package view;
 
 import network.client.core.ClientMain;
+import database.ScoreRecord;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import network.client.core.ClientSession;
-import network.client.core.ClientStateListener;
 import network.client.core.LocalGameState;
 import network.client.core.VirtualServer;
 import shared.dto.LobbyDto;
 import shared.dto.PlayerDto;
 import shared.dto.event.EndGameScoringDto;
+import view.widgets.ErrorToast;
+import view.widgets.EventResolutionOverlay;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,7 +30,6 @@ public class SceneRouter {
     private final ClientMain clientMain;
     private final Stage stage;
     private final LocalGameState localState;
-    private ClientStateListener listener;
 
     private ClientSession session;
 
@@ -38,6 +39,17 @@ public class SceneRouter {
     private NickViewController nickViewController;
     private SceneController currentViewController;
 
+    /**
+     * Set when setupSession() cannot determine reconnect status synchronously (RMI case).
+     * The first onGameStateUpdated() will clear it and navigate to the correct screen.
+     */
+    private boolean pendingGameReconnect = false;
+
+    // Leaderboard data may arrive before or after the winner screen is shown
+    private List<ScoreRecord> pendingLeaderboard;
+    private int pendingLeaderboardRank;
+    private int pendingLeaderboardPoints;
+
     public SceneRouter(Stage stage, LocalGameState localState, ClientMain main) {
         this.clientMain = main;
         this.stage = stage;
@@ -46,9 +58,6 @@ public class SceneRouter {
 
     // Bindings set as the user progresses through screens ---------------------------------------------------------------
 
-    //TODO: leave only useful ones
-    public void setListener(ClientStateListener l) { this.listener = l; }
-    public ClientStateListener listener() { return listener; }
     public VirtualServer getVirtualServer() { return session != null ? session.virtualServer() : null; }
     public String playerName() { return session != null ? session.playerName() : null; }
     public LocalGameState localState() { return localState; }
@@ -59,43 +68,68 @@ public class SceneRouter {
     // Navigation---------------------------------------------------------------
 
     public void toSplash() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/splash-view.fxml");
     }
 
     public void toNetworkSetup() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/network-setup-view.fxml");
     }
 
     public void toNick() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/nick-view.fxml");
     }
 
     public void toLobby() {
+        EventResolutionOverlay.reset();
         load("/org/example/mesos/lobby-view.fxml");
         if (getVirtualServer() != null) getVirtualServer().sendListLobbies();
     }
 
     public void toWaiting(LobbyDto lobby) {
+        pendingGameReconnect = false;
         load("/org/example/mesos/waiting-view.fxml");
         currentViewController.setLobby(lobby);
     }
 
     public void toTotemPick() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/totem-pick-view.fxml");
     }
 
     public void toBoard() {
+        pendingGameReconnect = false;
         load("/org/example/mesos/board/board-view.fxml");
     }
 
     public void toWinner(List<PlayerDto> players, List<String> winners) {
         load("/org/example/mesos/winner-view.fxml");
         currentViewController.showWinners(players, winners);
+        applyPendingLeaderboardIfWinner();
     }
 
     public void toWinner(List<PlayerDto> players, List<String> winners, EndGameScoringDto scoring) {
         load("/org/example/mesos/winner-view.fxml");
         currentViewController.showWinners(players, winners, scoring);
+        applyPendingLeaderboardIfWinner();
+    }
+
+    /** Called by the network listener when DB leaderboard data arrives (async). */
+    public void offerLeaderboard(List<ScoreRecord> lb, int rank, int pts) {
+        pendingLeaderboard = lb;
+        pendingLeaderboardRank = rank;
+        pendingLeaderboardPoints = pts;
+        applyPendingLeaderboardIfWinner();
+    }
+
+    private void applyPendingLeaderboardIfWinner() {
+        if (pendingLeaderboard == null) return;
+        if (currentViewController instanceof WinnerViewController w) {
+            w.applyLeaderboard(pendingLeaderboard, pendingLeaderboardRank, pendingLeaderboardPoints);
+            pendingLeaderboard = null;
+        }
     }
 
     // FXML loading ---------------------------------------------------------------
@@ -105,11 +139,13 @@ public class SceneRouter {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlResource));
             loader.load();
             SceneController ctrl = loader.getController();
-            this.currentViewController = ctrl;
             StackPane root = ctrl.root();
-            this.currentRoot = root;
 
-            currentViewController.bind(this);
+            // bind() before committing: if it throws, currentViewController/currentRoot stay valid
+            ctrl.bind(this);
+
+            this.currentViewController = ctrl;
+            this.currentRoot = root;
 
             Scene scene = stage.getScene();
             if (scene == null) {
@@ -121,9 +157,10 @@ public class SceneRouter {
                 scene.setRoot(root);
             }
             stage.show();
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Failed to load " + fxmlResource + ": " + e.getMessage());
             e.printStackTrace();
+            if (currentRoot != null) ErrorToast.show(currentRoot, "Failed to load screen");
         }
     }
 
@@ -146,19 +183,38 @@ public class SceneRouter {
     public void setupSession(String name, VirtualServer vs) {
         this.session = new ClientSession(name, vs);
         Platform.runLater(() -> {
-            //Socket Reconnection Case : navigate to the right screen
-            //if localState updated we need to reconnect
             if (localState.snapshot() != null) {
-                String phase = localState.getPhase();
-                if (phase != null && phase.contains("COLOR_CHOOSING_PHASE")) {
-                    toTotemPick();
-                } else {
-                    toBoard();
-                }
+                // Socket reconnect: state was populated synchronously during handshake.
+                navigateByPhase();
             } else {
+                // Fresh connection or RMI reconnect: go to lobby for now.
+                // If a game state arrives immediately after (RMI reconnect), the
+                // pendingGameReconnect flag will redirect us to the correct screen.
                 toLobby();
+                pendingGameReconnect = true;
             }
         });
+    }
+
+    /**
+     * Called by onGameStateUpdated() to handle the deferred RMI reconnect routing.
+     * Returns true if it navigated (caller should skip the normal update() call and
+     * instead update the new controller).
+     */
+    public boolean applyPendingReconnectIfNeeded() {
+        if (!pendingGameReconnect) return false;
+        pendingGameReconnect = false;
+        navigateByPhase();
+        return true;
+    }
+
+    private void navigateByPhase() {
+        String phase = localState.getPhase();
+        if (phase != null && phase.contains("COLOR_CHOOSING_PHASE")) {
+            toTotemPick();
+        } else {
+            toBoard();
+        }
     }
 
     public void connectionErrorHandling(String message) {
