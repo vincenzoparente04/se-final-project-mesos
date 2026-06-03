@@ -5,32 +5,35 @@ import model.cards.Card;
 import model.player.Player;
 import model.rowsManager.RowsManager;
 
+/**
+ * Corresponds to the "Take Food" action on offer tiles. When a player steps on an offer tile with this action,
+ * they immediately receive a specified amount of food.
+ */
 public class TakeFoodAction implements OfferTileAction {
     private final int foodAmount;
-    private boolean finished; // Stato dell'esecuzione
+    private boolean finished;
 
     public TakeFoodAction(int foodAmount) {
-        this.foodAmount = foodAmount; // Nel caso di Mesos sarà 3
+        this.foodAmount = foodAmount;
     }
 
     @Override
     public void onEnterAction(Player player, GameModel model) {
-        // Dà immediatamente il cibo al giocatore
+        // Immediately gives food to the player
         player.addFood(foodAmount);
 
-        // Imposta l'azione come finita istantaneamente
+        // In this case the action is already finished because it only gives food
         this.finished = true;
     }
 
     @Override
     public boolean canDraw(Card card,  RowsManager rowsManager) {
-        return false; // Questa tessera non fa MAI pescare carte
+        return false;
     }
 
     @Override
     public void performDraw(Card card, RowsManager rowsManager) {
-        // cancellare tanto non dovrebbe mai essere chiamato
-        throw new UnsupportedOperationException("Questa azione non prevede pescate.");
+        // This action does not allow drawing cards.
     }
 
     @Override

@@ -12,6 +12,32 @@ import shared.command.gameCommand.EndTurnCommand;
 
 import java.util.Optional;
 
+/**
+ * Represents a specialized transitional phase preceding the end of a round,
+ * dedicated exclusively to resolving the "extra draw" bonus mechanic.
+ *
+ * <p>This handler dynamically evaluates the game state to determine if any player
+ * is eligible for a bonus action. Its lifecycle and responsibilities include:
+ * <ol>
+ * <li><b>Evaluation:</b> Upon entry, it identifies if a player has the extra draw
+ * capability and assesses the board for valid targets using a {@link MoveChecker}.
+ * If no eligible player exists, or if no valid moves remain, it short-circuits
+ * and immediately transitions to the {@link EndOfRoundPhase}.</li>
+ * <li><b>Execution:</b> If active, it awaits a {@link DrawCardCommand} or an
+ * {@link EndTurnCommand}. It enforces strict domain rules, specifically restricting
+ * the bonus draw exclusively to the top row of the board.</li>
+ * <li><b>Resolution:</b> After the player either successfully draws a valid card
+ * (via {@link CardDrawer}), voluntarily passes, or is forcibly skipped due to a
+ * network disconnection, the state machine guarantees a safe transition to the
+ * next phase.</li>
+ * </ol>
+ * </p>
+ *
+ * @see GamePhaseHandler
+ * @see model.board.OfferTileAction.DrawCardsAction
+ * @see model.phaseHandlers.MoveChecker
+ * @see model.phaseHandlers.CardDrawer
+ */
 public class PreEndOfRoundPhase implements GamePhaseHandler {
 
     private final GameModel model;
@@ -22,7 +48,14 @@ public class PreEndOfRoundPhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote Find the player who can have an extra draw.
+     * Initializes the phase by checking for extra draw eligibility and validating
+     * the board state.
+     * <p>
+     * <b>Short-Circuit Optimization:</b> It constructs a temporary {@link DrawCardsAction}
+     * to perform a dry-run against the current board using a {@code MoveChecker}.
+     * If the evaluation yields no legal moves, the phase bypasses all client interaction
+     * and synchronously delegates control to the {@code EndOfRoundPhase}.
+     * </p>
      */
     @Override
     public void onEnter() {
@@ -31,7 +64,6 @@ public class PreEndOfRoundPhase implements GamePhaseHandler {
                 .findFirst()
                 .orElse(null);
 
-        // Checking if there is any legal move for the player with the extra draw action. If not, we skip directly to the EndOfRoundPhase.
         // offer tile action created to represent the extra draw action
         OfferTileAction extraDrawAction = new DrawCardsAction(1, 0);
         RowsManager rowsManager = model.getRowsManager();
@@ -46,7 +78,18 @@ public class PreEndOfRoundPhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote Draw a card from the top row.
+     * Intercepts and validates a targeted card draw request during the bonus phase.
+     * <p>
+     * This method strictly enforces the phase-specific domain rule that bonus draws
+     * must originate from the top row of the board. Upon successful validation, it
+     * delegates the actual state mutation to a {@link CardDrawer} and subsequently
+     * advances the game state.
+     * </p>
+     *
+     * @param cmd the payload containing the ID of the requested card.
+     * @throws IllegalStateException if the active player is null, the card does not exist,
+     * or the requested card is not located in the top row.
+     * @throws Exception if an unexpected error occurs during the drawing transaction.
      */
     @Override
     public void visit(DrawCardCommand cmd) throws Exception {
@@ -70,13 +113,18 @@ public class PreEndOfRoundPhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote End the turn without drawing a card, if the player decides not to use the extra draw.
-     * This will transition directly to the EndOfRoundPhase.
+     * Processes a voluntary forfeiture of the bonus draw.
+     * <p>
+     * If the active player chooses not to utilize their extra action, this method
+     * intercepts the end-turn command and smoothly advances the state machine directly
+     * to the {@link EndOfRoundPhase}.
+     * </p>
+     *
+     * @param cmd the command indicating the player's intent to pass.
      */
     @Override
     public void visit(EndTurnCommand cmd) throws Exception {
         if (activePlayer != null) {
-            // notificare che il player ha deciso di non pescare?
             model.setPhase(new EndOfRoundPhase(model));
         }
     }

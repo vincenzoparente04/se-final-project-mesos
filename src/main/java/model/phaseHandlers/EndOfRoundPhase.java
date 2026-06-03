@@ -42,7 +42,7 @@ public class EndOfRoundPhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote This method resolves all events on the board, broadcasts one
+     * This method resolves all events on the board, broadcasts one
      * {@code EventResolvedMessage} per resolved event card (so the client can
      * show an explanatory screen), checks for era changes, and transitions
      * to the next phase (either PlacementPhase or EndOfGamePhase) based on
@@ -57,7 +57,6 @@ public class EndOfRoundPhase implements GamePhaseHandler {
                 v.sendEventResolved(r);
             }
         }
-        // model.notifyChange();
 
         model.incrementRound();
 

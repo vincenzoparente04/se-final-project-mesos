@@ -3,7 +3,26 @@ package model.player;
 import model.enums.TotemColor;
 import model.enums.TotemLocation;
 
-
+/**
+ * Represents a player participating in the game, encapsulating their persistent
+ * identity, resources, and state.
+ *
+ * <p>Each player owns:
+ * <ul>
+ *   <li>A {@code name} and {@link Tribe}, established at construction time.</li>
+ *   <li>Mutable resources — {@code food} and {@code prestigePoints} — manipulated
+ *       through dedicated add/remove operations that enforce the game's economy rules.</li>
+ *   <li>A {@link TotemLocation} tracking the current position of the player's totem
+ *       on the board, and a {@link TotemColor} assigned during the
+ *       {@link model.phaseHandlers.ColorChoosingPhase}.</li>
+ *   <li>A set of boolean flags ({@code shamanicImmunity},
+ *       {@code shamanicBonusStars}, {@code shamanicDoublePrestige},
+ *       {@code extraFoodOnTotemReturn}, {@code extraDraw}) that grant
+ *       persistent or round-scoped bonuses awarded by specific buildings.</li>
+ *   <li>A connection flag ({@code online}) used by the phase handlers to
+ *       skip disconnected players while preserving the turn order.</li>
+ * </ul>
+ */
 public class Player {
     private final String name;
     private final Tribe tribe;
@@ -29,24 +48,39 @@ public class Player {
         this.online = true;
     }
 
-    // food handlers
     public int getFood(){ return food; }
     public void addFood(int amount){ food += amount; }
+    public int getPrestigePoints() { return prestigePoints; }
+    public void addPrestigePoints(int amount) { prestigePoints += amount; }
+    public void removePrestigePoints(int amount) { prestigePoints -= amount; }
+
     /**
-     * Removes food from the player, clamped at 0. Use when no prestige penalty applies.
+     * Removes the given amount of food from the player, clamping the result at zero
+     * so that the food stock can never become negative.
+     *
+     * <p>This variant is used when the rules prescribe no further penalty for
+     * insufficient food: any unpaid portion of the cost is simply discarded.
+     *
+     * @param amount the quantity of food to remove;
      */
     public void removeFood(int amount) {
         food = Math.max(0, food - amount);
     }
 
-
-    // prestige points handlers
-    public int getPrestigePoints() { return prestigePoints; }
-    public void addPrestigePoints(int amount) { prestigePoints += amount; }
-    public void removePrestigePoints(int amount) { prestigePoints -= amount; }
     /**
-     * Removes food from the player. If food is insufficient, the deficit is converted
-     * to prestige point loss using the given multiplier.
+     * Removes the given amount of food from the player and, if the stock is
+     * insufficient, converts the uncovered deficit into a loss of prestige points
+     * weighted by the provided multiplier.
+     *
+     * <p>Unlike {@link #removeFood(int)}, which silently absorbs any shortfall,
+     * this method enforces a penalty: each missing unit of food costs the player
+     * {@code prestigeMultiplier} prestige points. It is intended for game effects
+     * that explicitly mandate a prestige cost when food cannot fully cover the
+     * required payment.
+     *
+     * @param amount             the quantity of food the player is required to pay.
+     * @param prestigeMultiplier the prestige points subtracted for each unit of
+     *                           food that the player could not cover.
      */
     public void removeFoodWithPrestigePenalty(int amount, int prestigeMultiplier) {
         int available = food;
@@ -90,18 +124,10 @@ public class Player {
     public void setExtraFoodOnTotemReturn(boolean extraFoodOnTotemReturn) {
         this.extraFoodOnTotemReturn = extraFoodOnTotemReturn;
     }
+
+    // set when the player draws the extra draw building
     public void setExtraDraw(boolean extraDraw) {
         this.extraDraw = extraDraw;
-    }
-
-    public String getName() {
-        return name;
-    }
-    public TotemColor getColor() {
-        return color;
-    }
-    public TotemLocation getLocation() {
-        return totemLocation;
     }
 
     public void setLocation(TotemLocation location) {
@@ -119,5 +145,15 @@ public class Player {
     }
     public void setDisconnected(){
         this.online = false;
+    }
+
+    public String getName() {
+        return name;
+    }
+    public TotemColor getColor() {
+        return color;
+    }
+    public TotemLocation getLocation() {
+        return totemLocation;
     }
 }
