@@ -77,10 +77,12 @@ public class EndOfGamePhase implements GamePhaseHandler {
             }
 
         }else {
-
-            List<String> winnerNames = winners.stream().map(Player::getName).toList();
-            model.setWinners(winnerNames);
-            scoring = new EndGameScoringDto(new ArrayList<>()); // empty scoring since the game was suspended, so no points are calculated
+            List<String> winnerNames = null;
+            if (winners != null) {
+                winnerNames = winners.stream().map(Player::getName).toList();
+                model.setWinners(winnerNames);
+                scoring = new EndGameScoringDto(new ArrayList<>()); // empty scoring since the game was suspended, so no points are calculated
+            }
 
             for (VirtualView v : model.getViews()) {
                 v.sendGameOver(winnerNames, scoring);
