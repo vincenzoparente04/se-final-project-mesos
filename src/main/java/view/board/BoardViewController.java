@@ -30,7 +30,6 @@ public class BoardViewController implements SceneController {
     @FXML private BoardSelfPanelController selfPanelController;
 
     private SceneRouter router;
-    private boolean winnerShown = false;
 
     @Override
     public void bind(SceneRouter router) {
@@ -62,11 +61,8 @@ public class BoardViewController implements SceneController {
         updateStatusBar(state, phase, isMyTurn);
         gameAreaController.update(state);
         selfPanelController.update(state);
-
-        if (state.isGameOver() && !winnerShown) {
-            winnerShown = true;
-            router.toWinner(state.getPlayers(), state.getWinners());
-        }
+        // End-of-game navigation is driven exclusively by onGameOver (the authoritative
+        // payload with the scoring breakdown), so it is no longer triggered from here.
     }
 
     // ── Status bar ─────────────────────────────────────────────────────────

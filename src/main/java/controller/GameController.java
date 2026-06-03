@@ -283,15 +283,14 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                         () -> enqueueSelf(new SuspensionTimeoutCommand()),
                         SUSPENSION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } else if (connected == 0) {
-                // Anche l'ultimo player è uscito durante la sospensione: termina
-                // la partita calcolando i punteggi sullo stato corrente. La
-                // session resta in activeGames (lazy cleanup), verrà rimossa
-                // quando un eventuale player riconnesso farà LeaveCommand.
+                // Even the last player dropped during suspension: end the match by
+                // forfeit. The session stays in activeGames (lazy cleanup) until a
+                // reconnecting player issues a LeaveCommand. EndOfGamePhase.onEnter
+                // broadcasts the game-over.
                 cancelSuspensionTimer();
                 suspended = false;
-                model.setPhase(new EndOfGamePhase(model, null, true));
                 model.setGameOver();
-                // model.notifyChange(); // TODO: forse si può levare
+                model.setPhase(new EndOfGamePhase(model, null, true));
             }
         }
 
@@ -312,7 +311,13 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                     v.sendError("GAME_RESUMED");
                 }
             }
+            // State first (re-populates the client's LocalGameState, including the
+            // players the GUI winner screen reads), then re-send the end-game payload
+            // so a player reconnecting to a finished match rebuilds the final screen.
             model.notifyChange();
+            if (model.isGameOver()) {
+                model.notifyEndGame();
+            }
         }
 
         @Override
@@ -328,25 +333,11 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                     .findFirst()
                     .orElse(null);
 
-            List<String> winnerNames;
-            if (winner == null) {
-                // Edge: nessuno è più connesso (race con disconnect dell'ultimo).
-                // EndOfGamePhase.onEnter() farà il broadcast del game-over con
-                // lo scoring calcolato sui punti correnti.
-                model.setPhase(new EndOfGamePhase(model, null, true));
-                model.setGameOver();
-                model.notifyChange();
-                return;
-            }
-            //model.setWinners(List.of(winner));
-            model.setPhase(new EndOfGamePhase(model, List.of(winner), true));
+            // Forfeit: the last connected player wins by default (or nobody, if a
+            // final disconnect raced us). No end-game scoring breakdown.
+            // EndOfGamePhase.onEnter broadcasts the game-over.
             model.setGameOver();
-            // Game-over d'ufficio (forfait): no end-game scoring breakdown.
-            //winnerNames = List.of(winner);
-            //for (VirtualView v : model.getViews()) {
-            //    v.sendGameOver(winnerNames, null);
-            //}
-            model.notifyChange();
+            model.setPhase(new EndOfGamePhase(model, winner == null ? null : List.of(winner), true));
         }
     };
 
