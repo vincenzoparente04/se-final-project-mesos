@@ -60,10 +60,7 @@ public class LobbyViewController implements SceneController {
         } else{
             router.toBoard();
         }
-
-        if (state.isGameOver()) {
-            router.toWinner(state.getPlayers(), state.getWinners());
-        }
+        // End-of-game navigation is driven exclusively by onGameOver.
     }
 
     public void showLobbies(List<LobbyDto> lobbies) {

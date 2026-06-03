@@ -1,5 +1,6 @@
 package model;
 
+import database.ScoreRecord;
 import integration.FakeVirtualView;
 import model.enums.GamePhase;
 import model.player.Player;
@@ -7,8 +8,10 @@ import network.server.core.VirtualView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import shared.dto.event.EndGameScoringDto;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -125,6 +128,55 @@ class GameModelTest {
 
         verify(view1, atLeastOnce()).sendState(any());
         verify(view2, atLeastOnce()).sendState(any());
+    }
+
+    @Test
+    @DisplayName("notifyEndGame broadcasts game-over to all views; no leaderboard when not set")
+    void notifyEndGameBroadcastsGameOver() {
+        VirtualView view1 = mock(VirtualView.class);
+        VirtualView view2 = mock(VirtualView.class);
+        when(view1.getPlayerName()).thenReturn("Player1");
+        when(view2.getPlayerName()).thenReturn("Player2");
+
+        GameModel model = new GameModel(List.of(view1, view2));
+        model.startGame(List.of("Player1", "Player2"));
+
+        EndGameScoringDto scoring = new EndGameScoringDto(List.of());
+        model.setWinners(List.of("Player1"));
+        model.setEndGameScoring(scoring);
+
+        model.notifyEndGame();
+
+        verify(view1, times(1)).sendGameOver(List.of("Player1"), scoring);
+        verify(view2, times(1)).sendGameOver(List.of("Player1"), scoring);
+        verify(view1, never()).sendLeaderboard(any(), anyInt(), anyInt());
+        verify(view2, never()).sendLeaderboard(any(), anyInt(), anyInt());
+    }
+
+    @Test
+    @DisplayName("notifyEndGame sends the personalised leaderboard plus game-over when a leaderboard is cached")
+    void notifyEndGameSendsLeaderboard() {
+        VirtualView view1 = mock(VirtualView.class);
+        VirtualView view2 = mock(VirtualView.class);
+        when(view1.getPlayerName()).thenReturn("Player1");
+        when(view2.getPlayerName()).thenReturn("Player2");
+
+        GameModel model = new GameModel(List.of(view1, view2));
+        model.startGame(List.of("Player1", "Player2"));
+
+        List<ScoreRecord> top = List.of(new ScoreRecord("Player1", 30, 2, null));
+        Map<String, Integer> rankByName = Map.of("Player1", 1, "Player2", 5);
+        model.setLeaderboard(new GameModel.LeaderboardData(top, rankByName));
+        model.setWinners(List.of("Player1"));
+        model.setEndGameScoring(null);
+
+        model.notifyEndGame();
+
+        // points come from each player's prestige (0 for freshly created players)
+        verify(view1, times(1)).sendLeaderboard(top, 1, 0);
+        verify(view2, times(1)).sendLeaderboard(top, 5, 0);
+        verify(view1, times(1)).sendGameOver(List.of("Player1"), null);
+        verify(view2, times(1)).sendGameOver(List.of("Player1"), null);
     }
 
     @Test
