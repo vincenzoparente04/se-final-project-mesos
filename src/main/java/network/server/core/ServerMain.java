@@ -64,17 +64,17 @@ public class ServerMain {
         System.setProperty("java.rmi.server.hostname", host);
         System.out.println("RMI export hostname: " + host);
 
-        LobbyManager lobby = new LobbyManager();
-        lobby.start();
+        LobbyManager lobbyManager = new LobbyManager();
+        lobbyManager.start();
 
         // TODO: vedi se necessario
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down server…");
-            lobby.shutdown();
+            lobbyManager.shutdown();
         }, "server-shutdown"));
 
-        startRmiRegistry(lobby);
-        startSocketAcceptor(lobby);
+        startRmiRegistry(lobbyManager);
+        startSocketAcceptor(lobbyManager);
     }
 
     /**
