@@ -40,30 +40,45 @@ public class ColorChoosingPhase implements GamePhaseHandler {
     private final GameModel model;
     private Set<TotemColor> availableColors;
     private CompletableFuture<Void> timeout;
-    private Player currentPlayer;
 
     public ColorChoosingPhase(GameModel model) {
         this.model = model;
     }
 
+    /**
+     * Initializes the state of the phase by populating the available color pool
+     * and launching an asynchronous watchdog timer.
+     * <p>
+     * <b>Timeout Behavior:</b> If the 60-second timer expires before all players
+     * have chosen, a background thread forces random assignments for the remaining
+     * players and subsequently updates the model.
+     * </p>
+     */
     @Override
     public void onEnter() {
         availableColors = EnumSet.allOf(TotemColor.class);
 
         timeout = CompletableFuture.runAsync(() -> {
             List<Player> players = model.getPlayers().stream().filter(p -> p.getColor() == null).toList();
-            for (Player player : players) {
-                TotemColor randomizedChoice = availableColors.iterator().next();
-                doChooseColor(player, randomizedChoice);
-            }
+            for(Player player : players) {
+                    TotemColor randomizedChoice = availableColors.iterator().next();
+                    doChooseColor(player, randomizedChoice);
+                }
+            model.notifyChange();
         }, CompletableFuture.delayedExecutor(60, TimeUnit.SECONDS));
-
-        List<Player> players = model.getPlayers();
-        currentPlayer = players.isEmpty() ? null : players.get(0);
 
         model.notifyChange();
     }
 
+
+    /**
+     * Intercepts a color selection request from a client, validating the timing
+     * and the payload before delegating to the internal mutation logic.
+     * @param cmd the command containing the requesting player's name and desired color.
+     * @throws IllegalStateException if the 60-second selection window has already closed.
+     * @throws IllegalArgumentException if the provided color string does not map to a valid {@link TotemColor}.
+     * @throws Exception if any other processing error occurs.
+     */
     @Override
     public void visit(ChooseColorCommand cmd) throws Exception {
         if (timeout.isDone()) {
@@ -71,11 +86,6 @@ public class ColorChoosingPhase implements GamePhaseHandler {
         }
 
         Player player = model.getPlayerByName(cmd.playerName());
-
-        if (!player.equals(currentPlayer)) {
-            throw new IllegalArgumentException("It is not " + cmd.playerName() + "'s turn to choose a color");
-        }
-
         TotemColor color;
         try {
             color = TotemColor.valueOf(cmd.color().toUpperCase());
@@ -85,50 +95,33 @@ public class ColorChoosingPhase implements GamePhaseHandler {
         doChooseColor(player, color);
     }
 
-    @Override
-    public void skipCurrentPlayerTurn() {
-        if (currentPlayer == null) return;
-        Player toSkip = currentPlayer;
-        TotemColor randomColor = availableColors.iterator().next();
-        doChooseColor(toSkip, randomColor);
-    }
 
+    /**
+     * Executes the core transactional logic of assigning a color to a player.
+     * <p>
+     * This method removes the selected color from the available pool and notifies
+     * observers of the state mutation. If this assignment fulfills the requirement
+     * that all players have a color, it halts the timeout execution and transitions
+     * the game into the {@link SetupPhase}.
+     * </p>
+     * @param player the player receiving the color assignment.
+     * @param color the specific {@link TotemColor} being assigned.
+     * @throws IllegalArgumentException if the requested color is already taken by another player.
+     */
     private void doChooseColor(Player player, TotemColor color) {
-        if (!availableColors.contains(color)) {
-            throw new IllegalArgumentException("Color " + color + " is already taken");
-        }
-
-        player.setColor(color);
-        availableColors.remove(color);
-
-        model.notifyChange();
-
-        advanceCurrentPlayer(player);
-    }
-
-    private void advanceCurrentPlayer(Player justChose) {
-        List<Player> players = model.getPlayers();
-        int startIdx = players.indexOf(justChose) + 1;
-
-        for (int i = startIdx; i < players.size(); i++) {
-            Player next = players.get(i);
-            if (next.getColor() == null) {
-                if (next.isConnected()) {
-                    currentPlayer = next;
-                    return;
-                } else {
-                    // Auto-assign a color to disconnected player and keep scanning
-                    TotemColor randomColor = availableColors.iterator().next();
-                    next.setColor(randomColor);
-                    availableColors.remove(randomColor);
-                }
+            if (!availableColors.contains(color)) {
+                throw new IllegalArgumentException("Color " + color + " is already taken");
             }
-        }
 
-        // No more players need to choose
-        currentPlayer = null;
-        timeout.complete(null);
-        model.setPhase(new SetupPhase(model));
+            player.setColor(color);
+            availableColors.remove(color);
+
+            model.notifyChange();
+
+            if (availableColors.size() == TotemColor.values().length - model.getPlayerCount()) {
+                timeout.complete(null); // stop the timeout if it's still running
+                model.setPhase(new SetupPhase(model));
+            }
     }
 
     @Override
@@ -136,6 +129,6 @@ public class ColorChoosingPhase implements GamePhaseHandler {
 
     @Override
     public Player getCurrentPlayer() {
-        return currentPlayer;
+        return null;
     }
 }

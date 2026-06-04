@@ -224,8 +224,10 @@ public final class GameController implements Runnable, ClientCommandVisitor {
      */
     public synchronized void handleCommand(GameCommand cmd) throws Exception {
         Player current = model.getCurrentPlayer();
-        if (current == null || !current.getName().equals(cmd.getPlayerName())) {
-            throw new IllegalStateException("It is not " + cmd.getPlayerName() + "'s turn.");
+        if (model.getCurrentPhase() != GamePhase.COLOR_CHOOSING_PHASE) {
+            if (current == null || !current.getName().equals(cmd.getPlayerName())) {
+                throw new IllegalStateException("It is not " + cmd.getPlayerName() + "'s turn.");
+            }
         }
         model.handleCommand(cmd);
     }

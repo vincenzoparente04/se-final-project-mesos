@@ -33,7 +33,7 @@ public class TakeFoodAction implements OfferTileAction {
 
     @Override
     public void performDraw(Card card, RowsManager rowsManager) {
-        throw new UnsupportedOperationException("TakeFoodAction does not support drawing cards");
+        // This action does not allow drawing cards.
     }
 
     @Override

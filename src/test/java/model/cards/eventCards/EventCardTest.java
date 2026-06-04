@@ -1,6 +1,8 @@
 package model.cards.eventCards;
 
 import model.rowsManager.CardVisitor;
+import model.cards.eventCards.EventCard;
+import model.enums.CardType;
 import model.enums.Era;
 import model.player.Player;
 import org.junit.jupiter.api.DisplayName;
