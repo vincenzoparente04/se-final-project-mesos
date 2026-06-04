@@ -90,7 +90,7 @@ class ShamanicRitualEventCardTest {
     }
 
     @Test
-    @DisplayName("resolve applies both effects when all players tie on shaman stars")
+    @DisplayName("resolve applies reward to all and penalty to all when all players tie on shaman stars")
     void resolveAppliesBothEffectsOnTie() {
         Player p1 = mock(Player.class);
         Player p2 = mock(Player.class);
@@ -112,12 +112,13 @@ class ShamanicRitualEventCardTest {
 
         card.resolve(List.of(p1, p2, p3));
 
+        // All tie on max AND on min → everyone gets both reward and penalty
         verify(p1, times(1)).addPrestigePoints(5);
         verify(p2, times(1)).addPrestigePoints(5);
         verify(p3, times(1)).addPrestigePoints(5);
-        verify(p1, never()).removePrestigePoints(3);
-        verify(p2, never()).removePrestigePoints(3);
-        verify(p3, never()).removePrestigePoints(3);
+        verify(p1, times(1)).removePrestigePoints(3);
+        verify(p2, times(1)).removePrestigePoints(3);
+        verify(p3, times(1)).removePrestigePoints(3);
     }
 
     @Test

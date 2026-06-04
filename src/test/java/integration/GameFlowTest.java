@@ -41,10 +41,9 @@ class GameFlowTest {
 
     private void completeColorChoosing() throws Exception {
         TotemColor[] colors = TotemColor.values();
-        int i = 0;
-        while (model.getCurrentPhase() == GamePhase.COLOR_CHOOSING_PHASE) {
-            Player current = model.getCurrentPlayer();
-            model.handleCommand(new ChooseColorCommand(current.getName(), colors[i++].name()));
+        List<Player> players = model.getPlayers();
+        for (int i = 0; i < players.size(); i++) {
+            model.handleCommand(new ChooseColorCommand(players.get(i).getName(), colors[i].name()));
         }
     }
 
@@ -204,12 +203,10 @@ class GameFlowTest {
     private GameModel setupGame(List<String> names) throws Exception {
         GameModel m = new GameModel();
         m.startGame(names);
-        // consume color-choosing phase
         TotemColor[] colors = TotemColor.values();
-        int i = 0;
-        while (m.getCurrentPhase() == GamePhase.COLOR_CHOOSING_PHASE) {
-            Player current = m.getCurrentPlayer();
-            m.handleCommand(new ChooseColorCommand(current.getName(), colors[i++].name()));
+        List<Player> players = m.getPlayers();
+        for (int i = 0; i < players.size(); i++) {
+            m.handleCommand(new ChooseColorCommand(players.get(i).getName(), colors[i].name()));
         }
         return m;
     }

@@ -40,19 +40,12 @@ public class FullGameTest {
 
         assertEquals(model.getCurrentPhase(), GamePhase.COLOR_CHOOSING_PHASE, "Phase should be color choosing phase");
 
-        assertEquals(model.getCurrentPlayer(), homer, "Current player should be homer");
-        //wrong turn case
-        IllegalStateException errorTurn = assertThrows(
-                IllegalStateException.class,
-                () -> gameController.handleCommand(new ChooseColorCommand("Bart", "RED"))
-        );
-        assertTrue(errorTurn.getMessage().contains("It is not Bart's turn."));
+        // No turn tracking during color choosing: any player can choose in any order
+        assertNull(model.getCurrentPlayer());
 
         gameController.handleCommand(new ChooseColorCommand("Homer", "RED"));
 
         assertEquals(homer.getColor(), RED, "Color should be RED");
-
-        assertEquals(model.getCurrentPlayer(), bart, "Current player should be bart");
 
         //color already taken case
         IllegalArgumentException errorColorTaken = assertThrows(

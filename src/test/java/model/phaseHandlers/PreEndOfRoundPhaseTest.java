@@ -95,6 +95,8 @@ class PreEndOfRoundPhaseTest {
         when(model.getPlayers()).thenReturn(List.of(p1, p2, p3));
         when(p1.hasExtraDraw()).thenReturn(false);
         when(p2.hasExtraDraw()).thenReturn(true);
+        when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(card));
+        when(rowsManager.topRowContainsCard(card.getId())).thenReturn(true);
 
         phase.onEnter();
 
@@ -118,6 +120,8 @@ class PreEndOfRoundPhaseTest {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
         when(rowsManager.findCardById(10)).thenReturn(Optional.empty());
+        when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(card));
+        when(rowsManager.topRowContainsCard(card.getId())).thenReturn(true);
 
         phase.onEnter();
         org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
@@ -134,14 +138,16 @@ class PreEndOfRoundPhaseTest {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
         when(rowsManager.findCardById(10)).thenReturn(Optional.of(card));
-        when(rowsManager.topRowContainsCard(10)).thenReturn(false);
+        // true for MoveChecker in onEnter, false for topRow check in visit()
+        when(rowsManager.topRowContainsCard(10)).thenReturn(true, false);
+        when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(card));
 
         phase.onEnter();
         org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
                 () -> phase.visit(new DrawCardCommand("Player1", 10)));
 
         verify(rowsManager, times(1)).findCardById(10);
-        verify(rowsManager, times(1)).topRowContainsCard(10);
+        verify(rowsManager, times(2)).topRowContainsCard(10); // once in MoveChecker (onEnter), once in visit
         verify(rowsManager, never()).removeCard(10);
         verify(card, never()).registerToTribe(p1);
         verify(model, never()).setPhase(argThat(handler -> handler instanceof EndOfRoundPhase));
@@ -162,6 +168,7 @@ class PreEndOfRoundPhaseTest {
         when(p1.hasExtraDraw()).thenReturn(true);
         when(rowsManager.findCardById(10)).thenReturn(Optional.of(eventCard));
         when(rowsManager.topRowContainsCard(10)).thenReturn(true);
+        when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(card));
 
         phase.onEnter();
         org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
@@ -178,6 +185,7 @@ class PreEndOfRoundPhaseTest {
         when(p1.hasExtraDraw()).thenReturn(true);
         when(rowsManager.findCardById(10)).thenReturn(Optional.of(card));
         when(rowsManager.topRowContainsCard(10)).thenReturn(true);
+        when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(card));
 
         phase.onEnter();
         phase.visit(new DrawCardCommand("Player1", 10));
@@ -192,6 +200,8 @@ class PreEndOfRoundPhaseTest {
     void endTurnWithActivePlayerTransitions() throws Exception {
         when(model.getPlayers()).thenReturn(List.of(p1));
         when(p1.hasExtraDraw()).thenReturn(true);
+        when(rowsManager.getAllCardsOnBoard()).thenReturn(List.of(card));
+        when(rowsManager.topRowContainsCard(card.getId())).thenReturn(true);
 
         phase.onEnter();
         phase.visit(new EndTurnCommand("Player1"));

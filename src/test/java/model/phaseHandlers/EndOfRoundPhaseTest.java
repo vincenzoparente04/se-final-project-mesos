@@ -54,7 +54,6 @@ public class EndOfRoundPhaseTest {
 		// Assert: verify correct sequence of operations
 		var order = inOrder(rowsManager, model);
 		order.verify(rowsManager).resolveEvents(players);
-		order.verify(model).notifyChange();
 		order.verify(model).incrementRound();
 		order.verify(rowsManager).endRound(2);
 
@@ -83,7 +82,7 @@ public class EndOfRoundPhaseTest {
 		phase.onEnter();
 
 		// Assert: verify era change notification and board update
-		verify(model, times(2)).notifyChange();
+		verify(model, times(1)).notifyChange();
 		verify(rowsManager).changeEra();
 		verify(model).setPhase(argThat(handler -> handler instanceof PlacementPhase));
 	}

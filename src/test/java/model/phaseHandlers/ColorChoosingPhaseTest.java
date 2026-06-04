@@ -82,12 +82,11 @@ public class ColorChoosingPhaseTest {
     // ──────────────────────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("onEnter() should initialize available colors and set first player")
+    @DisplayName("onEnter() should initialize available colors (no turn tracking)")
     void testOnEnterInitializesGameState() {
         colorChoosingPhase.onEnter();
 
-        assertEquals(player1, colorChoosingPhase.getCurrentPlayer(),
-                "First player should be set to player1 after onEnter()");
+        assertNull(colorChoosingPhase.getCurrentPlayer());
     }
 
     @Test
@@ -113,15 +112,13 @@ public class ColorChoosingPhaseTest {
     }
 
     @Test
-    @DisplayName("visit(ChooseColorCommand) should advance and notify next player about their turn")
+    @DisplayName("visit(ChooseColorCommand) should notify observers after choosing")
     void testChooseColorNotifiesNextPlayerTurn() throws Exception {
         colorChoosingPhase.onEnter();
-        assertEquals(player1, colorChoosingPhase.getCurrentPlayer());
 
         colorChoosingPhase.visit(new ChooseColorCommand("Player1", "RED"));
 
-        assertEquals(player2, colorChoosingPhase.getCurrentPlayer(),
-                "Current player should advance to player2 after player1 chooses");
+        assertNull(colorChoosingPhase.getCurrentPlayer());
         verify(gameModel, times(2)).notifyChange();
     }
 
@@ -130,15 +127,13 @@ public class ColorChoosingPhaseTest {
     // ──────────────────────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("visit(ChooseColorCommand) should throw when wrong player tries to choose")
-    void testChooseColorIgnoresWrongPlayer() {
+    @DisplayName("visit(ChooseColorCommand) any player can choose in any order (no turn enforcement)")
+    void testChooseColorIgnoresWrongPlayer() throws Exception {
         colorChoosingPhase.onEnter();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> colorChoosingPhase.visit(new ChooseColorCommand("Player2", "RED")));
-
-        verify(player2, never()).setColor(any());
-        assertEquals(player1, colorChoosingPhase.getCurrentPlayer());
+        // No turn order enforcement: Player2 can choose before Player1
+        assertDoesNotThrow(() -> colorChoosingPhase.visit(new ChooseColorCommand("Player2", "RED")));
+        verify(player2, times(1)).setColor(TotemColor.RED);
     }
 
     @Test
@@ -271,37 +266,30 @@ public class ColorChoosingPhaseTest {
   
 
     @Test
-    @DisplayName("Skip player when disconnected")
+    @DisplayName("Color choosing phase has no turn tracking: getCurrentPlayer() returns null")
     void testSkipPlayerWhenDisconnected() throws Exception {
-
-        /// DIFFFERS FROM OTHERS --> no setup
         FakeVirtualView vv1 = new FakeVirtualView();
         FakeVirtualView vv2 = new FakeVirtualView();
         FakeVirtualView vv3 = new FakeVirtualView();
 
-        GameModel localModel = new GameModel(List.of(vv1,vv2, vv3));
-
+        GameModel localModel = new GameModel(List.of(vv1, vv2, vv3));
         List<String> localPlayers = List.of("Player1", "Player2", "Player3");
         localModel.startGame(localPlayers);
-
 
         Player pl2 = localModel.getPlayerByName("Player2");
         pl2.setDisconnected();
 
         assertEquals(GamePhase.COLOR_CHOOSING_PHASE, localModel.getCurrentPhase());
 
+        // No turn tracking: getCurrentPlayer() returns null during color choosing
+        assertNull(localModel.getCurrentPlayer());
+
+        // Any player can choose in any order
         localModel.handleCommand(new ChooseColorCommand("Player1", "RED"));
+        assertEquals(TotemColor.RED, localModel.getPlayerByName("Player1").getColor());
 
-        //first player disconnected so curr player should be the next
-        Player follows = localModel.getCurrentPlayer();
-        assertNotEquals(pl2, follows);
-
-        GamePhaseHandler currPhase = localModel.getPhaseHandler();
-        currPhase.skipCurrentPlayerTurn();
-
-        GamePhaseHandler afterPhase = localModel.getPhaseHandler();
-        assertNotEquals(currPhase, afterPhase);
-
+        // Phase stays in color choosing until all players have chosen
+        assertEquals(GamePhase.COLOR_CHOOSING_PHASE, localModel.getCurrentPhase());
     }
 
 }

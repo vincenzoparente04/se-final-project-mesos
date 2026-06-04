@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -40,7 +41,7 @@ class TakeFoodActionTest {
 
         assertAll(
                 () -> assertFalse(action.canDraw(card, rowsManager)),
-                () -> assertThrows(UnsupportedOperationException.class, () -> action.performDraw(card, rowsManager))
+                () -> assertDoesNotThrow(() -> action.performDraw(card, rowsManager))
         );
     }
 

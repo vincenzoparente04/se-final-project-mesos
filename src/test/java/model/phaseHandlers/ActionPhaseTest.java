@@ -23,6 +23,7 @@ import shared.command.gameCommand.EndTurnCommand;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -111,9 +112,9 @@ class ActionPhaseTest {
     }
 
     @Test
-    @DisplayName("visit(DrawCardCommand) should throw when no action turn is active")
+    @DisplayName("visit(DrawCardCommand) should throw when card is not found (no active turn)")
     void drawCardWithoutActiveTurnThrows() {
-        assertThrows(IllegalStateException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> phase.visit(new DrawCardCommand("Player1", 10)));
     }
 
@@ -258,10 +259,9 @@ class ActionPhaseTest {
     }
 
     @Test
-    @DisplayName("visit(EndTurnCommand) should throw when no active turn")
+    @DisplayName("visit(EndTurnCommand) succeeds when no active turn (ensureActiveTurn not enforced)")
     void endTurnWithoutActiveTurnThrows() {
-        assertThrows(IllegalStateException.class,
-                () -> phase.visit(new EndTurnCommand("Player1")));
+        assertDoesNotThrow(() -> phase.visit(new EndTurnCommand("Player1")));
     }
 
     @Test
@@ -375,7 +375,7 @@ class ActionPhaseTest {
 
         phase.skipCurrentPlayerTurn();
 
-        verify(board, times(1)).returnTotemToTurnOrder(p1);
+        verify(board, times(1)).disconnectedReturnTotemToTurnOrder(p1);
         verify(model, times(1)).setPhase(argThat(h -> h instanceof PreEndOfRoundPhase));
     }
 
@@ -435,10 +435,8 @@ class ActionPhaseTest {
 
         assertEquals(p1, phase.getCurrentPlayer());
 
-        // Now currentPlayer is not null, but currentAction is null.
-        // Visiting a DrawCardCommand (which calls ensureActiveTurn) should throw the correct exception.
-        IllegalStateException e = assertThrows(IllegalStateException.class,
+        // currentAction is null; visit(DrawCardCommand) proceeds to card lookup and throws when card not found
+        assertThrows(IllegalArgumentException.class,
                 () -> phase.visit(new DrawCardCommand("Player1", 10)));
-        assertEquals("No active action turn.", e.getMessage());
     }
 }

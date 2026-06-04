@@ -21,6 +21,7 @@ import shared.command.lobbyCommand.PlayerDisconnectedCommand;
 import shared.command.lobbyCommand.PlayerReconnectedCommand;
 import shared.command.lobbyCommand.SuspensionTimeoutCommand;
 
+import model.enums.GamePhase;
 import shared.command.lobbyCommand.LobbyCommand;
 import shared.command.lobbyCommand.LobbyCommandVisitor;
 
@@ -118,6 +119,18 @@ class GameControllerTest {
     }
 
     @Test
+    @DisplayName("handleCommand skips turn check during COLOR_CHOOSING_PHASE, any player can send commands")
+    void handleCommandSkipsTurnCheckDuringColorChoosingPhase() throws Exception {
+        when(model.getCurrentPhase()).thenReturn(GamePhase.COLOR_CHOOSING_PHASE);
+        when(model.getCurrentPlayer()).thenReturn(null);
+
+        // Bob is not the current player (null), but during COLOR_CHOOSING the check is bypassed
+        GameCommand cmd = new ChooseColorCommand("Bob", "BLUE");
+        assertDoesNotThrow(() -> controller.handleCommand(cmd));
+        verify(model).handleCommand(cmd);
+    }
+
+    @Test
     @DisplayName("handleCommand throws when current player is null")
     void handleCommandThrowsWhenCurrentPlayerNull() throws Exception {
         when(model.getCurrentPlayer()).thenReturn(null);
@@ -197,6 +210,15 @@ class GameControllerTest {
         GameCommand cmd = new ChooseColorCommand("Alice", "RED");
         controller.visit(cmd);
         verify(aliceView).sendError("bad move");
+    }
+
+    @Test
+    @DisplayName("visit(GameCommand) sends exception class name when exception has no message")
+    void visitGameCommandExceptionWithNullMessageSendsClassName() throws Exception {
+        doThrow(new RuntimeException()).when(model).handleCommand(any());
+        GameCommand cmd = new ChooseColorCommand("Alice", "RED");
+        controller.visit(cmd);
+        verify(aliceView).sendError("RuntimeException");
     }
 
     @Test
@@ -363,6 +385,35 @@ class GameControllerTest {
         controller.visit(new PlayerDisconnectedCommand("Bob"));
 
         verify(aliceView).sendError(contains("GAME_SUSPENDED"));
+    }
+
+    @Test
+    @DisplayName("PlayerDisconnectedCommand cancels pending suspension timer when last player also disconnects")
+    void playerDisconnectedCancelsSuspensionTimerWhenLastPlayerLeaves() throws Exception {
+        Player bob = mock(Player.class);
+        when(bob.getName()).thenReturn("Bob");
+        when(bob.isConnected()).thenReturn(false);
+
+        // Step 1: Bob disconnects → Alice is the only one left → suspension triggered, future scheduled
+        when(model.getPlayerByName("Bob")).thenReturn(bob);
+        when(model.getViews()).thenReturn(List.of(aliceView));
+        when(model.getPhaseHandler()).thenReturn(null);
+        when(model.getPlayers()).thenReturn(List.of(alice));
+        when(alice.isConnected()).thenReturn(true);
+        controller.visit(new PlayerDisconnectedCommand("Bob")); // suspended = true, future scheduled
+
+        // Step 2: Alice also disconnects → connected == 0 → cancelSuspensionTimer() on a real future
+        when(model.getPlayerByName("Alice")).thenReturn(alice);
+        when(model.getViews()).thenReturn(List.of());
+        when(model.getPlayers()).thenReturn(List.of());
+        controller.visit(new PlayerDisconnectedCommand("Alice")); // cancels the pending future
+
+        verify(model).setGameOver();
+        verify(model).setPhase(argThat(h -> h instanceof EndOfGamePhase));
+
+        // After cancellation, a SuspensionTimeoutCommand (if it somehow fires) is a no-op
+        assertDoesNotThrow(() -> controller.visit(new SuspensionTimeoutCommand()));
+        verify(model).setGameOver(); // still only once
     }
 
     @Test
