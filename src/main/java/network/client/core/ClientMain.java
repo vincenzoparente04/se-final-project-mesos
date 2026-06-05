@@ -49,7 +49,6 @@ public class ClientMain extends Application {
      * </ul>
      * <p>
      * @param primaryStage the main Stage provided by JavaFX
-     * @throws Exception if the FXML resource cannot be loaded
      */
     @Override
     public void start(Stage primaryStage) {

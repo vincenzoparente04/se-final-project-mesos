@@ -14,14 +14,14 @@ public class BuildingDeck {
 
     /**
      * Number of Building cards to use per Era based on player count (Setup, step 6).
-     *
+     * <p>
      *  Players | Era I | Era II | Era III
      *  --------|-------|--------|--------
      *     2    |   1   |   2    |    3
      *     3    |   2   |   2    |    4
      *     4    |   2   |   3    |    4
      *     5    |   2   |   3    |    5
-     *
+     * <p>
      * Indexed as [playerCount - 2][eraColumn]
      */
     private static final int[][] CARD_COUNT_TABLE = {
@@ -40,7 +40,7 @@ public class BuildingDeck {
 
     /**
      * Builds this era's Building deck according to the game rules (Setup, step 6).
-     *
+     * <p>
      * Called by RowsManager.setup() which passes the full list from BuildingCardFactory.createAll().
      * This method:
      *   1. Filters cards belonging to this deck's Era and eligible for the player count

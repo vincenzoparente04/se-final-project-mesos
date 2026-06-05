@@ -102,7 +102,6 @@ import java.util.stream.Stream;
      * This method is responsible for resolving the events present in the bottom row at the end of the round, it is called by the EndOfRoundPhaseHandler
      * at first it collects all the EventCard in the bottom row. The EventResolver sorts events by type and era,
      * then it calls the resolve method of each EventCard, passing the list of players as parameter, so that the EventCard can apply its effect on the players.
-     * @param players
      */
     public List<EventResolutionDto> resolveEvents(List<Player> players){
         eventResolver.sortEvents(bottomRowTribe);
@@ -113,7 +112,6 @@ import java.util.stream.Stream;
      * Solves all the events on the board. Called only by EndOfGamePhase
      * @implNote EventResolver sorts events by era and type, moving sustenance event at the end of the list from all cards present on the board. Then resolves all the events <br>
      * <b>NOTE: </b> to create the list of all cards present on the board it puts bottomRow cards first because maybe there could be some ERA_II card
-     * @param players
      */
     public List<EventResolutionDto> resolveAllEvents(List<Player> players){
         eventResolver.sortEvents(getAllTribeCardsOnBoard());
@@ -124,7 +122,6 @@ import java.util.stream.Stream;
      * 1. discard all tribe cards from bottom row
      * 2. moves all tribe cards from top row to bottom row
      * 3. restores top row tribe cards, drawing from tribe deck
-     * @param playerCount
      */
     public void endRound(int playerCount) {
         bottomRowTribe.clear();
@@ -152,7 +149,6 @@ import java.util.stream.Stream;
 
     /**
      * check if the card passed as argument is present in the top row
-     * @param cardId
      */
     public boolean topRowContainsCard(int cardId) {
         return Stream.of(topRowTribe, topRowBuilding)
@@ -162,7 +158,6 @@ import java.util.stream.Stream;
 
     /**
      * check if the card passed as argument is present in the bottom row
-     * @param cardId
      */
     public boolean bottomRowContainsCard(int cardId) {
         return Stream.of(bottomRowTribe, bottomRowBuilding)
@@ -183,7 +178,6 @@ import java.util.stream.Stream;
 
     /**
      * @implNote search the card through all 4 lists and removes it
-     * @param cardId
      */
     public void removeCard(int cardId) {
         Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)

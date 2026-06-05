@@ -18,7 +18,7 @@ public class BuilderCard extends CharacterCard {
 
     /**
      * @implNote Add a builder to its list in the tribe of the player who picked this card.
-     * @param player
+     * @param player the one who picked the card
      */
     @Override
     public void registerToTribe(Player player) {

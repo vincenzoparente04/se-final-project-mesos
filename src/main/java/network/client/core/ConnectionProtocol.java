@@ -7,10 +7,10 @@ package network.client.core;
  */
 public enum ConnectionProtocol {
 
-    /** TCP socket with text protocol ({@link client.socket.SocketServerProxy}). */
+    /** TCP socket with text protocol ({@link network.client.socket.SocketVirtualServer}). */
     SOCKET,
 
-    /** Java RMI with callback stubs ({@link client.rmi.RmiServerProxy}). */
+    /** Java RMI with callback stubs ({@link network.client.rmi.RmiVirtualServer}). */
     RMI;
 
     /**

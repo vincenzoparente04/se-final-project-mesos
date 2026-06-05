@@ -4,7 +4,6 @@ import model.factories.BoardFactory;
 import model.player.Player;
 
 import java.util.List;
-import java.util.Collections;
 
 public class Board {
     private OfferTrack offerTrack;
@@ -18,9 +17,6 @@ public class Board {
 
     /**
      * Delegate the placeTotem implementation to the offerTrack(which delegates to OfferTile)
-     * @param player
-     * @param offerTile
-     * @throws Exception
      */
     public void placeTotem(Player player, OfferTile offerTile) {
         turnOrderTile.freeSlot(player);
@@ -38,8 +34,6 @@ public class Board {
 
     /**
      * @implNote Find the correct tile corresponding to the char passed by the controller
-     * @param letter
-     * @return
      */
     public OfferTile findTileByLetter(char letter) {
         return offerTrack.getTileByLetter(letter);

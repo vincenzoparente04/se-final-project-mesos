@@ -12,7 +12,6 @@ public class ShamanCard extends CharacterCard {
 
     /**
      * @implNote Add a shaman to its list in the tribe of the player who picked this card.
-     * @param player
      */
     @Override
     public void registerToTribe(model.player.Player player) {

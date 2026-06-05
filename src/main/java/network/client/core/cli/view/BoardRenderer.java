@@ -121,7 +121,7 @@ public class BoardRenderer implements GameStateRenderer {
 
     /**
      * Each tile is rendered as a TILE_HEIGHT-line column and printed side by side.
-     *
+     * <p>
      * Column layout:
      *   line 0: top border
      *   line 1: letter + action type (PESCA / CIBO)
@@ -130,7 +130,7 @@ public class BoardRenderer implements GameStateRenderer {
      *   line 4: top-row draw status  (↑ usa/max ✓/✗/—)
      *   line 5: bottom-row draw status
      *   line 6: bottom border
-     *
+     * <p>
      * Status symbols: ✓ draws available, ✗ exhausted, — row not available on this tile.
      */
     private void printOfferTrack(GameStateDto dto) {

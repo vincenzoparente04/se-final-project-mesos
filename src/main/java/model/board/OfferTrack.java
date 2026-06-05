@@ -22,7 +22,6 @@ public class OfferTrack {
 
     /**
      * @implNote Find the correct tile based on the char passed by the view to the controller
-     * @return
      */
     public OfferTile getTileByLetter(char letter) {
         return tiles.stream()

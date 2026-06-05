@@ -13,8 +13,6 @@ public class EndGameBuildingEffect implements BuildingEffect {
     /**
      * @implNote The constructor receives a multiplier for each character and the correct getter to use to count the number
      * of characters
-     * @param multiplier
-     * @param getter
      */
     public EndGameBuildingEffect(int multiplier, ToIntFunction<Tribe> getter) {
         this.multiplier = multiplier;
@@ -29,7 +27,6 @@ public class EndGameBuildingEffect implements BuildingEffect {
 
     /**
      * @implNote Add to the player the number of character times the multiplier
-     * @param player
      */
     public void applyEffect(Player player) {
         player.addPrestigePoints(multiplier * getter.applyAsInt(player.getTribe()));

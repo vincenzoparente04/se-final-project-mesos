@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * <h2>Dispatch</h2>
  * Il {@code run()} estrae un {@link ClientCommand} per volta e gli fa
  * {@code cmd.accept(this)}. Il controller implementa {@link ClientCommandVisitor}
- * per discriminare in base alla famiglia ({@link gameCommand} →
+ * per discriminare in base alla famiglia ({@link GameCommand} →
  * {@link #handleCommand}, {@link LobbyCommand} → {@link #lobbyCommandVisitor},
  * {@link HeartbeatCommand} → no-op). I quattro lifecycle command interessanti
  * ({@link LeaveCommand}, {@link PlayerDisconnectedCommand},

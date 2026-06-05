@@ -30,7 +30,6 @@ public class BuildingCard extends Card {
 
     /**
      * @implNote Add the building card and the effect in the tribe of the player who picked the card.
-     * @param player
      */
     @Override
     public void registerToTribe(Player player) {
@@ -41,7 +40,6 @@ public class BuildingCard extends Card {
     /**
      * @implNote Calculate the discounted cost of the building card, applying any builder discount the
      * player may have. The cost cannot be negative.
-     * @param player
      * @return the right amount to pay for the building card
      */
     public int getDiscountedCost(Player player) {

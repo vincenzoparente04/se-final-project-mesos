@@ -14,7 +14,6 @@ public class HunterBonusForHuntEvent extends OnEventBuildingEffect {
     /**
      * @implNote Add food and prestige points depending on the number of hunters in the tribe of the owner of the building
      * card during hunt event
-     * @param player
      */
     @Override
     public void applyOnHunt(Player player) {

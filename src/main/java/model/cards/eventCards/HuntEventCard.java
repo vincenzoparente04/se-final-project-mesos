@@ -20,7 +20,6 @@ public class HuntEventCard extends EventCard {
      * @implNote For each player, add to their food the number of hunters they have and add prestige points
      * equal to the number of hunters multiplied by the era of the card (ERA_I = 1, ERA_II = 2, ERA_III = 3).
      * Calls if eventually there are buildings who affect the hunter event.
-     * @param players
      */
     @Override
     public EventResolutionDto resolve(List<Player> players) {

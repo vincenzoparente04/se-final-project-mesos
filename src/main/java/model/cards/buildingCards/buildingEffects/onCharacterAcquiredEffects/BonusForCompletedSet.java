@@ -7,7 +7,6 @@ public class BonusForCompletedSet extends OnAcquireBuildingEffect {
 
     /**
      * @implNote override registerSelf to save the already completed sets in the moment of acquiring
-     * @param player
      */
     @Override
     public void registerSelf(Player player) {
@@ -17,7 +16,6 @@ public class BonusForCompletedSet extends OnAcquireBuildingEffect {
 
     /**
      * @implNote After the drawing this method checks if the number of complete sets has increased from previous round
-     * @param player
      */
     @Override
     public void applyEffect(Player player) {

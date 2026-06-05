@@ -7,7 +7,7 @@ package shared.command.lobbyCommand;
  * - If player is in a lobby: removes them from the lobby
  * - If player is in a game (END_OF_GAME phase): removes them from the game
  * - Otherwise: sends error
- *
+ * <p>
  * Player remains connected after leaving.
  */
 public record LeaveCommand(String playerName) implements LobbyCommand {

@@ -35,7 +35,6 @@ public class DrawCardsAction implements OfferTileAction {
      * Identifies if a player can still draw from top or bottom rows.
      *
      * @param card to be drawn
-     * @param rowsManager
      * @return a boolean indicating if the card can be drawn.
      */
     @Override
@@ -57,7 +56,6 @@ public class DrawCardsAction implements OfferTileAction {
      * been already drawn.
      *
      * @param card To be drawn.
-     * @param rowsManager
      */
     @Override
     public void performDraw(Card card, RowsManager rowsManager) {

@@ -15,7 +15,6 @@ public class InventorCard extends CharacterCard {
 
     /**
      * @implNote Add an inventor to its list in the tribe of the player who picked this card.
-     * @param player
      */
     @Override
     public void registerToTribe(model.player.Player player) {

@@ -15,11 +15,11 @@ public class TribeDeck {
     // -- setup --
     /**
      * Builds the Tribe deck according to the game rules (Setup, step 3).
-     *
+     * <p>
      * Called by RowsManager.setup() which obtains the two lists from TribeCardFactory:
      *   - regularCards  -> TribeCardFactory.createAll().regularCards()
      *   - finalEvents   -> TribeCardFactory.createAll().finalEvents()
-     *
+     * <p>
      * Assembly order (top -> bottom):
      *   Era I (shuffled) | Era II (shuffled) | Era III (shuffled) | Final Events (any order)
      *
@@ -74,7 +74,6 @@ public class TribeDeck {
 
     /**
      * Draws multiple cards from the deck.
-     * @param count
      * @return a list of drawn TribeCards
      */
     public List<TribeCard> drawMultiple(int count){

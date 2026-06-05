@@ -11,7 +11,6 @@ public class ArtistBonusForCavePaintings extends OnEventBuildingEffect {
 
     /**
      * @implNote give a food bonus for each artist in player's tribe during cave painting event
-     * @param player
      */
     @Override
     public void applyOnCavePaintings(Player player) {
