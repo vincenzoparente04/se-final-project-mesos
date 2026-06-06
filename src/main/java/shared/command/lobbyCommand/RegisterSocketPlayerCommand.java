@@ -30,10 +30,7 @@ import java.util.concurrent.CompletableFuture;
  * e {@code future} non sono {@link java.io.Serializable}, ma il record nasce e
  * muore nella stessa JVM (stesso contratto di {@code PlayerReconnectedCommand}).
  */
-public record RegisterSocketPlayerCommand(String playerName,
-                                          Socket socket,
-                                          ObjectInputStream in,
-                                          ObjectOutputStream out,
+public record RegisterSocketPlayerCommand(String playerName, Socket socket, ObjectInputStream in, ObjectOutputStream out,
                                           CompletableFuture<Boolean> future) implements LobbyCommand {
 
     @Override
