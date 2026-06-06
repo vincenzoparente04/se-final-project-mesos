@@ -28,40 +28,43 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Motore della sessione di gioco. Possiede la coda dei comandi e il game
- * thread: questo thread è l'unico che muta il {@link GameModel}, per
- * costruzione.
+ * Engine for a game session. Holds the command queue and the game thread:
+ * this thread is the only one that mutates the {@link GameModel}, by
+ * construction.
  *
  * <h2>Dispatch</h2>
- * Il {@code run()} estrae un {@link ClientCommand} per volta e gli fa
- * {@code cmd.accept(this)}. Il controller implementa {@link ClientCommandVisitor}
- * per discriminare in base alla famiglia ({@link GameCommand} →
- * {@link #handleCommand}, {@link LobbyCommand} → {@link #lobbyCommandVisitor},
- * {@link HeartbeatCommand} → no-op). I quattro lifecycle command interessanti
- * ({@link LeaveCommand}, {@link PlayerDisconnectedCommand},
- * {@link PlayerReconnectedCommand}, {@link SuspensionTimeoutCommand}) sono
- * gestiti dal {@link #lobbyCommandVisitor} anonimo.
+ * The {@code run()} method takes one {@link ClientCommand} at a time and
+ * calls {@code cmd.accept(this)}. The controller implements
+ * {@link ClientCommandVisitor} to dispatch based on the command family
+ * ({@link GameCommand} → {@link #handleCommand}, {@link LobbyCommand} →
+ * {@link #lobbyCommandVisitor}, {@link HeartbeatCommand} → no-op). The four
+ * lifecycle commands of interest ({@link LeaveCommand},
+ * {@link PlayerDisconnectedCommand}, {@link PlayerReconnectedCommand},
+ * {@link SuspensionTimeoutCommand}) are handled by the anonymous
+ * {@link #lobbyCommandVisitor}.
  *
- * <h2>Sospensione e resilienza alle disconnessioni</h2>
- * Quando rimane un solo player connesso la partita entra in stato sospeso
- * (flag {@link #suspended}, scrutinato in {@link #visit(GameCommand)}). Un
- * timer di {@value #SUSPENSION_TIMEOUT_SECONDS} secondi viene schedulato sul
- * {@link #suspensionScheduler}; il task NON tocca il model direttamente,
- * impila invece un {@link SuspensionTimeoutCommand} sulla coda così che il
- * fine partita avvenga sul game thread come ogni altro evento. Se prima del
- * timeout almeno un altro player si riconnette il future viene cancellato e
- * il flag {@code suspended} torna false.
+ * <h2>Suspension and disconnection resilience</h2>
+ * When only one player remains connected the match enters a suspended state
+ * (flag {@link #suspended}, inspected in {@link #visit(GameCommand)}). A
+ * timer of {@value #SUSPENSION_TIMEOUT_SECONDS} seconds is scheduled on the
+ * {@link #suspensionScheduler}; the task does NOT touch the model directly
+ * but instead enqueues a {@link SuspensionTimeoutCommand} so that the
+ * end-of-game happens on the game thread like any other event. If at least
+ * one other player reconnects before the timeout the future is cancelled
+ * and the {@code suspended} flag is reset to false.
  *
- * <h2>Costruttori</h2>
+ * <h2>Constructors</h2>
  * <ul>
- *   <li>{@link #GameController(List)} è il costruttore di produzione: riceve
- *       i {@link PlayerEntry} di una lobby completa, costruisce il
- *       {@link GameModel}, inizializza la partita e crea il game thread
- *       (non avviato). {@link #start()} fa il wiring delle command queue sui
- *       player ed avvia il thread; {@link #shutdown()} lo ferma.</li>
- *   <li>{@link #GameController(GameModel)} è un costruttore minimale per i
- *       test: assegna il model passato, non crea thread; chi lo usa deve
- *       invocare {@code startGame()} e {@code handleCommand()} sincroni.</li>
+ *   <li>{@link #GameController(List)} is the production constructor: it
+ *       receives the {@link PlayerEntry} objects from a full lobby, builds
+ *       the {@link GameModel}, initializes the match and creates the game
+ *       thread (not started). {@link #start()} wires the players' command
+ *       queues to the controller and starts the thread; {@link #shutdown()}
+ *       stops it.</li>
+ *   <li>{@link #GameController(GameModel)} is a minimal constructor used for
+ *       tests: it assigns the provided model and does not create a thread;
+ *       callers must invoke {@code startGame()} and invoke
+ *       {@code handleCommand()} synchronously.</li>
  * </ul>
  */
 public final class GameController implements Runnable, ClientCommandVisitor {

@@ -30,7 +30,7 @@ public class BoardFactory {
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
-     * @implNote  Reads board.json and builds all board components for the given player count.
+     *   Reads board.json and builds all board components for the given player count.
      * What this method does:
      *   1. Reads the "offerTiles" array and keeps only tiles whose minPlayers <= playerCount.
      *      For each eligible tile it creates the correct OfferTileAction (TakeFoodAction or
@@ -80,7 +80,7 @@ public class BoardFactory {
     }
 
     /**
-     * @implNote  Reads the "action" object and returns the correct OfferTileAction.
+     *   Reads the "action" object and returns the correct OfferTileAction.
      */
     private static OfferTileAction buildAction(JsonObject action) {
         String type = action.get("type").getAsString();

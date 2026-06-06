@@ -18,7 +18,7 @@ public class SetupPhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote  This method is responsible for setting up the board, randomizing turn order, and distributing
+     *   This method is responsible for setting up the board, randomizing turn order, and distributing
      * starting resources to players. Once all setup tasks are complete, it transitions the game to the PlacementPhase.
      */
     @Override
@@ -31,7 +31,7 @@ public class SetupPhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote Randomizes the turn order by shuffling the list of players and placing their totems on the
+     *  Randomizes the turn order by shuffling the list of players and placing their totems on the
      * TurnOrderTile in the new order. Each player is also set to be located on the TurnOrderTile.
      */
     public void randomizeTurnOrder(List<Player> players) {
@@ -48,7 +48,7 @@ public class SetupPhase implements GamePhaseHandler {
     }
 
     /**
-     * @implNote Distributes starting resources to players based on their position in the turn order tile.
+     *  Distributes starting resources to players based on their position in the turn order tile.
      */
     private void distributeStartingResources() {
         List<Player> players = model.getBoard().getTurnOrderTile().getTurnOrder();

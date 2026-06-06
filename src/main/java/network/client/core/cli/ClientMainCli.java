@@ -229,7 +229,7 @@ public class ClientMainCli {
     // ─── Command Dispatcher ────────────────────────────────────
     
     /**
-     * @implNote This is a simple command dispatcher that parses the first word as the command and the rest as an argument.
+     *  This is a simple command dispatcher that parses the first word as the command and the rest as an argument.
      * It calls the appropriate method on the VirtualServer proxy based on the command.
      * @param proxy virtual server associated to the client
      * @param input command string took from CLI

@@ -45,7 +45,7 @@ import shared.liveness.LivenessSentinel;
  *   <li>{@link #start()} avvia il sentinel di liveness bidirezionale.</li>
  * </ol>
  *
- * @implNote The exported callback object owns an RMI listener thread that
+ *  The exported callback object owns an RMI listener thread that
  * keeps the JVM alive. {@link #close()} explicitly unexports it to allow clean process termination.
  */
 public class RmiVirtualServer implements VirtualServer {

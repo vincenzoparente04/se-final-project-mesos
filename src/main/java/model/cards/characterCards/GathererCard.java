@@ -8,7 +8,7 @@ public class GathererCard extends CharacterCard {
     }
 
     /**
-     * @implNote Add a gatherer to its list in the tribe of the player who picked this card.
+     *  Add a gatherer to its list in the tribe of the player who picked this card.
      */
     @Override
     public void registerToTribe(model.player.Player player) {

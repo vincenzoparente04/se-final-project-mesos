@@ -18,7 +18,7 @@ public class ShamanicRitualEventCard extends EventCard {
     }
 
     /**
-     * @implNote Each player counts the number of shamanic icons they have (including those from buildings).
+     *  Each player counts the number of shamanic icons they have (including those from buildings).
      * The player(s) with the most icons gain prestige points equal to 5 times the era of the card and manages eventual
      * ties. The method also considers the possible effects given by buildings.
      */

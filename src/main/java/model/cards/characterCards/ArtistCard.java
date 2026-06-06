@@ -9,7 +9,7 @@ public class ArtistCard extends CharacterCard {
     }
 
     /**
-     * @implNote Add an artist to its list in the tribe of the player who picked this card.
+     *  Add an artist to its list in the tribe of the player who picked this card.
      */
     @Override
     public void registerToTribe(Player player) {

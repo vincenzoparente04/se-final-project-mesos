@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Data Access Object (DAO) responsible for executing CRUD operations
  * related to match histories. It abstracts the SQL logic away from the main application.
- * @implNote Data Access Object (DAO) Pattern
+ *  Data Access Object (DAO) Pattern
  */
 public class MatchDAO {
     /**
@@ -86,7 +86,7 @@ public class MatchDAO {
      * @param nickname The player name.
      * @param points The score achieved by the player in this match.
      * @return The 1-based rank position of the player.
-     * @implNote This method counts how many players have an equal or higher score in the same player count mode.
+     *  This method counts how many players have an equal or higher score in the same player count mode.
      * This works because if there are two players with the same score, it takes the last one added, so the one just finished.
      */
     public int getPlayerRank(int playerCount, String nickname, int points) {

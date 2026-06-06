@@ -16,6 +16,7 @@
         <maven.surefire.version>3.2.5</maven.surefire.version>
         <jacoco.version>0.8.13</jacoco.version>
         <bytebuddy.experimental>true</bytebuddy.experimental>
+        <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
     </properties>
 
     <dependencies>
@@ -99,6 +100,29 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle.plugin.version}</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <!-- Only scan production sources, not tests -->
+                    <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                    <!-- Never fail the build – this is a coverage report, not enforcement -->
+                    <failsOnError>false</failsOnError>
+                    <failOnViolation>false</failOnViolation>
+                    <outputFile>${project.build.directory}/checkstyle-result.xml</outputFile>
+                    <!-- module-info.java uses syntax Checkstyle cannot parse -->
+                    <excludes>module-info.java</excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>checkstyle-report</id>
+                        <phase>verify</phase>
+                        <goals><goal>checkstyle</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

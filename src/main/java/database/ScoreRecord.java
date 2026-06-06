@@ -11,6 +11,6 @@ import java.time.LocalDateTime;
  * @param playerCount The total number of players who participated in the match,
  * which affects the weight of the final score.
  * @param date        The timestamp when the match concluded, used for sorting and historical records.
- * @implNote Java Record (Immutable DTO)
+ *  Java Record (Immutable DTO)
  */
 public record ScoreRecord(String nickname, int score, int playerCount, LocalDateTime date) implements Serializable {}

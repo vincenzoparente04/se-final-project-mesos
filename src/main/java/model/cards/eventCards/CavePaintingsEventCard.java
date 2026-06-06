@@ -17,7 +17,7 @@ public class CavePaintingsEventCard extends EventCard {
     }
 
     /**
-     * @implNote For each player, if they have less artists than the era of the card, they lose 2 prestige points.
+     *  For each player, if they have less artists than the era of the card, they lose 2 prestige points.
      * Otherwise, they gain prestige points equal to the number of artists multiplied by the era of the card.
      * Calls if eventually there are buildings who affect the cave paintings event.
      */

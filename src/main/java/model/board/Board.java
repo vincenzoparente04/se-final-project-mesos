@@ -33,7 +33,7 @@ public class Board {
     //}
 
     /**
-     * @implNote Find the correct tile corresponding to the char passed by the controller
+     *  Find the correct tile corresponding to the char passed by the controller
      */
     public OfferTile findTileByLetter(char letter) {
         return offerTrack.getTileByLetter(letter);

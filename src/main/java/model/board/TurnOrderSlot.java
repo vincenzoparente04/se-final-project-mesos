@@ -14,7 +14,7 @@ public class TurnOrderSlot {
     }
 
     /**
-     * @implNote last slot -> remove food or prestige
+     *  last slot -> remove food or prestige
      * for the others slot, if they have a food bonus > 0 -> add food to the player, checking if the player has the extra food on totem return building.
      */
     public void applyEffect(){

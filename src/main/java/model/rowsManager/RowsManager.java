@@ -110,7 +110,7 @@ import java.util.stream.Stream;
 
     /**
      * Solves all the events on the board. Called only by EndOfGamePhase
-     * @implNote EventResolver sorts events by era and type, moving sustenance event at the end of the list from all cards present on the board. Then resolves all the events <br>
+     *  EventResolver sorts events by era and type, moving sustenance event at the end of the list from all cards present on the board. Then resolves all the events <br>
      * <b>NOTE: </b> to create the list of all cards present on the board it puts bottomRow cards first because maybe there could be some ERA_II card
      */
     public List<EventResolutionDto> resolveAllEvents(List<Player> players){
@@ -177,7 +177,7 @@ import java.util.stream.Stream;
     }
 
     /**
-     * @implNote search the card through all 4 lists and removes it
+     *  search the card through all 4 lists and removes it
      */
     public void removeCard(int cardId) {
         Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
@@ -185,7 +185,7 @@ import java.util.stream.Stream;
     }
 
     /**
-     * @implNote merges top row and bottom row tribe cards. The returned list has bottom row cards first, then top row cards.
+     *  merges top row and bottom row tribe cards. The returned list has bottom row cards first, then top row cards.
      * @return a list of all the tribe cards present on the board, both in the top and bottom row
      */
     public List<TribeCard> getAllTribeCardsOnBoard() {

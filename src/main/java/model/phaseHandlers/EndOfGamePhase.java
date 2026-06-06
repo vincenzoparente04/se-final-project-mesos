@@ -99,14 +99,14 @@ public class EndOfGamePhase implements GamePhaseHandler {
     /**
      * Persists the match scores and computes the standings on a separate thread to avoid
      * blocking the game thread.
-     * @implNote it creates a list of {@link ScoreRecord}, one for each player, then a thread
+     * <p>it creates a list of {@link ScoreRecord}, one for each player, then a thread
      * saves the match, reads the top-20 standing and each player's rank, and caches the result
      * as a {@link GameModel.LeaderboardData} snapshot on the model via {@link GameModel#setLeaderboard}.
      * Finally it calls {@link GameModel#notifyEndGame()} which broadcasts, per view, the
      * personalised {@link shared.message.LeaderboardMessage} plus the {@link shared.message.GameOverMessage}.
      * Caching on the model (instead of sending once) lets the end-game payload be re-sent on
      * every reconnection. On error the leaderboard stays {@code null} and the game-over is sent
-     * without it.
+     * without it.</p>
      */
     private void processDatabaseAsync() {
         this.matchDAO = new MatchDAO();

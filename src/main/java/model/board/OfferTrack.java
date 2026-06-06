@@ -13,7 +13,7 @@ public class OfferTrack {
     }
 
     /**
-     * @implNote Checks if the tile is occupied, if so throws an exception. It places the totem on the tile and set its location.
+     *  Checks if the tile is occupied, if so throws an exception. It places the totem on the tile and set its location.
      */
     public void placeTotem(Player player, OfferTile offerTile) {
         offerTile.placeTotem(player);
@@ -21,7 +21,7 @@ public class OfferTrack {
     }
 
     /**
-     * @implNote Find the correct tile based on the char passed by the view to the controller
+     *  Find the correct tile based on the char passed by the view to the controller
      */
     public OfferTile getTileByLetter(char letter) {
         return tiles.stream()

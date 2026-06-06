@@ -15,7 +15,7 @@ public class InventorsPairBonus extends OnAcquireBuildingEffect {
     private Set<InventionIcon> alreadyPaired;
 
     /**
-     * @implNote Override registerSelf() to save the already paired icons in player's tribe when this building is acquired
+     *  Override registerSelf() to save the already paired icons in player's tribe when this building is acquired
      */
     @Override
     public void registerSelf(Player player) {
@@ -31,7 +31,7 @@ public class InventorsPairBonus extends OnAcquireBuildingEffect {
     }
 
     /**
-     * @implNote After each draw this method checks if a new pair has been completed, comparing the map of the previous
+     *  After each draw this method checks if a new pair has been completed, comparing the map of the previous
      * round to player's tribe
      */
     @Override

@@ -29,7 +29,7 @@ public class BuildingCard extends Card {
     public String getEffectId()      { return effectId; }
 
     /**
-     * @implNote Add the building card and the effect in the tribe of the player who picked the card.
+     *  Add the building card and the effect in the tribe of the player who picked the card.
      */
     @Override
     public void registerToTribe(Player player) {
@@ -38,7 +38,7 @@ public class BuildingCard extends Card {
     }
 
     /**
-     * @implNote Calculate the discounted cost of the building card, applying any builder discount the
+     *  Calculate the discounted cost of the building card, applying any builder discount the
      * player may have. The cost cannot be negative.
      * @return the right amount to pay for the building card
      */

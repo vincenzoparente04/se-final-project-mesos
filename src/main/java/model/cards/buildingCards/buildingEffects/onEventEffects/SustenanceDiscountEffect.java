@@ -16,7 +16,7 @@ public class SustenanceDiscountEffect extends OnEventBuildingEffect {
 
 
     /**
-     * @implNote return the food discount for every correct character card. The discount is handled by the event card
+     *  return the food discount for every correct character card. The discount is handled by the event card
      * @return int
      */
     @Override

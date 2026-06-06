@@ -26,7 +26,7 @@ import network.server.rmi.GameServerRemoteImpl;
  * - Socket server: 9999
  * - RMI registry: 1099 (standard Java RMI port)
  *
- * @implNote The {@code main} method does not return: after starting the RMI
+ *  The {@code main} method does not return: after starting the RMI
  *           registry, control enters the socket acceptor's blocking
  *           {@code accept()} loop and remains there for the lifetime of the
  *           server process.
