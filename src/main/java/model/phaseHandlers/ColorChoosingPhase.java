@@ -40,6 +40,8 @@ public class ColorChoosingPhase implements GamePhaseHandler {
     private final GameModel model;
     private Set<TotemColor> availableColors;
     private CompletableFuture<Void> timeout;
+    private final Object phaseLock = new Object();
+    private boolean isTimeoutTriggered = false;
 
     public ColorChoosingPhase(GameModel model) {
         this.model = model;
@@ -59,12 +61,17 @@ public class ColorChoosingPhase implements GamePhaseHandler {
         availableColors = EnumSet.allOf(TotemColor.class);
 
         timeout = CompletableFuture.runAsync(() -> {
-            List<Player> players = model.getPlayers().stream().filter(p -> p.getColor() == null).toList();
-            for(Player player : players) {
+            synchronized (phaseLock) {
+                if (isTimeoutTriggered) return;
+                isTimeoutTriggered = true;
+
+                List<Player> players = model.getPlayers().stream().filter(p -> p.getColor() == null).toList();
+                for (Player player : players) {
                     TotemColor randomizedChoice = availableColors.iterator().next();
                     doChooseColor(player, randomizedChoice);
                 }
-            model.notifyChange();
+                model.notifyChange();
+            }
         }, CompletableFuture.delayedExecutor(60, TimeUnit.SECONDS));
 
         model.notifyChange();
@@ -81,18 +88,20 @@ public class ColorChoosingPhase implements GamePhaseHandler {
      */
     @Override
     public void visit(ChooseColorCommand cmd) throws Exception {
-        if (timeout.isDone()) {
-            throw new IllegalStateException("Time to choose a color has already ended");
-        }
+        synchronized (phaseLock) {
+            if (isTimeoutTriggered || timeout.isDone()) {
+                throw new IllegalStateException("Time to choose a color has already ended");
+            }
 
-        Player player = model.getPlayerByName(cmd.playerName());
-        TotemColor color;
-        try {
-            color = TotemColor.valueOf(cmd.color().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid color: " + cmd.color());
+            Player player = model.getPlayerByName(cmd.playerName());
+            TotemColor color;
+            try {
+                color = TotemColor.valueOf(cmd.color().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid color: " + cmd.color());
+            }
+            doChooseColor(player, color);
         }
-        doChooseColor(player, color);
     }
 
 
