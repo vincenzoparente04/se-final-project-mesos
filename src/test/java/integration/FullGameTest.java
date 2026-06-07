@@ -16,7 +16,7 @@ import shared.command.gameCommand.PlaceTotemCommand;
 
 import java.util.List;
 
-import static model.enums.TotemColor.GREEN;
+import static model.enums.TotemColor.PURPLE;
 import static model.enums.TotemColor.RED;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,7 +64,7 @@ public class FullGameTest {
         gameController.handleCommand(new ChooseColorCommand("Bart", "GREEN"));
 
         assertEquals(homer.getColor(), RED, "homer's color should be RED");
-        assertEquals(bart.getColor(), GREEN, "bart's color should be GREEN");
+        assertEquals(bart.getColor(), PURPLE, "bart's color should be PURPLE");
 
 
 

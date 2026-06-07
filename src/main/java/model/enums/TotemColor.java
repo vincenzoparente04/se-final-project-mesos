@@ -3,7 +3,7 @@ package model.enums;
 public enum TotemColor {
     RED,
     BLUE,
-    GREEN,
+    PURPLE,
     YELLOW,
     WHITE
 }
