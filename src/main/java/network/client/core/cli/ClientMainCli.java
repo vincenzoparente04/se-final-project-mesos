@@ -174,13 +174,22 @@ public class ClientMainCli {
      * listener, reader thread and heartbeat scheduler created and started.
      */
     private static void startGame(ConnectionConfig config) throws Exception {
-        System.out.println("Connecting via " + config.transport() + " to " + config.host() + ":" + config.port() + "...");
-        VirtualServer virtualServer = VirtualServerFactory.connect(
-            config.transport(),
-            config.host(),
-            config.port()
-        );
-        System.out.println("✓ Connected!\n");
+        VirtualServer virtualServer = null;
+        while (virtualServer == null) {
+            System.out.println("Connecting via " + config.transport() + " to " + config.host() + ":" + config.port() + "...");
+            try {
+                virtualServer = VirtualServerFactory.connect(
+                    config.transport(),
+                    config.host(),
+                    config.port()
+                );
+                System.out.println("✓ Connected!\n");
+            } catch (Exception e) {
+                System.out.println("✗ Connection failed: " + e.getMessage());
+                System.out.println("Please re-enter the configuration.\n");
+                config = acquireConfiguration();
+            }
+        }
 
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         GameStateRenderer renderer = new BoardRenderer();
