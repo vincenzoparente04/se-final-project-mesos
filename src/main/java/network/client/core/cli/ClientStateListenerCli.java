@@ -145,7 +145,7 @@ public class ClientStateListenerCli implements ClientStateListener {
     private static String helpForPhase(String phase) {
         if (phase == null) return "lobbies | create <n> | join <id>";
         return switch (phase) {
-            case "COLOR_CHOOSING_PHASE"  -> "color <RED|BLUE|GREEN|YELLOW|WHITE>";
+            case "COLOR_CHOOSING_PHASE"  -> "color <RED|BLUE|PURPLE|YELLOW|WHITE>";
             case "PLACEMENT"             -> "totem <LETTER>  (place your totem on a free offer tile)";
             case "ACTION"                -> "draw <cardId>   (pick from the visible rows above)";
             case "TURN_END"              -> "end             (confirm end of your turn)";

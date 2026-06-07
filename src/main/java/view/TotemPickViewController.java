@@ -25,7 +25,7 @@ import java.util.Set;
  */
 public class TotemPickViewController implements SceneController {
 
-    private static final String[] COLORS = {"RED", "BLUE", "GREEN", "YELLOW", "WHITE"};
+    private static final String[] COLORS = {"RED", "BLUE", "PURPLE", "YELLOW", "WHITE"};
 
     @FXML private StackPane rootPane;
     @FXML private HBox colorRow;

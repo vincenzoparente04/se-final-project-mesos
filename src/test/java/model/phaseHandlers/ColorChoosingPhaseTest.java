@@ -168,11 +168,11 @@ public class ColorChoosingPhaseTest {
 
         colorChoosingPhase.visit(new ChooseColorCommand("Player1", "RED"));
         colorChoosingPhase.visit(new ChooseColorCommand("Player2", "BLUE"));
-        colorChoosingPhase.visit(new ChooseColorCommand("Player3", "GREEN"));
+        colorChoosingPhase.visit(new ChooseColorCommand("Player3", "PURPLE"));
 
         verify(player1, times(1)).setColor(TotemColor.RED);
         verify(player2, times(1)).setColor(TotemColor.BLUE);
-        verify(player3, times(1)).setColor(TotemColor.GREEN);
+        verify(player3, times(1)).setColor(TotemColor.PURPLE);
     }
 
     @Test
@@ -182,7 +182,7 @@ public class ColorChoosingPhaseTest {
 
         colorChoosingPhase.visit(new ChooseColorCommand("Player1", "RED"));
         colorChoosingPhase.visit(new ChooseColorCommand("Player2", "BLUE"));
-        colorChoosingPhase.visit(new ChooseColorCommand("Player3", "GREEN"));
+        colorChoosingPhase.visit(new ChooseColorCommand("Player3", "PURPLE"));
 
         verify(gameModel, times(1)).setPhase(any(SetupPhase.class));
     }
@@ -198,7 +198,7 @@ public class ColorChoosingPhaseTest {
         colorChoosingPhase.visit(new ChooseColorCommand("Player2", "BLUE"));
         verify(gameModel, never()).setPhase(any(SetupPhase.class));
 
-        colorChoosingPhase.visit(new ChooseColorCommand("Player3", "GREEN"));
+        colorChoosingPhase.visit(new ChooseColorCommand("Player3", "PURPLE"));
         verify(gameModel, times(1)).setPhase(any(SetupPhase.class));
     }
 
@@ -209,7 +209,7 @@ public class ColorChoosingPhaseTest {
 
         colorChoosingPhase.visit(new ChooseColorCommand("Player1", "RED"));
         colorChoosingPhase.visit(new ChooseColorCommand("Player2", "BLUE"));
-        colorChoosingPhase.visit(new ChooseColorCommand("Player3", "GREEN"));
+        colorChoosingPhase.visit(new ChooseColorCommand("Player3", "PURPLE"));
 
         verify(gameModel, times(1)).setPhase(any(SetupPhase.class));
         verify(gameModel, times(4)).notifyChange();
@@ -255,7 +255,7 @@ public class ColorChoosingPhaseTest {
 
         localPhase.visit(new ChooseColorCommand("Player1", "RED"));
         localPhase.visit(new ChooseColorCommand("Player2", "BLUE"));
-        localPhase.visit(new ChooseColorCommand("Player3", "GREEN"));
+        localPhase.visit(new ChooseColorCommand("Player3", "PURPLE"));
         localPhase.visit(new ChooseColorCommand("Player4", "YELLOW"));
 
         assertThrows(IllegalArgumentException.class,

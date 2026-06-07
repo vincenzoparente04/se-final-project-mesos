@@ -61,7 +61,7 @@ public class FullGameTest {
         );
         assertTrue(errorWrongPhaseCOLOR_CHOOSING.getMessage().contains("Cannot place totem in phase COLOR_CHOOSING_PHASE"));
 
-        gameController.handleCommand(new ChooseColorCommand("Bart", "GREEN"));
+        gameController.handleCommand(new ChooseColorCommand("Bart", "PURPLE"));
 
         assertEquals(homer.getColor(), RED, "homer's color should be RED");
         assertEquals(bart.getColor(), PURPLE, "bart's color should be PURPLE");
