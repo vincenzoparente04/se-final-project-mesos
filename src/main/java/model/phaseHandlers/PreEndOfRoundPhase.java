@@ -16,7 +16,7 @@ import java.util.Optional;
  * Represents a specialized transitional phase preceding the end of a round,
  * dedicated exclusively to resolving the "extra draw" bonus mechanic.
  *
- * <p>This handler dynamically evaluates the game state to determine if any player
+ * This handler dynamically evaluates the game state to determine if any player
  * is eligible for a bonus action. Its lifecycle and responsibilities include:
  * <ol>
  * <li><b>Evaluation:</b> Upon entry, it identifies if a player has the extra draw
@@ -31,7 +31,6 @@ import java.util.Optional;
  * network disconnection, the state machine guarantees a safe transition to the
  * next phase.</li>
  * </ol>
- * </p>
  *
  * @see GamePhaseHandler
  * @see model.board.OfferTileAction.DrawCardsAction

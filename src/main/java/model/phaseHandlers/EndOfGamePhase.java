@@ -26,7 +26,6 @@ import java.util.Map;
  * final prestige points (incorporating character types and building effects), and
  * determining the winner(s) using a food-based tie-breaking mechanism if necessary.
  * </p>
- * <p>
  * The behavior of this phase adapts dynamically based on its initialization state:
  * <ul>
  * <li><b>Standard Termination:</b> Processes full end-game scoring, broadcasts
@@ -37,7 +36,6 @@ import java.util.Map;
  * operations, immediate broadcasting a clean game-over status with empty scores
  * to ensure proper client-side cleanup.</li>
  * </ul>
- * </p>
  * @see GamePhaseHandler
  * @see database.MatchDAO
  * @see shared.dto.event.EndGameScoringDto
@@ -163,14 +161,12 @@ public class EndOfGamePhase implements GamePhaseHandler {
 
     /**
      * Aggregates and calculates the final prestige points for every active player.
-     * <p>
      * The calculation strategy incorporates disparate sources:
      * <ul>
      * <li>Character Card collections (Builders, Artists, Inventors).</li>
      * <li>Intrinsic points printed on acquired Building Cards.</li>
      * <li>Dynamic modifiers from active {@link EndGameBuildingEffect} instances.</li>
      * </ul>
-     * </p>
      * <p>
      * The results are structured into an {@link EndGameScoringDto} to provide the front-end
      * with a transparent, per-category breakdown of how the final scores were achieved.

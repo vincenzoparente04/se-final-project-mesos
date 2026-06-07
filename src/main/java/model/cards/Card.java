@@ -35,7 +35,7 @@ public abstract class Card {
     }
 
     /**
-     * @implSpec  This method is called when a player acquires a card, add the card to
+     * This method is called when a player acquires a card, add the card to
      * the player's tribe (specifically in the correct list of its type) and apply any effects it has.
      */
     public abstract void registerToTribe(Player player);

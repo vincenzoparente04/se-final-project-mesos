@@ -32,7 +32,7 @@ public class BoardFactory {
     /**
      *   Reads board.json and builds all board components for the given player count.
      * What this method does:
-     *   1. Reads the "offerTiles" array and keeps only tiles whose minPlayers <= playerCount.
+     *   1. Reads the "offerTiles" array and keeps only tiles whose minPlayers equal or less than playerCount.
      *      For each eligible tile it creates the correct OfferTileAction (TakeFoodAction or
      *      DrawCardsAction) by reading the nested "action" object, then builds the OfferTile.
      *   2. Reads the "turnOrderSlots" array and finds the group whose minPlayers == playerCount

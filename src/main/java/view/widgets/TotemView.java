@@ -10,7 +10,7 @@ import java.io.InputStream;
 
 /**
  * Visual marker for a player's totem.
- * Tries to load /images/Totems/Totem_<COLOR>.png; if missing, renders a coloured circle
+ * Tries to load /images/Totems/Totem_COLOR.png; if missing, renders a coloured circle
  * so the UI keeps working before the assets are added.
  */
 public class TotemView extends StackPane {

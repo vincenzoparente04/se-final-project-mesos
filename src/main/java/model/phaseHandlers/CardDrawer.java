@@ -14,7 +14,7 @@ import model.rowsManager.RowsManager;
 /**
  * Executes the acquisition of a card from the board, managing the transfer
  * of the card to the player's tribe and the application of associated costs and effects.
- * * <p>Acting as a state-mutating <em>Visitor</em>, this class leverages double-dispatch
+ * Acting as a state-mutating <em>Visitor</em>, this class leverages double-dispatch
  * to process different card types safely without explicit casting:
  * <ul>
  * <li><b>Character Cards:</b> Removed from the board, registered to the player's tribe,
@@ -24,7 +24,6 @@ import model.rowsManager.RowsManager;
  * <li><b>Event Cards:</b> Throws an {@link IllegalStateException} since event cards
  * are resolved automatically by the game engine and cannot be manually drawn.</li>
  * </ul>
- * </p>
  * <p>This handler gracefully adapts to contexts where a standard {@code OfferTileAction}
  * is absent (e.g., during the end-of-round bonus draft), applying the base acquisition
  * logic without tile-specific modifiers.

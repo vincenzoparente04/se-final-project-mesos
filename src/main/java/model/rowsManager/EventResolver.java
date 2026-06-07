@@ -21,13 +21,11 @@ import java.util.List;
  * to enforce the strict game rule that all standard events must be resolved
  * before any Sustenance events.
  * </p>
- * <p>
  * <b>Usage Lifecycle:</b>
  * <ol>
  * <li>Call {@link #sortEvents(List)} to populate and order the internal resolution queues.</li>
  * <li>Call {@link #resolve(List)} to trigger the effects and generate the data transfer objects (DTOs) for the clients.</li>
  * </ol>
- * </p>
  * @see model.rowsManager.CardVisitor
  * @see model.cards.eventCards.EventCard
  * @see model.cards.eventCards.SustenanceEventCard

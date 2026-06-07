@@ -21,14 +21,13 @@ import java.util.List;
  * {@link model.board.OfferTileAction.OfferTileAction} and their available resources
  * (e.g., food).
  * </p>
- * <p>The validation follows these core rules:
+ * The validation follows these core rules:
  * <ul>
  * <li><b>Character Cards:</b> Valid if permitted by the current tile action.</li>
  * <li><b>Building Cards:</b> Valid only if the player possesses sufficient food
  * to cover the card's cost and is permitred by the tile action.</li>
  * <li><b>Event Cards:</b> Strictly invalid, as they cannot be drawn by players.</li>
  * </ul>
- * </p>
  * <p>For performance optimization, the checking mechanisms ({@code checkLegalMoves}
  * and {@code checkForcedMoves}) utilize short-circuit evaluation, halting iteration
  * as soon as the first legal move is identified.

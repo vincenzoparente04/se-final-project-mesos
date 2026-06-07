@@ -69,8 +69,6 @@ public class GameModel {
         this(List.of());
     }
 
-
-    /** @apiNote @CalledOnGameThreadOnly */
     public void startGame(List<String> playerNames) {
         this.board = new Board(playerNames.size());
         createPlayers(playerNames);
@@ -84,7 +82,6 @@ public class GameModel {
         }
     }
 
-    /** @apiNote @CalledOnGameThreadOnly */
     public void setPhase(GamePhaseHandler phase) {
         this.currentPhaseHandler = phase;
         phase.onEnter();
@@ -95,15 +92,12 @@ public class GameModel {
      * phase handler once and visits the command on it: the handler decides,
      * via polymorphic dispatch on the command type, whether and how to
      * execute it.
-     *
-     * @apiNote @CalledOnGameThreadOnly
      */
     public void handleCommand(GameCommand cmd) throws Exception {
         GamePhaseHandler handler = this.currentPhaseHandler;
         cmd.accept(handler);
     }
 
-    /** @apiNote @CalledOnGameThreadOnly */
     public void notifyChange() {
         GameStateDto dto = GameStateDtoBuilder.build(this);
         for (VirtualView v : new ArrayList<>(views)) {
@@ -141,8 +135,6 @@ public class GameModel {
     /**
      * Replace the view associated with {@code playerName}. If no view exists
      * for that player the new view is simply appended.
-     *
-     * @apiNote @CalledOnGameThreadOnly
      */
     public void swapView(String playerName, VirtualView newView) {
         views.removeIf(v -> v.getPlayerName().equals(playerName));
@@ -151,8 +143,6 @@ public class GameModel {
 
     /**
      * Remove the view associated with {@code playerName}, if present.
-     *
-     * @apiNote @CalledOnGameThreadOnly
      */
     public void removeView(String playerName) {
         views.removeIf(v -> v.getPlayerName().equals(playerName));
@@ -166,7 +156,6 @@ public class GameModel {
         return List.copyOf(views);
     }
 
-    /** @apiNote @CalledOnGameThreadOnly */
     public void incrementRound() {
         currentRound++;
     }
@@ -180,19 +169,15 @@ public class GameModel {
      * Used by the controller when the suspension timeout proclaims a winner
      * or when the last connected player drops during a suspension and the
      * game has to end early.
-     *
-     * @apiNote @CalledOnGameThreadOnly
      */
     public void setGameOver() {
         this.currentRound = MAX_ROUNDS + 1;
     }
 
-    /** @apiNote @CalledOnGameThreadOnly */
     public void setWinners(List<String> winnerNames) {
         this.winners = winnerNames;
     }
 
-    /** @apiNote @CalledOnGameThreadOnly */
     public void setEndGameScoring(EndGameScoringDto scoring) {
         this.endGameScoring = scoring;
     }
