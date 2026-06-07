@@ -2,6 +2,7 @@ package network.client.core;
 
 import network.client.rmi.RmiVirtualServer;
 import network.client.socket.SocketVirtualServer;
+import network.server.NetworkUtil;
 
 /**
  * Opens the transport layer for the chosen {@link ConnectionProtocol} and
@@ -32,7 +33,18 @@ public class VirtualServerFactory {
                                         int port) throws Exception {
         return switch (transport) {
             case SOCKET -> new SocketVirtualServer(host, port);
-            case RMI    -> new RmiVirtualServer(host, port);
+            case RMI    -> {
+                // Re-detect the local LAN IP on every connect attempt: if the JVM
+                // started with the network down, java.rmi.server.hostname was
+                // frozen to 127.0.0.1 in ClientMain.main, which would make the
+                // ClientCallbackImpl stub unreachable from the server. Refresh it
+                // here so a retry after the network comes up exports stubs with
+                // the correct address.
+                String localHost = NetworkUtil.detectLocalIPv4();
+                System.setProperty("java.rmi.server.hostname", localHost);
+                System.out.println("RMI export hostname: " + localHost);
+                yield new RmiVirtualServer(host, port);
+            }
         };
     }
 }
