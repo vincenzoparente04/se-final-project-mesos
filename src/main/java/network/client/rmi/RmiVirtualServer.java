@@ -11,6 +11,7 @@ import shared.command.lobbyCommand.HeartbeatCommand;
 import shared.command.lobbyCommand.LeaveCommand;
 import shared.command.ClientCommand;
 
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -83,10 +84,16 @@ public class RmiVirtualServer implements VirtualServer {
 
     public RmiVirtualServer(String host, int rmiPort) throws Exception {
         this.host = host;
-        Registry registry = LocateRegistry.getRegistry(host, rmiPort);
-        this.serverStub = (GameServerRemote) registry.lookup(SERVICE_NAME);
-
-        // TODO
+        try {
+            Registry registry = LocateRegistry.getRegistry(host, rmiPort);
+            this.serverStub = (GameServerRemote) registry.lookup(SERVICE_NAME);
+        } catch (NotBoundException e) {
+            throw new Exception("RMI service '" + SERVICE_NAME
+                    + "' not bound on " + host + ":" + rmiPort, e);
+        } catch (RemoteException e) {
+            throw new Exception("Cannot reach RMI registry at " + host + ":" + rmiPort
+                    + " (" + e.getMessage() + ")", e);
+        }
     }
 
     @Override

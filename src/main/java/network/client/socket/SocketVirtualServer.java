@@ -65,11 +65,21 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
     private boolean connectionResponse;
 
     public SocketVirtualServer(String host, int port) throws IOException {
-        this.socket = new Socket(host, port);
-        ObjectOutputStream objectOut = new ObjectOutputStream(socket.getOutputStream());
-        objectOut.flush();
-        this.out = objectOut;
-        this.in = new ObjectInputStream(socket.getInputStream());
+        Socket s = null;
+        try {
+            s = new Socket(host, port);
+            ObjectOutputStream objectOut = new ObjectOutputStream(s.getOutputStream());
+            objectOut.flush();
+            this.socket = s;
+            this.out = objectOut;
+            this.in = new ObjectInputStream(s.getInputStream());
+        } catch (IOException e) {
+            if (s != null) {
+                try { s.close(); } catch (IOException ignored) {}
+            }
+            throw new IOException("Cannot connect to socket server at "
+                    + host + ":" + port + " (" + e.getMessage() + ")", e);
+        }
     }
 
     @Override
