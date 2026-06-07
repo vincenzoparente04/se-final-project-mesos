@@ -11,10 +11,10 @@ import java.util.UUID;
  * up.
  *
  * <h2>Thread safety</h2>
- * This class is <strong>not</strong> internally synchronized. All mutators
- * must be invoked while holding {@code LobbyManager.this}'s monitor — i.e.
- * from within a {@code synchronized} method of {@link LobbyManager}, which is
- * the sole owner of every {@code Lobby} instance.
+ * This class is <strong>not</strong> internally synchronized and needs no locks:
+ * {@link LobbyManager} is the sole owner of every {@code Lobby} instance and
+ * mutates it only on its single {@code lobby-thread}, so all access is already
+ * serialized by that actor.
  */
 public class Lobby {
 

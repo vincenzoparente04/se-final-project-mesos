@@ -50,14 +50,15 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Player registration is the only synchronous path and uses an "ask" pattern:
  * {@link #submitSocketRegistration} / {@link #submitRmiRegistration} enqueue a
  * registration command and return a {@link CompletableFuture} that the
- * lobby-thread completes with the verdict (accept/reject). Because checking and
- * reserving a name is a single O(1) action on the lobby-thread, two concurrent
- * attempts on the same name can never both win — this removes the
- * time-of-check/time-of-use race on duplicate names by construction.
- *
- * TODO: secondo me quanto affermato nel paragrafo sopra è falso. Due comandi possono essere impilati contemporaneamente
- * ma la condizione sul nome viene verificata in momenti distinti dal lobby thread e tutti i casi di ghost entry sono
- * gestite da eccezioni che impilano comandi di disconnessione; il paragrafo sopra difende nel modo sbagliato l'architettura
+ * lobby-thread completes with the verdict (accept/reject). The duplicate-name
+ * check ({@link #nameAlreadyTaken}) and the reservation
+ * ({@code connectedPlayers.put}) run back-to-back on the lobby-thread with no
+ * blocking call between them, and each command is handled
+ * run-to-completion before the next is dequeued: the queue's serialization
+ * <em>is</em> the mutual exclusion. A second attempt on the same name therefore
+ * always observes the first one's reservation, so two attempts can never both
+ * win.
+ * <p>
  *
  * <h2>No blocking work on the lobby-thread</h2>
  * Blocking socket-handshake I/O lives in {@link ConnectionHandshaker}, on the
@@ -122,7 +123,8 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
      * Enqueues a command for the lobby-thread (fire-and-forget). Used by the
      * network dispatchers to forward menu commands (list/create/join/leave). A
      * pending interrupt is preserved rather than propagated.
-     * TODO: aggiungi @param
+     *
+     * @param cmd the command to enqueue for the lobby-thread to process
      */
     public void submit(LobbyCommand cmd) {
         try {
@@ -137,7 +139,8 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
      * per-player liveness sentinels. It only enqueues a
      * {@link LobbyDisconnectCommand}; the teardown runs later on the lobby-thread
      * ({@link #visit(LobbyDisconnectCommand)}).
-     * TODO: aggiungi @param
+     *
+     * @param playerName the name of the player whose connection dropped
      */
     public void onDisconnect(String playerName) {
         submit(new LobbyDisconnectCommand(playerName));
@@ -165,11 +168,15 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
 
     /**
      * Submits an already-built RMI {@link PlayerEntry} for registration ("ask"
-     * pattern). Unlike the socket path there is no view to build and no reader
-     * thread to start — RMI dispatch is driven by the runtime — so the lobby-thread
-     * only registers the entry (or rejects a duplicate name).
-     *
-     * TODO: spiega meglio perché è piu snello del socket
+     * pattern). This path is leaner than the socket one: the entry and its
+     * {@code RmiVirtualView} are already constructed by the caller, so the
+     * lobby-thread has no view/handler to build and no {@code client-<name>} reader
+     * thread to start (RMI dispatch is driven by the runtime, not by a reader loop).
+     * There is also no blocking handshake I/O to off-load to the
+     * {@code shutdown-executor}, and the {@code RmiVirtualView} allocates no network
+     * resources until {@code activateLiveness()}, so a rejected name leaks nothing.
+     * The lobby-thread's work thus collapses to the name check plus a single map
+     * {@code put} (or a reject).
      *
      * @param entry the RMI player entry created by {@code GameServerRemoteImpl}
      * @return a future completed with {@code true} (accepted) or {@code false}
@@ -216,7 +223,9 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
      * name allocates no instances. The future is
      * <strong>always</strong> completed — even if construction throws — so the
      * handshaker never blocks until its timeout.
-     * TODO aggiungi @param
+     *
+     * @param cmd the socket-registration request: requested name, the live socket
+     *            and its streams, and the verdict future to complete
      */
     @Override
     public void visit(RegisterSocketPlayerCommand cmd) {
@@ -248,7 +257,9 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
      * already built and RMI has no reader thread, so this only registers the player
      * (or rejects a duplicate name) and completes the future. As above, the future
      * is always completed.
-     * TODO aggiungi @param
+     *
+     * @param cmd the RMI-registration request: requested name, the prebuilt
+     *            {@link PlayerEntry}, and the verdict future to complete
      */
     @Override
     public void visit(RegisterRmiPlayerCommand cmd) {
@@ -270,7 +281,9 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
      * in an active game) it wires the player's game queue and enqueues a
      * {@link PlayerReconnectedCommand}; on a new connection it sends the player's
      * lobby list. Runs only on the lobby-thread.
-     * TODO aggiungi @param
+     *
+     * @param playerName the player's server-wide identity (the map key)
+     * @param entry the freshly built entry to register under {@code playerName}
      */
     private void registerPlayer(String playerName, PlayerEntry entry) {
         connectedPlayers.put(playerName, entry);
@@ -323,7 +336,6 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
         Lobby lobby = new Lobby(cmd.playerName() + "'s lobby", cmd.playersNumber());
         lobbies.put(lobby.getId(), lobby);
         lobby.addPlayer(entry);
-        startIfFull(lobby); // TODO: forse inutile, essendo stata appena creata :()
         broadcastLobbyListToBrowsers();
     }
 
@@ -382,7 +394,8 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
             enqueue(controller.getQueue(), cmd);
             activeGames.remove(playerName);
 
-            // TODO: consider exposing this "any connected player left in the session?" check as a GameController helper.
+            // Note: this "any connected player left in the session?" scan reads LobbyManager
+            // state (activeGames + connectedPlayers), not GameController state;
             boolean stillHasConnected = activeGames.entrySet().stream()
                     .filter(e -> e.getValue() == controller)
                     .anyMatch(e -> connectedPlayers.containsKey(e.getKey()));
@@ -432,22 +445,7 @@ public class LobbyManager implements Runnable, LobbyCommandVisitor {
             shutdownExecutor.submit(view::close);
         }
 
-        // TODO: this lobby removal duplicates isPlayerInLobby()/handleLeaveFromLobby(); consider reusing them.
-        Lobby hostingLobby = lobbies.values().stream()
-                .filter(l -> l.containsPlayer(playerName))
-                .findFirst()
-                .orElse(null);
-
-        if (hostingLobby == null) {
-            // player was only browsing → nothing to clean up lobby-side
-            return;
-        }
-        hostingLobby.removePlayerByName(playerName);
-        if (hostingLobby.isEmpty()) {
-            lobbies.remove(hostingLobby.getId());
-        }
-
-        broadcastLobbyListToBrowsers();
+        handleLeaveFromLobby(playerName);
     }
 
     // ─── Game start ───────────────────────────────────────────────────────
