@@ -4,6 +4,5 @@ public enum EventType {
     HUNT,
     SHAMANIC_RITUAL,
     CAVE_PAINTINGS,
-    SUSTENANCE,
-    NASCONDINO
+    SUSTENANCE
 }
