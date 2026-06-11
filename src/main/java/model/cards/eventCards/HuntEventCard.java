@@ -17,9 +17,12 @@ public class HuntEventCard extends EventCard {
     }
 
     /**
-     *  For each player, add to their food the number of hunters they have and add prestige points
-     * equal to the number of hunters multiplied by the era of the card (ERA_I = 1, ERA_II = 2, ERA_III = 3).
-     * Calls if eventually there are buildings who affect the hunter event.
+     * For each player, adds food and prestige equal to their hunter count scaled
+     * by the era index (1 for ERA_I, 2 for ERA_II, 3 for ERA_III). Then applies
+     * any active building effects via {@code applyOnHunt}.
+     *
+     * @param players the list of active players
+     * @return an {@link EventResolutionDto} summarising the per-player outcome
      */
     @Override
     public EventResolutionDto resolve(List<Player> players) {

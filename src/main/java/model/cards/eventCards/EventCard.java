@@ -17,11 +17,13 @@ public abstract class EventCard extends TribeCard {
     public void registerToTribe(Player player) { return; }
 
     /**
-     * Applies the event side-effects on the given players and returns a
-     * structured snapshot of what happened (per-player food/prestige before
-     * and after, plus a server-formatted {@code details} string explaining
-     * the calculation). The {@code EndOfRoundPhase} broadcasts one
+     * Applies the event side-effects on all players and returns a structured
+     * snapshot of what happened (per-player food/prestige deltas plus a
+     * server-formatted details string). {@code EndOfRoundPhase} broadcasts one
      * {@code EventResolvedMessage} per returned DTO.
+     *
+     * @param players the list of active players
+     * @return an {@link EventResolutionDto} summarising the per-player outcome
      */
     public abstract EventResolutionDto resolve(List<Player> players);
 

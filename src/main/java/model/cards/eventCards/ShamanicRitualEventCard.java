@@ -18,14 +18,19 @@ public class ShamanicRitualEventCard extends EventCard {
     }
 
     /**
-     *  Each player counts the number of shamanic icons they have (including those from buildings).
-     * The player(s) with the most icons gain prestige points equal to 5 times the era of the card and manages eventual
-     * ties. The method also considers the possible effects given by buildings.
+     * Each player's shamanic icon count is tallied, including bonuses from buildings.
+     * The player(s) with the most icons gain prestige equal to 5 times the era index;
+     * those with the fewest lose a scaled amount unless they hold shamanic immunity.
+     * Building effects that double the prestige reward are applied before awarding points.
+     * Ties at majority or minority are handled correctly.
+     *
+     * @param players the list of active players
+     * @return an {@link EventResolutionDto} summarising the per-player outcome
      */
     public EventResolutionDto resolve(List<Player> players) {
         int eraIndex = this.getEra().ordinal() + 1;
 
-        // 1. calcola icone con bonus building
+        // 1. calculates icons considering building cards
         Map<Player, Integer> iconCounts = new HashMap<>();
         Map<Player, Integer> prestigeBeforeMap = new HashMap<>();
         Map<Player, Integer> foodBeforeMap = new HashMap<>();
@@ -39,15 +44,15 @@ public class ShamanicRitualEventCard extends EventCard {
             foodBeforeMap.put(p, p.getFood());
         }
 
-        // 2. determina maggioranza e minoranza
+        // 2. finds max and min
         int max = Collections.max(iconCounts.values());
         int min = Collections.min(iconCounts.values());
 
-        // 3. funzioni ricavate dai valori delle carte
+        // 3. functions found in the cards
         int gain = eraIndex * 5;
         int loss = 3 + (2 * (eraIndex - 1));
 
-        // 4. assegna punti al massimo
+        // 4. gives points to who has max
         players.stream()
                 .filter(p -> iconCounts.get(p) == max)
                 .forEach(p -> {
@@ -58,13 +63,13 @@ public class ShamanicRitualEventCard extends EventCard {
                     p.addPrestigePoints(reward);
                 });
 
-        // 5. rimuovi punti al minimo (se diverso dal massimo)
+        // 5. removes from who has minimum (if not same)
         players.stream()
                 .filter(p -> iconCounts.get(p) == min)
                 .filter(p -> !p.hasShamanicImmunity())
                 .forEach(p -> p.removePrestigePoints(loss));
 
-        // 6. costruisci i delta per il client
+        // 6. builds deltas to be shown at the clients
         List<PlayerEventDeltaDto> deltas = new ArrayList<>();
         for (Player p : players) {
             int icons = iconCounts.get(p);

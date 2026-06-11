@@ -19,12 +19,15 @@ public class SustenanceEventCard extends EventCard {
 
 
     /**
-     * Resolves the sustenance event for all players in the game.
-     * * @param players The list of players participating in the event.
-     *  The method iterates over the players, calculating the food requirement
-     * as the difference between the total character count and the gatherer discounts.
-     * It then delegates the penalty management to the {@code removeFood} method
-     * of the {@code Player} class, using the current era as the penalty multiplier.
+     * Each player must feed their entire tribe. The food requirement equals the
+     * total character count minus gatherer discounts and any building-provided
+     * reductions. Shortfalls are passed to
+     * {@link model.player.Player#removeFoodWithPrestigePenalty(int, int)},
+     * which drains food first and converts any remaining deficit to prestige
+     * losses scaled by the era index.
+     *
+     * @param players the list of active players
+     * @return an {@link EventResolutionDto} summarising the per-player outcome
      */
     @Override
     public EventResolutionDto resolve(List<Player> players) {

@@ -17,9 +17,13 @@ public class CavePaintingsEventCard extends EventCard {
     }
 
     /**
-     *  For each player, if they have less artists than the era of the card, they lose 2 prestige points.
-     * Otherwise, they gain prestige points equal to the number of artists multiplied by the era of the card.
-     * Calls if eventually there are buildings who affect the cave paintings event.
+     * For each player, if their artist count is below the era index they lose
+     * 2 prestige points; otherwise they gain prestige equal to artists times the
+     * era index. Then applies any active building effects via
+     * {@code applyOnCavePaintings}.
+     *
+     * @param players the list of active players
+     * @return an {@link EventResolutionDto} summarising the per-player outcome
      */
     @Override
     public EventResolutionDto resolve(List<Player> players) {
