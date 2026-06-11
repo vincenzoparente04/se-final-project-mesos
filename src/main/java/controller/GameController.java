@@ -110,6 +110,12 @@ public final class GameController implements Runnable, ClientCommandVisitor {
         this.gameThread.setDaemon(true);
     }
 
+    /**
+     * Delegates to {@link GameModel#startGame(List)}.
+     * Intended for test use, where the production constructor is bypassed.
+     *
+     * @param playerNames ordered list of player names
+     */
     public void startGame(List<String> playerNames) {
         model.startGame(playerNames);
     }
@@ -170,6 +176,13 @@ public final class GameController implements Runnable, ClientCommandVisitor {
 
     // ─── Game thread loop ────────────────────────────────────────────────
 
+    /**
+     * Main game-thread loop. Blocks on {@link #queue} and dispatches each
+     * dequeued command via {@code cmd.accept(this)}. Unexpected handler
+     * exceptions are caught and logged so they never kill the thread.
+     * Exits cleanly when interrupted or when {@link #running} is set to
+     * {@code false} by {@link #shutdown()}.
+     */
     @Override
     public void run() {
         while (running) {
@@ -190,6 +203,15 @@ public final class GameController implements Runnable, ClientCommandVisitor {
 
     // ─── ClientCommandVisitor: famiglia → handler giusto ─────────────────
 
+    /**
+     * Entry point for in-game commands. Rejects the command with an error if
+     * the match is {@link #suspended} (only one player connected). Silently
+     * drops the command if the current-turn player is disconnected. Otherwise
+     * delegates to {@link #handleCommand(GameCommand)}, routing any exception
+     * back to the sender as an error message.
+     *
+     * @param cmd the game command to dispatch
+     */
     @Override
     public void visit(GameCommand cmd) {
         if (suspended) {
@@ -211,6 +233,12 @@ public final class GameController implements Runnable, ClientCommandVisitor {
         }
     }
 
+    /**
+     * Forwards lifecycle commands to the internal {@link #lobbyCommandVisitor}.
+     *
+     * @param cmd the lobby command to handle
+     * @throws Exception if the underlying visitor throws
+     */
     @Override
     public void visit(LobbyCommand cmd) throws Exception {
         cmd.accept(lobbyCommandVisitor);
@@ -237,7 +265,21 @@ public final class GameController implements Runnable, ClientCommandVisitor {
 
     // ─── LobbyCommandVisitor anonimo: solo i 4 lifecycle che ci interessano
 
+    /**
+     * Handles the four lifecycle events ({@link LeaveCommand},
+     * {@link PlayerDisconnectedCommand}, {@link PlayerReconnectedCommand},
+     * {@link SuspensionTimeoutCommand}) forwarded from the lobby layer.
+     * All methods run on the game thread.
+     */
     private final LobbyCommandVisitor lobbyCommandVisitor = new LobbyCommandVisitor() {
+
+        /**
+         * Handles a player voluntarily leaving an already-finished match.
+         * Marks the player as disconnected, removes their view, and notifies
+         * the remaining connected players.
+         *
+         * @param cmd the leave command carrying the departing player's name
+         */
         @Override
         public void visit(LeaveCommand cmd) {
             if (!model.isGameOver()) return;
@@ -252,6 +294,22 @@ public final class GameController implements Runnable, ClientCommandVisitor {
             }
         }
 
+        /**
+         * Reacts to an unintentional player disconnection.
+         * <p>
+         * Marks the player as disconnected, removes their view, and notifies
+         * the other players. If the disconnected player holds the current turn,
+         * it is skipped via {@link GamePhaseHandler#skipCurrentPlayerTurn()}.
+         * <p>
+         * When only one player remains connected and the match is not yet
+         * suspended, sets {@link #suspended} to {@code true}, broadcasts the
+         * suspension notice, and arms the
+         * {@value #SUSPENSION_TIMEOUT_SECONDS}-second forfeit timer.
+         * If no players at all remain connected, cancels any pending timer and
+         * forces game-over immediately via {@link EndOfGamePhase}.
+         *
+         * @param cmd the command carrying the disconnected player's name
+         */
         @Override
         public void visit(PlayerDisconnectedCommand cmd) {
             Player p;
@@ -297,6 +355,20 @@ public final class GameController implements Runnable, ClientCommandVisitor {
             }
         }
 
+        /**
+         * Reacts to a player reconnecting to a suspended or ongoing match.
+         * <p>
+         * Swaps the player's view with the new one and marks them as connected.
+         * If at least two players are now connected and the match was suspended,
+         * cancels the forfeit timer, clears {@link #suspended}, and broadcasts
+         * a {@code GAME_RESUMED} notice.
+         * <p>
+         * Always pushes the full model state to the reconnecting client.
+         * If the match is already over, re-sends the end-game payload so the
+         * client can rebuild the final screen.
+         *
+         * @param cmd the command carrying the reconnecting player's name and their new view
+         */
         @Override
         public void visit(PlayerReconnectedCommand cmd) {
             try {
@@ -323,6 +395,16 @@ public final class GameController implements Runnable, ClientCommandVisitor {
             }
         }
 
+        /**
+         * Fired by the suspension scheduler when the reconnection window expires.
+         * <p>
+         * Guards against a race where suspension was already cancelled (a reconnect
+         * arrived while the command was still in the queue). If the match is still
+         * suspended, determines the last connected player as the forfeit winner and
+         * transitions to {@link EndOfGamePhase}.
+         *
+         * @param cmd the timeout command (carries no payload)
+         */
         @Override
         public void visit(SuspensionTimeoutCommand cmd) {
             // Guard: il reconnect potrebbe aver cancellato la sospensione
@@ -346,16 +428,34 @@ public final class GameController implements Runnable, ClientCommandVisitor {
 
     // ─── Helpers ─────────────────────────────────────────────────────────
 
+    /**
+     * Looks up the {@link VirtualView} associated with the given player name.
+     *
+     * @param playerName the player whose view to look up
+     * @return an {@link Optional} containing the view, or empty if not found
+     */
     private Optional<VirtualView> findView(String playerName) {
         return model.getViews().stream()
                 .filter(v -> v.getPlayerName().equals(playerName))
                 .findFirst();
     }
 
+    /**
+     * Returns the number of currently connected players.
+     *
+     * @return count of players whose {@link Player#isConnected()} is {@code true}
+     */
     private long countConnected() {
         return model.getPlayers().stream().filter(Player::isConnected).count();
     }
 
+    /**
+     * Enqueues a {@link LobbyCommand} onto the game queue from outside the
+     * game thread (typically the suspension scheduler). Restores the interrupt
+     * flag if the put is interrupted.
+     *
+     * @param cmd the command to enqueue
+     */
     private void enqueueSelf(LobbyCommand cmd) {
         try {
             queue.put(cmd);
@@ -364,6 +464,10 @@ public final class GameController implements Runnable, ClientCommandVisitor {
         }
     }
 
+    /**
+     * Cancels the pending suspension timeout future, if any, and resets the
+     * reference to {@code null}.
+     */
     private void cancelSuspensionTimer() {
         if (suspensionTimeoutFuture != null) {
             suspensionTimeoutFuture.cancel(false);
