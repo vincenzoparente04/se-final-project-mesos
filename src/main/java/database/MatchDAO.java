@@ -44,10 +44,15 @@ public class MatchDAO {
     }
 
     /**
-     * Retrieves the top scores for a specific player count mode.
-     * * @param playerCount The match mode (number of players).
-     * @param limit The maximum number of rows to retrieve (e.g., 10 for Top 10).
-     * @return A sorted {@link List} of {@link ScoreRecord} objects.
+     * Retrieves the top scoring players for a specific match mode (player count).
+     * 
+     * Queries the database for the highest-scoring matches in a given player count category
+     * and returns them sorted in descending order by score.
+     *
+     * @param playerCount the match mode (number of players) to filter by
+     * @param limit the maximum number of records to retrieve (e.g., 10 for Top 10)
+     * @return a sorted {@link List} of {@link ScoreRecord} objects ordered by descending score,
+     *         or an empty list if no records are found
      */
     public List<ScoreRecord> getTopScores(int playerCount, int limit) {
         List<ScoreRecord> leaderboard = new ArrayList<>();
@@ -56,7 +61,6 @@ public class MatchDAO {
                      "WHERE player_count = ? " +
                      "ORDER BY score DESC " +
                      "LIMIT ? ";
-
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
