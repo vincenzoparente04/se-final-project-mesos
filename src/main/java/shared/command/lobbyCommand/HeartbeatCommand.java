@@ -4,15 +4,14 @@ import shared.command.ClientCommand;
 import shared.command.ClientCommandVisitor;
 
 /**
- * Heartbeat applicativo inviato periodicamente dal client al server
- * per segnalare che la connessione è ancora viva.
+ * Application-level heartbeat sent periodically by the client to the server to
+ * signal that the connection is still alive.
  * <p>
- * Il server tiene traccia dell'istante dell'ultimo heartbeat ricevuto
- * per ciascun player; un task periodico marca come disconnesso ogni
- * player il cui ultimo heartbeat sia più vecchio di una soglia
- * configurabile.
+ * The server keeps track of the timestamp of the last heartbeat received for
+ * each player; a periodic task marks as disconnected every player whose last
+ * heartbeat is older than a configurable threshold.
  *
- * @param playerName nome del player mittente
+ * @param playerName the sender player's name
  */
 public record HeartbeatCommand(String playerName) implements ClientCommand {
 

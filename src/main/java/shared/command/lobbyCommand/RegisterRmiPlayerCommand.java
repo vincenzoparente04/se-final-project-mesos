@@ -5,25 +5,30 @@ import network.server.core.PlayerEntry;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Comando server-interno di registrazione di un player RMI. Lo crea
- * {@code GameServerRemoteImpl.join(...)} e lo impila sulla coda del
- * {@code LobbyManager}, che lo processa via
- * {@link LobbyCommandVisitor#visit(RegisterRmiPlayerCommand)}: come per il
- * socket, il check-e-registra del nome avviene atomicamente sul lobby-thread.
+ * Server-internal registration command for an RMI player. It is created by
+ * {@code GameServerRemoteImpl.join(...)} and enqueued on the
+ * {@code LobbyManager} queue, which processes it via
+ * {@link LobbyCommandVisitor#visit(RegisterRmiPlayerCommand)}: as with the
+ * socket case, the check-and-register of the name happens atomically on the
+ * lobby thread.
  * <p>
- * A differenza del socket, l'{@link PlayerEntry} (e la relativa
- * {@code RmiVirtualView}) è già costruito al momento del comando: non c'è I/O
- * bloccante da differire e la view RMI non alloca risorse di rete fino
- * all'{@code activateLiveness()}, quindi un eventuale REJECT non lascia leak
- * significativi.
+ * Unlike the socket case, the {@link PlayerEntry} (and its
+ * {@code RmiVirtualView}) is already built when the command is issued: there is
+ * no blocking I/O to defer and the RMI view allocates no network resources until
+ * {@code activateLiveness()}, so a possible REJECT leaves no significant leak.
  * <p>
- * {@code future} è il canale di risposta "ask": completato con {@code true}
- * (ACCEPT) o {@code false} (REJECT); il thread di dispatch RMI vi blocca sopra
- * con timeout.
+ * {@code future} is the "ask" reply channel: completed with {@code true}
+ * (ACCEPT) or {@code false} (REJECT); the RMI dispatch thread blocks on it with
+ * a timeout.
  * <p>
- * <strong>Non viaggia mai sul wire</strong>: {@code entry} e {@code future} non
- * sono {@link java.io.Serializable}, ma il record nasce e muore nella stessa
- * JVM.
+ * <strong>It never travels over the wire</strong>: {@code entry} and
+ * {@code future} are not {@link java.io.Serializable}, but the record is born
+ * and dies within the same JVM.
+ *
+ * @param playerName name requested by the RMI player
+ * @param entry      already-built {@link PlayerEntry} (RMI view included)
+ * @param future     "ask" channel: completed with {@code true} (ACCEPT) or
+ *                   {@code false} (REJECT, name taken)
  */
 public record RegisterRmiPlayerCommand(String playerName,
                                        PlayerEntry entry,

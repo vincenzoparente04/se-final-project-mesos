@@ -8,6 +8,8 @@ import shared.dto.event.EventResolutionDto;
  * Carries the structured {@link EventResolutionDto} so that the client can
  * render an explanatory screen / popup describing what happened and how
  * each player's food/prestige changed.
+ *
+ * @param resolution structured outcome of the event-card resolution
  */
 public record EventResolvedMessage(EventResolutionDto resolution) implements ServerMessage {
     @Override

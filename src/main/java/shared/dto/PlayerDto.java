@@ -2,6 +2,11 @@ package shared.dto;
 
 import java.io.Serializable;
 
+/**
+ * Serializable view of a player: resources (food, prestige points), totem colour
+ * and location, and the acquired {@link TribeDto}. Enums (colour, totem
+ * location) are carried as their {@code name()}.
+ */
 public class PlayerDto implements Serializable {
     public final String name;
     public final int food;

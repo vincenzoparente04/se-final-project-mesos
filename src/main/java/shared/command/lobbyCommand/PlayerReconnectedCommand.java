@@ -3,20 +3,21 @@ package shared.command.lobbyCommand;
 import network.server.core.VirtualView;
 
 /**
- * Lifecycle command server-internal. Lo crea il {@code LobbyManager} al
- * momento di una riconnessione (handshake socket o RMI con nome già presente
- * in una partita attiva) e lo impila sulla coda della session, dove il
- * {@code GameController} lo processa via
- * {@link LobbyCommandVisitor#visit(PlayerReconnectedCommand)}: registra la
- * nuova view sul model, marca il player come riconnesso e inoltra lo stato
- * corrente.
+ * Server-internal lifecycle command. The {@code LobbyManager} creates it upon a
+ * reconnection (socket or RMI handshake with a name already present in an active
+ * game) and enqueues it on the session queue, where the {@code GameController}
+ * processes it via {@link LobbyCommandVisitor#visit(PlayerReconnectedCommand)}:
+ * it registers the new view on the model, marks the player as reconnected and
+ * forwards the current state.
  * <p>
- * <strong>Non viaggia mai sul wire</strong>: il componente {@code newView}
- * referenzia un {@link VirtualView} che non è {@link java.io.Serializable},
- * ma il record è costruito e consumato all'interno della stessa JVM e
- * non viene mai passato a un {@code ObjectOutputStream}. L'estensione di
- * {@link LobbyCommand} è puramente per uniformità di tipo nella coda dei
- * comandi del controller.
+ * <strong>It never travels over the wire</strong>: the {@code newView} component
+ * references a {@link VirtualView} that is not {@link java.io.Serializable}, but
+ * the record is built and consumed within the same JVM and is never passed to an
+ * {@code ObjectOutputStream}. Extending {@link LobbyCommand} is purely for type
+ * uniformity in the controller's command queue.
+ *
+ * @param playerName name of the reconnecting player
+ * @param newView    new {@link VirtualView} to register on the model for the player
  */
 public record PlayerReconnectedCommand(String playerName, VirtualView newView) implements LobbyCommand {
 

@@ -6,29 +6,37 @@ import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Comando server-interno di registrazione di un player socket. Lo crea il
- * {@code ConnectionHandshaker} (sul thread per-connessione) dopo aver letto il
- * {@code ConnectMessage}, e lo impila sulla coda del {@code LobbyManager}, che
- * lo processa via {@link LobbyCommandVisitor#visit(RegisterSocketPlayerCommand)}:
- * sul lobby-thread il check-e-registra del nome è un'unica azione atomica
- * (la serializzazione della coda È la mutua esclusione), eliminando la race
- * TOCTOU sui nomi duplicati.
+ * Server-internal registration command for a socket player. It is created by the
+ * {@code ConnectionHandshaker} (on the per-connection thread) after reading the
+ * {@code ConnectMessage}, and enqueued on the {@code LobbyManager} queue, which
+ * processes it via {@link LobbyCommandVisitor#visit(RegisterSocketPlayerCommand)}:
+ * on the lobby thread the check-and-register of the name is a single atomic
+ * action (the queue's serialization IS the mutual exclusion), removing the
+ * TOCTOU race on duplicate names.
  * <p>
- * Il comando porta {@code socket}/{@code in}/{@code out} così che, <strong>solo
- * se</strong> il nome è libero, il lobby-thread costruisca
+ * The command carries {@code socket}/{@code in}/{@code out} so that,
+ * <strong>only if</strong> the name is free, the lobby thread builds
  * {@code SocketVirtualView}/{@code SocketClientHandler}/{@code SocketPlayerEntry}
- * e avvii il thread reader. Costruire dentro il ramo "nome libero" evita di
- * allocare il sender executor del player su un nome rifiutato e tiene il socket
- * aperto per il retry. Nessuna di queste operazioni è bloccante
- * ({@code Thread.start()} ritorna subito), quindi il lobby-thread non fa mai I/O.
+ * and starts the reader thread. Building inside the "name free" branch avoids
+ * allocating the player's sender executor for a rejected name and keeps the
+ * socket open for the retry. None of these operations is blocking
+ * ({@code Thread.start()} returns immediately), so the lobby thread never does I/O.
  * <p>
- * {@code future} è il canale di risposta "ask": il lobby-thread lo completa con
- * {@code true} (ACCEPT, reader già avviato) o {@code false} (REJECT, nome
- * occupato); il thread di connessione vi blocca sopra con timeout.
+ * {@code future} is the "ask" reply channel: the lobby thread completes it with
+ * {@code true} (ACCEPT, reader already started) or {@code false} (REJECT, name
+ * taken); the connection thread blocks on it with a timeout.
  * <p>
- * <strong>Non viaggia mai sul wire</strong>: {@code socket}/{@code in}/{@code out}
- * e {@code future} non sono {@link java.io.Serializable}, ma il record nasce e
- * muore nella stessa JVM (stesso contratto di {@code PlayerReconnectedCommand}).
+ * <strong>It never travels over the wire</strong>: {@code socket}/{@code in}/{@code out}
+ * and {@code future} are not {@link java.io.Serializable}, but the record is born
+ * and dies within the same JVM (same contract as {@code PlayerReconnectedCommand}).
+ *
+ * @param playerName name requested by the socket player
+ * @param socket     the connection socket, used to build the view only if the
+ *                   name is free
+ * @param in         the connection's input stream
+ * @param out        the connection's output stream
+ * @param future     "ask" channel: completed with {@code true} (ACCEPT, reader
+ *                   started) or {@code false} (REJECT, name taken)
  */
 public record RegisterSocketPlayerCommand(String playerName, Socket socket, ObjectInputStream in, ObjectOutputStream out,
                                           CompletableFuture<Boolean> future) implements LobbyCommand {

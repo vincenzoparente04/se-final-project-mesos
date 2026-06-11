@@ -1,5 +1,11 @@
 package shared.command.gameCommand;
 
+/**
+ * Game command: the player places their totem on an offer tile.
+ *
+ * @param playerName the sender player's name
+ * @param tileId     identifier of the tile to place the totem on
+ */
 public record PlaceTotemCommand(String playerName, char tileId) implements GameCommand {
 
     @Override

@@ -2,6 +2,13 @@ package shared.dto;
 
 import java.io.Serializable;
 
+/**
+ * Serializable view of an offer (action) tile: its letter, action type, the
+ * occupant (if any) and, for draw tiles, the per-row draw limits and how many
+ * draws have already been used this turn. The {@code Integer} fields are
+ * {@code null} for {@code TAKE_FOOD} tiles; {@code occupantName} is {@code null}
+ * when the tile is free.
+ */
 public class OfferTileDto implements Serializable {
     public final char letter;
     public final String actionType;       // "DRAW_CARDS" or "TAKE_FOOD"

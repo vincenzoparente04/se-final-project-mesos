@@ -3,16 +3,18 @@ package shared.command.lobbyCommand;
 import shared.command.ClientCommand;
 
 /**
- * Lifecycle command server-internal. Lo crea il {@code LobbyManager} quando
- * rileva la disconnessione di un player presente in una partita attiva e lo
- * impila sulla coda della session, dove il {@code GameController} lo
- * processa via {@link LobbyCommandVisitor#visit(PlayerDisconnectedCommand)}
- * applicando le mutazioni necessarie sul model (set disconnected, rimozione
- * della view, skip del turno se era il suo).
+ * Server-internal lifecycle command. The {@code LobbyManager} creates it when
+ * it detects the disconnection of a player taking part in an active game and
+ * enqueues it on the session queue, where the {@code GameController} processes
+ * it via {@link LobbyCommandVisitor#visit(PlayerDisconnectedCommand)}, applying
+ * the required mutations on the model (set disconnected, view removal, turn skip
+ * if it was theirs).
  * <p>
- * Non viaggia mai sul wire: pur estendendo l'interfaccia
- * {@link LobbyCommand} (e quindi {@link ClientCommand} Serializable), viene
- * creato e consumato dentro la stessa JVM.
+ * It never travels over the wire: although it extends {@link LobbyCommand}
+ * (hence {@link ClientCommand}, Serializable), it is created and consumed within
+ * the same JVM.
+ *
+ * @param playerName name of the disconnected player
  */
 public record PlayerDisconnectedCommand(String playerName) implements LobbyCommand {
 

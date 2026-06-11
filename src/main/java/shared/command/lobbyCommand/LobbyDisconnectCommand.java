@@ -1,15 +1,16 @@
 package shared.command.lobbyCommand;
 
 /**
- * Comando server-interno di disconnessione. Lo impilano i sentinel di liveness
- * e gli handler di trasporto (socket {@code finally} / RMI
- * {@code handleDisconnect}) tramite {@code LobbyManager.onDisconnect(name)},
- * che ora si limita a enqueue. Viene processato sul lobby-thread via
- * {@link LobbyCommandVisitor#visit(LobbyDisconnectCommand)}, dove la pipeline di
- * disconnect (rimozione dal lobby, sospensione partita, close della view) gira
- * serializzata con tutto il resto — eliminando l'hack sull'ordine
- * "enqueue-prima-di-close" che serviva quando il corpo girava sul thread del
- * sentinel.
+ * Server-internal disconnection command. It is enqueued by the liveness
+ * sentinels and the transport handlers (socket {@code finally} / RMI
+ * {@code handleDisconnect}) through {@code LobbyManager.onDisconnect(name)},
+ * which now merely enqueues. It is processed on the lobby thread via
+ * {@link LobbyCommandVisitor#visit(LobbyDisconnectCommand)}, where the
+ * disconnect pipeline (removal from the lobby, game suspension, view close)
+ * runs serialized with everything else — removing the "enqueue-before-close"
+ * ordering hack that was needed when the body ran on the sentinel thread.
+ *
+ * @param playerName name of the player to disconnect
  */
 public record LobbyDisconnectCommand(String playerName) implements LobbyCommand {
 

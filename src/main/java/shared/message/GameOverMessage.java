@@ -8,9 +8,13 @@ import java.util.List;
  * Game-over notification carrying the winners and (optionally) the
  * end-game scoring breakdown.
  * <p>
- * {@code scoring} è {@code null} nei casi di chiusura forzata in cui non
- * c'è un vero calcolo finale (es. timeout di sospensione che proclama
- * vincitore d'ufficio l'unico player connesso).
+ * {@code scoring} is {@code null} in forced-shutdown cases where there is no
+ * real final computation (e.g. a suspension timeout that declares the only
+ * connected player the winner by default).
+ *
+ * @param winners names of the winning players
+ * @param scoring final-score breakdown, or {@code null} in forced shutdowns
+ *                with no final computation
  */
 public record GameOverMessage(List<String> winners, EndGameScoringDto scoring) implements ServerMessage {
     @Override

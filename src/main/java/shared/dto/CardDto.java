@@ -2,6 +2,13 @@ package shared.dto;
 
 import java.io.Serializable;
 
+/**
+ * Serializable view of a single card — a character/event/building card or a
+ * tribe card. Carries the data the client needs to render the card (costs,
+ * end-game points, special-effect {@code details}, front/back image paths);
+ * enums such as the type and era are passed as their {@code name()}. Cost and
+ * point fields are {@code 0} for tribe cards.
+ */
 public class CardDto implements Serializable {
     public final int id;
     public final String type;         // "CHARACTER", "EVENT", or "BUILDING"

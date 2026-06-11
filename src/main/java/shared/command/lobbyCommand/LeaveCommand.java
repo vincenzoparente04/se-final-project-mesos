@@ -9,6 +9,8 @@ package shared.command.lobbyCommand;
  * - Otherwise: sends error
  * <p>
  * Player remains connected after leaving.
+ *
+ * @param playerName the sender player's name
  */
 public record LeaveCommand(String playerName) implements LobbyCommand {
 

@@ -1,5 +1,10 @@
 package shared.command.lobbyCommand;
 
+/**
+ * Lobby command: request for the list of available lobbies.
+ *
+ * @param playerName the sender player's name
+ */
 public record ListLobbiesCommand(String playerName) implements LobbyCommand {
 
     @Override

@@ -3,6 +3,13 @@ package shared.dto;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * Serializable snapshot of the whole game state, sent to clients inside a
+ * {@link shared.message.StateMessage}. It is a flat, view-friendly projection of
+ * the model: enums are carried as their {@code name()} and absent values as
+ * {@code null} (see the per-field notes). The client rebuilds its view entirely
+ * from this object, without ever touching the model.
+ */
 public class GameStateDto implements Serializable {
     public final String phase;              // GamePhase.name()
     public final String currentPlayerName;  // null when no active player

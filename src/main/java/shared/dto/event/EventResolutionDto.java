@@ -5,9 +5,9 @@ import java.util.List;
 
 /**
  * Snapshot of one event card resolution. The server emits one of these for
- * every event card processed at the end of a round (or at end-of-game).
- * The {@code details} stringhe sui delta dei singoli player sono già
- * formattate server-side: il client le mostra come sono.
+ * every event card processed at the end of a round (or at end-of-game). The
+ * per-player {@code details} strings are already formatted server-side: the
+ * client shows them as they are.
  */
 public class EventResolutionDto implements Serializable {
     public final String eventType;     // EventType.name(): HUNT / CAVE_PAINTINGS / SHAMANIC_RITUAL / SUSTENANCE / NASCONDINO
