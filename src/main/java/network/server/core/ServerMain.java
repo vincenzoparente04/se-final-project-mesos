@@ -14,22 +14,13 @@ import network.server.rmi.GameServerRemote;
 import network.server.rmi.GameServerRemoteImpl;
 
 /**
- * Entry point of the Mesos game server.
- * <p>
- * Boots two transport listeners that share a single {@link LobbyManager}:
- * an RMI registry (for clients connecting via Java RMI) and a TCP socket
- * acceptor (for clients connecting via the textual socket protocol).
- * The two listeners are independent: a failure in one does not prevent
- * the other from serving clients.
- * <p>
- * Uses fixed ports:
- * - Socket server: 9999
- * - RMI registry: 1099 (standard Java RMI port)
- *
- *  The {@code main} method does not return: after starting the RMI
- *           registry, control enters the socket acceptor's blocking
- *           {@code accept()} loop and remains there for the lifetime of the
- *           server process.
+ * Entry point of the Mesos game server. Boots two transport listeners that
+ * share a single {@link LobbyManager}: an RMI registry (port {@value #RMI_PORT})
+ * and a TCP socket acceptor (port {@value #SOCKET_PORT}). The two listeners
+ * are independent — a failure in one does not prevent the other from serving
+ * clients. {@code main} does not return: after starting the RMI registry,
+ * control enters the socket acceptor's blocking {@code accept()} loop for
+ * the lifetime of the server process.
  */
 public class ServerMain {
 
@@ -48,7 +39,7 @@ public class ServerMain {
 
             boolean dbReady = setupDatabaseEnvironment(dbConfig);
             if (!dbReady) {
-                System.err.println("Unable to start the database infrastructure. Starting server without database functionality."); //TODO: VOGLIO CHE SE NON VA A BUON FINE MI STARTA IL SERVER MA SENZA LA FUNZINALITà DB
+                System.err.println("Unable to start the database infrastructure. Starting server without database functionality."); // TODO: if setup fails, start the server without database functionality
                 database.DatabaseManager.disable(); // Disables DB functionality for the rest of the server lifecycle
             }
 
@@ -67,7 +58,7 @@ public class ServerMain {
         LobbyManager lobbyManager = new LobbyManager();
         lobbyManager.start();
 
-        // TODO: vedi se necessario
+        // TODO: evaluate if a more explicit shutdown sequence is needed here
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutting down server…");
             lobbyManager.shutdown();

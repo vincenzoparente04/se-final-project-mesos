@@ -7,14 +7,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A pre-game gathering of {@link PlayerEntry}s waiting for the lobby to fill
- * up.
- *
- * <h2>Thread safety</h2>
- * This class is <strong>not</strong> internally synchronized and needs no locks:
- * {@link LobbyManager} is the sole owner of every {@code Lobby} instance and
- * mutates it only on its single {@code lobby-thread}, so all access is already
- * serialized by that actor.
+ * A pre-game gathering of {@link PlayerEntry}s waiting for the lobby to fill up.
+ * Not internally synchronized: {@link LobbyManager} is the sole owner and mutates
+ * it only on its single lobby thread, so all access is already serialised.
  */
 public class Lobby {
 
@@ -29,11 +24,21 @@ public class Lobby {
         this.maxPlayers = maxPlayers;
     }
 
+    /**
+     * Adds a player to the lobby and broadcasts the updated state to all members.
+     *
+     * @param entry the player to add
+     */
     public void addPlayer(PlayerEntry entry) {
         players.add(entry);
         broadcastState();
     }
 
+    /**
+     * Removes a player from the lobby without broadcasting a state update.
+     *
+     * @param entry the player to remove
+     */
     public void removePlayer(PlayerEntry entry) {
         players.remove(entry);
     }
@@ -58,31 +63,32 @@ public class Lobby {
         return players.stream().map(PlayerEntry::getView).toList();
     }
 
-    /** True se c'è un player con quel nome in questa lobby. */
+    /** True if the lobby contains that player */
     public boolean containsPlayer(String playerName) {
         return players.stream().anyMatch(p -> p.getName().equals(playerName));
     }
 
-    /** True se la lobby non ha più giocatori. */
     public boolean isEmpty() {
         return players.isEmpty();
     }
 
     /**
-     * Rimuove dalla lobby il player con il nome dato.
+     * Removes the player with the given name and broadcasts the updated state.
+     *
+     * @param playerName the name of the player to remove
      */
     public void removePlayerByName(String playerName) {
         players.removeIf(p -> p.getName().equals(playerName));
         broadcastState();
     }
 
-    /** Invia il LobbyDto corrente a tutte le view dei player di questa lobby. */
+    /** Sends the current {@link shared.dto.LobbyDto} snapshot to all players in this lobby. */
     public void broadcastState() {
         LobbyDto dto = toDto();
         getViews().forEach(v -> v.sendLobbyState(dto));
     }
 
-    /** Invia sendGameStarting a tutte le view dei player di questa lobby. */
+    /** Notifies all players in this lobby that the game is about to start. */
     public void notifyGameStarting() {
         getViews().forEach(VirtualView::sendGameStarting);
     }
