@@ -17,6 +17,7 @@ public class DrawCardsAction implements OfferTileAction {
 
     // --- These two variables indicate the state of the action ---
     private int currentTopRowDraws;
+    // --- These two variables indicate the state of the action ---
     private int currentBottomRowDraws;
 
     public DrawCardsAction(int maxTopRowDraws, int maxBottomRowDraws) {

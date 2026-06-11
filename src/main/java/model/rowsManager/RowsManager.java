@@ -60,14 +60,14 @@ import java.util.stream.Stream;
     private final EventResolver eventResolver;
 
     public RowsManager() {
-        this.topRowTribe      = new ArrayList<>();
-        this.bottomRowTribe   = new ArrayList<>();
-        this.topRowBuilding   = new ArrayList<>();
+        this.topRowTribe = new ArrayList<>();
+        this.bottomRowTribe = new ArrayList<>();
+        this.topRowBuilding = new ArrayList<>();
         this.bottomRowBuilding = new ArrayList<>();
 
-        this.tribeDeck        = new TribeDeck();
-        this.buildingDeckEraI   = new BuildingDeck(Era.ERA_I);
-        this.buildingDeckEraII  = new BuildingDeck(Era.ERA_II);
+        this.tribeDeck = new TribeDeck();
+        this.buildingDeckEraI = new BuildingDeck(Era.ERA_I);
+        this.buildingDeckEraII = new BuildingDeck(Era.ERA_II);
         this.buildingDeckEraIII = new BuildingDeck(Era.ERA_III);
 
         this.eventResolver = new EventResolver();

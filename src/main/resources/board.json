@@ -51,6 +51,7 @@
     }
 
   ],
+
   "turnOrderSlots": [
     { "minPlayers": 2,
       "frontImage": "Order_2_Players_BACK.png",

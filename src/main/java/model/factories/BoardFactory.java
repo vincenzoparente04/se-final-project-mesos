@@ -15,11 +15,19 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Factory class responsible for parsing the game board configuration from a JSON resource file
+ * and instantiating the corresponding domain model components based on the player count.
+ *
+ */
 public class BoardFactory {
 
     /**
-     * Container returned by the factory.
-     * Keeps OfferTiles and TurnOrderSlots separated so the caller (Board.setup) can pass each list to the correct object.
+     * An immutable container holding the isolated components required to initialize a game board.
+     *
+     * @param offerTiles the list of filtered {@link OfferTile} instances eligible for the game
+     * @param turnOrderSlots the list of {@link TurnOrderSlot} instances configured for the specific player count
+     * @param turnOrderTileImage the resource path string for the turn order background image
      */
     public record BoardComponents(
             List<OfferTile> offerTiles,
@@ -30,17 +38,14 @@ public class BoardFactory {
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
-     *   Reads board.json and builds all board components for the given player count.
-     * What this method does:
-     *   1. Reads the "offerTiles" array and keeps only tiles whose minPlayers equal or less than playerCount.
-     *      For each eligible tile it creates the correct OfferTileAction (TakeFoodAction or
-     *      DrawCardsAction) by reading the nested "action" object, then builds the OfferTile.
-     *   2. Reads the "turnOrderSlots" array and finds the group whose minPlayers == playerCount
-     *      (exact match — each player count has its own distinct slot configuration).
-     *      For each slot in that group it builds a TurnOrderSlot(foodBonus, isLast).
+     * Reads the {@code board.json} configuration file and constructs all necessary board components
+     * tailored to the specified number of participants.
      *
-     * @param playerCount number of players in the game (2–5)
-     * @return a BoardComponents record containing the two ready-to-use lists
+     * @param playerCount the number of players participating in the game session (expected range: 2 to 5)
+     * @return a {@link BoardComponents} record encapsulating the instantiated tiles, slots, and assets
+     * @throws NullPointerException if the configuration file contains missing structural fields
+     * @throws IllegalArgumentException if no valid turn order configuration matches the given {@code playerCount}
+     * @throws RuntimeException if the JSON file cannot be found or read from the application resources
      */
     public static BoardComponents createComponents(int playerCount) {
         JsonObject root = loadJson("board.json");
@@ -54,6 +59,13 @@ public class BoardFactory {
 
     // OfferTiles ────────────────────────────────────────────────────────────
 
+    /**
+     * Parses the JSON array containing offer tile definitions and filters them according to player count eligibility.
+     *
+     * @param array       the {@link JsonArray} containing the raw offer tile data
+     * @param playerCount the current game session's player count used as a lower-bound filter threshold
+     * @return a mutable {@link List} of instantiated {@link OfferTile} objects
+     */
     private static List<OfferTile> buildOfferTiles(JsonArray array, int playerCount) {
         List<OfferTile> tiles = new ArrayList<>();
 
@@ -65,7 +77,7 @@ public class BoardFactory {
             if (minPlayers > playerCount) continue;
 
             // Step 2 — read basic fields
-            char letter       = json.get("letter").getAsString().charAt(0);
+            char letter = json.get("letter").getAsString().charAt(0);
             String frontImage = json.get("frontImage").getAsString();
             String backImage  = json.get("backImage").getAsString();
 
@@ -80,7 +92,11 @@ public class BoardFactory {
     }
 
     /**
-     *   Reads the "action" object and returns the correct OfferTileAction.
+     * Parses a nested JSON action object and maps it to its specific polymorphic concrete implementation.
+     *
+     * @param action the {@link JsonObject} defining the action attributes and type identifier
+     * @return the instantiated polymorphic {@link OfferTileAction} subtype
+     * @throws IllegalArgumentException if the action type property does not match any known identifier
      */
     private static OfferTileAction buildAction(JsonObject action) {
         String type = action.get("type").getAsString();
@@ -94,14 +110,20 @@ public class BoardFactory {
     // ── TurnOrderSlots ────────────────────────────────────────────────────────
 
     /**
-     * Small private record to carry both the slots list and the image together
-     * without exposing them as separate return values.
+     * An internal data transfer object to pair instantiated turn order slots with their associated visual asset path.
+     *
+     * @param slots the parsed {@link List} of {@link TurnOrderSlot} instances
+     * @param image the resource path string for the group's front graphical asset
      */
     private record TurnOrderData(List<TurnOrderSlot> slots, String image) {}
 
     /**
-     * Finds the turnOrderSlots group matching the exact player count,
-     * then builds a TurnOrderSlot for each entry in that group.
+     * Scans the turn order configuration array to find the exact structural match for the specified player count.
+     *
+     * @param array       the {@link JsonArray} containing configuration groups for various player counts
+     * @param playerCount the exact number of players to match against the configuration groups
+     * @return a {@link TurnOrderData} record holding the matching list of slots and asset metadata
+     * @throws IllegalArgumentException if no layout group matches the specified {@code playerCount}
      */
     private static TurnOrderData buildTurnOrderData(JsonArray array, int playerCount) {
         for (JsonElement el : array) {
@@ -129,6 +151,13 @@ public class BoardFactory {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * Loads and parses a JSON file from the application's classpath resources.
+     *
+     * @param filename the relative path or name of the target resource file
+     * @return the parsed {@link JsonObject} root reference
+     * @throws RuntimeException if the specified stream resource resolve evaluation returns {@code null}
+     */
     private static JsonObject loadJson(String filename) {
         InputStream is = BoardFactory.class.getClassLoader().getResourceAsStream(filename);
         if (is == null) {
