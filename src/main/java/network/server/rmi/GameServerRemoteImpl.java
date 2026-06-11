@@ -16,21 +16,46 @@ import shared.command.gameCommand.GameCommand;
 import shared.command.lobbyCommand.HeartbeatCommand;
 import shared.command.lobbyCommand.LobbyCommand;
 
+/**
+ * Server-side implementation of {@link GameServerRemote}. Exported as a
+ * {@link UnicastRemoteObject} and registered in the RMI registry by
+ * {@link network.server.core.ServerMain}.
+ *
+ * Incoming commands arrive on RMI worker threads and are dispatched
+ * synchronously via the internal {@link ClientCommandVisitor}: lobby commands
+ * go to {@link LobbyManager}, game commands are placed on the per-player
+ * {@link #gameQueues} entry, and heartbeat commands notify the corresponding
+ * {@link RmiVirtualView}'s liveness sentinel via {@link #rmiViews}.
+ *
+ * @see GameServerRemote
+ * @see RmiPlayerEntry
+ * @see RmiVirtualView
+ */
 public class GameServerRemoteImpl extends UnicastRemoteObject implements GameServerRemote {
 
+    /** Maximum time to wait for the lobby thread to accept or reject a registration request. */
     private static final long REGISTRATION_TIMEOUT_MS = 50_000L;
 
     private final LobbyManager lobbyManager;
+
+    /** Maps player name to the active game command queue for in-game command routing. */
     private final ConcurrentHashMap<String, BlockingQueue<GameCommand>> gameQueues = new ConcurrentHashMap<>();
+
     /**
-     * Mappa playerName → RmiVirtualView per il dispatch del HeartbeatCommand.
-     * Accesso package-private a {@link RmiVirtualView#notifyInbound()} senza passare
-     * dall'interfaccia {@code VirtualView} (che non espone il metodo per design).
+     * Maps player name to {@link RmiVirtualView} for heartbeat routing.
+     * {@link RmiVirtualView#notifyInbound()} is called directly here rather
+     * than via the {@link network.server.core.VirtualView} interface, which
+     * does not expose that method by design.
      */
     private final ConcurrentHashMap<String, RmiVirtualView> rmiViews =
             new ConcurrentHashMap<>();
 
-
+    /**
+     * Routes each incoming command to its destination: lobby commands go to
+     * {@link LobbyManager}, game commands are placed on the player's game queue,
+     * and heartbeat commands notify the corresponding {@link RmiVirtualView}'s
+     * liveness sentinel.
+     */
     private final ClientCommandVisitor dispatcher = new ClientCommandVisitor() {
         @Override
         public void visit(LobbyCommand cmd) {
@@ -46,12 +71,16 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
 
         @Override
         public void visit(HeartbeatCommand cmd) {
-            // Canale di liveness isolato: solo HeartbeatCommand aggiorna il watchdog server-side.
+            // Isolated liveness channel: only HeartbeatCommand updates the server-side watchdog.
             RmiVirtualView view = rmiViews.get(cmd.playerName());
             if (view != null) view.notifyInbound();
         }
     };
 
+    /**
+     * @param lobbyManager the lobby manager to forward commands and connection events to
+     * @throws RemoteException if the RMI export fails
+     */
     public GameServerRemoteImpl(LobbyManager lobbyManager) throws RemoteException {
         super();
         this.lobbyManager = lobbyManager;
@@ -67,7 +96,7 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
         RmiVirtualView view = new RmiVirtualView(playerName, callback, lobbyManager);
         boolean connectionSuccessful;
         try {
-            // "ask" pattern: impila la registrazione e blocca sul verdetto del lobby-thread.
+            // "Ask" pattern: enqueue the registration and block until the lobby thread returns a verdict.
             connectionSuccessful = lobbyManager.submitRmiRegistration(new RmiPlayerEntry(view, this))
                     .get(REGISTRATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (TimeoutException | ExecutionException e) {
@@ -83,13 +112,21 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
             rmiViews.put(playerName, view);
             System.out.println("RMI connection from " + host);
         } else {
-            // Nome rifiutato (o registrazione fallita): rilascia il sender
-            // executor appena creato dalla view per non lasciarlo appeso.
+            // Name rejected or registration failed: release the sender executor
+            // created by the view so it does not leak.
             view.close();
         }
         return connectionSuccessful;
     }
 
+    /**
+     * Accepts a command from the RMI client and dispatches it via the
+     * internal {@link #dispatcher}. Any routing exception is wrapped in a
+     * {@link RemoteException} so the client receives a meaningful error.
+     *
+     * @param command the command to route
+     * @throws RemoteException if command routing fails
+     */
     @Override
     public void submitClientCommand(ClientCommand command) throws RemoteException {
         try {
@@ -99,6 +136,13 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
         }
     }
 
+    /**
+     * Forwards a graceful disconnect request to the lobby manager's
+     * disconnect pipeline.
+     *
+     * @param playerName the name of the disconnecting player
+     * @throws RemoteException if the RMI call fails
+     */
     @Override
     public void disconnect(String playerName) throws RemoteException {
         lobbyManager.onDisconnect(playerName);

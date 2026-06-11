@@ -17,20 +17,30 @@ import network.client.rmi.ClientCallbackRemote;
 import network.server.core.LobbyManager;
 import network.server.core.VirtualView;
 
+/**
+ * Server-side view of an RMI client. Sole responsibility: delivering server
+ * messages to the client by invoking methods on the {@link ClientCallbackRemote}
+ * stub.
+ *
+ * All {@code sendXxx} calls are dispatched on a dedicated single-thread
+ * executor per player, so the game thread never blocks on a slow RMI call.
+ * On any {@link java.rmi.RemoteException}, {@link #handleDisconnect()} is
+ * called, which triggers the lobby-manager disconnect pipeline exactly once,
+ * guarded by a CAS on {@link #closed} to avoid races between {@link #close()}
+ * and {@link #handleDisconnect()}.
+ *
+ * A {@link LivenessSentinel} is started by {@link #activateLiveness()} and
+ * runs a bidirectional heartbeat: it invokes {@link #sendHeartbeat()} every
+ * {@value #SEND_INTERVAL_MS} ms and declares the connection dead if no
+ * inbound heartbeat arrives within {@value #TIMEOUT_MS} ms.
+ */
 public class RmiVirtualView implements VirtualView {
 
-    /**
-     * Periodo di invio heartbeat server→client.
-     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling.
-     */
-    /**
-     * Intervalli del sentinel server-side RMI.
-     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling
-     * e ritardi temporanei dovuti a messaggi applicativi grandi che impegnano il sender.
-     * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
-     */
+    /** Heartbeat send interval (server to client), in milliseconds. */
     private static final long SEND_INTERVAL_MS  = 2_000L;
+    /** How often the sentinel checks for a missing inbound heartbeat, in milliseconds. */
     private static final long CHECK_INTERVAL_MS = 5_000L;
+    /** Inbound-heartbeat timeout; if exceeded the connection is declared dead, in milliseconds. */
     private static final long TIMEOUT_MS        = 15_000L;
 
     private final String playerName;
@@ -40,14 +50,22 @@ public class RmiVirtualView implements VirtualView {
     private final LivenessSentinel sentinel;
 
     /**
-     * Garantisce che la pipeline di chiusura (sentinel + executor) venga eseguita al più
-     * una volta, anche in presenza di race tra {@link #close()} e {@link #handleDisconnect()}.
-     * Usare CAS invece di {@code synchronized} evita un potenziale deadlock con il lock di
-     * {@link LobbyManager} quando quest'ultimo chiama {@code close()} dall'interno di
-     * {@code onDisconnect}.
+     * Ensures the shutdown pipeline (sentinel + executor) runs at most once,
+     * even when {@link #close()} and {@link #handleDisconnect()} race.
+     * CAS avoids a potential deadlock with {@link LobbyManager}'s internal
+     * lock, which may call {@link #close()} from within {@code onDisconnect}.
      */
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    /**
+     * Creates the view, sets up the single-thread sender executor and
+     * initialises the {@link LivenessSentinel} (not started yet;
+     * call {@link #activateLiveness()} when the connection is ready).
+     *
+     * @param playerName   the name that identifies this player on the server
+     * @param callback     the RMI stub used to deliver messages to the client
+     * @param lobbyManager the lobby manager to notify on timeout or disconnect
+     */
     public RmiVirtualView(String playerName, ClientCallbackRemote callback, LobbyManager lobbyManager) {
         this.playerName = playerName;
         this.callback = callback;
@@ -180,17 +198,28 @@ public class RmiVirtualView implements VirtualView {
         return playerName;
     }
 
+    /**
+     * Starts the {@link LivenessSentinel}, enabling the bidirectional heartbeat.
+     * Must be called once the RMI registration is complete.
+     */
     @Override
     public void activateLiveness() {
         sentinel.start();
     }
 
-    /** Aggiorna il timestamp di liveness: da chiamare solo all'arrivo di un HeartbeatCommand. */
+    /**
+     * Updates the liveness timestamp. Must be called only upon receiving
+     * a {@link shared.command.lobbyCommand.HeartbeatCommand} from the client.
+     */
     @Override
     public void notifyInbound() {
         sentinel.notifyInbound();
     }
 
+    /**
+     * Shuts down this view cleanly: stops the sentinel and terminates the
+     * sender executor. Idempotent — safe to call multiple times.
+     */
     @Override
     public void close() {
         if (!closed.compareAndSet(false, true)) return;
@@ -198,6 +227,11 @@ public class RmiVirtualView implements VirtualView {
         senderExecutor.shutdownNow();
     }
 
+    /**
+     * Called when a {@link java.rmi.RemoteException} is thrown during a send.
+     * Stops the sentinel, notifies the lobby manager of the disconnection, and
+     * shuts down the sender executor. Idempotent via CAS on {@link #closed}.
+     */
     private void handleDisconnect() {
         if (!closed.compareAndSet(false, true)) return;
         sentinel.stop();
