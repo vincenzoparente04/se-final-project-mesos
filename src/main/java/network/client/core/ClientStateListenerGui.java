@@ -19,8 +19,12 @@ import java.util.List;
  */
 public class ClientStateListenerGui implements ClientStateListener {
 
+    /** Navigation hub used to reach the current controller and switch scenes. */
     private final SceneRouter router;
 
+    /**
+     * @param router the scene router that resolves the current controller
+     */
     public ClientStateListenerGui(SceneRouter router) {
         this.router = router;
     }

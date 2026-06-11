@@ -34,9 +34,11 @@ public class ClientMainCli {
     // ─── Main Entry Point ──────────────────────────────────────
 
     /**
-     * Entry point that collects configuration from the user interactively,
-     * then starts the game with those settings.
-     * No command-line arguments required.
+     * Entry point that collects configuration from the user interactively, then
+     * starts the game with those settings.
+     *
+     * @param args ignored (no command-line arguments are required)
+     * @throws Exception if connecting or starting the session fails
      */
     public static void main(String[] args) throws Exception {
         // Advertise the local LAN IP so the callback stub we export inside
@@ -61,7 +63,9 @@ public class ClientMainCli {
     
     /**
      * Interactively prompts the user for connection configuration.
-     * Returns a ConnectionConfig with validated parameters.
+     *
+     * @return a {@link ConnectionConfig} with validated parameters
+     * @throws IOException if reading from {@code stdin} fails
      */
     private static ConnectionConfig acquireConfiguration() throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -90,7 +94,11 @@ public class ClientMainCli {
     }
     
     /**
-     * Prompts for connection protocol selection with Socket as default.
+     * Prompts for connection protocol selection, defaulting to Socket.
+     *
+     * @param reader the input source
+     * @return the chosen {@link ConnectionProtocol}
+     * @throws IOException if reading from {@code stdin} fails
      */
     private static ConnectionProtocol selectTransport(BufferedReader reader) throws IOException {
         while (true) {
@@ -121,7 +129,12 @@ public class ClientMainCli {
     }
     
     /**
-     * Prompts for server port with a sensible default based on protocol.
+     * Prompts for the server port, defaulting by protocol (9999 socket, 1099 RMI).
+     *
+     * @param reader the input source
+     * @param transport the chosen transport, used to pick the default port
+     * @return a valid port in the range 1–65535
+     * @throws IOException if reading from {@code stdin} fails
      */
     private static int readPort(BufferedReader reader, ConnectionProtocol transport) throws IOException {
         int defaultPort = transport == ConnectionProtocol.SOCKET ? 9999 : 1099;
@@ -149,7 +162,11 @@ public class ClientMainCli {
     }
     
     /**
-     * Prompts for player name with validation (non-empty, max 20 chars).
+     * Prompts for a player name with validation (non-empty, max 20 chars).
+     *
+     * @param reader the input source
+     * @return the validated player name
+     * @throws IOException if reading from {@code stdin} fails
      */
     private static String readPlayerName(BufferedReader reader) throws IOException {
         while (true) {
@@ -179,6 +196,9 @@ public class ClientMainCli {
      * Opens the transport, then loops on the player-name prompt until the
      * server accepts the name. Only after acceptance are the local game state,
      * listener, reader thread and heartbeat scheduler created and started.
+     *
+     * @param config the transport configuration to connect with
+     * @throws Exception if connecting or starting the session fails
      */
     private static void startGame(ConnectionConfig config) throws Exception {
         VirtualServer virtualServer = null;

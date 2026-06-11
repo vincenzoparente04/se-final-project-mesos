@@ -100,6 +100,13 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
         }
     }
 
+    /**
+     * Socket name handshake: sends a {@code ConnectMessage} and blocks reading the
+     * server's reply (bounded by a {@value #NAME_NEGOTIATION_TIMEOUT_MS} ms socket
+     * timeout), then dispatches it through this visitor to set the verdict. The TCP
+     * connection stays open on rejection, so it can be retried with a different name
+     * on the same instance.
+     */
     @Override
     public boolean tryRegisterName(String name, LocalGameState localState, ClientStateListener listener) {
         try {
@@ -191,6 +198,11 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
     }
 
 
+    /**
+     * Starts the liveness sentinel and spawns the reader thread
+     * ({@code SocketClientThread}) that drains inbound messages. Call once, after a
+     * successful {@link #tryRegisterName}.
+     */
     @Override
     public void start() {
         this.sentinel = new LivenessSentinel(
@@ -266,6 +278,11 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
         }
     }
 
+    /**
+     * Closes the connection once (idempotent): stops the sentinel, closes the
+     * socket, notifies the listener and terminates the client process. Safe to call
+     * from the reader thread, the sentinel or the UI.
+     */
     @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {

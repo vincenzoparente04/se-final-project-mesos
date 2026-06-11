@@ -107,11 +107,16 @@ public class RmiVirtualServer implements VirtualServer {
             throw new Exception("RMI service '" + SERVICE_NAME
                     + "' not bound on " + host + ":" + rmiPort, e);
         } catch (RemoteException e) {
-            throw new Exception("Cannot reach RMI registry at " + host + ":" + rmiPort
-                    + " (" + e.getMessage() + ")", e);
+            throw new Exception("Cannot reach RMI registry at " + host + ":" + rmiPort + " (" + e.getMessage() + ")", e);
         }
     }
 
+    /**
+     * RMI name handshake: exports a fresh {@link ClientCallbackImpl} and calls
+     * {@code serverStub.join(...)}. On rejection the callback is unexported at once,
+     * so a retry exports a clean one. No reader thread is involved — the RMI runtime
+     * drives inbound callbacks.
+     */
     @Override
     public boolean tryRegisterName(String name, LocalGameState localState, ClientStateListener listener) {
         ClientCallbackImpl tempCallback;
@@ -146,6 +151,11 @@ public class RmiVirtualServer implements VirtualServer {
         return true;
     }
 
+    /**
+     * Creates the single-thread command executor, starts the liveness sentinel and
+     * routes inbound notifications to it. No reader thread is spawned (the RMI
+     * runtime delivers callbacks). Call once, after a successful {@link #tryRegisterName}.
+     */
     @Override
     public void start() {
         this.commandExecutor = Executors.newSingleThreadExecutor(r -> {
@@ -201,6 +211,11 @@ public class RmiVirtualServer implements VirtualServer {
         submitAsync(new LeaveCommand(playerName));
     }
 
+    /**
+     * Closes the connection once (idempotent): stops the sentinel, notifies the
+     * server via {@code serverStub.disconnect}, unexports the callback and the
+     * command executor, notifies the listener and terminates the client process.
+     */
     @Override
     public void close() {
         if (!disconnected.compareAndSet(false, true)) return;
