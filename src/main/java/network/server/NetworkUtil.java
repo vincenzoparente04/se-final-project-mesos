@@ -38,10 +38,10 @@ public final class NetworkUtil {
         try {
             for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
                 if (!ni.isUp() || ni.isLoopback() || ni.isVirtual()) continue;
-                // Salta interfacce Docker, bridge virtuali, tunnel VPN e adapter VM:
-                // queste passano i check isLoopback/isVirtual ma non sono raggiungibili
-                // da altri host sulla LAN/hotspot, e verrebbero altrimenti restituite
-                // prima dell'interfaccia WiFi/Ethernet reale.
+                // Skip Docker interfaces, virtual bridges, VPN tunnels, and VM adapters:
+                // These pass isLoopback/isVirtual checks but are not reachable
+                // from other hosts on the LAN/hotspot, and would otherwise be returned
+                // before the real WiFi/Ethernet interface.
                 String name = ni.getName().toLowerCase();
                 if (name.startsWith("docker") || name.startsWith("br-")   ||
                     name.startsWith("veth")   || name.startsWith("virbr") ||

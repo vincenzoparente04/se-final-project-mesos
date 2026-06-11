@@ -19,31 +19,28 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Server-side view of a socket client. Sole responsibility: trasmettere al
- * client i messaggi che il server le passa.
- * <p>
- * Le {@code sendXxx} sono dispatchate su un executor single-thread dedicato
- * per ogni player: in questo modo il game thread non si blocca mai sulla
- * write TCP di un client lento. La view non conosce {@code LobbyManager}; se
- * una write fallisce, si limita a chiudere il socket — il
- * {@code SocketClientHandler.run()} se ne accorge tramite EOF/SocketException
- * sul read loop e attiva la pipeline di disconnect (chiamando
- * {@code lobbyManager.onDisconnect} nel suo finally).
+ * Server-side view of a socket client. Sole responsibility: delivering
+ * server messages to the client over the TCP connection.
+ *
+ * All {@code sendXxx} calls are dispatched on a dedicated single-thread
+ * executor per player, so the game thread never blocks on the TCP write of
+ * a slow client. The view holds no reference to {@link LobbyManager}; when
+ * a write fails it closes the socket so that {@link SocketClientHandler}'s
+ * read loop detects the EOF or {@link java.net.SocketException} and triggers
+ * the disconnect pipeline via {@link LobbyManager#onDisconnect}.
+ *
+ * A {@link LivenessSentinel} is started by {@link #activateLiveness()} and
+ * runs a bidirectional heartbeat: it sends a {@code HeartbeatMessage} every
+ * {@value #SEND_INTERVAL_MS} ms and declares the connection dead if no
+ * inbound heartbeat arrives within {@value #TIMEOUT_MS} ms.
  */
 public class SocketVirtualView implements VirtualView {
 
-    /**
-     * Periodo di invio heartbeat server→client.
-     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling.
-     */
-    /**
-     * Intervalli del sentinel server-side socket.
-     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling
-     * e ritardi temporanei dovuti a messaggi applicativi grandi che impegnano il sender.
-     * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
-     */
+    /** Heartbeat send interval (server to client), in milliseconds. */
     private static final long SEND_INTERVAL_MS  = 2_000L;
+    /** How often the sentinel checks for a missing inbound heartbeat, in milliseconds. */
     private static final long CHECK_INTERVAL_MS = 5_000L;
+    /** Inbound-heartbeat timeout; if exceeded the connection is declared dead, in milliseconds. */
     private static final long TIMEOUT_MS        = 15_000L;
 
     private final String playerName;
@@ -53,6 +50,16 @@ public class SocketVirtualView implements VirtualView {
     private volatile boolean closed = false;
     private final LivenessSentinel sentinel;
 
+    /**
+     * Creates the view, sets up the single-thread sender executor and
+     * initialises the {@link LivenessSentinel} (not started yet;
+     * call {@link #activateLiveness()} when the connection is ready).
+     *
+     * @param playerName   the name that identifies this player on the server
+     * @param socket       the underlying TCP socket (closed on write failure or {@link #close()})
+     * @param out          the object output stream to write messages to
+     * @param lobbyManager the lobby manager to notify when a timeout is detected
+     */
     public SocketVirtualView(String playerName, Socket socket, ObjectOutputStream out, LobbyManager lobbyManager) {
         this.playerName = playerName;
         this.socket = socket;
@@ -132,17 +139,29 @@ public class SocketVirtualView implements VirtualView {
         return playerName;
     }
 
+    /**
+     * Starts the {@link LivenessSentinel}, enabling the bidirectional heartbeat.
+     * Must be called once the connection handshake is complete.
+     */
     @Override
     public void activateLiveness() {
         sentinel.start();
     }
 
-    /** Aggiorna il timestamp di liveness: da chiamare solo all'arrivo di un HeartbeatCommand. */
+    /**
+     * Updates the liveness timestamp. Must be called only upon receiving
+     * a {@link shared.command.lobbyCommand.HeartbeatCommand} from the client.
+     */
     @Override
     public void notifyInbound() {
         sentinel.notifyInbound();
     }
 
+    /**
+     * Shuts down this view cleanly: stops accepting new messages, waits up
+     * to 500 ms for in-flight sends to complete, stops the sentinel, and
+     * closes the underlying socket.
+     */
     @Override
     public synchronized void close() {
         if (closed) return;
@@ -160,6 +179,15 @@ public class SocketVirtualView implements VirtualView {
         try { socket.close(); } catch (IOException ignored) {}
     }
 
+    /**
+     * Writes a message directly to the output stream on the caller's thread
+     * (always the sender executor). Resets the stream before each write to
+     * prevent stale object-graph caching. On any {@link IOException}, marks
+     * the view as closed, shuts down the executor and closes the socket so
+     * that {@link SocketClientHandler}'s read loop detects the failure.
+     *
+     * @param msg the message to serialise and send
+     */
     private void rawSend(ServerMessage msg) {
         if (closed) return;
         try {

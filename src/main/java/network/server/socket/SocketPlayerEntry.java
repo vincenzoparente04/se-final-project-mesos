@@ -7,6 +7,14 @@ import network.server.core.PlayerEntry;
 import network.server.core.VirtualView;
 import shared.command.gameCommand.GameCommand;
 
+/**
+ * Socket-based implementation of {@link PlayerEntry}. Bundles the player's
+ * name, input stream, outbound view and client handler into a single entry
+ * used by the server to identify and interact with a connected socket client.
+ *
+ * @see SocketClientHandler
+ * @see SocketVirtualView
+ */
 public class SocketPlayerEntry implements PlayerEntry {
 
     private final String name;
