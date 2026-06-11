@@ -23,12 +23,17 @@ import java.util.Map;
  * {@link VirtualView}s when the state changes.
  *
  * <h2>Threading contract</h2>
- * After construction, {@code GameModel} is mutated exclusively by the
+ * After construction, {@code GameModel} is mutated primarily by the
  * single <em>game thread</em> owned by {@code GameController}. All mutators
  * documented as {@code @CalledOnGameThreadOnly} below MUST NOT be invoked
- * from network/handler threads. Read-only getters that are accessed across
- * threads (e.g. {@link #isGameOver()}) are made safe by marking the underlying
- * fields {@code volatile}.
+ * from network/handler threads. However, there is one exception: during the
+ * {@link model.phaseHandlers.ColorChoosingPhase ColorChoosingPhase}, if the
+ * 60-second timeout expires, an asynchronous timeout thread may call 
+ * {@link #notifyChange()} to apply random color assignments to inactive players
+ * and transition to the {@link model.phaseHandlers.SetupPhase SetupPhase}.
+ * 
+ * Read-only getters that are accessed across threads (e.g. {@link #isGameOver()})
+ * are made safe by marking the underlying fields {@code volatile}.
  */
 public class GameModel {
     private static final int MAX_ROUNDS = 10;
