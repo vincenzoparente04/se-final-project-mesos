@@ -20,10 +20,10 @@ public abstract class Card {
     /**
      * Constructs a new base {@code Card} with the specified structural and visual properties.
      *
-     * @param id            the unique sequential identifier assigned by the respective factory
-     * @param era           the chronological {@link Era} (ERA_I, ERA_II, ERA_III) this card belongs to
-     * @param playerCount   the minimum number of players required for this card to be included in the game deck
-     * @param imagePath     the relative resource path for the card's front graphical asset
+     * @param id the unique sequential identifier assigned by the respective factory
+     * @param era the chronological {@link Era} (ERA_I, ERA_II, ERA_III) this card belongs to
+     * @param playerCount the minimum number of players required for this card to be included in the game deck
+     * @param imagePath the relative resource path for the card's front graphical asset
      * @param backImagePath the relative resource path for the card's back graphical asset
      */
     public Card(int id, Era era, int playerCount, String imagePath, String backImagePath) {

@@ -23,14 +23,14 @@ public class BuildingCard extends Card {
     /**
      * Constructs a new {@code BuildingCard} with the specified structural, economic, and functional attributes.
      *
-     * @param id            the unique sequential identifier assigned by the factory
-     * @param era           the chronological {@link Era} this card belongs to
-     * @param playercount   the minimum number of players required to include this card in the active game deck
-     * @param foodCost      the base amount of food resources required to acquire this building
+     * @param id the unique sequential identifier assigned by the factory
+     * @param era the chronological {@link Era} this card belongs to
+     * @param playercount the minimum number of players required to include this card in the active game deck
+     * @param foodCost the base amount of food resources required to acquire this building
      * @param endGamePoints the flat prestige points awarded to the owner at the end of the game
-     * @param effect        the instantiated polymorphic {@link BuildingEffect} bound to this card
-     * @param effectId      the string identifier of the effect, primarily used for CLI rendering and debugging
-     * @param imagePath     the resource path for the card's front graphical asset
+     * @param effect the instantiated polymorphic {@link BuildingEffect} bound to this card
+     * @param effectId the string identifier of the effect, primarily used for CLI rendering and debugging
+     * @param imagePath the resource path for the card's front graphical asset
      * @param backImagePath the resource path for the card's back graphical asset
      */
     public BuildingCard(int id, Era era, int playercount, int foodCost, int endGamePoints, BuildingEffect effect, String effectId, String imagePath, String backImagePath) {

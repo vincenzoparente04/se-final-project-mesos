@@ -18,10 +18,10 @@ public abstract class TribeCard extends Card {
     /**
      * Constructs a new {@code TribeCard} with the specified core structural and visual attributes.
      *
-     * @param id            the unique sequential identifier assigned by the factory
-     * @param era           the chronological {@link Era} this card belongs to
-     * @param playerCount   the minimum number of players required to include this card in the active game deck
-     * @param imagePath     the resource path for the card's front graphical asset
+     * @param id the unique sequential identifier assigned by the factory
+     * @param era the chronological {@link Era} this card belongs to
+     * @param playerCount the minimum number of players required to include this card in the active game deck
+     * @param imagePath the resource path for the card's front graphical asset
      * @param backImagePath the resource path for the card's back graphical asset (e.g., specific era or final event back)
      */
     public TribeCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {

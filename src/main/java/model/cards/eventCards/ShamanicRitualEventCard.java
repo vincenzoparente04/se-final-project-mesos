@@ -12,25 +12,60 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents the global concrete event execution card for the Shamanic Ritual phase.
+ * <p>
+ * This event implements a relative performance comparison (majority vs. minority) among all active
+ * participants based on their aggregate shamanic star counts. The resolution algorithm evaluates
+ * player states dynamically by compounding intrinsic tribal stars with building-derived capabilities
+ * (such as flat icon padding, score multiplication, and penalty mitigation flags).
+ * </p>
+ */
 public class ShamanicRitualEventCard extends EventCard {
+
+    /**
+     * Constructs a new concrete {@code ShamanicRitualEventCard} instance.
+     *
+     * @param id the unique sequential identifier assigned by the factory layer
+     * @param era the chronological {@link Era} this card is bound to
+     * @param playerCount the minimum player threshold required to inject this card into play
+     * @param imagePath the resource path for this card's front graphical asset
+     * @param backImagePath the resource path for the standard event deck back asset
+     */
     public ShamanicRitualEventCard(int id, Era era, int playerCount, String imagePath, String backImagePath) {
         super(id, era, playerCount, imagePath, backImagePath);
     }
 
     /**
-     * Each player's shamanic icon count is tallied, including bonuses from buildings.
-     * The player(s) with the most icons gain prestige equal to 5 times the era index;
-     * those with the fewest lose a scaled amount unless they hold shamanic immunity.
-     * Building effects that double the prestige reward are applied before awarding points.
-     * Ties at majority or minority are handled correctly.
+     * <p>
+     * <b>Algorithmic Resolution Pipeline:</b>
+     * <ol>
+     * <li>Computes the chronological scaling index: {@code eraIndex = era.ordinal() + 1}.</li>
+     * <li><b>Demographic Audit:</b> Iterates through all players to map total shamanic star weights.
+     * If a player possesses an active bonus icon flag ({@link Player#hasShamanicBonusIcons()}),
+     * an additional padding of 3 stars is structurally added to their evaluation tally.</li>
+     * <li><b>Extrema Identification:</b> Determines the absolute maximum ({@code max}) and minimum ({@code min})
+     * star metrics present across the global sample.</li>
+     * <li><b>Mathematical Scale Definition:</b> Defines the reward baseline as {@code eraIndex * 5} and
+     * the regression penalty baseline as {@code 3 + (2 * (eraIndex - 1))}.</li>
+     * <li><b>Majority Payload Allocation:</b> Awards the calculated baseline to all players matching the
+     * {@code max} threshold. If a winning player has the doubling modifier active ({@link Player#hasShamanicDoublePrestige()}),
+     * the prestige point payload is multiplied by 2.</li>
+     * <li><b>Minority Penalty Execution:</b> Deducts the regression penalty from all players matching the
+     * {@code min} threshold, provided they do not possess protective immunity ({@link Player#hasShamanicImmunity()}).</li>
+     * <li><b>State Serialization:</b> Compiles data deltas and performance context labels ("tied", "majority",
+     * "minority", "middle") into transportable {@link PlayerEventDeltaDto} instances.</li>
+     * </ol>
+     * </p>
      *
-     * @param players the list of active players
-     * @return an {@link EventResolutionDto} summarising the per-player outcome
+     * @param players the active list of {@link Player} instances participating in the game
+     * @return a fully populated, serialized network transport object {@link EventResolutionDto} summarizing the phase outcomes
      */
+    @Override
     public EventResolutionDto resolve(List<Player> players) {
         int eraIndex = this.getEra().ordinal() + 1;
 
-        // 1. calculates icons considering building cards
+        // 1. Calculates icons considering active building modifications
         Map<Player, Integer> iconCounts = new HashMap<>();
         Map<Player, Integer> prestigeBeforeMap = new HashMap<>();
         Map<Player, Integer> foodBeforeMap = new HashMap<>();
@@ -44,15 +79,15 @@ public class ShamanicRitualEventCard extends EventCard {
             foodBeforeMap.put(p, p.getFood());
         }
 
-        // 2. finds max and min
+        // 2. Finds relative global bounds
         int max = Collections.max(iconCounts.values());
         int min = Collections.min(iconCounts.values());
 
-        // 3. functions found in the cards
+        // 3. Structural coefficients evaluation
         int gain = eraIndex * 5;
         int loss = 3 + (2 * (eraIndex - 1));
 
-        // 4. gives points to who has max
+        // 4. Distributes rewards to the majority holders (with potential multipliers)
         players.stream()
                 .filter(p -> iconCounts.get(p) == max)
                 .forEach(p -> {
@@ -63,13 +98,13 @@ public class ShamanicRitualEventCard extends EventCard {
                     p.addPrestigePoints(reward);
                 });
 
-        // 5. removes from who has minimum (if not same)
+        // 5. Deducts penalties from minority holders (with conditional immunity check)
         players.stream()
                 .filter(p -> iconCounts.get(p) == min)
                 .filter(p -> !p.hasShamanicImmunity())
                 .forEach(p -> p.removePrestigePoints(loss));
 
-        // 6. builds deltas to be shown at the clients
+        // 6. Packages delta metrics for network distribution
         List<PlayerEventDeltaDto> deltas = new ArrayList<>();
         for (Player p : players) {
             int icons = iconCounts.get(p);
