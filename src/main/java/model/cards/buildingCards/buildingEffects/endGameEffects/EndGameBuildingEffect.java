@@ -6,63 +6,55 @@ import model.player.Tribe;
 
 import java.util.function.ToIntFunction;
 
+/**
+ * Implements a deferred end-game scoring strategy for building cards.
+ * <p>
+ * Instead of hardcoding distinct subclasses for every possible scoring condition, this class
+ * relies on functional composition via {@link ToIntFunction} to dynamically evaluate a player's
+ * {@link Tribe} state. By injecting specific method references (e.g., {@code Tribe::getHunterCount},
+ * {@code Tribe::countCompleteSets}) or custom lambdas (e.g., {@code tribe -> 1} for flat points)
+ * alongside a numeric multiplier, the factory can seamlessly instantiate highly versatile and
+ * complex end-game point calculators.
+ * </p>
+ */
 public class EndGameBuildingEffect implements BuildingEffect {
+
     private final int multiplier;
     private final ToIntFunction<Tribe> getter;
 
     /**
-     *  The constructor receives a multiplier for each character and the correct getter to use to count the number
-     * of characters
+     * Constructs a new deferred end-game scoring effect based on a specific demographic metric.
+     *
+     * @param multiplier the prestige point multiplier awarded for each unit returned by the getter
+     * @param getter the functional interface used to dynamically extract the relevant integer
+     * metric (e.g., number of characters, completed sets) from the player's tribe
      */
     public EndGameBuildingEffect(int multiplier, ToIntFunction<Tribe> getter) {
         this.multiplier = multiplier;
         this.getter = getter;
     }
 
+    /**
+     * <p>
+     * For end-game effects, this method defers execution by registering the instance into
+     * the player's internal end-game evaluation queue, ensuring it is only triggered during
+     * the final scoring phase.
+     * </p>
+     *
+     * @param player the target {@link Player} acquiring the effect
+     */
     @Override
     public void registerSelf(Player player) {
         player.getTribe().registerEndGameEffect(this);
     }
 
-
     /**
-     *  Add to the player the number of character times the multiplier
+     * Executes the deferred scoring logic, evaluating the functional getter against the
+     * player's current tribe state, and immediately updates the player's prestige score.
+     *
+     * @param player the target {@link Player} receiving the calculated prestige points
      */
     public void applyEffect(Player player) {
         player.addPrestigePoints(multiplier * getter.applyAsInt(player.getTribe()));
     }
-
-    /* Nella CardFactory:
-
-        // "3 PP per ogni Hunter"
-        BuildingCard hunterBuilding = new BuildingCard(
-        foodCost, era, printedPP,
-        new EndGameBuildingEffect(3, Tribe::getHunterCount)
-        );
-
-        // "2 PP per ogni Artist"
-        BuildingCard artistBuilding = new BuildingCard(
-        foodCost, era, printedPP,
-        new EndGameBuildingEffect(2, Tribe::getArtistCount)
-        );
-
-        // 6 PP per ogni set completo
-        BuildingCard inventorBuilding = new BuildingCard(
-        foodCost, era, printedPP,
-        new EndGameBuildingEffect(6, Tribe::countCompleteSets)
-        );
-
-        // raddoppia PP dei builders
-        BuildingCard inventorBuilding = new BuildingCard(
-        foodCost, era, printedPP,
-        new EndGameBuildingEffect(1, Tribe::calculateBuildersEndGamePoints)
-        );
-
-        // 25 PP flat
-        BuildingCard inventorBuilding = new BuildingCard(
-        foodCost, era, printedPP,
-        new EndGameBuildingEffect(25, tribe -> 1)
-        );
-     */
-
 }
