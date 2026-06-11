@@ -17,8 +17,9 @@ public class BuilderCard extends CharacterCard {
     public int getBuilderDiscount(){ return builderDiscount; }
 
     /**
-     *  Add a builder to its list in the tribe of the player who picked this card.
-     * @param player the one who picked the card
+     * Registers this card by adding a builder to the player's tribe.
+     *
+     * @param player the player who drew this card
      */
     @Override
     public void registerToTribe(Player player) {

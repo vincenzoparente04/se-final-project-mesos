@@ -14,7 +14,9 @@ public class InventorCard extends CharacterCard {
     public InventionIcon getInventionIcon() { return inventionIcon; }
 
     /**
-     *  Add an inventor to its list in the tribe of the player who picked this card.
+     * Registers this card by adding an inventor to the player's tribe.
+     *
+     * @param player the player who drew this card
      */
     @Override
     public void registerToTribe(model.player.Player player) {

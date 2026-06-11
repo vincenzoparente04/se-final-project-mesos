@@ -11,7 +11,9 @@ public class ShamanCard extends CharacterCard {
     public int getStarCount(){ return starCount; }
 
     /**
-     *  Add a shaman to its list in the tribe of the player who picked this card.
+     * Registers this card by adding a shaman to the player's tribe.
+     *
+     * @param player the player who drew this card
      */
     @Override
     public void registerToTribe(model.player.Player player) {

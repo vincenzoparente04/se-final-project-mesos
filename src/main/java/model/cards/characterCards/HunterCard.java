@@ -12,8 +12,11 @@ public class HunterCard extends CharacterCard {
     }
 
     /**
-     *  Add an hunter to its list in the tribe of the player who picked this card and add the
-     * food if the card has the trigger icon depending on the number of hunters the players has.
+     * Registers this card by adding a hunter to the player's tribe.
+     * If this card carries a trigger icon, immediately grants the player
+     * food equal to their updated hunter count.
+     *
+     * @param player the player who drew this card
      */
     @Override
     public void registerToTribe(Player player) {

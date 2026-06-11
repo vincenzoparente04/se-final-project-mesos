@@ -9,7 +9,9 @@ public class ArtistCard extends CharacterCard {
     }
 
     /**
-     *  Add an artist to its list in the tribe of the player who picked this card.
+     * Registers this card by adding an artist to the player's tribe.
+     *
+     * @param player the player who drew this card
      */
     @Override
     public void registerToTribe(Player player) {
