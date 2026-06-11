@@ -9,17 +9,36 @@ import model.player.Player;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Handles the setup phase of the game.
+ * 
+ * This phase is responsible for initializing the board, randomizing the turn order of players,
+ * and distributing starting resources. Once setup is complete, the game transitions to the
+ * {@link PlacementPhase}.
+ * 
+ * @see GamePhaseHandler
+ * @see PlacementPhase
+ * @see GameModel
+ */
 public class SetupPhase implements GamePhaseHandler {
 
     private final GameModel model;
 
+    /**
+     * Constructs a SetupPhase handler.
+     *
+     * @param model the game model containing game state and player information
+     */
     public SetupPhase(GameModel model) {
         this.model = model;
     }
 
     /**
-     *   This method is responsible for setting up the board, randomizing turn order, and distributing
-     * starting resources to players. Once all setup tasks are complete, it transitions the game to the PlacementPhase.
+     * Initializes the setup phase.
+     * 
+     * This method is responsible for setting up the board, randomizing turn order, and distributing
+     * starting resources to players. Once all setup tasks are complete, it transitions the game to the 
+     * {@link PlacementPhase}.
      */
     @Override
     public void onEnter() {
@@ -31,8 +50,10 @@ public class SetupPhase implements GamePhaseHandler {
     }
 
     /**
-     *  Randomizes the turn order by shuffling the list of players and placing their totems on the
-     * TurnOrderTile in the new order. Each player is also set to be located on the TurnOrderTile.
+     * Randomizes the turn order by shuffling the list of players and placing their totems on the
+     * TurnOrderTile in the new order. Each player is also set as being located on the TurnOrderTile.
+     *
+     * @param players the list of players whose turn order is to be randomized
      */
     public void randomizeTurnOrder(List<Player> players) {
         List<TurnOrderSlot> slots = model.getBoard().getTurnOrderTile().getSlots();
@@ -48,7 +69,10 @@ public class SetupPhase implements GamePhaseHandler {
     }
 
     /**
-     *  Distributes starting resources to players based on their position in the turn order tile.
+     * Distributes starting resources to players based on their position in the turn order.
+     * 
+     * Each player receives a different amount of food based on their position:
+     * Position 0 receives 2 food, positions 1-2 receive 3 food, and positions 3-4 receive 4 food.
      */
     private void distributeStartingResources() {
         List<Player> players = model.getBoard().getTurnOrderTile().getTurnOrder();
@@ -62,11 +86,24 @@ public class SetupPhase implements GamePhaseHandler {
         }
     }
 
+    /**
+     * Returns the game phase associated with this handler.
+     *
+     * @return the {@link GamePhase#SETUP SETUP} phase
+     */
     @Override
     public GamePhase getPhase() {
         return GamePhase.SETUP;
     }
 
+    /**
+     * Returns the current player during this phase.
+     * 
+     * In the setup phase, there is no specific current player as setup operations
+     * affect all players equally.
+     *
+     * @return null as no single player is active during setup
+     */
     @Override
     public Player getCurrentPlayer() {
         return null;
