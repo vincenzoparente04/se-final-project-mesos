@@ -20,7 +20,7 @@ import java.util.List;
 public interface VirtualView {
 
     /**
-     * Sends the latest game-state snapshot to the client.
+     * Sends the latest game-state snapshot to the client using a separate thread for both implementations.
      *
      * @param dto the game-state snapshot to transmit
      */

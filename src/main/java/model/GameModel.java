@@ -65,21 +65,40 @@ public class GameModel {
     private volatile GamePhaseHandler currentPhaseHandler;
     private final List<VirtualView> views;
 
+    /**
+     * Constructs a game model with the specified list of views.
+     *
+     * @param views the list of {@link VirtualView}s representing connected clients
+     */
     public GameModel(List<VirtualView> views) {
         this.views = new ArrayList<>(views);
     }
 
-    /** Convenience constructor for tests that don't need any view registered. */
+    /**
+     * Constructs a game model without any registered views.
+     * 
+     * Convenience constructor for tests that don't need any view registered.
+     */
     public GameModel() {
         this(List.of());
     }
 
+    /**
+     * Initializes the game constructing the board and creating the players and starting the color-choosing phase.
+     *
+     * @param playerNames the list of player names
+     */
     public void startGame(List<String> playerNames) {
         this.board = new Board(playerNames.size());
         createPlayers(playerNames);
         setPhase(new ColorChoosingPhase(this));
     }
 
+    /**
+     * Creates player objects from the given list of names.
+     *
+     * @param playerNames the list of player names to create players from
+     */
     private void createPlayers(List<String> playerNames) {
         this.players = new ArrayList<>();
         for (String name : playerNames) {
@@ -87,6 +106,11 @@ public class GameModel {
         }
     }
 
+    /**
+     * Transitions the game to a new phase and triggers its entry logic.
+     *
+     * @param phase the new {@link GamePhaseHandler} to activate
+     */
     public void setPhase(GamePhaseHandler phase) {
         this.currentPhaseHandler = phase;
         phase.onEnter();
@@ -103,6 +127,15 @@ public class GameModel {
         cmd.accept(handler);
     }
 
+    /**
+     * broadcast the updated state to every registered view. Called by the phase handlers after mutating the model.
+     * <p>
+     * It first creates a new {@link GameStateDto}. Then send the state to every {@link VirtualView} in the list of views.
+     * The list is copied to avoid concurrent modification issues if a view is added/removed while iterating.
+     * <p>
+     * The model notify itself the views, avoiding the model to know the controller.
+     * These actions are not blocking for server because {@link VirtualView} use a separate thread to send dto.
+     */
     public void notifyChange() {
         GameStateDto dto = GameStateDtoBuilder.build(this);
         for (VirtualView v : new ArrayList<>(views)) {
@@ -138,8 +171,12 @@ public class GameModel {
     }
 
     /**
-     * Replace the view associated with {@code playerName}. If no view exists
-     * for that player the new view is simply appended.
+     * Replaces the view associated with the given player name.
+     * 
+     * If no view exists for that player, the new view is appended to the list.
+     *
+     * @param playerName the name of the player whose view is being replaced
+     * @param newView the new {@link VirtualView} to associate with the player
      */
     public void swapView(String playerName, VirtualView newView) {
         views.removeIf(v -> v.getPlayerName().equals(playerName));
@@ -147,7 +184,9 @@ public class GameModel {
     }
 
     /**
-     * Remove the view associated with {@code playerName}, if present.
+     * Removes the view associated with the given player name.
+     *
+     * @param playerName the name of the player whose view is being removed
      */
     public void removeView(String playerName) {
         views.removeIf(v -> v.getPlayerName().equals(playerName));
@@ -165,6 +204,11 @@ public class GameModel {
         currentRound++;
     }
 
+    /**
+     * Determines whether the game has ended based on round progression.
+     *
+     * @return true if the current round exceeds the maximum, false otherwise
+     */
     public boolean isGameOver() {
         return currentRound > MAX_ROUNDS;
     }
@@ -183,10 +227,20 @@ public class GameModel {
         this.winners = winnerNames;
     }
 
+    /**
+     * Sets the end-game scoring data.
+     *
+     * @param scoring the {@link EndGameScoringDto} containing final score details
+     */
     public void setEndGameScoring(EndGameScoringDto scoring) {
         this.endGameScoring = scoring;
     }
 
+    /**
+     * Returns the end-game scoring data.
+     *
+     * @return the {@link EndGameScoringDto}, or null if not yet available
+     */
     public EndGameScoringDto getEndGameScoring() {
         return endGameScoring;
     }
@@ -199,6 +253,11 @@ public class GameModel {
         this.leaderboard = data;
     }
 
+    /**
+     * Returns the leaderboard snapshot.
+     *
+     * @return the {@link LeaderboardData} published by the database thread, or null if not yet available
+     */
     public LeaderboardData getLeaderboard() {
         return leaderboard;
     }
@@ -228,10 +287,20 @@ public class GameModel {
         return currentPhaseHandler;
     }
 
+    /**
+     * Returns the current game phase.
+     *
+     * @return the {@link GamePhase} of the current handler, or null if none is active
+     */
     public GamePhase getCurrentPhase() {
         return currentPhaseHandler != null ? currentPhaseHandler.getPhase() : null;
     }
 
+    /**
+     * Returns the player whose turn it currently is.
+     *
+     * @return the current active {@link Player}, or null if the current phase does not have an active player
+     */
     public Player getCurrentPlayer() {
         return currentPhaseHandler != null ? currentPhaseHandler.getCurrentPlayer() : null;
     }
@@ -244,6 +313,13 @@ public class GameModel {
         return rowsManager.getCurrentEra();
     }
 
+    /**
+     * Finds a player by their unique name.
+     *
+     * @param name the name of the player to find
+     * @return the {@link Player} with the given name
+     * @throws IllegalArgumentException if no player with the given name exists
+     */
     public Player getPlayerByName(String name) {
         return players.stream()
                 .filter(p -> p.getName().equals(name))
@@ -251,6 +327,11 @@ public class GameModel {
                 .orElseThrow(() -> new IllegalArgumentException("No player named: " + name));
     }
 
+    /**
+     * Returns the list of winning player names.
+     *
+     * @return a list of names of players who won the match
+     */
     public List<String> getWinners() {
         return winners;
     }

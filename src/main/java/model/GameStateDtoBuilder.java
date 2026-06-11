@@ -28,8 +28,21 @@ import model.cards.characterCards.GathererCard;
 
 import java.util.List;
 
+/**
+ * Builder class for constructing {@link GameStateDto} objects from the game model.
+ * 
+ * This class serves as an adapter between the internal game model and the data transfer
+ * objects (DTOs) sent to clients. It polymorphically converts model objects into their
+ * corresponding DTO representations for network transmission.
+ */
 public class GameStateDtoBuilder {
 
+    /**
+     * Builds a complete game state DTO from the current game model.
+     *
+     * @param model the {@link GameModel} to extract state from
+     * @return a {@link GameStateDto} representing the current game state
+     */
     public static GameStateDto build(GameModel model) {
         Player currentPlayer = model.getCurrentPlayer();
         String currentEra = model.getCurrentEra() != null ? String.valueOf(model.getCurrentEra().ordinal() + 1) : null;
@@ -80,6 +93,12 @@ public class GameStateDtoBuilder {
         );
     }
 
+    /**
+     * Converts a player to a {@link PlayerDto}.
+     *
+     * @param player the player to convert
+     * @return a {@link PlayerDto} representation of the player
+     */
     private static PlayerDto toPlayerDto(Player player) {
         String color = player.getColor() != null ? player.getColor().name() : null;
         String location = player.getLocation() != null ? player.getLocation().name() : null;
@@ -95,6 +114,12 @@ public class GameStateDtoBuilder {
         return new PlayerDto(player.getName(), player.getFood(), player.getPrestigePoints(), color, location, tribeDto);
     }
 
+    /**
+     * Converts an offer tile to an {@link OfferTileDto}.
+     *
+     * @param tile the offer tile to convert
+     * @return an {@link OfferTileDto} representation of the tile
+     */
     private static OfferTileDto toOfferTileDto(OfferTile tile) {
         String occupantName = tile.isOccupied() ? tile.getOccupant().getName() : null;
         ActionDetailsExtractor extractor = new ActionDetailsExtractor();
@@ -104,6 +129,12 @@ public class GameStateDtoBuilder {
                 extractor.getTopRowUsed(), extractor.getBottomRowUsed());
     }
 
+    /**
+     * Converts turn order slots to {@link TurnOrderSlotDto} objects.
+     *
+     * @param slots the list of turn order slots to convert
+     * @return a list of {@link TurnOrderSlotDto} representations
+     */
     private static List<TurnOrderSlotDto> toTurnOrderSlotDtos(List<TurnOrderSlot> slots) {
         TurnOrderSlotDto[] dtos = new TurnOrderSlotDto[slots.size()];
         for (int i = 0; i < slots.size(); i++) {
@@ -114,12 +145,21 @@ public class GameStateDtoBuilder {
         return List.of(dtos);
     }
 
+    /**
+     * Converts a card to a {@link CardDto}.
+     *
+     * @param card the card to convert
+     * @return a {@link CardDto} representation of the card
+     */
     private static CardDto toCardDto(Card card) {
         CardToDtoVisitor visitor = new CardToDtoVisitor();
         card.accept(visitor);
         return visitor.getDto();
     }
 
+    /**
+     * {@link model.board.OfferTileAction.OfferTileActionVisitor} implementation to extract details from an offer tile's action for DTO construction.
+     */
     private static class ActionDetailsExtractor implements OfferTileActionVisitor {
         private String label;
         private Integer topRowLimit;
@@ -166,6 +206,9 @@ public class GameStateDtoBuilder {
         }
     }
 
+    /**
+     * Details collector from a card to build a {@link CardDto}. Uses the Visitor pattern to handle different card types polymorphically.
+     */
     private static class CardToDtoVisitor implements CardVisitor {
         private CardDto dto;
 
