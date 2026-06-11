@@ -74,21 +74,49 @@ public class EventResolver implements CardVisitor {
         return resolutions;
     }
 
+    /**
+     * Visits a character card.
+     * 
+     * Character cards do not contain any events, so no action is taken.
+     *
+     * @param card the character card to visit
+     */
     @Override
     public void visit(CharacterCard card) {
         // CharacterCard does not have any event to resolve
     }
 
+    /**
+     * Visits a standard event card and queues it for resolution.
+     *
+     * @param card the event card to visit
+     */
     @Override
     public void visit(EventCard card) {
         eventsToResolve.add(card);
     }
 
+    /**
+     * Visits a sustenance event card and queues it for later resolution.
+     * 
+     * Sustenance events are resolved after all standard events, so they are
+     * queued in a separate list and appended to the main resolution queue
+     * after standard event processing begins.
+     *
+     * @param card the sustenance event card to visit
+     */
     @Override
     public void visit(SustenanceEventCard card) {
         sustenanceToResolve.add(card);
     }
 
+    /**
+     * Visits a building card.
+     * 
+     * Building cards do not appear in tribe rows, so no action is taken.
+     *
+     * @param card the building card to visit
+     */
     @Override
     public void visit(BuildingCard card) {
         // There are no building cards in tribe rows

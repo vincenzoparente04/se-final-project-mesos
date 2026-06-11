@@ -87,20 +87,43 @@ public class TribeDeck {
     }
 
     // -- state --
+
+    /**
+     * Determines whether this deck is empty.
+     *
+     * @return true if no cards remain in the deck, false otherwise
+     */
     public boolean isEmpty() {
         return cards.isEmpty();
     }
 
+    /**
+     * Filters a list of tribe cards by era.
+     *
+     * @param list the list of cards to filter
+     * @param era the era to match
+     * @return a new list containing only cards from the specified era
+     */
     private List<TribeCard> filterByEra(List<TribeCard> list, Era era) {
         return list.stream()
                 .filter(c -> c.getEra() == era)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Returns the number of cards remaining in this deck.
+     *
+     * @return the size of the deck
+     */
     public int size() {
         return cards.size();
     }
 
+    /**
+     * Returns the current era based on the last drawn card.
+     *
+     * @return the {@link Era} of the last drawn card
+     */
     public Era getCurrentEra(){
         return currentEra;
     }

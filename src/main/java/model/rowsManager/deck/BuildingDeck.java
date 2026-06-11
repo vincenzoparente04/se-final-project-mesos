@@ -8,6 +8,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Manages a building card deck for a specific era.
+ * 
+ * Each era (I, II, III) has its own separate building deck. The deck is initialized
+ * based on player count and holds the building cards available for that era.
+ * 
+ * @see Era
+ * @see BuildingCard
+ */
 public class BuildingDeck {
     private Era era;
     private List<BuildingCard> cards;
@@ -31,6 +40,11 @@ public class BuildingDeck {
             {2, 3, 5},  // 5 players
     };
 
+    /**
+     * Constructs a BuildingDeck for the specified era.
+     *
+     * @param era the {@link Era} this deck belongs to
+     */
     public BuildingDeck(Era era) {
         this.era = era;
         this.cards = new ArrayList<>();
@@ -65,13 +79,21 @@ public class BuildingDeck {
         this.cards = new ArrayList<>(eligible.subList(0, take));
     }
 
+    /**
+     * Adds a building card to this deck.
+     *
+     * @param card the building card to add
+     */
     public void addCard(BuildingCard card) {
         cards.add(card);
     }
 
     /**
      * Returns all cards in this deck and clears it.
-     * Used at the beginning of each Era to populate the top row.
+     * 
+     * Used at the beginning of each era to populate the top building row.
+     *
+     * @return a {@link List} of all {@link BuildingCard}s in this deck
      */
     public List<BuildingCard> drawAll() {
         List<BuildingCard> all = new ArrayList<>(cards);
@@ -79,14 +101,35 @@ public class BuildingDeck {
         return all;
     }
 
-    // - state --
+    /**
+     * Determines whether this deck is empty.
+     *
+     * @return true if no cards remain in the deck, false otherwise
+     */
     public boolean isEmpty() {
         return cards.isEmpty();
     }
-    public Era getEra(){return era;}
+
+    /**
+     * Returns the era associated with this deck.
+     *
+     * @return the {@link Era} of this deck
+     */
+    public Era getEra() {
+        return era;
+    }
 
     // -- helpers --
 
+    /**
+     * Retrieves the number of cards required for this era based on player count.
+     * 
+     * Uses the {@link #CARD_COUNT_TABLE CARD_COUNT_TABLE} to determine how many
+     * building cards should be used for this era given the number of players.
+     *
+     * @param playerCount the number of players in the game (2–5)
+     * @return the number of cards to use for this era
+     */
     private int getCardCountForEra(int playerCount) {
         int row = playerCount - 2;
         int col = switch (era) {

@@ -26,7 +26,7 @@ import java.util.stream.Stream;
  *       drawn from a single {@link TribeDeck}.</li>
  *   <li><b>Building track</b> — a top row and a bottom row of
  *       {@link BuildingCard}s. Cards progress across three era-specific
- *       {@link BuildingDeck}s: Era I fills the top row at setup, and each
+ *       {@link BuildingDeck}s: Era I fill the top row at setup, and each
  *       era transition promotes the current top row to the bottom and loads
  *       the next era deck into the top.</li>
  * </ul>
@@ -122,6 +122,7 @@ import java.util.stream.Stream;
      * 1. discard all tribe cards from bottom row
      * 2. moves all tribe cards from top row to bottom row
      * 3. restores top row tribe cards, drawing from tribe deck
+     * @param playerCount the number of players (used to determine how many cards to draw)
      */
     public void endRound(int playerCount) {
         bottomRowTribe.clear();
@@ -148,7 +149,10 @@ import java.util.stream.Stream;
     }
 
     /**
-     * check if the card passed as argument is present in the top row
+     * Checks whether a specific card is present in the top row (tribe or building).
+     *
+     * @param cardId the unique identifier of the card to search for
+     * @return true if the card is found in the top row, false otherwise
      */
     public boolean topRowContainsCard(int cardId) {
         return Stream.of(topRowTribe, topRowBuilding)
@@ -157,7 +161,10 @@ import java.util.stream.Stream;
     }
 
     /**
-     * check if the card passed as argument is present in the bottom row
+     * Checks whether a specific card is present in the bottom row (tribe or building).
+     *
+     * @param cardId the unique identifier of the card to search for
+     * @return true if the card is found in the bottom row, false otherwise
      */
     public boolean bottomRowContainsCard(int cardId) {
         return Stream.of(bottomRowTribe, bottomRowBuilding)
@@ -166,9 +173,10 @@ import java.util.stream.Stream;
     }
 
     /**
-     * Finds a card by its ID across all four board rows.
-     * @param cardId the card ID to search for
-     * @return an Optional containing the card if found, or empty if not present on the board
+     * Finds a card by its unique identifier across all four board rows.
+     *
+     * @param cardId the unique identifier of the card to search for
+     * @return an {@link Optional} containing the {@link Card} if found, or an empty Optional if not present on the board
      */
     public Optional<Card> findCardById(int cardId) {
         return getAllCardsOnBoard().stream()
@@ -177,7 +185,12 @@ import java.util.stream.Stream;
     }
 
     /**
-     *  search the card through all 4 lists and removes it
+     * Removes a card by its unique identifier from all four rows.
+     * 
+     * Searches through all tribe and building rows (top and bottom) and removes the first card
+     * matching the given ID. Does nothing if no card with the specified ID is found.
+     *
+     * @param cardId the unique identifier of the card to remove
      */
     public void removeCard(int cardId) {
         Stream.of(topRowTribe, bottomRowTribe, topRowBuilding, bottomRowBuilding)
@@ -185,8 +198,11 @@ import java.util.stream.Stream;
     }
 
     /**
-     *  merges top row and bottom row tribe cards. The returned list has bottom row cards first, then top row cards.
-     * @return a list of all the tribe cards present on the board, both in the top and bottom row
+     * Returns all tribe cards currently on the board (top and bottom rows).
+     * 
+     * The returned list contains bottom row cards first, followed by top row cards.
+     *
+     * @return a {@link List} of all {@link TribeCard}s present on the board
      */
     public List<TribeCard> getAllTribeCardsOnBoard() {
         List<TribeCard> allCards = new ArrayList<>(bottomRowTribe);
@@ -194,6 +210,14 @@ import java.util.stream.Stream;
         return allCards;
     }
 
+    /**
+     * Returns all cards (tribe and building) currently on the board (top and bottom rows).
+     * 
+     * The returned list contains cards in the following order: bottom tribe row, top tribe row,
+     * bottom building row, top building row.
+     *
+     * @return a {@link List} of all {@link Card}s present on the board
+     */
     public List<Card> getAllCardsOnBoard() {
         List<Card> allCards = new ArrayList<>(bottomRowTribe);
         allCards.addAll(topRowTribe);
