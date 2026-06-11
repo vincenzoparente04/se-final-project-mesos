@@ -8,20 +8,28 @@ import network.server.core.VirtualView;
 import shared.command.gameCommand.GameCommand;
 
 /**
- * Socket-based implementation of {@link PlayerEntry}. Bundles the player's
- * name, input stream, outbound view and client handler into a single entry
- * used by the server to identify and interact with a connected socket client.
- *
- * @see SocketClientHandler
- * @see SocketVirtualView
+ * Socket implementation of {@link PlayerEntry}. Bundles the player's name, inbound
+ * stream, {@link SocketVirtualView} and {@link SocketClientHandler}; wiring the
+ * game queue is delegated to the handler so the reader thread can route in-game
+ * commands once the player joins a session.
  */
 public class SocketPlayerEntry implements PlayerEntry {
 
+    /** The player's server-wide name. */
     private final String name;
+    /** Inbound stream, exposed via {@link #getIn()} for session wiring. */
     private final ObjectInputStream in;
+    /** Outbound view for this player. */
     private final SocketVirtualView view;
+    /** Reader/dispatcher, target of {@link #setGameQueue}. */
     private final SocketClientHandler handler;
 
+    /**
+     * @param name the player's server-wide name
+     * @param in the inbound command stream
+     * @param view the outbound view for this player
+     * @param handler the reader/dispatcher to wire the game queue into
+     */
     public SocketPlayerEntry(String name, ObjectInputStream in, SocketVirtualView view, SocketClientHandler handler) {
         this.name = name;
         this.in = in;
@@ -44,6 +52,7 @@ public class SocketPlayerEntry implements PlayerEntry {
         handler.setGameQueue(queue);
     }
 
+    /** @return the inbound command stream for this player */
     public ObjectInputStream getIn() {
         return in;
     }

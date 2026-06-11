@@ -15,25 +15,34 @@ import network.client.core.LocalGameState;
 import network.client.core.ClientStateListener;
 
 /**
- * RMI implementation of the ClientCallbackRemote interface.
- * Client side receiver of server callbacks in the RMI architecture.
+ * RMI implementation of {@link ClientCallbackRemote}: the client-side receiver of
+ * server callbacks in the RMI transport. Each callback updates the local state
+ * and/or notifies the {@link ClientStateListener}.
  *
- * <p>Design "canale di liveness isolato": solo {@link #onHeartbeat()} aggiorna il sentinel
- * di liveness del {@link RmiVirtualServer}. Gli altri callback applicativi non toccano la
- * liveness, così un eventuale stop del traffico applicativo (ma non degli heartbeat) non
- * produce un falso positivo di disconnessione.
+ * <p>"Isolated liveness channel" design: only {@link #onHeartbeat()} refreshes the
+ * {@link RmiVirtualServer}'s liveness sentinel. The application callbacks do not
+ * touch liveness, so a stop of application traffic (but not of heartbeats) does not
+ * produce a false-positive disconnect.
  *
- * <p>L'{@code inboundNotifier} è iniettato al costruttore come {@link Runnable}. Prima che
- * {@link RmiVirtualServer#start()} completi, il notifier è un no-op: in questo modo le rare
- * callback che arrivano tra {@code tryRegisterName} e {@code start} non causano NPE.
+ * <p>The {@code inboundNotifier} is injected into the constructor as a {@link Runnable}.
+ * Until {@link RmiVirtualServer#start()} completes it is a no-op, so the rare
+ * callbacks arriving between {@code tryRegisterName} and {@code start} cause no NPE.
  */
 public class ClientCallbackImpl extends UnicastRemoteObject implements ClientCallbackRemote {
 
+    /** Local mirror of the game state, updated on {@link #onState}. */
     private final LocalGameState localState;
+    /** Listener notified of inbound server events. */
     private final ClientStateListener listener;
-    /** Notifier di liveness: delegato a {@code RmiVirtualServer.notifyInbound()} dopo {@code start()}. */
+    /** Liveness notifier: delegates to {@code RmiVirtualServer.notifyInbound()} after {@code start()}. */
     private final Runnable inboundNotifier;
 
+    /**
+     * @param localState the local state to update from server snapshots
+     * @param listener the listener to notify of inbound events
+     * @param inboundNotifier the liveness notifier (a no-op until {@code start()})
+     * @throws RemoteException if exporting this remote object fails
+     */
     public ClientCallbackImpl(LocalGameState localState, ClientStateListener listener,
                               Runnable inboundNotifier) throws RemoteException {
         super();
@@ -85,7 +94,7 @@ public class ClientCallbackImpl extends UnicastRemoteObject implements ClientCal
 
     @Override
     public void onHeartbeat() throws RemoteException {
-        // Canale di liveness isolato: solo HeartbeatMessage aggiorna il watchdog client-side.
+        // Isolated liveness channel: only the heartbeat refreshes the client-side watchdog.
         inboundNotifier.run();
     }
 }

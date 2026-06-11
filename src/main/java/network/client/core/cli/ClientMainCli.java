@@ -10,6 +10,13 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 
 
+/**
+ * Entry point and interactive driver for the text (CLI) client. It collects the
+ * transport configuration and player name from {@code stdin}, opens a
+ * {@link VirtualServer}, then runs the read-eval loop that parses console commands
+ * and forwards them to the server. Inbound server events are rendered by
+ * {@link ClientStateListenerCli} on the reader thread.
+ */
 public class ClientMainCli {
 
     // ─── Configuration Record ──────────────────────────────────
@@ -286,6 +293,7 @@ public class ClientMainCli {
 
     // ─── Helpers ───────────────────────────────────────────────
     
+    /** @return the one-line list of available lobby/menu commands */
     private static String helpLine() {
         return "lobbies | create <n> | join <id> | leave | quit";
     }

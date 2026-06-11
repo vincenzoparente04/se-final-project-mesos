@@ -43,45 +43,61 @@ import shared.liveness.LivenessSentinel;
  *       the server rejects the name (already taken), the callback is
  *       unexported and the method returns {@code false} so the caller can
  *       retry with a different name.</li>
- *   <li>{@link #start()} avvia il sentinel di liveness bidirezionale.</li>
+ *   <li>{@link #start()} starts the bidirectional liveness sentinel.</li>
  * </ol>
- *
- *  The exported callback object owns an RMI listener thread that
- * keeps the JVM alive. {@link #close()} explicitly unexports it to allow clean process termination.
+ * <p>
+ * The exported callback object owns an RMI listener thread that keeps the JVM
+ * alive. {@link #close()} explicitly unexports it to allow clean process termination.
  */
 public class RmiVirtualServer implements VirtualServer {
 
     private static final String SERVICE_NAME = "MesosGameServer";
 
     /**
-     * Intervalli del sentinel client-side RMI.
-     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling
-     * e ritardi temporanei dovuti a messaggi applicativi grandi che impegnano il sender.
-     * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
+     * Client-side RMI liveness intervals (milliseconds). Invariant:
+     * {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS}, to tolerate scheduling jitter and
+     * brief delays from large application messages occupying the sender. Worst-case
+     * detection time is {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 20 s}.
      */
     private static final long SEND_INTERVAL_MS  = 2_000L;
     private static final long CHECK_INTERVAL_MS = 5_000L;
     private static final long TIMEOUT_MS        = 15_000L;
 
+    /** Server host, re-used as the advertised callback host in {@link #tryRegisterName}. */
     private final String host;
+    /** Remote stub looked up in the registry; the only server entry point. */
     private final GameServerRemote serverStub;
 
+    /** Registered player name; set on a successful {@link #tryRegisterName}. */
     private String playerName;
+    /** This client's exported callback; the server pushes messages through it. */
     private ClientCallbackImpl callback;
+    /** Listener notified of inbound server events. */
     private ClientStateListener listener;
+    /** Single-thread executor that serialises outbound commands; created in {@link #start()}. */
     private ExecutorService commandExecutor;
+    /** Bidirectional liveness watchdog; created in {@link #start()}. */
     private LivenessSentinel sentinel;
 
     /**
-     * Riferimento al notifier di liveness passato al {@link ClientCallbackImpl}.
-     * Inizialmente è un no-op; viene aggiornato in {@link #start()} quando il sentinel
-     * è pronto, evitando problemi di ordine di inizializzazione.
+     * Indirection for the liveness notifier passed to {@link ClientCallbackImpl}.
+     * Initially a no-op; {@link #start()} swaps in the real sentinel once it is
+     * ready, avoiding an initialization-order problem (callbacks may arrive before
+     * {@code start()} completes).
      */
     private final AtomicReference<Runnable> inboundNotifier = new AtomicReference<>(() -> {});
 
-    /** Garantisce che la pipeline di chiusura venga eseguita al più una volta. */
+    /** Ensures the shutdown pipeline runs at most once. */
     private final AtomicBoolean disconnected = new AtomicBoolean(false);
 
+    /**
+     * Looks up the server stub in the RMI registry. No callback is exported and no
+     * {@code join} call is made yet.
+     *
+     * @param host the server hostname or IP
+     * @param rmiPort the RMI registry port
+     * @throws Exception if the registry is unreachable or the service is not bound
+     */
     public RmiVirtualServer(String host, int rmiPort) throws Exception {
         this.host = host;
         try {
@@ -100,8 +116,8 @@ public class RmiVirtualServer implements VirtualServer {
     public boolean tryRegisterName(String name, LocalGameState localState, ClientStateListener listener) {
         ClientCallbackImpl tempCallback;
         try {
-            // Il notifier punta all'AtomicReference: quando start() imposta il sentinel,
-            // tutte le callback successive trovano automaticamente il notifier aggiornato.
+            // The notifier reads the AtomicReference: once start() installs the sentinel,
+            // every later callback automatically finds the updated notifier.
             tempCallback = new ClientCallbackImpl(localState, listener,
                     () -> inboundNotifier.get().run());
         } catch (RemoteException e) {
@@ -144,7 +160,7 @@ public class RmiVirtualServer implements VirtualServer {
                 () -> submitAsync(new HeartbeatCommand(playerName)),
                 this::onConnectionLost);
         sentinel.start();
-        //
+        // Now that the sentinel exists, route inbound notifications to it.
         inboundNotifier.set(sentinel::notifyInbound);
     }
 
@@ -189,7 +205,7 @@ public class RmiVirtualServer implements VirtualServer {
     public void close() {
         if (!disconnected.compareAndSet(false, true)) return;
         if (sentinel != null) sentinel.stop();
-        // Notifica il server della disconnessione
+        // Notify the server of the disconnect.
         try {
             if (playerName != null) serverStub.disconnect(playerName);
         } catch (RemoteException e) {
@@ -201,8 +217,9 @@ public class RmiVirtualServer implements VirtualServer {
     }
 
     /**
-     * Invocata dal watchdog quando il server non invia messaggi entro {@code TIMEOUT_MS}.
-     * Ferma il sentinel, libera le risorse locali e notifica l'interfaccia utente.
+     * Invoked by the watchdog when the server sends no message within
+     * {@code TIMEOUT_MS}. Stops the sentinel, releases local resources and notifies
+     * the UI. Runs at most once (guarded by {@link #disconnected}).
      */
     private void onConnectionLost() {
         if (!disconnected.compareAndSet(false, true)) return;

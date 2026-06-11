@@ -18,53 +18,51 @@ import network.server.core.LobbyManager;
 import network.server.core.VirtualView;
 
 /**
- * Server-side view of an RMI client. Sole responsibility: delivering server
- * messages to the client by invoking methods on the {@link ClientCallbackRemote}
- * stub.
- *
- * All {@code sendXxx} calls are dispatched on a dedicated single-thread
- * executor per player, so the game thread never blocks on a slow RMI call.
- * On any {@link java.rmi.RemoteException}, {@link #handleDisconnect()} is
- * called, which triggers the lobby-manager disconnect pipeline exactly once,
- * guarded by a CAS on {@link #closed} to avoid races between {@link #close()}
- * and {@link #handleDisconnect()}.
- *
- * A {@link LivenessSentinel} is started by {@link #activateLiveness()} and
- * runs a bidirectional heartbeat: it invokes {@link #sendHeartbeat()} every
- * {@value #SEND_INTERVAL_MS} ms and declares the connection dead if no
- * inbound heartbeat arrives within {@value #TIMEOUT_MS} ms.
+ * Server-side view of an RMI client. It forwards the server's messages to the
+ * client's exported {@link ClientCallbackRemote} and starts the liveness sentinel.
+ * <p>
+ * Every {@code sendXxx} is dispatched onto a dedicated single-thread executor per
+ * player, which issues the (synchronous, blocking) RMI callbacks one at a time and
+ * in order — so the client never receives overlapping callbacks. A failed callback
+ * ({@link RemoteException}) triggers the disconnect pipeline.
  */
 public class RmiVirtualView implements VirtualView {
 
-    /** Heartbeat send interval (server to client), in milliseconds. */
+    /**
+     * Server-side RMI liveness intervals (milliseconds). Invariant:
+     * {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS}, to tolerate scheduling jitter and
+     * brief delays from large application messages occupying the sender. Worst-case
+     * detection time is {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 20 s}.
+     */
     private static final long SEND_INTERVAL_MS  = 2_000L;
     /** How often the sentinel checks for a missing inbound heartbeat, in milliseconds. */
     private static final long CHECK_INTERVAL_MS = 5_000L;
     /** Inbound-heartbeat timeout; if exceeded the connection is declared dead, in milliseconds. */
     private static final long TIMEOUT_MS        = 15_000L;
 
+    /** Server-wide name of the player this view serves. */
     private final String playerName;
+    /** The client's exported callback, target of every {@code sendXxx}. */
     private final ClientCallbackRemote callback;
+    /** Registry notified on a liveness timeout or a failed callback. */
     private final LobbyManager lobbyManager;
+    /** Single-thread executor that serialises all callbacks for this client. */
     private final ExecutorService senderExecutor;
+    /** Bidirectional liveness watchdog (heartbeat sender + inbound timeout). */
     private final LivenessSentinel sentinel;
 
     /**
-     * Ensures the shutdown pipeline (sentinel + executor) runs at most once,
-     * even when {@link #close()} and {@link #handleDisconnect()} race.
-     * CAS avoids a potential deadlock with {@link LobbyManager}'s internal
-     * lock, which may call {@link #close()} from within {@code onDisconnect}.
+     * Ensures the shutdown pipeline (sentinel + executor) runs at most once, even
+     * under a race between {@link #close()} and {@link #handleDisconnect()}. A CAS is
+     * used instead of {@code synchronized} so a callback thread never blocks on a
+     * monitor while completing the teardown.
      */
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
-     * Creates the view, sets up the single-thread sender executor and
-     * initialises the {@link LivenessSentinel} (not started yet;
-     * call {@link #activateLiveness()} when the connection is ready).
-     *
-     * @param playerName   the name that identifies this player on the server
-     * @param callback     the RMI stub used to deliver messages to the client
-     * @param lobbyManager the lobby manager to notify on timeout or disconnect
+     * @param playerName the player's server-wide name
+     * @param callback the client's exported callback for server→client messages
+     * @param lobbyManager the registry to notify on a liveness timeout or callback failure
      */
     public RmiVirtualView(String playerName, ClientCallbackRemote callback, LobbyManager lobbyManager) {
         this.playerName = playerName;
@@ -228,9 +226,9 @@ public class RmiVirtualView implements VirtualView {
     }
 
     /**
-     * Called when a {@link java.rmi.RemoteException} is thrown during a send.
-     * Stops the sentinel, notifies the lobby manager of the disconnection, and
-     * shuts down the sender executor. Idempotent via CAS on {@link #closed}.
+     * Tears down the view after a failed callback: stops the sentinel, notifies the
+     * {@link LobbyManager} of the disconnect and shuts the sender down. Runs at most
+     * once (guarded by {@link #closed}).
      */
     private void handleDisconnect() {
         if (!closed.compareAndSet(false, true)) return;

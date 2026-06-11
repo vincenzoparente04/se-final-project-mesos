@@ -13,30 +13,39 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Performs the handshake for a single incoming socket connection, running on
- * the per-connection thread spawned by the {@link ServerMain} acceptor loop
- * (never on the acceptor thread itself, so a slow or hostile client blocks
- * only itself). All blocking socket I/O lives here: stream creation, reading
- * the initial {@link ConnectMessage}, and writing rejections.
+ * Performs the handshake for a single socket connection, on the per-connection
+ * thread spawned by the {@code ServerMain} acceptor (never on the acceptor thread,
+ * so a slow or hostile client only stalls itself). <strong>All</strong> blocking
+ * socket I/O lives here: opening the streams, reading the {@link ConnectMessage}
+ * and writing rejections.
  *
- * The name-negotiation loop keeps the socket open across rejections so the
- * client can retry without reconnecting. The flow is: read a
- * {@link ConnectMessage} (timeout {@value #CONNECT_TIMEOUT_MS} ms), submit
- * the registration to {@link LobbyManager} and block on the future verdict.
- * On ACCEPT the method returns — the lobby thread has already built the
- * session and started the reader. On REJECT it sends an error and loops back.
- * On timeout or I/O error it sends an error and closes the socket.
+ * <h2>Flow</h2>
+ * <ol>
+ *   <li>create the streams and read a {@link ConnectMessage} (blocking, timeout
+ *       {@value #CONNECT_TIMEOUT_MS} ms);</li>
+ *   <li>enqueue the registration on the {@code LobbyManager}
+ *       ({@code submitSocketRegistration}) and block on the future with a timeout,
+ *       receiving only a {@code boolean} verdict;</li>
+ *   <li><b>ACCEPT</b> &rarr; return: the view/handler and the reader thread have
+ *       already been built and started by the lobby-thread;
+ *       <b>REJECT</b> (name taken) &rarr; rewrite the error on the same stream and
+ *       read another {@link ConnectMessage} (the socket stays open for the retry);
+ *       <b>timeout/error</b> &rarr; write the error and close.</li>
+ * </ol>
  */
 public class ConnectionHandshaker implements Runnable {
 
+    /** Timeout for reading a {@link ConnectMessage} and for awaiting the registration verdict. */
     private static final int CONNECT_TIMEOUT_MS = 50_000;
 
+    /** The live client connection this handshaker negotiates. */
     private final Socket socket;
+    /** Registry the player is submitted to once a name has been read. */
     private final LobbyManager lobbyManager;
 
     /**
-     * @param socket       the accepted client socket
-     * @param lobbyManager the lobby manager to submit the registration to
+     * @param socket the freshly accepted client connection
+     * @param lobbyManager the registry to submit the player to once a name is read
      */
     public ConnectionHandshaker(Socket socket, LobbyManager lobbyManager) {
         this.socket = socket;
@@ -44,9 +53,10 @@ public class ConnectionHandshaker implements Runnable {
     }
 
     /**
-     * Executes the name-negotiation loop. Reads {@link ConnectMessage} objects
-     * and submits each one to {@link LobbyManager} until one is accepted, the
-     * connection times out, or an I/O error occurs.
+     * Runs the name-negotiation loop: read a {@link ConnectMessage}, submit the
+     * registration and block on the verdict, looping on rejection until a name is
+     * accepted or the connection times out / fails. On any unrecoverable I/O or
+     * deserialization error the socket is closed and the thread ends.
      */
     @Override
     public void run() {
@@ -71,7 +81,8 @@ public class ConnectionHandshaker implements Runnable {
                         accepted = lobbyManager.submitSocketRegistration(playerName, socket, in, out)
                                 .get(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
                     } catch (TimeoutException | ExecutionException ex) {
-                        // The lobby thread did not respond in time or session setup failed: close.
+                        // The lobby-thread did not answer in time, or building the
+                        // session failed: close the connection.
                         trySendError(out, "connection_timeout:registration_failed");
                         closeSocket();
                         return;
@@ -82,14 +93,15 @@ public class ConnectionHandshaker implements Runnable {
                     }
 
                     if (accepted) {
-                        // The lobby thread has already built the session and started the reader.
+                        // Il lobby-thread ha già costruito la sessione e avviato il
+                        // reader: l'handshake è concluso.
                         return;
                     }
 
-                    // REJECT: name already taken — send an error and loop back.
+                    // REJECT: name taken → rewrite the error and read again (loop).
                     sendHandshakeError(out, "name_already_taken:" + playerName);
                 } catch (SocketTimeoutException e) {
-                    // Timeout waiting for ConnectMessage: send an error and close.
+                    // Timed out while reading the ConnectMessage: send an error and close.
                     trySendError(out, "connection_timeout:no_connect_message_received");
                     closeSocket();
                     return;
@@ -103,6 +115,10 @@ public class ConnectionHandshaker implements Runnable {
     /**
      * Writes an {@link ErrorMessage} directly through the handshake's output
      * stream. Used to reject a name attempt without spinning up a full session.
+     *
+     * @param out the handshake output stream
+     * @param message the error text to send
+     * @throws IOException if the write fails
      */
     private void sendHandshakeError(ObjectOutputStream out, String message) throws IOException {
         synchronized (out) {
@@ -113,8 +129,10 @@ public class ConnectionHandshaker implements Runnable {
     }
 
     /**
-     * Best-effort variant of {@link #sendHandshakeError}: swallows any
-     * {@link IOException} so it is safe to call during error-recovery paths.
+     * Best-effort {@link #sendHandshakeError}: swallows any {@link IOException}.
+     *
+     * @param out the handshake output stream
+     * @param message the error text to send
      */
     private void trySendError(ObjectOutputStream out, String message) {
         try {
@@ -122,7 +140,7 @@ public class ConnectionHandshaker implements Runnable {
         } catch (IOException ignored) {}
     }
 
-    /** Closes the socket, ignoring any {@link IOException}. */
+    /** Quietly closes the socket, ignoring any {@link IOException}. */
     private void closeSocket() {
         try { socket.close(); } catch (IOException ignored) {}
     }

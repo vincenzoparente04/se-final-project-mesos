@@ -12,17 +12,18 @@ import shared.command.gameCommand.GameCommand;
  */
 public interface PlayerEntry {
 
+    /** @return the player's server-wide name (their identity key) */
     String getName();
 
+    /** @return the outbound {@link VirtualView} used to message this player */
     VirtualView getView();
 
     /**
-     * Wires the game session's command queue to the transport layer so that
-     * in-game commands from this player are routed to the right session.
-     * The default is a no-op; transport-specific implementations override
-     * this to forward the queue to their command reader.
+     * Wires this player's incoming in-game commands to a running game session's
+     * queue. Called when the player joins or reconnects to an active game; the
+     * default no-op covers entries that never reach in-game state.
      *
-     * @param queue the game command queue of the session this player has joined
+     * @param queue the game session's command queue to forward in-game commands to
      */
     default void setGameQueue(BlockingQueue<GameCommand> queue) {}
 }

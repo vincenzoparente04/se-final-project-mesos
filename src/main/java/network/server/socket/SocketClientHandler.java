@@ -16,35 +16,25 @@ import java.util.concurrent.BlockingQueue;
 import network.server.core.LobbyManager;
 
 /**
- * Reads {@link ClientCommand} objects from the socket input stream and
- * dispatches them to the correct server-side destination.
- *
- * Runs on a dedicated thread (one per connected client). Incoming commands
- * are routed via the internal {@link ClientCommandVisitor}: {@link LobbyCommand}
- * objects are forwarded to {@link LobbyManager}; {@link GameCommand} objects
- * are placed on the active {@link #gameQueue}; {@link HeartbeatCommand} objects
- * notify the liveness sentinel without entering any queue.
- *
- * When the read loop terminates (EOF, {@link SocketException}, or any I/O
- * error) it invokes {@link LobbyManager#onDisconnect} in its {@code finally}
- * block to trigger the disconnection pipeline.
- *
- * @see SocketPlayerEntry
- * @see SocketVirtualView
+ * Reader for a single socket client, run on the per-player {@code client-<name>}
+ * thread. It blocks reading {@link ClientCommand}s and dispatches each to its
+ * destination: lobby commands to the {@link LobbyManager}, in-game commands to the
+ * player's game-session queue, and heartbeats to the liveness watchdog. When the
+ * stream ends or fails it triggers the disconnect pipeline via
+ * {@link LobbyManager#onDisconnect}.
  */
 public class SocketClientHandler implements Runnable {
 
-    // notifyInbound() is declared in the VirtualView interface.
+    /** Outbound view, used to report errors and to refresh inbound liveness. */
     private final VirtualView virtualView;
+    /** Inbound command stream from this client. */
     private final ObjectInputStream in;
+    /** Registry to forward lobby commands and disconnects to. */
     private final LobbyManager lobbyManager;
+    /** In-game command queue; wired once the player joins a game, {@code null} otherwise. */
     private volatile BlockingQueue<GameCommand> gameQueue = null;
 
-    /**
-     * Routes each incoming command to its destination: lobby commands go to
-     * {@link LobbyManager}, game commands are placed on {@link #gameQueue},
-     * and heartbeat commands notify the liveness sentinel.
-     */
+    /** Routes each inbound {@link ClientCommand} by type (lobby / in-game / heartbeat). */
     private final ClientCommandVisitor dispatcher = new ClientCommandVisitor() {
         @Override
         public void visit(LobbyCommand cmd) {
@@ -63,15 +53,15 @@ public class SocketClientHandler implements Runnable {
 
         @Override
         public void visit(HeartbeatCommand cmd) {
-            // Isolated liveness channel: only HeartbeatCommand updates the watchdog.
+            // Isolated liveness channel: only HeartbeatCommand refreshes the watchdog.
             virtualView.notifyInbound();
         }
     };
 
     /**
-     * @param virtualView  the view used to send error messages back to the client
-     * @param in           the object input stream to read commands from
-     * @param lobbyManager the lobby manager to forward lobby commands and disconnect events to
+     * @param virtualView the outbound view for this client
+     * @param in the inbound command stream
+     * @param lobbyManager the registry for lobby commands and disconnects
      */
     public SocketClientHandler(VirtualView virtualView, ObjectInputStream in, LobbyManager lobbyManager) {
         this.virtualView = virtualView;
@@ -79,15 +69,18 @@ public class SocketClientHandler implements Runnable {
         this.lobbyManager = lobbyManager;
     }
 
+    /**
+     * Wires the in-game command queue once the player enters a game session.
+     *
+     * @param queue the game session's command queue
+     */
     public void setGameQueue(BlockingQueue<GameCommand> queue) {
         this.gameQueue = queue;
     }
 
     /**
-     * Read loop: deserialises one {@link ClientCommand} at a time and passes
-     * it to {@link #handleCommand}. Terminates silently on EOF or socket
-     * error, then triggers the disconnect pipeline via
-     * {@link LobbyManager#onDisconnect}.
+     * Read loop: dispatch each {@link ClientCommand} until the stream closes or
+     * fails, then trigger the disconnect pipeline in the {@code finally} block.
      */
     @Override
     public void run() {
@@ -104,9 +97,9 @@ public class SocketClientHandler implements Runnable {
     }
 
     /**
-     * Dispatches a single command through the {@link #dispatcher}.
-     * Restores the interrupt flag on {@link InterruptedException}; routes
-     * any other exception back to the client as an error message.
+     * Dispatches one command, restoring the interrupt flag on
+     * {@link InterruptedException} and reporting any other failure back to the
+     * client as an error message.
      *
      * @param cmd the command to dispatch
      */

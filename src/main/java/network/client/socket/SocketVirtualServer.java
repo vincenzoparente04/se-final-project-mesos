@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *       Object{Input,Output}Streams. No game-layer wiring happens here.</li>
  *   <li>{@link #tryRegisterName(String, LocalGameState, ClientStateListener)}
  *       performs the name handshake. Reusable across rejections.</li>
- *   <li>{@link #start()} spawns the reader thread and il sentinel di liveness bidirezionale.</li>
+ *   <li>{@link #start()} spawns the reader thread and the bidirectional liveness sentinel.</li>
  * </ol>
  */
 public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor {
@@ -42,28 +42,46 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
     private static final int NAME_NEGOTIATION_TIMEOUT_MS = 50_000;
 
     /**
-     * Intervalli del sentinel client-side socket.
-     * Invariante: {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS} per tollerare il jitter di scheduling
-     * e ritardi temporanei dovuti a messaggi applicativi grandi che impegnano il sender.
-     * Il detection time massimo è {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 12s}.
+     * Client-side socket liveness intervals (milliseconds). Invariant:
+     * {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS}, to tolerate scheduling jitter and
+     * brief delays from large application messages occupying the sender. Worst-case
+     * detection time is {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 20 s}.
      */
     private static final long SEND_INTERVAL_MS  = 2_000L;
     private static final long CHECK_INTERVAL_MS = 5_000L;
     private static final long TIMEOUT_MS        = 15_000L;
 
+    /** TCP connection to the server. */
     private final Socket socket;
+    /** Outbound command stream; writes are guarded by {@code synchronized (out)}. */
     private final ObjectOutputStream out;
+    /** Inbound message stream, drained by the reader thread. */
     private final ObjectInputStream in;
+    /** Set once the connection is closed; makes {@link #close()} idempotent. */
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    /** Registered player name; set during {@link #tryRegisterName}. */
     private String playerName;
+    /** Local mirror of the game state, updated from server snapshots. */
     private LocalGameState localState;
+    /** Listener notified of inbound server events. */
     private ClientStateListener listener;
+    /** Last lobby list received, cached for the UI. */
     private List<LobbyDto> bufferedLobbyList;
+    /** Bidirectional liveness watchdog; created in {@link #start()}. */
     private LivenessSentinel sentinel;
 
+    /** Verdict of the last handshake response, read by {@link #tryRegisterName}. */
     private boolean connectionResponse;
 
+    /**
+     * Opens the TCP socket and the object streams to the server. Performs blocking
+     * network I/O, so it must not run on the JavaFX Application Thread.
+     *
+     * @param host the server hostname or IP
+     * @param port the server TCP port
+     * @throws IOException if the connection or stream setup fails
+     */
     public SocketVirtualServer(String host, int port) throws IOException {
         Socket s = null;
         try {
@@ -168,7 +186,7 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
 
     @Override
     public void visit(HeartbeatMessage msg) {
-        // Canale di liveness isolato: solo HeartbeatMessage aggiorna il watchdog client-side.
+        // Isolated liveness channel: only HeartbeatMessage refreshes the client-side watchdog.
         if (sentinel != null) sentinel.notifyInbound();
     }
 
@@ -229,6 +247,12 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
         send(new LeaveCommand(playerName));
     }
 
+    /**
+     * Serializes and flushes a command to the server under {@code synchronized (out)}.
+     * On I/O failure it triggers the client-side disconnect.
+     *
+     * @param cmd the command to send
+     */
     private void send(ClientCommand cmd) {
         if (closed.get()) return;
         try {
@@ -252,11 +276,12 @@ public class SocketVirtualServer implements VirtualServer, ServerMessageVisitor 
         }
     }
 
-    /** Aggiorna il timestamp di liveness: chiamato dal {@link SocketClientThread} ad ogni messaggio. */
+    /** Refreshes the inbound-liveness timestamp. Unused: liveness is refreshed only by {@link #visit(HeartbeatMessage)}. */
     void notifyInbound() {
         if (sentinel != null) sentinel.notifyInbound();
     }
 
+    /** Reader-thread hook on stream end/failure: closes the connection. */
     void onDisconnected() {
         close();
     }

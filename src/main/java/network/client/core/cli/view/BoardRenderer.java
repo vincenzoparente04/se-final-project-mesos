@@ -17,9 +17,11 @@ import java.util.List;
  */
 public class BoardRenderer implements GameStateRenderer {
 
-    // Offer tile column dimensions
-    private static final int TILE_WIDTH  = 14;   // including borders
-    private static final int TILE_INNER  = 10;   // TILE_WIDTH - 4
+    /** Offer-tile column width in characters, borders included. */
+    private static final int TILE_WIDTH  = 14;
+    /** Usable text width inside an offer-tile column ({@code TILE_WIDTH - 4}). */
+    private static final int TILE_INNER  = 10;
+    /** Offer-tile column height in lines. */
     private static final int TILE_HEIGHT = 7;
 
     // ─── GameStateRenderer ───────────────────────────────────────────────────
@@ -68,11 +70,18 @@ public class BoardRenderer implements GameStateRenderer {
 
     // ─── Sections ────────────────────────────────────────────────────────────
 
+    /** Clears the terminal screen (ANSI escape sequence). */
     private void clearScreen() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
     }
 
+    /**
+     * Prints the top banner: phase, round, era and whose turn it is.
+     *
+     * @param dto the current state snapshot
+     * @param localPlayerName the local player's name (to flag "your turn")
+     */
     private void printHeader(GameStateDto dto, String localPlayerName) {
         String cp      = dto.currentPlayerName != null ? dto.currentPlayerName : "—";
         boolean myTurn = cp.equals(localPlayerName);
@@ -149,6 +158,12 @@ public class BoardRenderer implements GameStateRenderer {
         System.out.println();
     }
 
+    /**
+     * Builds the {@value #TILE_HEIGHT}-line column for one offer tile.
+     *
+     * @param t the offer tile to render
+     * @return the column's lines, top to bottom
+     */
     private String[] buildTileColumn(OfferTileDto t) {
         String[] lines      = new String[TILE_HEIGHT];
         boolean  isDrawTile = "DRAW_CARDS".equals(t.actionType);
@@ -190,6 +205,13 @@ public class BoardRenderer implements GameStateRenderer {
         System.out.println("─".repeat(78));
     }
 
+    /**
+     * Prints one board row: its character cards and building cards under separate headers.
+     *
+     * @param label the row label (e.g. {@code "TOP ROW"})
+     * @param tribe the character cards on the row
+     * @param buildings the building cards on the row
+     */
     private void printRow(String label, List<CardDto> tribe, List<CardDto> buildings) {
         System.out.println("[ " + label + " ]");
         boolean hasTribes    = tribe    != null && !tribe.isEmpty();
@@ -209,6 +231,12 @@ public class BoardRenderer implements GameStateRenderer {
         System.out.println();
     }
 
+    /**
+     * Prints the local player's own tribe (characters and buildings).
+     *
+     * @param dto the current state snapshot
+     * @param localPlayerName the local player's name
+     */
     private void printMyTribe(GameStateDto dto, String localPlayerName) {
         if (dto.players == null) return;
         dto.players.stream()
@@ -257,6 +285,7 @@ public class BoardRenderer implements GameStateRenderer {
         return parts.isEmpty() ? "(empty)" : String.join(" | ", parts);
     }
 
+    /** @return the number of cards of the given {@code type} in {@code cards} */
     private static long count(List<CardDto> cards, String type) {
         return cards.stream().filter(c -> type.equals(c.type)).count();
     }
@@ -291,6 +320,10 @@ public class BoardRenderer implements GameStateRenderer {
 
     // ─── String helpers ──────────────────────────────────────────────────────
 
+    /**
+     * @param phase the raw phase constant (may be {@code null})
+     * @return a human-readable phase label
+     */
     private static String friendlyPhase(String phase) {
         if (phase == null) return "—";
         return switch (phase) {
@@ -305,11 +338,13 @@ public class BoardRenderer implements GameStateRenderer {
         };
     }
 
+    /** @return {@code s} padded with spaces (or truncated) to width {@code w} */
     private static String pad(String s, int w) {
         if (s == null) s = "";
         return s.length() >= w ? s.substring(0, w) : s + " ".repeat(w - s.length());
     }
 
+    /** @return {@code s} truncated to width {@code w} with a {@code ".."} ellipsis if needed */
     private static String truncate(String s, int w) {
         if (s == null) return "";
         return s.length() <= w ? s : s.substring(0, w - 2) + "..";
@@ -317,6 +352,7 @@ public class BoardRenderer implements GameStateRenderer {
 
     // ─── Event resolution rendering ──────────────────────────────────────
 
+    /** Width of the boxed event/scoring header, in characters. */
     private static final int EVENT_BOX_WIDTH = 70;
 
     @Override
@@ -360,6 +396,11 @@ public class BoardRenderer implements GameStateRenderer {
         System.out.println();
     }
 
+    /**
+     * Prints a centered title inside a box {@value #EVENT_BOX_WIDTH} characters wide.
+     *
+     * @param title the header text
+     */
     private static void printBoxHeader(String title) {
         String t = title == null ? "" : title;
         int innerWidth = EVENT_BOX_WIDTH - 2;

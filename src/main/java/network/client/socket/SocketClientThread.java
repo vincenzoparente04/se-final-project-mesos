@@ -12,14 +12,25 @@ import java.net.SocketException;
  */
 public class SocketClientThread implements Runnable {
 
+    /** Inbound object stream from the server. */
     private final ObjectInputStream in;
+    /** Proxy whose visitor handles each decoded {@link ServerMessage}. */
     private final SocketVirtualServer socketVirtualServer;
 
+    /**
+     * @param in the inbound object stream from the server
+     * @param socketVirtualServer the proxy that dispatches each decoded message
+     */
     public SocketClientThread(ObjectInputStream in, SocketVirtualServer socketVirtualServer) {
         this.in = in;
         this.socketVirtualServer = socketVirtualServer;
     }
 
+    /**
+     * Read loop: decode each {@link ServerMessage} and dispatch it to the proxy's
+     * visitor, in order, on this thread. On stream end or failure it leaves the loop
+     * and triggers the client-side disconnect in the {@code finally} block.
+     */
     @Override
     public void run() {
         try {

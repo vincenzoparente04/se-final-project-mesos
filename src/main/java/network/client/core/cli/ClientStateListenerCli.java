@@ -10,13 +10,28 @@ import shared.dto.event.EventResolutionDto;
 
 import java.util.List;
 
+/**
+ * CLI implementation of {@link ClientStateListener}. Renders inbound server events
+ * to {@code System.out} through a {@link GameStateRenderer}, on the network reader
+ * thread. The {@code onXxx} callbacks are {@code synchronized} so renders never
+ * interleave with each other.
+ */
 public class ClientStateListenerCli implements ClientStateListener {
+    /** Name of the local player, used to tailor the rendered view and prompt. */
     private final String localPlayerName;
+    /** Renderer that prints the board/state to the console. */
     private final GameStateRenderer renderer;
+    /** Last leaderboard received, shown at game over; {@code null} until received. */
     private List<ScoreRecord> scoreRecord = null;
+    /** This player's leaderboard position, paired with {@link #scoreRecord}. */
     private int rankPosition;
+    /** This player's final score, paired with {@link #scoreRecord}. */
     private int points;
 
+    /**
+     * @param localPlayerName the local player's name
+     * @param renderer the renderer used to print game state to the console
+     */
     public ClientStateListenerCli(String localPlayerName, GameStateRenderer renderer) {
         this.localPlayerName = localPlayerName;
         this.renderer = renderer;
@@ -125,8 +140,10 @@ public class ClientStateListenerCli implements ClientStateListener {
     }
 
     /**
-     * Forza il rendering dello stato e la stampa del prompt contestuale.
-     * Utile quando l'utente richiede esplicitamente un refresh manuale della UI.
+     * Forces a re-render of the state and prints the contextual prompt. Used when
+     * the user explicitly requests a manual UI refresh (the {@code state} command).
+     *
+     * @param state the local game state to render
      */
     public void forceRefresh(LocalGameState state) {
         GameStateDto dto = state.snapshot();
@@ -135,6 +152,11 @@ public class ClientStateListenerCli implements ClientStateListener {
         System.out.print(contextualPrompt(state));
     }
 
+    /**
+     * Renders every tribe row (the {@code tribes} command).
+     *
+     * @param state the local game state to render
+     */
     public void printAllTribes(LocalGameState state) {
         renderer.renderAllTribes(state.snapshot(), localPlayerName);
     }
@@ -142,6 +164,10 @@ public class ClientStateListenerCli implements ClientStateListener {
 
     //HEPLERS
 
+    /**
+     * @param phase the current game phase (may be {@code null})
+     * @return a short hint listing the commands valid in that phase
+     */
     private static String helpForPhase(String phase) {
         if (phase == null) return "lobbies | create <n> | join <id>";
         return switch (phase) {
@@ -154,6 +180,10 @@ public class ClientStateListenerCli implements ClientStateListener {
         };
     }
 
+    /**
+     * @param state the local game state
+     * @return the prompt line, highlighting the local player's turn when applicable
+     */
     private String contextualPrompt(LocalGameState state) {
         GameStateDto dto = state.snapshot();
         if (dto == null) return "> ";

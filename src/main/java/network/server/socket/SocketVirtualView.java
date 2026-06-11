@@ -19,35 +19,42 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Server-side view of a socket client. Sole responsibility: delivering
- * server messages to the client over the TCP connection.
- *
- * All {@code sendXxx} calls are dispatched on a dedicated single-thread
- * executor per player, so the game thread never blocks on the TCP write of
- * a slow client. The view holds no reference to {@link LobbyManager}; when
- * a write fails it closes the socket so that {@link SocketClientHandler}'s
- * read loop detects the EOF or {@link java.net.SocketException} and triggers
- * the disconnect pipeline via {@link LobbyManager#onDisconnect}.
- *
- * A {@link LivenessSentinel} is started by {@link #activateLiveness()} and
- * runs a bidirectional heartbeat: it sends a {@code HeartbeatMessage} every
- * {@value #SEND_INTERVAL_MS} ms and declares the connection dead if no
- * inbound heartbeat arrives within {@value #TIMEOUT_MS} ms.
+ * Server-side view of a socket client. Its sole responsibility is to transmit to
+ * the client the messages the server hands it.
+ * <p>
+ * Every {@code sendXxx} is dispatched onto a dedicated single-thread executor per
+ * player, so the game-thread never blocks on the TCP write of a slow client, and
+ * outbound messages to a given client are never interleaved. The view does not
+ * know the {@code LobbyManager}; if a write fails it just closes the socket, and
+ * {@code SocketClientHandler.run()} notices it via EOF/SocketException on its read
+ * loop and triggers the disconnect pipeline (calling {@code lobbyManager.onDisconnect}
+ * in its {@code finally}).
  */
 public class SocketVirtualView implements VirtualView {
 
-    /** Heartbeat send interval (server to client), in milliseconds. */
+    /**
+     * Server-side socket liveness intervals (milliseconds). Invariant:
+     * {@code TIMEOUT_MS > 2 * SEND_INTERVAL_MS}, to tolerate scheduling jitter and
+     * brief delays from large application messages occupying the sender. Worst-case
+     * detection time is {@code TIMEOUT_MS + CHECK_INTERVAL_MS = 20 s}.
+     */
     private static final long SEND_INTERVAL_MS  = 2_000L;
     /** How often the sentinel checks for a missing inbound heartbeat, in milliseconds. */
     private static final long CHECK_INTERVAL_MS = 5_000L;
     /** Inbound-heartbeat timeout; if exceeded the connection is declared dead, in milliseconds. */
     private static final long TIMEOUT_MS        = 15_000L;
 
+    /** Server-wide name of the player this view serves. */
     private final String playerName;
+    /** The client's socket; closed on shutdown or on a write failure. */
     private final Socket socket;
+    /** Outbound object stream; written only on the sender thread. */
     private final ObjectOutputStream out;
+    /** Single-thread executor that serialises all outbound writes for this client. */
     private final ExecutorService senderExecutor;
+    /** Set once the view is closed; gates every {@code sendXxx} and {@link #rawSend}. */
     private volatile boolean closed = false;
+    /** Bidirectional liveness watchdog (heartbeat sender + inbound timeout). */
     private final LivenessSentinel sentinel;
 
     /**
@@ -148,6 +155,7 @@ public class SocketVirtualView implements VirtualView {
         sentinel.start();
     }
 
+    /** Refreshes the inbound-liveness timestamp; called only on arrival of a heartbeat. */
     /**
      * Updates the liveness timestamp. Must be called only upon receiving
      * a {@link shared.command.lobbyCommand.HeartbeatCommand} from the client.

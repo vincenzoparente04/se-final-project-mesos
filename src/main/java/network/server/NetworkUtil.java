@@ -29,6 +29,8 @@ public final class NetworkUtil {
      *       WiFi/Ethernet interface);</li>
      *   <li>{@code 127.0.0.1} as a last-resort fallback.</li>
      * </ol>
+     *
+     * @return the IPv4 address to advertise to remote peers, never {@code null}
      */
     public static String detectLocalIPv4() {
         String override = System.getProperty("mesos.host");
@@ -38,10 +40,10 @@ public final class NetworkUtil {
         try {
             for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
                 if (!ni.isUp() || ni.isLoopback() || ni.isVirtual()) continue;
-                // Skip Docker interfaces, virtual bridges, VPN tunnels, and VM adapters:
-                // These pass isLoopback/isVirtual checks but are not reachable
-                // from other hosts on the LAN/hotspot, and would otherwise be returned
-                // before the real WiFi/Ethernet interface.
+                // Skip Docker interfaces, virtual bridges, VPN tunnels and VM adapters:
+                // these pass the isLoopback/isVirtual checks but are not reachable from
+                // other hosts on the LAN/hotspot, and would otherwise be returned before
+                // the real WiFi/Ethernet interface.
                 String name = ni.getName().toLowerCase();
                 if (name.startsWith("docker") || name.startsWith("br-")   ||
                     name.startsWith("veth")   || name.startsWith("virbr") ||

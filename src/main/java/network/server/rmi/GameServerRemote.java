@@ -7,11 +7,10 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 /**
- * RMI remote interface exposed by the server. Clients obtain a stub for this
- * interface from the RMI registry and use it to join a lobby, submit commands,
- * and disconnect gracefully.
- *
- * @see GameServerRemoteImpl
+ * Remote interface exported by the server to RMI clients. A client looks it up in
+ * the registry and uses it to register ({@link #join}), to forward its commands
+ * ({@link #submitClientCommand}) and to announce a clean disconnect
+ * ({@link #disconnect}).
  */
 public interface GameServerRemote extends Remote {
 
@@ -22,11 +21,11 @@ public interface GameServerRemote extends Remote {
      * name (the client may retry by calling {@code join} again with a
      * different name on the same stub).
      *
-     * @param playerName the name the player wants to use
-     * @param callback   the client-side stub the server will use to push messages
-     * @param host       the client's host address, used for logging
-     * @return {@code true} if the registration was accepted, {@code false} otherwise
-     * @throws RemoteException if the RMI call fails
+     * @param playerName the requested player name
+     * @param callback the client's exported callback for server→client messages
+     * @param host the client's advertised host, used for logging
+     * @return {@code true} if the name was accepted, {@code false} if already taken
+     * @throws RemoteException on RMI transport failure
      */
     boolean join(String playerName, ClientCallbackRemote callback, String host) throws RemoteException;
 
@@ -36,17 +35,16 @@ public interface GameServerRemote extends Remote {
      * {@link network.server.core.LobbyManager}, game commands go to the
      * active game queue, and heartbeat commands update the liveness sentinel.
      *
-     * @param command the command to submit
-     * @throws RemoteException if the RMI call fails or command routing throws
+     * @param command the command to route
+     * @throws RemoteException on RMI transport failure or a routing error
      */
     void submitClientCommand(ClientCommand command) throws RemoteException;
 
     /**
-     * Notifies the server that the player is disconnecting gracefully.
-     * Triggers the same disconnect pipeline as an unintentional drop.
+     * Announces a clean, client-initiated disconnect, triggering server-side teardown.
      *
-     * @param playerName the name of the disconnecting player
-     * @throws RemoteException if the RMI call fails
+     * @param playerName the disconnecting player's name
+     * @throws RemoteException on RMI transport failure
      */
     void disconnect(String playerName) throws RemoteException;
 }

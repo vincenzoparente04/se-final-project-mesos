@@ -8,7 +8,7 @@ import view.SceneRouter;
 
 /**
  * Entry point for the Mesos GUI client.
- *Boots straight into the splash screen, and the SceneRouter handles all subsequent navigation. The main responsibilities of this class are:
+ * Boots straight into the splash screen, and the SceneRouter handles all subsequent navigation. The main responsibilities of this class are:
  * <ul>
  *   <li>Setting the RMI export hostname to the local LAN IP address to ensure callbacks are reachable by the server.</li>
  *   <li>Initializing the SceneRouter and ClientStateListenerGui to bridge network events to the UI.</li>
@@ -20,11 +20,21 @@ import view.SceneRouter;
  */
 public class ClientMain extends Application {
 
+    /** Connected proxy to the server; set after a successful connect. */
     private VirtualServer virtualServer;
+    /** Local mirror of the game state, updated from server snapshots. */
     private LocalGameState localState;
+    /** Bridges inbound server events to the JavaFX UI. */
     private ClientStateListenerGui listener;
+    /** Navigation hub for the GUI scenes. */
     private SceneRouter router;
 
+    /**
+     * GUI client entry point: advertises a LAN-reachable RMI hostname, then launches
+     * the JavaFX application.
+     *
+     * @param args JavaFX application arguments
+     */
     public static void main(String[] args) {
         // Advertise the local LAN IP so the RMI callback stub exported by
         // RmiVirtualServer carries a reachable address, not 127.0.0.1.

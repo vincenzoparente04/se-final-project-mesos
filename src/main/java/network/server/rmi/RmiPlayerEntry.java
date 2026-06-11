@@ -14,9 +14,15 @@ import shared.command.gameCommand.GameCommand;
  */
 public class RmiPlayerEntry implements PlayerEntry {
 
+    /** Outbound RMI view for this player. */
     private final RmiVirtualView view;
+    /** RMI endpoint the player's game queue is registered with. */
     private final GameServerRemoteImpl server;
 
+    /**
+     * @param view the RMI view used to message this player
+     * @param server the RMI endpoint to register the player's game queue with
+     */
     public RmiPlayerEntry(RmiVirtualView view, GameServerRemoteImpl server) {
         this.view = view;
         this.server = server;
