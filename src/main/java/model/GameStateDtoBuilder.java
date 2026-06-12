@@ -207,81 +207,112 @@ public class GameStateDtoBuilder {
     }
 
     /**
-     * Details collector from a card to build a {@link CardDto}. Uses the Visitor pattern to handle different card types polymorphically.
+     * Builds a {@link CardDto} from a card by visiting it. Each card type maps to its own
+     * presentation payload — subtype label, era and a short human-readable detail string —
+     * so the rendering layer can display cards without knowing their domain classes.
      */
     private static class CardToDtoVisitor implements CardVisitor {
         private CardDto dto;
 
         @Override
+        public void visit(HunterCard card) {
+            dto = tribeDto(card, "HUNTER", card.hasTriggerIcon() ? " bonus on draw" : "no draw bonus");
+        }
+
+        @Override
+        public void visit(ShamanCard card) {
+            dto = tribeDto(card, "SHAMAN", "★".repeat(card.getStarCount()));
+        }
+
+        @Override
+        public void visit(BuilderCard card) {
+            dto = tribeDto(card, "BUILDER",
+                    "-" + card.getBuilderDiscount() + " food/bldg  |  +" + card.getPrestigePoints() + " PP end");
+        }
+
+        @Override
+        public void visit(ArtistCard card) {
+            dto = tribeDto(card, "ARTIST", "end: +10PP per 2 artists");
+        }
+
+        @Override
+        public void visit(InventorCard card) {
+            dto = tribeDto(card, "INVENTOR", "icon: " + card.getInventionIcon().name());
+        }
+
+        @Override
+        public void visit(GathererCard card) {
+            dto = tribeDto(card, "GATHERER", "sustenance: -3 food");
+        }
+
+        /**
+         * Fallback for any character role not handled by a dedicated overload. Reaching this
+         * method signals a concrete {@link CharacterCard} subtype was added without a matching
+         * visit overload, so it fails fast rather than emitting a mislabeled DTO.
+         *
+         * @param card the unhandled character card
+         * @throws IllegalStateException always, naming the offending subtype
+         */
+        @Override
         public void visit(CharacterCard card) {
-            String subtype = switch (card) {
-                case HunterCard h -> "HUNTER";
-                case ShamanCard s -> "SHAMAN";
-                case BuilderCard b -> "BUILDER";
-                case ArtistCard a -> "ARTIST";
-                case InventorCard i -> "INVENTOR";
-                case GathererCard g -> "GATHERER";
-                default -> "CHARACTER";
-            };
-            String details = switch (card) {
-                case HunterCard h -> h.hasTriggerIcon() ? " bonus on draw" : "no draw bonus";
-                case ShamanCard s -> "★".repeat(s.getStarCount());
-                case BuilderCard b ->
-                        "-" + b.getBuilderDiscount() + " food/bldg  |  +" + b.getPrestigePoints() + " PP end";
-                case InventorCard i -> "icon: " + i.getInventionIcon().name();
-                case ArtistCard a -> "end: +10PP per 2 artists";
-                case GathererCard g -> "sustenance: -3 food";
-                default -> "";
-            };
-            dto = new CardDto(card.getId(), subtype, String.valueOf(card.getEra().ordinal() + 1),
-                    0, 0, details, card.getImagePath(), card.getBackImagePath());
+            throw new IllegalStateException("Unhandled CharacterCard subtype: " + card.getClass().getSimpleName());
         }
 
         @Override
         public void visit(EventCard card) {
-            dto = new CardDto(card.getId(), "EVENT", String.valueOf(card.getEra().ordinal() + 1), 0, 0, "", card.getImagePath(), card.getBackImagePath());
+            dto = eventDto(card);
         }
 
         @Override
         public void visit(SustenanceEventCard card) {
-            dto = new CardDto(card.getId(), "EVENT", String.valueOf(card.getEra().ordinal() + 1), 0, 0, "", card.getImagePath(), card.getBackImagePath());
+            dto = eventDto(card);
         }
 
         @Override
         public void visit(BuildingCard card) {
-            dto = new CardDto(card.getId(), "BUILDING", String.valueOf(card.getEra().ordinal() + 1), card.getFoodCost(), card.getEndGamePoints(), describeEffect(card.getEffectId()),
+            dto = new CardDto(card.getId(), "BUILDING", eraOf(card),
+                    card.getFoodCost(), card.getEndGamePoints(), card.getEffect().getDescription(),
                     card.getImagePath(), card.getBackImagePath());
         }
 
-        // only used to print the effect of the card in the cli
-        private static String describeEffect(String effectId) {
-            return switch (effectId) {
-                case "shamanic_immunity"          -> "Ritual:no PP loss";
-                case "shamanic_double_points"     -> "Ritual:dbl PP top";
-                case "shamanic_extra_stars"       -> "Ritual:+3 stars";
-                case "extra_food_on_totem_return" -> "Return:+1 food";
-                case "extra_draw"                 -> "Post-act:draw 1";
-                case "on_acquire_set"             -> "Acq:+5food/set";
-                case "on_acquire_pair"            -> "Acq:+3food/pair";
-                case "on_sustenance_artist"       -> "Sust:-1f/artist";
-                case "on_sustenance_gatherer"     -> "Sust:-1f/gatherer";
-                case "on_sustenance_inventor"     -> "Sust:-1f/inventor";
-                case "on_hunt_bonus"              -> "Hunt:+1f+1PP";
-                case "on_cave_paintings_bonus"    -> "Cave:+1f/artist";
-                case "end_game_count_hunters"     -> "End:+3PP/hunter";
-                case "end_game_count_shamans"     -> "End:+4PP/shaman";
-                case "end_game_count_artists"     -> "End:+4PP/artist";
-                case "end_game_count_inventors"   -> "End:+2PP/inventor";
-                case "end_game_count_builders"    -> "End:+4PP/builder";
-                case "end_game_count_gatherers"   -> "End:+4PP/gatherer";
-                case "end_game_count_sets"        -> "End:+6PP/full set";
-                case "end_game_double_builders"   -> "End:x2 builder PP";
-                case "none"                       -> "";
-                default                           -> effectId;
-            };
+        /**
+         * Builds a DTO for a tribe character card, which carries no food cost or end-game points.
+         *
+         * @param card    the character card to convert
+         * @param subtype the display label identifying the character role
+         * @param details the short human-readable detail string for this card
+         * @return the populated {@link CardDto}
+         */
+        private static CardDto tribeDto(CharacterCard card, String subtype, String details) {
+            return new CardDto(card.getId(), subtype, eraOf(card), 0, 0, details,
+                    card.getImagePath(), card.getBackImagePath());
         }
 
-        CardDto getDto () {
+        /**
+         * Builds a DTO for an event card, which exposes no player-facing detail string.
+         *
+         * @param card the event card to convert
+         * @return the populated {@link CardDto}
+         */
+        private static CardDto eventDto(EventCard card) {
+            return new CardDto(card.getId(), "EVENT", eraOf(card), 0, 0, "",
+                    card.getImagePath(), card.getBackImagePath());
+        }
+
+        /**
+         * Renders the card era as a 1-based display string ("1", "2", "3").
+         *
+         * @param card the card whose era is formatted
+         * @return the 1-based era label
+         */
+        private static String eraOf(Card card) {
+            return String.valueOf(card.getEra().ordinal() + 1);
+        }
+
+        /**
+         * @return the DTO produced by the most recent visit
+         */
+        CardDto getDto() {
             return dto;
         }
     }

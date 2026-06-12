@@ -25,4 +25,13 @@ public interface BuildingEffect {
      * to whom the effect must be applied
      */
     public void registerSelf(Player player);
+
+    /**
+     * Returns a short, human-readable summary of what this effect does, suitable for
+     * display next to the building card. The text is supplied at construction time, so a
+     * single parameterized effect class can describe each of its concrete configurations.
+     *
+     * @return the effect's display description (never {@code null})
+     */
+    String getDescription();
 }

@@ -18,7 +18,6 @@ public class BuildingCard extends Card {
     private final int foodCost;
     private final int endGamePoints;
     private final BuildingEffect effect;
-    private final String effectId;          // used to specify the effect of the card in the cli
 
     /**
      * Constructs a new {@code BuildingCard} with the specified structural, economic, and functional attributes.
@@ -29,16 +28,14 @@ public class BuildingCard extends Card {
      * @param foodCost the base amount of food resources required to acquire this building
      * @param endGamePoints the flat prestige points awarded to the owner at the end of the game
      * @param effect the instantiated polymorphic {@link BuildingEffect} bound to this card
-     * @param effectId the string identifier of the effect, primarily used for CLI rendering and debugging
      * @param imagePath the resource path for the card's front graphical asset
      * @param backImagePath the resource path for the card's back graphical asset
      */
-    public BuildingCard(int id, Era era, int playercount, int foodCost, int endGamePoints, BuildingEffect effect, String effectId, String imagePath, String backImagePath) {
+    public BuildingCard(int id, Era era, int playercount, int foodCost, int endGamePoints, BuildingEffect effect, String imagePath, String backImagePath) {
         super(id, era, playercount, imagePath, backImagePath);
         this.foodCost = foodCost;
         this.endGamePoints = endGamePoints;
         this.effect = effect;
-        this.effectId      = effectId;
     }
 
     /**
@@ -61,13 +58,6 @@ public class BuildingCard extends Card {
      * @return the polymorphic {@link BuildingEffect} instance
      */
     public BuildingEffect getEffect() { return effect; }
-
-    /**
-     * Retrieves the structural string identifier of the card's effect.
-     *
-     * @return the textual effect ID
-     */
-    public String getEffectId()      { return effectId; }
 
     /**
      * <p>

@@ -68,7 +68,7 @@ public class BuildingCardFactory {
             BuildingEffect effect = createEffect(effectId);
 
             // Assicurati che il costruttore di BuildingCard accetti backImage come ultimo parametro
-            cards.add(new BuildingCard(id, era, minPlayers, foodCost, endGamePoints, effect, effectId, image, backImage));
+            cards.add(new BuildingCard(id, era, minPlayers, foodCost, endGamePoints, effect, image, backImage));
         }
 
         return cards;
@@ -85,27 +85,27 @@ public class BuildingCardFactory {
      */
     private static BuildingEffect createEffect(String effectId) {
         return switch (effectId) {
-            case "shamanic_immunity" -> new OnPickingEffects(p -> p.setShamanicImmunity(true));
-            case "shamanic_double_points" -> new OnPickingEffects(p -> p.setShamanicDoublePrestige(true));
-            case "shamanic_extra_stars" -> new OnPickingEffects(p -> p.setShamanicBonusIcons(true));
-            case "extra_food_on_totem_return" -> new OnPickingEffects(p -> p.setExtraFoodOnTotemReturn(true));
-            case "extra_draw" -> new OnPickingEffects(p -> p.setExtraDraw(true)); // TODO CONTROLLA
-            case "on_acquire_set" -> new BonusForCompletedSet();
-            case "on_acquire_pair" -> new InventorsPairBonus();
-            case "on_sustenance_artist" -> new SustenanceDiscountEffect(1, Tribe::getArtistCount);
-            case "on_sustenance_gatherer" -> new SustenanceDiscountEffect(1, Tribe::getGathererCount);
-            case "on_sustenance_inventor" -> new SustenanceDiscountEffect(1, Tribe::getInventorCount);
-            case "on_hunt_bonus" -> new HunterBonusForHuntEvent(1, 1);
-            case "on_cave_paintings_bonus" -> new ArtistBonusForCavePaintings(1);
-            case "end_game_count_hunters" -> new EndGameBuildingEffect(3, Tribe::getHunterCount);
-            case "end_game_count_shamans" -> new EndGameBuildingEffect(4, Tribe::getShamanCount);
-            case "end_game_count_artists" -> new EndGameBuildingEffect(4, Tribe::getArtistCount);
-            case "end_game_count_inventors" -> new EndGameBuildingEffect(2, Tribe::getInventorCount);
-            case "end_game_count_builders" -> new EndGameBuildingEffect(4, Tribe::getBuilderCount);
-            case "end_game_count_gatherers" -> new EndGameBuildingEffect(4, Tribe::getGathererCount);
-            case "end_game_count_sets" -> new EndGameBuildingEffect(6, Tribe::countCompleteSets);
-            case "end_game_double_builders" -> new EndGameBuildingEffect(1, Tribe::calculateBuildersEndGamePoints);
-            case "none" -> new OnPickingEffects(p -> {});
+            case "shamanic_immunity" -> new OnPickingEffects(p -> p.setShamanicImmunity(true), "Ritual:no PP loss");
+            case "shamanic_double_points" -> new OnPickingEffects(p -> p.setShamanicDoublePrestige(true), "Ritual:dbl PP top");
+            case "shamanic_extra_stars" -> new OnPickingEffects(p -> p.setShamanicBonusIcons(true), "Ritual:+3 stars");
+            case "extra_food_on_totem_return" -> new OnPickingEffects(p -> p.setExtraFoodOnTotemReturn(true), "Return:+1 food");
+            case "extra_draw" -> new OnPickingEffects(p -> p.setExtraDraw(true), "Post-act:draw 1"); // TODO CONTROLLA
+            case "on_acquire_set" -> new BonusForCompletedSet("Acq:+5food/set");
+            case "on_acquire_pair" -> new InventorsPairBonus("Acq:+3food/pair");
+            case "on_sustenance_artist" -> new SustenanceDiscountEffect(1, Tribe::getArtistCount, "Sust:-1f/artist");
+            case "on_sustenance_gatherer" -> new SustenanceDiscountEffect(1, Tribe::getGathererCount, "Sust:-1f/gatherer");
+            case "on_sustenance_inventor" -> new SustenanceDiscountEffect(1, Tribe::getInventorCount, "Sust:-1f/inventor");
+            case "on_hunt_bonus" -> new HunterBonusForHuntEvent(1, 1, "Hunt:+1f+1PP");
+            case "on_cave_paintings_bonus" -> new ArtistBonusForCavePaintings(1, "Cave:+1f/artist");
+            case "end_game_count_hunters" -> new EndGameBuildingEffect(3, Tribe::getHunterCount, "End:+3PP/hunter");
+            case "end_game_count_shamans" -> new EndGameBuildingEffect(4, Tribe::getShamanCount, "End:+4PP/shaman");
+            case "end_game_count_artists" -> new EndGameBuildingEffect(4, Tribe::getArtistCount, "End:+4PP/artist");
+            case "end_game_count_inventors" -> new EndGameBuildingEffect(2, Tribe::getInventorCount, "End:+2PP/inventor");
+            case "end_game_count_builders" -> new EndGameBuildingEffect(4, Tribe::getBuilderCount, "End:+4PP/builder");
+            case "end_game_count_gatherers" -> new EndGameBuildingEffect(4, Tribe::getGathererCount, "End:+4PP/gatherer");
+            case "end_game_count_sets" -> new EndGameBuildingEffect(6, Tribe::countCompleteSets, "End:+6PP/full set");
+            case "end_game_double_builders" -> new EndGameBuildingEffect(1, Tribe::calculateBuildersEndGamePoints, "End:x2 builder PP");
+            case "none" -> new OnPickingEffects(p -> {}, "");
             default -> throw new IllegalArgumentException("Unknown building effect: " + effectId);
         };
     }

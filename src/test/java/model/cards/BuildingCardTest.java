@@ -34,14 +34,13 @@ public class BuildingCardTest {
     private static final int PLAYER_COUNT = 3;
     private static final int FOOD_COST = 5;
     private static final int END_GAME_POINTS = 10;
-    private static final String EFFECT_ID = "test_effect";
     private static final String IMAGE_PATH = "front.png";
     private static final String BACK_IMAGE_PATH = "back.png";
 
     @BeforeEach
     void setUp() {
         buildingCard = new BuildingCard(ID, ERA, PLAYER_COUNT, FOOD_COST, END_GAME_POINTS,
-                mockEffect, EFFECT_ID, IMAGE_PATH, BACK_IMAGE_PATH);
+                mockEffect, IMAGE_PATH, BACK_IMAGE_PATH);
     }
 
     @Test

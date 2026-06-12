@@ -16,6 +16,20 @@ import model.player.Player;
 public class OnEventBuildingEffect implements BuildingEffect {
 
     /**
+     * Short, human-readable summary of this effect, shown next to the building card.
+     */
+    private final String description;
+
+    /**
+     * Constructs the base event effect with its display description.
+     *
+     * @param description the human-readable summary shown next to the building card
+     */
+    public OnEventBuildingEffect(String description) {
+        this.description = description;
+    }
+
+    /**
      * {@inheritDoc}
      * <p>
      * For event-driven effects, this method hooks the instance into the player's tribe
@@ -27,6 +41,14 @@ public class OnEventBuildingEffect implements BuildingEffect {
     @Override
     public void registerSelf(Player player) {
         player.getTribe().registerOnEventEffect(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     /**

@@ -23,8 +23,10 @@ public class ArtistBonusForCavePaintings extends OnEventBuildingEffect {
      * Constructs a new reactive event modifier with a specific scaling configuration.
      *
      * @param foodMultiplier the amount of food units granted per artist character inside the tribe
+     * @param description the human-readable summary shown next to the building card
      */
-    public ArtistBonusForCavePaintings(int foodMultiplier){
+    public ArtistBonusForCavePaintings(int foodMultiplier, String description){
+        super(description);
         this.foodMultiplier = foodMultiplier;
     }
 

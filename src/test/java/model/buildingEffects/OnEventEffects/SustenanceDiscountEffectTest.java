@@ -19,7 +19,7 @@ class SustenanceDiscountEffectTest {
         player.getTribe().addArtist(new ArtistCard(2, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
         player.getTribe().addHunter(new HunterCard(3, Era.ERA_I, 2, false, "test/front.png" , "test/front.png"));
 
-        SustenanceDiscountEffect effect = new SustenanceDiscountEffect(3, Tribe::getArtistCount);
+        SustenanceDiscountEffect effect = new SustenanceDiscountEffect(3, Tribe::getArtistCount, "");
 
         assertEquals(6, effect.applyOnSustenance(player));
     }
@@ -27,7 +27,7 @@ class SustenanceDiscountEffectTest {
     @Test
     void applyOnSustenanceReturnsZeroWhenNoMatchingCharacters() {
         Player player = new Player("p1");
-        SustenanceDiscountEffect effect = new SustenanceDiscountEffect(4, Tribe::getShamanCount);
+        SustenanceDiscountEffect effect = new SustenanceDiscountEffect(4, Tribe::getShamanCount, "");
 
         assertEquals(0, effect.applyOnSustenance(player));
     }

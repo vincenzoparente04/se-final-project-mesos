@@ -12,7 +12,7 @@ class OnEventBuildingEffectTest {
     @Test
     void registerSelfRegistersEffectInTribeOnEventList() {
         Player player = new Player("p1");
-        OnEventBuildingEffect effect = new OnEventBuildingEffect();
+        OnEventBuildingEffect effect = new OnEventBuildingEffect("");
 
         int before = player.getTribe().getOnEventBuildingEffects().size();
         effect.registerSelf(player);
@@ -25,7 +25,7 @@ class OnEventBuildingEffectTest {
     @Test
     void baseOnEventEffectIsNoOp() {
         Player player = new Player("p1");
-        OnEventBuildingEffect effect = new OnEventBuildingEffect();
+        OnEventBuildingEffect effect = new OnEventBuildingEffect("");
         player.addFood(5);
         player.addPrestigePoints(7);
 

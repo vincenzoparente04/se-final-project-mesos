@@ -21,6 +21,15 @@ public class BonusForCompletedSet extends OnAcquireBuildingEffect {
     private int alreadyCompletedSets;
 
     /**
+     * Constructs the effect with its display description.
+     *
+     * @param description the human-readable summary shown next to the building card
+     */
+    public BonusForCompletedSet(String description) {
+        super(description);
+    }
+
+    /**
      * <p>
      * Overrides the registration lifecycle hook to perform an immediate snapshotting evaluation
      * of the player's current assets. It initializes the baseline watermark with the count

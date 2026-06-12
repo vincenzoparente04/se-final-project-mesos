@@ -17,7 +17,7 @@ class ArtistBonusForCavePaintingsTest {
         player.getTribe().addArtist(new ArtistCard(2, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
         player.getTribe().addArtist(new ArtistCard(3, Era.ERA_I, 2, "test/front.png" , "test/front.png"));
 
-        ArtistBonusForCavePaintings effect = new ArtistBonusForCavePaintings(1);
+        ArtistBonusForCavePaintings effect = new ArtistBonusForCavePaintings(1, "");
         effect.applyOnCavePaintings(player);
 
         assertEquals(3, player.getFood());
@@ -27,7 +27,7 @@ class ArtistBonusForCavePaintingsTest {
     void applyOnCavePaintingsDoesNothingWithoutArtists() {
         Player player = new Player("p1");
 
-        ArtistBonusForCavePaintings effect = new ArtistBonusForCavePaintings(1);
+        ArtistBonusForCavePaintings effect = new ArtistBonusForCavePaintings(1, "");
         effect.applyOnCavePaintings(player);
 
         assertEquals(0, player.getFood());

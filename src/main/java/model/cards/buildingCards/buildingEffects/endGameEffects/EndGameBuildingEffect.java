@@ -23,15 +23,22 @@ public class EndGameBuildingEffect implements BuildingEffect {
     private final ToIntFunction<Tribe> getter;
 
     /**
+     * Short, human-readable summary of this effect, shown next to the building card.
+     */
+    private final String description;
+
+    /**
      * Constructs a new deferred end-game scoring effect based on a specific demographic metric.
      *
      * @param multiplier the prestige point multiplier awarded for each unit returned by the getter
      * @param getter the functional interface used to dynamically extract the relevant integer
      * metric (e.g., number of characters, completed sets) from the player's tribe
+     * @param description the human-readable summary shown next to the building card
      */
-    public EndGameBuildingEffect(int multiplier, ToIntFunction<Tribe> getter) {
+    public EndGameBuildingEffect(int multiplier, ToIntFunction<Tribe> getter, String description) {
         this.multiplier = multiplier;
         this.getter = getter;
+        this.description = description;
     }
 
     /**
@@ -56,5 +63,13 @@ public class EndGameBuildingEffect implements BuildingEffect {
      */
     public void applyEffect(Player player) {
         player.addPrestigePoints(multiplier * getter.applyAsInt(player.getTribe()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDescription() {
+        return description;
     }
 }

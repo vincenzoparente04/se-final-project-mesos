@@ -34,8 +34,10 @@ public class SustenanceDiscountEffect extends OnEventBuildingEffect {
      * @param discountPerCharacter the quantity of food resource discount granted per character unit
      * @param correctGetter the functional reference used to evaluate the applicable
      * character headcount from the player's tribe state
+     * @param description the human-readable summary shown next to the building card
      */
-    public SustenanceDiscountEffect(int discountPerCharacter, ToIntFunction<Tribe> correctGetter) {
+    public SustenanceDiscountEffect(int discountPerCharacter, ToIntFunction<Tribe> correctGetter, String description) {
+        super(description);
         this.discountPerCharacter = discountPerCharacter;
         this.correctGetter = correctGetter;
     }
