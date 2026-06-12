@@ -25,13 +25,20 @@ public class OnPickingEffects implements BuildingEffect {
     private final Consumer<Player> flagSetter;
 
     /**
+     * Short, human-readable summary of this effect, shown next to the building card.
+     */
+    private final String description;
+
+    /**
      * Constructs a new immediate building effect initialized with a specific mutation routine.
      *
      * @param flagSetter the functional {@link Consumer} encapsulating the exact state modification
      * logic to run against the player instance
+     * @param description the human-readable summary shown next to the building card
      */
-    public OnPickingEffects(Consumer<Player> flagSetter) {
+    public OnPickingEffects(Consumer<Player> flagSetter, String description) {
         this.flagSetter = flagSetter;
+        this.description = description;
     }
 
     /**
@@ -46,5 +53,13 @@ public class OnPickingEffects implements BuildingEffect {
     @Override
     public void registerSelf(Player player) {
         flagSetter.accept(player);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDescription() {
+        return description;
     }
 }

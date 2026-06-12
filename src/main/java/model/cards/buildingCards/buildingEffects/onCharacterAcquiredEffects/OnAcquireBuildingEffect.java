@@ -16,6 +16,20 @@ import model.player.Player;
 public abstract class OnAcquireBuildingEffect implements BuildingEffect {
 
     /**
+     * Short, human-readable summary of this effect, shown next to the building card.
+     */
+    private final String description;
+
+    /**
+     * Constructs the base on-acquire effect with its display description.
+     *
+     * @param description the human-readable summary shown next to the building card
+     */
+    protected OnAcquireBuildingEffect(String description) {
+        this.description = description;
+    }
+
+    /**
      * <p>
      * For character acquisition effects, this method hooks the instance directly into the
      * player's tribe reactive listener registry, ensuring it intercepts future character
@@ -27,6 +41,14 @@ public abstract class OnAcquireBuildingEffect implements BuildingEffect {
     @Override
     public void registerSelf(Player player) {
         player.getTribe().registerOnAcquireEffect(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     /**

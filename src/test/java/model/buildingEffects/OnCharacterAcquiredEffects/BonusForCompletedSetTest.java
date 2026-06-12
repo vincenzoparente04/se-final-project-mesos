@@ -21,7 +21,7 @@ class BonusForCompletedSetTest {
         Player player = new Player("p1");
         addCompleteSet(player, 0);
 
-        BonusForCompletedSet effect = new BonusForCompletedSet();
+        BonusForCompletedSet effect = new BonusForCompletedSet("");
         effect.registerSelf(player);
 
         effect.applyEffect(player);

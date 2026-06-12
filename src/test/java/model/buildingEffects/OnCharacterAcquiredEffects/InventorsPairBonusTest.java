@@ -17,7 +17,7 @@ class InventorsPairBonusTest {
         player.getTribe().addInventor(new InventorCard(1, Era.ERA_I, 2, InventionIcon.ICON_1, "test/front.png" , "test/front.png"));
         player.getTribe().addInventor(new InventorCard(2, Era.ERA_I, 2, InventionIcon.ICON_1, "test/front.png" , "test/front.png"));
 
-        InventorsPairBonus effect = new InventorsPairBonus();
+        InventorsPairBonus effect = new InventorsPairBonus("");
         effect.registerSelf(player);
 
         player.getTribe().addInventor(new InventorCard(3, Era.ERA_I, 2, InventionIcon.ICON_2, "test/front.png" , "test/front.png"));
@@ -35,7 +35,7 @@ class InventorsPairBonusTest {
     @Test
     void applyEffectRewardsAtMostOnePairPerInvocation() {
         Player player = new Player("p1");
-        InventorsPairBonus effect = new InventorsPairBonus();
+        InventorsPairBonus effect = new InventorsPairBonus("");
         effect.registerSelf(player);
 
         player.getTribe().addInventor(new InventorCard(10, Era.ERA_I, 2, InventionIcon.ICON_2, "test/front.png" , "test/front.png"));

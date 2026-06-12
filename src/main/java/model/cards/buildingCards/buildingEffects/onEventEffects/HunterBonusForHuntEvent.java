@@ -29,8 +29,10 @@ public class HunterBonusForHuntEvent extends OnEventBuildingEffect {
      *
      * @param prestigeMultiplier the amount of prestige points granted per hunter character
      * @param foodMultiplier the amount of food units granted per hunter character
+     * @param description the human-readable summary shown next to the building card
      */
-    public HunterBonusForHuntEvent(int prestigeMultiplier, int foodMultiplier) {
+    public HunterBonusForHuntEvent(int prestigeMultiplier, int foodMultiplier, String description) {
+        super(description);
         this.foodMultiplier = foodMultiplier;
         this.prestigeMultiplier = prestigeMultiplier;
     }

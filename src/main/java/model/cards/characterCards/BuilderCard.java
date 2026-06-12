@@ -2,6 +2,7 @@ package model.cards.characterCards;
 
 import model.enums.Era;
 import model.player.Player;
+import model.rowsManager.CardVisitor;
 
 /**
  * Represents a concrete Character card of type Builder within the tribe deck configuration.
@@ -73,5 +74,16 @@ public class BuilderCard extends CharacterCard {
     @Override
     public void registerToTribe(Player player) {
         player.getTribe().addBuilder(this);
+    }
+
+    /**
+     * Routes this card to the builder-specific overload of the visitor, completing the
+     * double-dispatch so role-aware visitors receive the concrete type without casting.
+     *
+     * @param visitor the visitor performing an operation on this card
+     */
+    @Override
+    public void accept(CardVisitor visitor) {
+        visitor.visit(this);
     }
 }

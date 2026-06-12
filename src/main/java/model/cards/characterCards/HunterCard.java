@@ -2,6 +2,7 @@ package model.cards.characterCards;
 
 import model.enums.Era;
 import model.player.Player;
+import model.rowsManager.CardVisitor;
 
 /**
  * Represents a concrete Character card of type Hunter within the tribe deck configuration.
@@ -62,5 +63,16 @@ public class HunterCard extends CharacterCard {
      */
     public boolean hasTriggerIcon() {
         return triggerIcon;
+    }
+
+    /**
+     * Routes this card to the hunter-specific overload of the visitor, completing the
+     * double-dispatch so role-aware visitors receive the concrete type without casting.
+     *
+     * @param visitor the visitor performing an operation on this card
+     */
+    @Override
+    public void accept(CardVisitor visitor) {
+        visitor.visit(this);
     }
 }

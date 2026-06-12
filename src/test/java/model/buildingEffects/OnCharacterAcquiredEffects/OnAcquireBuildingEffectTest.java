@@ -22,6 +22,10 @@ class OnAcquireBuildingEffectTest {
     }
 
     private static class DummyOnAcquireEffect extends OnAcquireBuildingEffect {
+        DummyOnAcquireEffect() {
+            super("");
+        }
+
         @Override
         public void applyEffect(Player player) {
             // no-op: this test only verifies registerSelf contract

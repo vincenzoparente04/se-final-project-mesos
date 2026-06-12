@@ -28,6 +28,15 @@ public class InventorsPairBonus extends OnAcquireBuildingEffect {
     private Set<InventionIcon> alreadyPaired;
 
     /**
+     * Constructs the effect with its display description.
+     *
+     * @param description the human-readable summary shown next to the building card
+     */
+    public InventorsPairBonus(String description) {
+        super(description);
+    }
+
+    /**
      * <p>
      * Overrides the registration lifecycle hook to perform an initial structural evaluation
      * of the player's current assets. It populates the exclusion filter with any invention icon

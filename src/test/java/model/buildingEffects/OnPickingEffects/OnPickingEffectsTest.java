@@ -11,7 +11,7 @@ class OnPickingEffectsTest {
     @Test
     void registerSelfSetsShamanicImmunity() {
         Player player = new Player("p1");
-        OnPickingEffects effect = new OnPickingEffects(p -> p.setShamanicImmunity(true));
+        OnPickingEffects effect = new OnPickingEffects(p -> p.setShamanicImmunity(true), "");
 
         effect.registerSelf(player);
 
@@ -21,7 +21,7 @@ class OnPickingEffectsTest {
     @Test
     void registerSelfSetsShamanicBonusIcons() {
         Player player = new Player("p1");
-        OnPickingEffects effect = new OnPickingEffects(p -> p.setShamanicBonusIcons(true));
+        OnPickingEffects effect = new OnPickingEffects(p -> p.setShamanicBonusIcons(true), "");
 
         effect.registerSelf(player);
 
@@ -31,7 +31,7 @@ class OnPickingEffectsTest {
     @Test
     void registerSelfSetsShamanicDoublePrestige() {
         Player player = new Player("p1");
-        OnPickingEffects effect = new OnPickingEffects(p -> p.setShamanicDoublePrestige(true));
+        OnPickingEffects effect = new OnPickingEffects(p -> p.setShamanicDoublePrestige(true), "");
 
         effect.registerSelf(player);
 
@@ -41,7 +41,7 @@ class OnPickingEffectsTest {
     @Test
     void registerSelfSetsExtraDraw() {
         Player player = new Player("p1");
-        OnPickingEffects effect = new OnPickingEffects(p -> p.setExtraDraw(true));
+        OnPickingEffects effect = new OnPickingEffects(p -> p.setExtraDraw(true), "");
 
         effect.registerSelf(player);
 
@@ -51,7 +51,7 @@ class OnPickingEffectsTest {
     @Test
     void registerSelfSetsExtraFoodOnTotemReturn() {
         Player player = new Player("p1");
-        OnPickingEffects effect = new OnPickingEffects(p -> p.setExtraFoodOnTotemReturn(true));
+        OnPickingEffects effect = new OnPickingEffects(p -> p.setExtraFoodOnTotemReturn(true), "");
 
         effect.registerSelf(player);
 
