@@ -1,0 +1,57 @@
+@startuml 02-lobby-commands-request
+!include _common.puml
+title 02 · Lobby commands — request (client → server) · Socket / RMI
+autonumber
+
+box "Client" #E3F2FD
+participant UI as "Client UI\n(GUI / CLI)"
+participant VS as "VirtualServer\n(Socket / RMI)"
+end box
+
+participant NET as "Network"
+
+box "Server" #E8F5E9
+participant EP as "SocketClientHandler /\nGameServerRemoteImpl\n(inbound dispatcher)"
+participant LM as "LobbyManager\n(lobby-thread)"
+end box
+
+== User action ==
+UI -> VS : sendCreateLobby(n) / sendJoinLobby(id) / sendListLobbies() / sendLeaveCommand()
+note over VS : builds a LobbyCommand
+
+== Transport to the server ==
+alt Socket transport
+  VS -> NET : send(cmd): synchronized(out) writeObject(cmd) + flush
+  NET -> EP : ClientCommand
+  EP -> EP : SocketClientHandler.run(): in.readObject(); cmd.accept(dispatcher)
+else RMI transport
+  VS -> NET : submitAsync(cmd): commandExecutor → serverStub.submitClientCommand(cmd)
+  NET -> EP : submitClientCommand(cmd)
+  EP -> EP : command.accept(dispatcher)
+end
+
+EP -> EP : dispatcher.visit(LobbyCommand)
+EP -> LM : lobbyManager.submit(cmd)
+note right of EP : lobby commands are enqueued,\nnot executed inline
+
+== Processing on the lobby-thread ==
+LM -> LM : queue.put(cmd) → run(): cmd.accept(this)
+
+alt visit(CreateLobbyCommand)
+  LM -> LM : guards: already in game / already in lobby / size in 2..5 ?
+  LM -> LM : new Lobby(...); lobbies.put(id, lobby); lobby.addPlayer(entry)
+else visit(JoinLobbyCommand)
+  LM -> LM : guards: already in game/lobby; lobby exists & not full ?
+  LM -> LM : lobby.addPlayer(entry); startIfFull(lobby)
+  note right of LM : if the lobby fills up → game start (diagram 08)
+else visit(ListLobbiesCommand)
+  LM -> LM : getView(name).sendLobbyList(currentLobbyListDto())
+else visit(LeaveCommand)
+  LM -> LM : finished game → session queue; in lobby → handleLeaveFromLobby; else sendError
+end
+
+note over UI, LM
+  All server → client responses (LobbyList / LobbyState / GameStarting / Error)
+  are covered in diagram 03.
+end note
+@enduml

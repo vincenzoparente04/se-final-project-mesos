@@ -1,0 +1,57 @@
+' =====================================================================
+'  Shared style for the MESOS sequence diagrams
+'  Included by every diagram with:  !include _common.puml
+' =====================================================================
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundCorner 12
+skinparam DefaultFontName Helvetica
+skinparam DefaultFontSize 17
+skinparam TitleFontSize 26
+skinparam TitleFontColor #1A237E
+skinparam ArrowFontSize 16
+skinparam maxMessageSize 300
+skinparam wrapWidth 300
+
+skinparam sequence {
+    ArrowColor #37474F
+    ArrowThickness 1.3
+    ArrowFontColor #263238
+    ArrowFontSize 16
+
+    LifeLineBorderColor #B0BEC5
+    LifeLineBackgroundColor #F5F7F8
+
+    ParticipantBorderColor #546E7A
+    ParticipantBackgroundColor #ECEFF1
+    ParticipantFontColor #102027
+    ParticipantFontStyle bold
+    ParticipantFontSize 18
+    ParticipantPadding 26
+
+    ActorFontSize 18
+
+    BoxBorderColor #90A4AE
+    BoxFontColor #455A64
+    BoxFontStyle bold
+    BoxFontSize 18
+
+    GroupBorderColor #5C6BC0
+    GroupBackgroundColor #E8EAF6
+    GroupHeaderFontColor #283593
+    GroupFontColor #283593
+    GroupFontSize 17
+
+    DividerBackgroundColor #E8EAF6
+    DividerBorderColor #5C6BC0
+    DividerFontColor #283593
+    DividerFontSize 18
+}
+
+skinparam note {
+    BackgroundColor #FFF8E1
+    BorderColor #FFB300
+    FontColor #5D4037
+    FontSize 15
+}

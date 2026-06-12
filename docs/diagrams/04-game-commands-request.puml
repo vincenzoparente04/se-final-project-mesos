@@ -1,0 +1,53 @@
+@startuml 04-game-commands-request
+!include _common.puml
+title 04 · Game commands — request (client → server) · Socket / RMI
+autonumber
+
+box "Client" #E3F2FD
+participant UI as "Client UI\n(GUI / CLI)"
+participant VS as "VirtualServer\n(Socket / RMI)"
+end box
+
+participant NET as "Network"
+
+box "Server" #E8F5E9
+participant EP as "SocketClientHandler /\nGameServerRemoteImpl\n(inbound dispatcher)"
+participant GC as "GameController\n(game-thread)"
+participant GM as "GameModel"
+participant PH as "GamePhaseHandler"
+end box
+
+UI -> VS : sendChooseColor(c) / sendPlaceTotem(t) / sendDrawCard(id) / sendEndTurn()
+note over VS : builds a GameCommand
+
+alt Socket transport
+  VS -> NET : send(cmd): synchronized(out) writeObject(cmd) + flush
+  NET -> EP : GameCommand
+  EP -> EP : SocketClientHandler.run(): in.readObject(); cmd.accept(dispatcher)
+  EP -> EP : dispatcher.visit(GameCommand): gameQueue.put(cmd)
+  note right of EP : gameQueue == null → sendError("not_in_game")
+else RMI transport
+  VS -> NET : submitAsync(cmd): serverStub.submitClientCommand(cmd)
+  NET -> EP : submitClientCommand(cmd)
+  EP -> EP : command.accept(dispatcher)
+  EP -> EP : dispatcher.visit(GameCommand): gameQueues.get(name).put(cmd)
+end
+
+EP -> GC : enqueue on the session game queue
+
+== Processing on the game-thread ==
+GC -> GC : queue.take(); cmd.accept(this); visit(GameCommand)
+alt match suspended
+  GC -> GC : findView(player).sendError("GAME_SUSPENDED")
+else current player disconnected
+  GC -> GC : drop the command
+else normal
+  GC -> GC : handleCommand(cmd): validate it is the player's turn
+  note right of GC : not your turn →\nIllegalStateException → sendError to sender
+  GC -> GM : model.handleCommand(cmd)
+  GM -> PH : cmd.accept(currentPhaseHandler)
+  PH -> PH : visit(ChooseColor / PlaceTotem / DrawCard / EndTurn)\n→ mutates the model
+  PH -> GM : model.notifyChange()
+  note right of GM : new-state broadcast → diagram 05
+end
+@enduml

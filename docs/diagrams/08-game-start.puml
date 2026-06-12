@@ -1,0 +1,43 @@
+@startuml 08-game-start
+!include _common.puml
+title 08 · Game start — lobby full → game · Socket / RMI
+autonumber
+
+box "Server" #E8F5E9
+participant LM as "LobbyManager / Lobby\n(lobby-thread)"
+participant GC as "GameController\n(game-thread)"
+participant GM as "GameModel"
+participant PH as "ColorChoosingPhase"
+participant VV as "VirtualView\n(Socket / RMI)"
+end box
+
+participant NET as "Network"
+participant CL as "Client(s)"
+
+LM -> LM : visit(JoinLobbyCommand): lobby.addPlayer(entry)
+LM -> LM : startIfFull(lobby): lobby.isFull() ?
+
+== Notify game starting ==
+LM -> VV : lobby.notifyGameStarting() → sendGameStarting() [each member]
+VV -> NET : GameStartingMessage (Socket / RMI)
+NET -> CL : onGameStarting()  (see diagram 03)
+LM -> LM : lobbies.remove(id)
+
+== Build the session (in the GameController constructor) ==
+LM -> GC : new GameController(players)
+GC -> GM : new GameModel(views); model.startGame(names): Board + createPlayers
+GM -> PH : setPhase(ColorChoosingPhase) → onEnter()
+PH -> PH : start 60 s color-choosing timeout
+PH -> GM : notifyChange()  (first state snapshot)
+GM -> VV : v.sendState(dto) [each player]
+VV -> NET : StateMessage (Socket / RMI)
+NET -> CL : onGameStateUpdated()  (see diagram 05)
+
+== Start the game-thread ==
+LM -> GC : controller.start(): PlayerEntry.setGameQueue(q) [each]; gameThread.start()
+LM -> LM : activeGames.put(name, controller) [each player]
+note over PH, CL
+  When all colors are chosen (or the 60 s timeout fires assigning random colors),
+  the game advances to SetupPhase.
+end note
+@enduml

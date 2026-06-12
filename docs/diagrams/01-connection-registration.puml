@@ -1,0 +1,89 @@
+@startuml 01-connection-registration
+!include _common.puml
+title 01 · Connection and name registration — Socket / RMI
+autonumber
+
+box "Client" #E3F2FD
+participant UI as "Client UI\n(GUI / CLI)"
+participant VS as "VirtualServer\n(Socket / RMI)"
+end box
+
+participant NET as "Network"
+
+box "Server" #E8F5E9
+participant HS as "ConnectionHandshaker /\nGameServerRemoteImpl"
+participant LM as "LobbyManager\n(lobby-thread)"
+participant VV as "VirtualView\n(Socket / RMI)"
+end box
+
+== Transport opening ==
+
+UI -> VS : VirtualServerFactory.connect(transport, host, port)
+note over VS
+  Socket: opens TCP + ObjectInput/OutputStream
+  RMI: LocateRegistry.lookup("MesosGameServer")
+end note
+
+== Name negotiation ("ask" pattern) ==
+
+loop until the name is accepted
+
+  alt Socket transport
+    VS -> NET : out.writeObject(ConnectMessage(name)) + flush
+    NET -> HS : ConnectMessage(name)
+    HS -> HS : in.readObject()
+    HS -> LM : submitSocketRegistration(name, socket, in, out)
+  else RMI transport
+    VS -> NET : serverStub.join(name, ClientCallbackImpl, host)
+    NET -> HS : join(name, callback, host)
+    HS -> LM : submitRmiRegistration(new RmiPlayerEntry(view))
+  end
+
+  LM -> LM : queue.put(RegisterXxxPlayerCommand)
+  note right of LM
+    The queue IS the mutual exclusion:
+    the name check-and-register
+    is atomic on the lobby-thread
+  end note
+  LM -> LM : visit(RegisterXxxPlayerCommand)\nnameAlreadyTaken(name) ?
+
+  alt Name already taken  →  REJECT
+    LM --> HS : future.complete(false)
+    alt Socket transport
+      HS -> NET : writeObject(ErrorMessage("name_already_taken"))
+      NET -> VS : ErrorMessage
+      note over VS : the socket stays open:\nretry with a new name
+    else RMI transport
+      HS --> NET : join() = false
+      NET --> VS : false
+      VS -> VS : unexportObject(callback)\n→ retry
+    end
+
+  else Name free  →  ACCEPT
+    note over LM
+      Only when the name is free:
+      Socket builds SocketVirtualView / Handler / Entry
+      RMI: RmiVirtualView already built by the caller
+    end note
+    LM -> LM : registerPlayer():\nconnectedPlayers.put(name, entry)
+    LM -> VV : activateLiveness()
+    note right of VV : starts LivenessSentinel\n(heartbeat + watchdog)
+    LM -> VV : sendLobbyList(currentLobbyListDto())
+    note right of VV : first message to the client\n(detailed in diagram 03)
+    alt Socket transport
+      LM -> LM : starts reader thread "client-<name>"
+    end
+    LM --> HS : future.complete(true)  /  join() = true
+    HS --> NET : ACCEPT
+    NET --> VS : ACCEPT
+    VS -> VS : start()\n→ LivenessSentinel + (Socket) reader thread
+    note over VS #C8E6C9 : connection active
+  end
+
+end
+
+note over UI, VV
+  If the name already belongs to an ACTIVE game, registerPlayer does not send the lobby list
+  but starts the RECONNECTION pipeline (PlayerReconnectedCommand) — see diagram 07.
+end note
+@enduml

@@ -1,0 +1,57 @@
+@startuml 06-database-end-of-game
+!include _common.puml
+title 06 · Database — end of game (persistence + leaderboard) · async
+autonumber
+
+box "Server (game-thread)" #E8F5E9
+participant GM as "GameModel /\nEndOfGamePhase"
+end box
+
+participant DBT as "db-async-thread"
+
+box "Database" #FFF3E0
+participant DAO as "MatchDAO /\nDatabaseManager"
+participant SQL as "MySQL"
+end box
+
+box "Outbound → clients" #E8F5E9
+participant VV as "VirtualView\n(Socket / RMI)"
+end box
+
+participant NET as "Network"
+participant CL as "ClientStateListener\n→ UI"
+
+== End of game on the game-thread ==
+GM -> GM : setPhase(EndOfGamePhase) → onEnter()
+GM -> GM : resolveAllVisibleEvents() → sendEventResolved(...)
+GM -> GM : calculateEndGameScoring(); determineWinner()
+GM -> GM : setWinners(...); setEndGameScoring(...); notifyChange()
+note right of GM : final state pushed first (diagram 05)\nso the winner screen orders correctly
+
+alt DatabaseManager.isEnabled()
+  GM -> DBT : processDatabaseAsync(): start "db-async-thread"
+  note right of GM : the game-thread is NOT blocked
+  DBT -> DAO : saveMatch(records)
+  DAO -> SQL : getConnection(); INSERT batch INTO match_archive
+  DBT -> DAO : getTopScores(playerCount, 20)
+  DAO -> SQL : SELECT ... ORDER BY score DESC LIMIT 20
+  DBT -> DAO : getPlayerRank(playerCount, name, points)  [per player]
+  DAO -> SQL : SELECT COUNT(*) WHERE score >= ?
+  DBT -> GM : model.setLeaderboard(LeaderboardData)  [volatile publish]
+  DBT -> GM : model.notifyEndGame()
+else DB disabled / DB error
+  GM -> GM : model.notifyEndGame()
+  note right of GM : on DB error: leaderboard stays null\n+ sendError("[DB] ...")
+end
+
+== Push to clients (inside notifyEndGame, per view) ==
+GM -> VV : sendLeaderboard(top, rank, points) + sendGameOver(winners, scoring)
+note right of GM : leaderboard cached on the model →\nre-sent on every reconnection
+alt Socket transport
+  VV -> NET : LeaderboardMessage / GameOverMessage (writeObject + flush)
+else RMI transport
+  VV -> NET : callback.onLeaderboardUpdate(...) / onGameOver(...)
+end
+NET -> CL : onLeaderboardUpdate(...) / onGameOver(...)
+CL -> CL : winner screen + leaderboard
+@enduml

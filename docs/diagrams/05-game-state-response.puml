@@ -1,0 +1,42 @@
+@startuml 05-game-state-response
+!include _common.puml
+title 05 · Game state — response / broadcast (server → all clients) · Socket / RMI
+autonumber
+
+box "Server" #E8F5E9
+participant GM as "GameModel /\nGamePhaseHandler"
+participant VV as "VirtualView\n(Socket / RMI)\n× N clients"
+end box
+
+participant NET as "Network"
+
+box "Client" #E3F2FD
+participant CIN as "Inbound dispatcher\n(SocketClientThread + SocketVirtualServer /\nClientCallbackImpl)"
+participant LGS as "LocalGameState"
+participant L as "ClientStateListener"
+participant UI as "Client UI\n(GUI / CLI)"
+end box
+
+== State broadcast ==
+GM -> GM : notifyChange(): dto = GameStateDtoBuilder.build(model)
+loop for each registered VirtualView (all connected players)
+  GM -> VV : v.sendState(dto)
+  VV -> VV : senderExecutor.submit(...)
+end
+note right of VV : one single-thread sender per client →\nordered, non-blocking for the game-thread
+
+== Transport to a client ==
+alt Socket transport
+  VV -> NET : rawSend(StateMessage(dto)): out.writeObject + flush
+  NET -> CIN : StateMessage
+  CIN -> CIN : SocketClientThread: in.readObject(); msg.accept(SocketVirtualServer)
+  CIN -> LGS : SocketVirtualServer.visit(StateMessage): localState.update(dto)
+else RMI transport
+  VV -> NET : callback.onState(dto)
+  NET -> CIN : onState(dto)
+  CIN -> LGS : ClientCallbackImpl.onState: localState.update(dto)
+end
+
+LGS -> L : listener.onGameStateUpdated(localState)
+L -> UI : Platform.runLater(...) → re-render board / hand / turn
+@enduml

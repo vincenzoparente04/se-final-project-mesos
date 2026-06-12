@@ -1,0 +1,49 @@
+@startuml 07-disconnection-reconnection
+!include _common.puml
+title 07 · Disconnection, suspension & reconnection · Socket / RMI
+autonumber
+
+participant CL as "Reconnecting\nclient"
+participant DET as "Disconnect trigger\n(LivenessSentinel /\nSocketClientHandler /\nRmiVirtualView)"
+participant LM as "LobbyManager\n(lobby-thread)"
+participant GC as "GameController\n(game-thread)"
+participant GM as "GameModel"
+
+== Disconnection detected ==
+note over DET
+  Triggers:
+  liveness watchdog timeout (onTimeoutAction)
+  socket EOF (SocketClientHandler.run finally)
+  RMI RemoteException (RmiVirtualView.handleDisconnect)
+  graceful close: serverStub.disconnect (RMI) / socket close → EOF (socket)
+end note
+DET -> LM : onDisconnect(playerName)
+LM -> LM : submit(LobbyDisconnectCommand) → visit(...)
+alt player in an active game
+  LM -> GC : enqueue PlayerDisconnectedCommand
+end
+LM -> LM : connectedPlayers.remove(name);\nshutdownExecutor.submit(view.close); handleLeaveFromLobby
+
+== Teardown on the game-thread ==
+GC -> GM : visit(PlayerDisconnectedCommand): setDisconnected(); removeView()
+GC -> GM : broadcast "Player_disconnected"; skipCurrentPlayerTurn() if current
+alt only one player still connected
+  GC -> GC : suspended = true; broadcast "GAME_SUSPENDED";\nschedule SuspensionTimeoutCommand (60 s)
+else no player connected
+  GC -> GM : setGameOver(); setPhase(EndOfGamePhase, forfeit)
+end
+
+== Reconnection (same name) ==
+CL -> LM : connect + name handshake (diagram 01)
+LM -> LM : registerPlayer(): activeGames.get(name) != null
+LM -> GC : setGameQueue(...); enqueue PlayerReconnectedCommand(name, newView)
+GC -> GM : visit(PlayerReconnectedCommand): swapView(newView); setConnected()
+alt suspended && connected >= 2
+  GC -> GC : cancel timer; suspended = false; broadcast "GAME_RESUMED"
+end
+GC -> GM : notifyChange()  (+ notifyEndGame() if already over)
+
+== Suspension timeout (no reconnection) ==
+GC -> GC : visit(SuspensionTimeoutCommand): if !suspended → return
+GC -> GM : winner = last connected; setGameOver(); EndOfGamePhase(forfeit)
+@enduml

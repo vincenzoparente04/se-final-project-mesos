@@ -1,0 +1,43 @@
+@startuml 03-lobby-updates-response
+!include _common.puml
+title 03 · Lobby updates — response (server → client) · Socket / RMI
+autonumber
+
+box "Server" #E8F5E9
+participant LM as "LobbyManager / Lobby\n(lobby-thread)"
+participant VV as "VirtualView\n(Socket / RMI)\n+ senderExecutor"
+end box
+
+participant NET as "Network"
+
+box "Client" #E3F2FD
+participant CIN as "Inbound dispatcher\n(SocketClientThread + SocketVirtualServer /\nClientCallbackImpl)"
+participant L as "ClientStateListener"
+participant UI as "Client UI\n(GUI / CLI)"
+end box
+
+== Server pushes a lobby update ==
+note left of LM
+  Sources:
+  registerPlayer / ListLobbies → sendLobbyList
+  Lobby.addPlayer/remove → broadcastState() → sendLobbyState
+  startIfFull → notifyGameStarting() → sendGameStarting
+end note
+LM -> VV : sendLobbyList(list) / sendLobbyState(dto) / sendGameStarting()
+VV -> VV : senderExecutor.submit(...)
+note right of VV : one single-thread sender per client:\nordered, never blocks the lobby-thread
+
+== Transport to the client ==
+alt Socket transport
+  VV -> NET : rawSend(LobbyListMessage / LobbyStateMessage / GameStartingMessage)\nout.writeObject + flush
+  NET -> CIN : ServerMessage
+  CIN -> CIN : SocketClientThread: in.readObject(); msg.accept(SocketVirtualServer)
+  CIN -> L : SocketVirtualServer.visit(...) → listener.onLobbyList / onLobbyState / onGameStarting
+else RMI transport
+  VV -> NET : callback.onLobbyList(list) / onLobbyState(dto) / onGameStarting()
+  NET -> CIN : onLobbyList / onLobbyState / onGameStarting
+  CIN -> L : ClientCallbackImpl forwards → listener.onLobbyList / onLobbyState / onGameStarting
+end
+
+L -> UI : Platform.runLater(...) → lobby browser / waiting screen / switch to game
+@enduml

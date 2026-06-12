@@ -1,0 +1,36 @@
+@startuml 09-database-server-startup
+!include _common.puml
+title 09 · Database setup at server startup
+autonumber
+
+participant SM as "ServerMain"
+participant DM as "DatabaseManager"
+participant SQL as "MySQL"
+
+SM -> SM : acquireConfiguration()  (interactive prompts)
+
+alt database enabled
+  SM -> DM : setupDatabaseEnvironment(cfg) → initializeDatabase(cfg)
+  DM -> SQL : getConnection(url, user, password)
+  DM -> SQL : CREATE TABLE IF NOT EXISTS match_archive (...)
+  note right of DM : optimistic path: DB + user already exist
+
+  alt SQLException 1049 (unknown DB) / 1045 (access denied)
+    SM -> SM : prompt admin (root) credentials
+    SM -> DM : setupEnvironmentWithRoot(root, password, cfg)
+    DM -> SQL : CREATE DATABASE; CREATE USER; GRANT ALL PRIVILEGES
+    SM -> DM : retry initializeDatabase(cfg)
+    DM -> SQL : CREATE TABLE IF NOT EXISTS match_archive (...)
+  else SQLState 08S01 (cannot contact MySQL)
+    SM -> DM : DatabaseManager.disable()
+    note right of SM : the server starts without persistence
+  end
+
+else database disabled
+  SM -> DM : DatabaseManager.disable()
+end
+
+== Server boot continues ==
+SM -> SM : new LobbyManager().start()
+SM -> SM : startRmiRegistry(); startSocketAcceptor()
+@enduml
