@@ -31,14 +31,21 @@ import java.util.List;
  * <p>Pure view utility — no model dependency, no server commands.
  */
 public final class RulesOverlay {
-
+    /**path to the pdf of the rules*/
     private static final String RULES_PDF_PATH = "/images/mesos_rules_en.pdf";
+    /** render resolution*/
     private static final float RENDER_DPI = 150f;
+    /**dimension of the pages*/
     private static final double PAGE_WIDTH = 900.0;
 
+    /**pages of the pdf that had been cached*/
     private static List<Image> cachedPages = null;
+    /**task of loading images*/
     private static Task<List<Image>> loadingTask = null;
 
+    /**
+     * noooooop
+     */
     private RulesOverlay() {}
 
     /**

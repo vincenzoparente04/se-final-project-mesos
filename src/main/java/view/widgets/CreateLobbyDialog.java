@@ -16,10 +16,20 @@ import javafx.stage.Window;
 
 import java.util.Optional;
 
+/**
+ * Popup view that shows after the user clicks the button 'create new lobby'.
+ * It gives the user the ability to choose the size of the lobby from 2 to 5 players.
+ * Once the user clicks the button 'create' its sends back the number of player chosen by the player.
+ * Once the user clicks the button 'cancel' the popup disappears.
+ */
 public class CreateLobbyDialog extends Stage {
 
+    /** number of player chosen by the user*/
     private Integer chosen;
 
+    /**
+     * Main method that creates the LobbyDialog and binds logical functions
+     */
     public CreateLobbyDialog() {
         initModality(Modality.APPLICATION_MODAL);
         initStyle(StageStyle.TRANSPARENT);
@@ -31,7 +41,7 @@ public class CreateLobbyDialog extends Stage {
         Label subtitle = new Label("How many players?");
         subtitle.getStyleClass().add("mesos-hint");
 
-        Spinner<Integer> spinner = new Spinner<>(2, 5, 4);
+        Spinner<Integer> spinner = new Spinner<>(2, 5, 3);
         spinner.setEditable(false);
         spinner.setPrefWidth(160);
         spinner.getStyleClass().add("mesos-spinner");
@@ -69,6 +79,9 @@ public class CreateLobbyDialog extends Stage {
         setScene(scene);
     }
 
+    /**
+     * Shows the widget popup and waits for the choiche of the user
+     */
     public Optional<Integer> showAndWait(Window owner) {
         initOwner(owner);
         super.showAndWait();

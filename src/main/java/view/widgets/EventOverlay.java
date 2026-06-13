@@ -20,7 +20,6 @@ import java.util.WeakHashMap;
  * never intercepts clicks or input.
  */
 public final class EventOverlay {
-
     private static final WeakHashMap<StackPane, VBox> overlayBoxes = new WeakHashMap<>();
 
     private EventOverlay() {}

@@ -30,24 +30,36 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Modal popup that shows another player's full tribe.
- * Characters are grouped by sub-type (HUNTER, BUILDER, …) and each card carries
+ * Popup that shows another player's full tribe.
+ * Characters are grouped by type (HUNTER, BUILDER, …) and each card carries
  * a short caption with the key info (e.g. star count for shamans). Click any card
  * to zoom it.
  */
 public class TribePopupController implements ViewController {
 
+    /**Title HBox bar */
     @FXML private HBox  titleBar;
+    /** Title Label */
     @FXML private Label titleLabel;
+    /** HBox containing the food and PP widgets */
     @FXML private HBox  statsBox;
+    /** VBox for the character cards, grouped by type */
     @FXML private VBox  charactersBox;
+    /** VBox for the building cards*/
     @FXML private VBox  buildingsBox;
-
+    
+    /** The window stage representing this popup */
     private Stage stage;
+    /** The root pane containing the popup layout */
     private StackPane overlayRoot;
 
     private static Stage openStage = null;
 
+    /**
+     * Called by {@link view.widgets.EventResolutionOverlay}.
+     * <p>
+     * When an event is resolved, if the tribe popup is open, it's automatically closed to avoid having two popups opened together.
+     */
     public static void closeIfOpen() {
         if (openStage != null) {
             openStage.close();
@@ -55,6 +67,12 @@ public class TribePopupController implements ViewController {
         }
     }
 
+    /**
+     * Main method of the {@link TribePopupController}. Called when the user clicks the summary panel of another player.
+     * It loads the FXML and appends it to the board view.
+     * @param owner the window that called the tribePopupController
+     * @param target Player of which the data appears.
+     */
     public static void show(Window owner, PlayerDto target) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -86,6 +104,12 @@ public class TribePopupController implements ViewController {
         }
     }
 
+    /**
+     * Initializes the popup with target player data and the root graphical element.
+     * 
+     * @param target Player of which the data is displayed.
+     * @param root The root parent node of the popup.
+     */
     private void init(PlayerDto target, Parent root) {
         overlayRoot = (StackPane) root;
 
@@ -109,6 +133,10 @@ public class TribePopupController implements ViewController {
         renderBuildings(target);
     }
 
+    /**
+     * Called by {@code init()}. It renders the characters cards in the Tribe Popup
+     * @param target the DTO of the player that 'owns' the popup
+     */
     private void renderCharacters(PlayerDto target) {
         charactersBox.getChildren().clear();
         if (target.tribe == null || target.tribe.characterCards == null
@@ -130,6 +158,10 @@ public class TribePopupController implements ViewController {
         }
     }
 
+    /**
+     * Called by {@code init()}. It renders the building cards in the Tribe Popup
+     * @param target the DTO of the player that 'owns' the popup
+     */
     private void renderBuildings(PlayerDto target) {
         buildingsBox.getChildren().clear();
         if (target.tribe == null || target.tribe.buildings == null
@@ -139,6 +171,13 @@ public class TribePopupController implements ViewController {
         buildingsBox.getChildren().add(buildGroup("Buildings", target.tribe.buildings));
     }
 
+    /**
+     * Called by {@code renderCharacters()} and {@code renderBuildings()}.
+     * It builds a VBox containing a group of characters cards or building cards.
+     * @param title The name of the type of the group of cards
+     * @param cards the DTO of cards
+     * @return VBox made of sequential cards of the group
+     */
     private VBox buildGroup(String title, List<CardDto> cards) {
         VBox group = new VBox(8);
         group.getStyleClass().add("mesos-tribe-group");
@@ -173,6 +212,10 @@ public class TribePopupController implements ViewController {
         return group;
     }
 
+    /**
+     * Called when the button "close" is clicked.
+     * Close the popup window.
+     */
     @FXML
     private void onClose() {
         if (stage != null) stage.close();

@@ -15,6 +15,11 @@ import java.io.InputStream;
  */
 public class TotemView extends StackPane {
 
+    /**
+     * Retireves the image for the totem and loads and displays it.
+     * @param colorName Name of the color of the totem
+     * @param size dimension of the totem to be rendered.
+     */
     public TotemView(String colorName, double size) {
         if (colorName == null) colorName = "WHITE";
 
@@ -37,6 +42,11 @@ public class TotemView extends StackPane {
         setMaxSize(size, size);
     }
 
+    /**
+     * Method called to show a color for the totem when the image is not found
+     * @param colorName Name of the color
+     * @return string of the code of the color
+     */
     private static Color paintFor(String colorName) {
         return switch (colorName) {
             case "RED" -> Color.web("#e74c3c");

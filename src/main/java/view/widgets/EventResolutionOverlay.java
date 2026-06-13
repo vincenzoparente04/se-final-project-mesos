@@ -24,12 +24,16 @@ import java.util.Deque;
  */
 public final class EventResolutionOverlay {
 
+    /**Seconds for the popup event to stay*/
     private static final double DWELL_SECONDS = 12.0;
+    /**fade in seconds*/
     private static final double FADE_IN_MS = 300;
+    /**fade out time*/
     private static final double FADE_OUT_MS = 200;
 
+    /**Stores the event that is resolving*/
     private record PendingEvent(StackPane root, EventResolutionDto dto) {}
-
+    /** Queue to order the events resolving in the same endround*/
     private static final Deque<PendingEvent> queue = new ArrayDeque<>();
     private static StackPane activeRoot = null;
     private static StackPane activeBackdrop = null;

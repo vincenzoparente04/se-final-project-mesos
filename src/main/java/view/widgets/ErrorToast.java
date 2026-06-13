@@ -18,11 +18,21 @@ import java.util.WeakHashMap;
  * vertical stacking is handled by the VBox layout, not by manual offset calculation.
  */
 public final class ErrorToast {
-
+    /**
+     * weak hash map of stackPane and Vbox of toast boxes.
+     */
     private static final WeakHashMap<StackPane, VBox> toastBoxes = new WeakHashMap<>();
 
+    /**
+     * no
+     */
     private ErrorToast() {}
 
+    /**
+     * main method of the class that shows the error notify toast.
+     * @param root stackpane on which to show the nottifications.
+     * @param message error message
+     */
     public static void show(StackPane root, String message) {
         if (root == null || message == null) return;
 

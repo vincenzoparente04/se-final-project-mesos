@@ -28,17 +28,33 @@ import java.util.Map;
  */
 public class PlayerViewController implements ViewController {
 
+    /** Base pane of the player panel*/
     @FXML private StackPane totemSlot;
+    /** Label containing the name of the player*/
     @FXML private Label nameLabel;
+    /** HBox containing the food state*/
     @FXML private HBox foodBox;
+    /** StackPane containing the pp state*/
     @FXML private StackPane ppBox;
+    /**VBox containing the stats of cards owned by the player*/
     @FXML private VBox chipsBar;
 
+    /** Player stat data in the form of DTO*/
     private PlayerDto player;
+    /** Bool saving if it's the user player view*/
     private boolean isSelf;
+    /** Bool saving if it's the player turn**/
     private boolean isCurrent;
+    /** parent root*/
     private Parent root;
 
+    /**
+     * Called by the board view, it loads the player view panel.
+     * @param p Player DTO
+     * @param isSelf Bool saving if it's the user player view
+     * @param isCurrentPlayer Bool saving if it's the player turn
+     * @return the player view panel itself
+     */
     public static PlayerViewController load(PlayerDto p, boolean isSelf, boolean isCurrentPlayer) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -53,9 +69,23 @@ public class PlayerViewController implements ViewController {
         }
     }
 
+    /**
+     * @return the parent root
+     */
     public Parent root() { return root; }
+
+    /**
+     * @return the owning the panel player's DTO
+     */
     public PlayerDto player() { return player; }
 
+    /**
+     * Called by {@code load()}, it initializes the player pane view.
+     * It builds new {@link FoodWidget} and {@link PpWidget} and calls {@code buildChips()}.
+     * @param p Player DTO
+     * @param isSelf Bool saving if it's the user player view
+     * @param isCurrent Bool saving if it's the player turn
+     */
     private void init(PlayerDto p, boolean isSelf, boolean isCurrent) {
         this.player = p;
         this.isSelf = isSelf;
@@ -73,6 +103,11 @@ public class PlayerViewController implements ViewController {
         buildChips(p.tribe);
     }
 
+    /**
+     * Called by {@code init()}, builds the chips showing the various cards stats and types.
+     * It divides the area it owns in rows (HBox) to organize the space in a more efficient way.
+     * @param tribe player's tribeDTO
+     */
     private void buildChips(TribeDto tribe) {
         chipsBar.getChildren().clear();
         if (tribe == null) return;
@@ -134,12 +169,26 @@ public class PlayerViewController implements ViewController {
         if (!row4.getChildren().isEmpty()) chipsBar.getChildren().add(row4);
     }
 
+    /**
+     * Add iconChip to the specified row.
+     * @param row row in which to insert the chip
+     * @param counts number of cards
+     * @param type type of the card
+     * @param iconFile the icon image.
+     */
     private void addIconChipTo(HBox row, Map<String, Integer> counts, String type, String iconFile) {
         int n = counts.getOrDefault(type, 0);
         if (n == 0) return;
         row.getChildren().add(buildIconChip(iconFile, "×" + n));
     }
 
+    /**
+     * Called by {@code init}, builds the different icon chips in a standard way to make them similar.
+     * If it does not find the icon uses text instead.
+     * @param iconFile the icon of the type of the card
+     * @param text the name of the card
+     * @return HBox that is the chip
+     */
     private HBox buildIconChip(String iconFile, String text) {
         HBox box = new HBox(4);
         box.getStyleClass().add("mesos-card-chip");
@@ -157,6 +206,7 @@ public class PlayerViewController implements ViewController {
         return box;
     }
 
+    /** called by {@code buildIconCHip()} if the icon image is not found. Put text in the chip instead */
     private HBox buildTextChip(String text) {
         HBox box = new HBox(new Label(text));
         box.getStyleClass().add("mesos-card-chip");
@@ -164,6 +214,7 @@ public class PlayerViewController implements ViewController {
         return box;
     }
 
+    /**Helper method to count the shaman stars*/
     private static int countStars(String details) {
         int count = 0;
         for (int i = 0; i < details.length(); i++) {

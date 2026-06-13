@@ -11,9 +11,12 @@ import java.io.InputStream;
 /** Prestige-points crown with the amount overlaid at centre. */
 public class PpWidget extends StackPane {
 
+    /**size of the widget*/
     private static final double SIZE = 38;
+    /**offset of the pp of the widget*/
     private static final double LABEL_OFFSET_Y = -4;
 
+    /**main class of the ppWidget, get images does all sort of things bee boop*/
     public PpWidget(int amount) {
         Image img = ImageCache.get("/images/icons/PuntiPrestige.png");
         if (img != null) {

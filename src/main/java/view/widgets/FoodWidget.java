@@ -11,6 +11,7 @@ import java.io.InputStream;
 /** Food icon + amount label. */
 public class FoodWidget extends HBox {
 
+    /**main method of the food widget, build boop bap*/
     public FoodWidget(int amount) {
         super(3);
         setAlignment(Pos.CENTER);
