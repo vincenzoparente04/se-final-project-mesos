@@ -22,18 +22,29 @@ import java.util.stream.Collectors;
 
 public class WinnerViewController implements SceneController {
 
+    /** The root pane of the winner view screen layout. */
     @FXML private StackPane rootPane;
+    /** Label that holds the name of the winner */
     @FXML private Label winnerNameLabel;
+    /* Label that holds the score of the winner */
     @FXML private Label winnerScoreLabel;
+    /** VBox of the other players rankings */
     @FXML private VBox rankingBox;
+    /** Button to open the leaderboard DB*/
     @FXML private Button leaderboardBtn;
-
+    /** The router used to navigate between scenes. */
     private SceneRouter router;
 
+    /**List to store leaderboard data*/
     private List<ScoreRecord> leaderboardData;
+
     private int leaderboardRank;
     private int leaderboardPoints;
 
+    /**
+     * Binds the router to this controller when this controller is created to make it possible to reference it.
+     * @param router the SceneRouter
+     */
     @Override
     public void bind(SceneRouter router) {
         this.router = router;
@@ -41,6 +52,11 @@ public class WinnerViewController implements SceneController {
 
     // Called without scoring (fallback)
 
+    /**
+     * Called when the game ends early. There is no EndGameScoringDTO
+     * @param players the list of players in the game
+     * @param winners the list of winner usernames
+     */
     @Override
     public void showWinners(List<PlayerDto> players, List<String> winners) {
         showWinners(players, winners, null);
@@ -48,6 +64,12 @@ public class WinnerViewController implements SceneController {
 
     //Main entry point
 
+    /**
+     *
+     * @param players the list of players in the game
+     * @param winners the list of winner usernames
+     * @param scoring the detailed scoring breakdown for all players
+     */
     @Override
     public void showWinners(List<PlayerDto> players, List<String> winners, EndGameScoringDto scoring) {
         
@@ -111,8 +133,12 @@ public class WinnerViewController implements SceneController {
         }
     }
 
-    // Table header
+    // Table header---------------------------------
 
+    /**
+     * Called by {@code ShowWinners()} in order to build the header of the table of endgame points
+     * @return HBox of the header of the table
+     */
     private HBox buildTableHeader() {
         HBox header = new HBox(0);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -132,6 +158,12 @@ public class WinnerViewController implements SceneController {
         return header;
     }
 
+    /**
+     * Called by {@code buildTableHeader()} in order to build a single header cell of the table of endgame points
+     * @param text the text to display in the header cell
+     * @param w dimension of the cell
+     * @return label header Cell
+     */
     private Label headerCell(String text, double w) {
         Label l = new Label(text);
         l.getStyleClass().add("mesos-winner-header-cell");
@@ -140,8 +172,16 @@ public class WinnerViewController implements SceneController {
         return l;
     }
 
-    // Player row
+    // Player row----------------------------------------
 
+
+    /**
+     * Called by {@code showWinners()}, it builds the row of the player in the table of endgame points
+     * @param rank position of the player in the ranking
+     * @param p DTO of the player
+     * @param delta scoring delta of the player
+     * @return HBox containing the row
+     */
     private HBox buildRow(int rank, PlayerDto p, PlayerScoringDeltaDto delta) {
         HBox row = new HBox(0);
         row.setAlignment(Pos.CENTER_LEFT);
@@ -179,6 +219,12 @@ public class WinnerViewController implements SceneController {
         return row;
     }
 
+    /**
+     * Called by {@code buildRow()} in order to build the rank cell, the player name cell and the total points cell of the table of endgame points
+     * @param text What is written in the cell
+     * @param w dimension of the cell
+     * @return a label that is the cell
+     */
     private Label cell(String text, double w) {
         Label l = new Label(text);
         l.setMinWidth(w);
@@ -186,6 +232,11 @@ public class WinnerViewController implements SceneController {
         return l;
     }
 
+    /**
+     * Called by {@code buildRow()} in order to build the cells of the scoring breakdown of the table of endgame points
+     * @param value points of the single cell
+     * @return a label containing the points that is the cell
+     */
     private Label scoringCell(int value) {
         Label l = new Label(value > 0 ? "+" + value : (value == 0 ? "—" : String.valueOf(value)));
         l.setMinWidth(70);
@@ -197,6 +248,12 @@ public class WinnerViewController implements SceneController {
         return l;
     }
 
+    /**
+     * Called by {@code buildRow()} in order to build the total points cell of the table of endgame points,
+     * it has a different style from the other cells of the scoring breakdown
+     * @param pp total pp of the player
+     * @return a label that is the total scoring point cell
+     */
     private Label totalCell(int pp) {
         Label l = new Label(pp + " PP");
         l.setMinWidth(80);
@@ -213,8 +270,16 @@ public class WinnerViewController implements SceneController {
         if (leaderboardBtn != null) leaderboardBtn.setDisable(false);
     }
 
+    /**
+     * called by the {@link SceneRouter} in the loadFXML method.
+     * @return the root StackPane.
+     */
     public StackPane root() { return rootPane; }
 
+    /**
+     * Called when the 'show leaderboard' button is clicked.
+     * Shows the leaderboard overlay with the data from the DB.
+     */
     @FXML
     private void onLeaderboard() {
         if (leaderboardData == null || leaderboardData.isEmpty()) return;
@@ -222,6 +287,9 @@ public class WinnerViewController implements SceneController {
         LeaderboardOverlay.show(rootPane, leaderboardData, leaderboardRank, leaderboardPoints, myName);
     }
 
+    /**
+     * Called when the 'back' button is clicked, it goes back to the lobby scene, and it notifies the server of doing so.
+     */
     @FXML
     private void onBack() {
         if (router.getVirtualServer() != null) {

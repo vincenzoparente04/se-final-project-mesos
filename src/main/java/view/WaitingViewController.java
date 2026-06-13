@@ -12,11 +12,16 @@ import shared.dto.LobbyDto;
  */
 public class WaitingViewController implements SceneController {
 
+    /** The root pane of the waiting view screen layout. */
     @FXML private StackPane rootPane;
+    /** Label to show the name of the lobby*/
     @FXML private Label lobbyNameLabel;
+    /** Count of player in the lobby label*/
     @FXML private Label countLabel;
 
+    /** The router used to navigate between scenes. */
     private SceneRouter router;
+    /** The DTO of the lobby sent by the server*/
     private LobbyDto lobby;
 
     /**
@@ -42,7 +47,7 @@ public class WaitingViewController implements SceneController {
     public StackPane root() { return rootPane; }
 
     /**
-     * Modifies the values in the {@link resources.org.examples.mesos#waiting-view waiting_view} to reflect the current lobby state.
+     * Modifies the values in the FXML waiting-view to reflect the current lobby state.
      * @param lobby current lobby DTO
      */
     public void showLobbyState(LobbyDto lobby) {

@@ -17,8 +17,8 @@ public interface SceneController extends ViewController {
     void bind(SceneRouter router);
 
     /**
-     * Called by the {@link SceneRouter} in the loadFXML method to get the root pane of the scene.
-     * @return StackPane root
+     * Called by the {@link SceneRouter}. Returns the root node of the controller's view.
+     * @return the {@link StackPane} root of the splash screen
      */
     StackPane root();
 }

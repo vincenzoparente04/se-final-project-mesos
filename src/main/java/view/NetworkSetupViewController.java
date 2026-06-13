@@ -10,28 +10,49 @@ import javafx.scene.layout.StackPane;
 import view.widgets.ErrorToast;
 
 /**
- * First connection screen. Collects host, port, and transport then calls connect().
+ * First connection screen. Collects host, port, and transport then tries to connect to the server.
+ * On failure, it shows the connection error.
+ * On success, the {@link SceneRouter} moves the screen view forward to the nickname choosing view.
  */
 public class NetworkSetupViewController implements SceneController {
 
+    /** The root pane of the network screen layout. */
     @FXML private StackPane rootPane;
+    /** Input field for host ip*/
     @FXML private TextField hostField;
+    /** Input field for server port*/
     @FXML private TextField portField;
+    /** RadioButton to select RMI transport protocol*/
     @FXML private RadioButton rmiRadio;
+    /** RadioButton to select RMI transport protocol*/
     @FXML private RadioButton socketRadio;
+    /** Button to send the connection attempt */
     @FXML private Button connectButton;
+    /** Label to report change in status and errors */
     @FXML private Label statusLabel;
 
+    /** The router used to navigate between scenes. */
     private SceneRouter router;
 
+    /**
+     * Returns the root node of this controller's view.
+     */
     @Override
     public StackPane root() { return rootPane; }
 
+    /**
+     * Binds the scene router with this controller
+     * @param router actual {@link SceneRouter}
+     */
     @Override
     public void bind(SceneRouter router) {
         this.router = router;
     }
 
+    /**
+     * Initializes the transport type radioButton (checkbox) to change the suggested portField to the normal one for transport
+     * once clicked.
+     */
     @FXML
     public void initialize() {
         rmiRadio.selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
@@ -46,6 +67,10 @@ public class NetworkSetupViewController implements SceneController {
         });
     }
 
+    /**
+     * Called when the connect button is clicked. Validates input and attempts to connect using the {@link SceneRouter}.
+     * Change the statusLabel if there are input errors.
+     */
     @FXML
     private void onConnect() {
         String host = hostField.getText() == null ? "" : hostField.getText().trim();
@@ -67,6 +92,11 @@ public class NetworkSetupViewController implements SceneController {
         router.connect(transport, host, port, this);
     }
 
+    /**
+     * Called by the {@link SceneRouter} when there is a connection error. Displays it with an errorToast and with the
+     * statusLabel.
+     * @param message server returned msg
+     */
     public void onConnectionError(String message) {
         Platform.runLater(() -> {
             setStatus("Connection failed: " + message, true);
@@ -75,6 +105,11 @@ public class NetworkSetupViewController implements SceneController {
         });
     }
 
+    /**
+     * Changes the statusLabel color and text.
+     * @param msg status message
+     * @param error boolean to change the text color in red if the message is an error
+     */
     private void setStatus(String msg, boolean error) {
         statusLabel.setText(msg);
         statusLabel.setStyle(error
