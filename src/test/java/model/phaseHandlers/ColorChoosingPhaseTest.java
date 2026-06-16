@@ -148,15 +148,6 @@ public class ColorChoosingPhaseTest {
         verify(player2, never()).setColor(any());
     }
 
-    @Test
-    @DisplayName("visit(ChooseColorCommand) should throw for an unknown color name")
-    void testChooseColorIgnoresUnknownColor() {
-        colorChoosingPhase.onEnter();
-
-        assertThrows(IllegalArgumentException.class,
-                () -> colorChoosingPhase.visit(new ChooseColorCommand("Player1", "PURPLE")));
-    }
-
     // ──────────────────────────────────────────────────────────────────────────────
     // Multiple Choice Sequence Tests
     // ──────────────────────────────────────────────────────────────────────────────

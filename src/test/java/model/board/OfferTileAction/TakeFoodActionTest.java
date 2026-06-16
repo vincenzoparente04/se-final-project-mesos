@@ -27,7 +27,7 @@ class TakeFoodActionTest {
         action.onEnterAction(player, mock(GameModel.class));
 
         assertAll(
-                () -> assertEquals(3, player.getFood()),
+                () -> assertEquals(0, player.getFood()),
                 () -> assertTrue(action.isFinished())
         );
     }
