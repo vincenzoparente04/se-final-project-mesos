@@ -20,6 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Last screen of the GUI. Showed after the normal end or early end of the game. Shows the winner(s) and the ranking of all players with their scoring breakdown.
+ * If the leaderboard DB is available, it also shows a button to open the leaderboard overlay.
+ * It implements the {@link SceneController} interface to be able to be called by the {@link SceneRouter} when the game ends.
+ */
 public class WinnerViewController implements SceneController {
 
     /** The root pane of the winner view screen layout. */

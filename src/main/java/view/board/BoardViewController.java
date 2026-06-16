@@ -19,18 +19,37 @@ import view.widgets.RulesOverlay;
  */
 public class BoardViewController implements SceneController {
 
+    /** RootPane */
     @FXML private StackPane rootPane;
+    /** topBar in the boardView, in which there are some button (music, rules, end turn) and some labels*/
     @FXML private HBox topBar;
+    /** label in which is written the phase of the round*/
     @FXML private Label phaseLabel;
+    /** label that reports the actual round over the max number of rounds*/
     @FXML private Label roundLabel;
+    /** Button to end turn, enabled in specifc situation*/
     @FXML private Button endTurnButton;
+    /** Button to open the rules PDF*/
     @FXML private Button rulesButton;
 
+    /**
+     * Main section of the board, dedicated to the cards on the table, other players and offerTrack and offerTiler.
+     */
     @FXML private BoardGameAreaController gameAreaController;
+    /**
+     * The section of the board screen dedicated to the player. There are the cards and the player stats.
+     */
     @FXML private BoardSelfPanelController selfPanelController;
 
+    /**
+     * The sceneRouter used to navigate between scenes.
+     */
     private SceneRouter router;
 
+    /**
+     * Method to bind the Board screen with the scene router, in order to enable callback.
+     * @param router actual {@link SceneRouter}
+     */
     @Override
     public void bind(SceneRouter router) {
         this.router = router;
@@ -49,9 +68,17 @@ public class BoardViewController implements SceneController {
             Platform.runLater(() -> update(state));
     }
 
+    /**
+     * @return the root StackPane of this controller's view.
+     */
     @Override
     public StackPane root() { return rootPane; }
 
+    /**
+     * Main update function of the board. It calls the {@link #updateStatusBar(LocalGameState, String, boolean)} and it calls the update
+     * methods of {@link BoardGameAreaController} and {@link BoardSelfPanelController}.
+     * @param state the game state given by the server
+     */
     @Override
     public void update(LocalGameState state) {
         String phase = state.getPhase();
@@ -61,12 +88,16 @@ public class BoardViewController implements SceneController {
         updateStatusBar(state, phase, isMyTurn);
         gameAreaController.update(state);
         selfPanelController.update(state);
-        // End-of-game navigation is driven exclusively by onGameOver (the authoritative
-        // payload with the scoring breakdown), so it is no longer triggered from here.
     }
 
-    // ── Status bar ─────────────────────────────────────────────────────────
+    // Status bar ---------------------------------
 
+    /**
+     * logic to update the top bar, showing or not the end of turn button, modifying the label.
+     * @param state LocalGameState
+     * @param phase actual phase
+     * @param isMyTurn is the turn of player or not
+     */
     private void updateStatusBar(LocalGameState state, String phase, boolean isMyTurn) {
         phaseLabel.setText(formatPhase(phase));
         roundLabel.setText("Round " + state.getCurrentRound());
@@ -76,16 +107,27 @@ public class BoardViewController implements SceneController {
         endTurnButton.setMouseTransparent(!showEnd);
     }
 
+    /**
+     * Called by clicking the onEndTurn button. It sends the command to the server of ending the round of the player.
+     */
     @FXML
     private void onEndTurn() {
         router.getVirtualServer().sendEndTurn();
     }
 
+    /**
+     * Called by clicking the rules icon button. It calls the class {@link RulesOverlay} to show the overlay widget fo rules.
+     */
     @FXML
     private void onOpenRules() {
         RulesOverlay.show(rootPane);
     }
 
+    /**
+     * Formatter method for displaying phases in the left hot corner
+     * @param phase written in capslock eg.: "END_OF_ROUND"
+     * @return pretty eg.: "End of round"
+     */
     private static String formatPhase(String phase) {
         if (phase == null) return "—";
         return switch (phase) {
