@@ -15,6 +15,14 @@ import java.io.InputStream;
  */
 public class CardView extends StackPane {
 
+    /**
+     * Constructor method used to build the graphics of the card. It interrogates the {@link ImageCache}
+     * to see if the image has already been loaded or else it loads it. Then it build the cardView.
+     * @param card the DTO of the card
+     * @param faceUp boolean to see if the card is faceUp or face Down
+     * @param width dimension of the card
+     * @param height dimension of the card
+     */
     public CardView(CardDto card, boolean faceUp, double width, double height) {
         String filename = faceUp ? card.ImagePath : card.backImagePath;
         String dir = faceUp ? "FrontCards" : "BackCards";
@@ -49,6 +57,11 @@ public class CardView extends StackPane {
         setPrefSize(width, height);
     }
 
+    /**
+     * Helper if the card image is not found.
+     * @param card the card to be substituted with
+     * @return a static color
+     */
     private static Color fallbackColor(CardDto card) {
         if (card == null || card.type == null) return Color.LIGHTGRAY;
         return switch (card.type) {

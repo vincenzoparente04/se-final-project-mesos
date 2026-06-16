@@ -16,8 +16,12 @@ import javafx.scene.layout.VBox;
  */
 public final class SummaryCardOverlay {
 
+    /**Dimension of the summary card once opened*/
     private static final double EXPANDED_WIDTH = 700.0 * 0.75; // 525 px
 
+    /**
+     * nooooooop
+     */
     private SummaryCardOverlay() {}
 
     /**
@@ -79,6 +83,11 @@ public final class SummaryCardOverlay {
 
     // HELPERS
 
+    /**
+     * Two arrows to switch between front and back of the image
+     * @param symbol symbol of the arrow
+     * @return the button to attach
+     */
     private static Button makeArrow(String symbol) {
         Button btn = new Button(symbol);
         btn.getStyleClass().add("mesos-button-secondary");

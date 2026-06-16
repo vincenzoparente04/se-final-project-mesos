@@ -22,8 +22,15 @@ import java.util.Map;
  */
 public class TurnOrderTileView extends StackPane {
 
+    /**Height of the turn order tile, for proportion*/
     public static final double TILE_HEIGHT = 110;
 
+    /**
+     * Main method of this class renderds and displays the single turn order tile image view
+     * @param slots List of DTOs of the slots
+     * @param playersByName Map of players and their corresponding DTOs.
+     * @param tileHeight the height of the tile to build
+     */
     public TurnOrderTileView(List<TurnOrderSlotDto> slots,
                              Map<String, PlayerDto> playersByName,
                              double tileHeight) {

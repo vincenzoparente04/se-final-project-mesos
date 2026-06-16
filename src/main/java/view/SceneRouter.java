@@ -16,14 +16,25 @@ import shared.dto.event.EndGameScoringDto;
 import view.widgets.ErrorToast;
 import view.widgets.EventResolutionOverlay;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
- * Single navigation hub for the whole client UI.
- * Each screen calls back into the router to move forward (or back),
- * and the network listener uses it to know which controller is on screen
+ * Single navigation hub for the whole GUI.
+ * Each screen calls back into the router to move forward (or backward),
+ * the {@link network.client.core.ClientStateListenerGui} uses it to address the {@link ViewController} that is on screen
  * and to overlay toasts on top of the current root.
+ * <p>
+ * It's created by the {@link ClientMain} and passed to each controller.
+ * </p>
+ *
+ * <p>
+ * Handles the followings:
+ * <ul>
+ *     <li>Move from one ViewController to another and loads its FXML</li>
+ *     <li>Handles commands and errors for joining the server between the {@link NickViewController} and the
+ *     {@link ClientMain}</li>
+ * </ul>
+ * </p>
  */
 public class SceneRouter {
 
@@ -50,6 +61,9 @@ public class SceneRouter {
     private int pendingLeaderboardRank;
     private int pendingLeaderboardPoints;
 
+    /**
+     * constructs the router
+     */
     public SceneRouter(Stage stage, LocalGameState localState, ClientMain main) {
         this.clientMain = main;
         this.stage = stage;
@@ -67,56 +81,96 @@ public class SceneRouter {
 
     // Navigation---------------------------------------------------------------
 
+    /**
+     * Navigates to the splash screen. This is the first screen shown when the application starts.
+     */
     public void toSplash() {
         pendingGameReconnect = false;
         load("/org/example/mesos/splash-view.fxml");
     }
 
+    /**
+     * Navigates to the network screen where the user can choose connection settings and connect to the server.
+     */
     public void toNetworkSetup() {
         pendingGameReconnect = false;
         load("/org/example/mesos/network-setup-view.fxml");
     }
 
+    /**
+     * Navigates to the nickname choosing screen.
+     */
     public void toNick() {
         pendingGameReconnect = false;
         load("/org/example/mesos/nick-view.fxml");
     }
 
+    /**
+     * Navigates to the lobby screen, in which user can choose which game to join
+     */
     public void toLobby() {
         EventResolutionOverlay.reset();
         load("/org/example/mesos/lobby-view.fxml");
         if (getVirtualServer() != null) getVirtualServer().sendListLobbies();
     }
 
+    /**
+     * Navigates to the screen in which the user waits for the game to start after joining a lobby.
+     * @param lobby the lobby the user is joining, used to display lobby info while waiting for the game to start
+     */
     public void toWaiting(LobbyDto lobby) {
         pendingGameReconnect = false;
         load("/org/example/mesos/waiting-view.fxml");
         currentViewController.setLobby(lobby);
     }
 
+    /**
+     * Navigates to the screen in which the user can choose the color of its totem
+     */
     public void toTotemPick() {
         pendingGameReconnect = false;
         load("/org/example/mesos/totem-pick-view.fxml");
     }
 
+    /**
+     * Navigates to the game board
+     */
     public void toBoard() {
         pendingGameReconnect = false;
         load("/org/example/mesos/board/board-view.fxml");
     }
 
+    /**
+     * Navigates to the winner view, showing the point info of the game.
+     * Called when the game terminates early due to disconnection of player, there are no EndGameScoringDto to show.
+     * @param players the list of players DTO in the game
+     * @param winners the list of the winners of the games, could be one or more than one if it's a draw
+     */
     public void toWinner(List<PlayerDto> players, List<String> winners) {
         load("/org/example/mesos/winner-view.fxml");
         currentViewController.showWinners(players, winners);
         applyPendingLeaderboardIfWinner();
     }
 
+    /**
+     * Navigates to the winner view, showing the point info of the game.
+     * Called when the game terminates normally, after the 10th round.
+     * @param players the list of players DTO in the game
+     * @param winners the list of the winners of the games, could be one or more than one if it's a draw
+     * @param scoring DTO reporting the scoring of each player at the end of the game, of each category
+     */
     public void toWinner(List<PlayerDto> players, List<String> winners, EndGameScoringDto scoring) {
         load("/org/example/mesos/winner-view.fxml");
         currentViewController.showWinners(players, winners, scoring);
         applyPendingLeaderboardIfWinner();
     }
 
-    /** Called by the network listener when DB leaderboard data arrives (async). */
+    /** Called by the network listener when DB leaderboard data arrives (async).
+     *  If the winner screen is already shown, applies the data to it. Otherwise, stores it in pending variables to be applied when the winner screen is shown.
+     * @param lb the list of all players and their points, sorted by points descending
+     * @param rank the rank of the current player in the leaderboard
+     * @param pts the points of the current player in the leaderboard
+     */
     public void offerLeaderboard(List<ScoreRecord> lb, int rank, int pts) {
         pendingLeaderboard = lb;
         pendingLeaderboardRank = rank;
@@ -124,6 +178,10 @@ public class SceneRouter {
         applyPendingLeaderboardIfWinner();
     }
 
+    /**
+     * If the winner screen is already shown and pending leaderboard data is available,
+     * applies the data to the current winner screen.
+     */
     private void applyPendingLeaderboardIfWinner() {
         if (pendingLeaderboard == null) return;
         if (currentViewController instanceof WinnerViewController w) {
@@ -134,6 +192,10 @@ public class SceneRouter {
 
     // FXML loading ---------------------------------------------------------------
 
+    /**
+     * Loads the FXML file at the given path and sets it as the current scene.
+     * @param fxmlResource path to the FXML of each screen
+     */
     private void load(String fxmlResource) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlResource));
@@ -141,7 +203,6 @@ public class SceneRouter {
             SceneController ctrl = loader.getController();
             StackPane root = ctrl.root();
 
-            // bind() before committing: if it throws, currentViewController/currentRoot stay valid
             ctrl.bind(this);
 
             this.currentViewController = ctrl;
@@ -166,30 +227,49 @@ public class SceneRouter {
 
     // Connection Handling ---------------------------------------------------------------
 
+    /**
+     *Called by the network listener when the connection to the server is lost.
+     * Navigates back to the network setup screen and shows a toast with the error message.
+     * @param transport type of connection: RMI or SOCKET
+     * @param host host ip
+     * @param port server port number
+     * @param controller NetworkSetupViewController used to bind the sceneRouter with the network setup screen, so that the user can try reconnecting
+     */
     public void connect(String transport, String host, int port, NetworkSetupViewController controller) {
         this.networkSetupViewController = controller;
         clientMain.connect(transport, host, port);
     }
 
+    /**
+     * Called by the network listener when the connection to the server is successfully established.
+     * Asks the sceneRouter to route to the nickname choosing screen.
+     */
     public void connectionEstablished() {
         Platform.runLater(this::toNick);
     }
 
+    /**
+     * Called by the nickViewController when the player chooses its name. Asks the clientMain to set the name.
+     * @param name name chosen by the player
+     * @param controller NickViewController used to bind the sceneRouter with the nickname choosing screen, so that the user can try choosing another nickname if the chosen one is already taken
+     */
     public void setName(String name, NickViewController controller) {
         this.nickViewController = controller;
         clientMain.setName(name);
     }
 
+    /**
+     * Called by ClientMain to set up the virtual server reference in the scene router.
+     * Then starts the navigation from the lobby on.
+     * @param name the name of the player accepted by the server
+     * @param vs the reference to the virtual server
+     */
     public void setupSession(String name, VirtualServer vs) {
         this.session = new ClientSession(name, vs);
         Platform.runLater(() -> {
             if (localState.snapshot() != null) {
-                // Socket reconnect: state was populated synchronously during handshake.
                 navigateByPhase();
             } else {
-                // Fresh connection or RMI reconnect: go to lobby for now.
-                // If a game state arrives immediately after (RMI reconnect), the
-                // pendingGameReconnect flag will redirect us to the correct screen.
                 toLobby();
                 pendingGameReconnect = true;
             }
@@ -208,6 +288,10 @@ public class SceneRouter {
         return true;
     }
 
+    /**
+     * Normal navigation function that check if the started game is still in the color choosing phase, or it's in the
+     * game phases.
+     */
     private void navigateByPhase() {
         String phase = localState.getPhase();
         if (phase != null && phase.contains("COLOR_CHOOSING_PHASE")) {
@@ -217,10 +301,18 @@ public class SceneRouter {
         }
     }
 
+    /**
+     * called by {@link ClientMain} when the connection to the server is unsuccessful.
+     * @param message the server message given to explain the error
+     */
     public void connectionErrorHandling(String message) {
             networkSetupViewController.onConnectionError(message);
     }
 
+    /**
+     * Called by the network listener when the chosen nickname is already taken by another player.
+     * Asks the nickViewController to let the user choose another nickname.
+     */
     public void nickRejected() {
             nickViewController.onNickRejected();
     }

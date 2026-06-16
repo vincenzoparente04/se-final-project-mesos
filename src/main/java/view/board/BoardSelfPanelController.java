@@ -33,29 +33,41 @@ import java.util.LinkedHashMap;
  */
 public class BoardSelfPanelController implements ViewController {
 
+    /**Self card width*/
     private static final double SELF_CARD_W = 90;
+    /**Self card height*/
     private static final double SELF_CARD_H = 130;
 
+    /**Root HBox for the self bar*/
     @FXML private HBox rootBar;
+    /**Totem slot on the left*/
     @FXML private StackPane selfPlayerSlot;
+    /** HBox containing the tribe cards of the players*/
     @FXML private HBox selfTribeSlot;
+    /** HBox containing the building cards of the players*/
     @FXML private HBox selfBuildingsSlot;
 
+    /**
+     * @return the panelHeight if positive, or else the preferred height of the panel.
+     */
     public double panelHeight() {
         double h = rootBar.getHeight();
         return h > 0 ? h : rootBar.getPrefHeight();
     }
 
+    /** Scene router to change between scenes*/
     private SceneRouter router;
+    /**Overlay root*/
     private StackPane overlayRoot;
 
+    /**Called by {@link BoardViewController}, initializes the self panel*/
     public void init(SceneRouter router, StackPane overlayRoot) {
         this.router = router;
         this.overlayRoot = overlayRoot;
         attachSummaryCard();
     }
 
-    /** Appends a spacer + SummaryCard thumbnail anchored to the far right of the self panel. */
+    /** Appends a spacer and the SummaryCard thumbnail anchored to the far right of the self panel. */
     private void attachSummaryCard() {
         Image summary = ImageCache.get("/images/FrontCards/FrontCard22.png");
         Image sumBack = ImageCache.get("/images/BackCards/ExplanationCard.png");
@@ -75,16 +87,20 @@ public class BoardSelfPanelController implements ViewController {
         rootBar.getChildren().addAll(spacer, thumb);
     }
 
+    /**
+     * Called by the update() in {@link BoardViewController}.
+     * It gets the self DTO and loads the playerViewController, then gets the cards of the player and renders them with two helper function.
+     * @param state the game state given by the server
+     */
     @Override
     public void update(LocalGameState state) {
         String me = router.playerName();
 
-        updateSelfPanel(state.getPlayers(), me, state.getCurrentPlayerName());
-    }
+        //updateSelfPanel(state.getPlayers(), me, state.getCurrentPlayerName());
 
-    // Self panel ---------------------------------------------------------------
+        List<PlayerDto> players = state.getPlayers();
+        String currentPlayer = state.getCurrentPlayerName();
 
-    private void updateSelfPanel(List<PlayerDto> players, String me, String currentPlayer) {
         PlayerDto self = players.stream().filter(p -> p.name.equals(me)).findFirst().orElse(null);
         if (self == null) {
             selfPlayerSlot.getChildren().clear();
@@ -102,10 +118,15 @@ public class BoardSelfPanelController implements ViewController {
                 ? self.tribe.buildings : List.of();
 
         selfTribeSlot.getChildren().setAll(buildTribeGroups(chars));
-        // Buildings use a hidden header placeholder to top-align with character columns.
         selfBuildingsSlot.getChildren().setAll(buildHeaderlessGroup(builds));
     }
 
+
+    /**
+     * Called by {@link #update(LocalGameState)}, builds the building cards view. It uses an invisible placheolder to keep the cards aligned.
+     * @param cards Dto of cards
+     * @return a VBox containing the building cards
+     */
     private VBox buildHeaderlessGroup(List<CardDto> cards) {
         VBox group = new VBox(4);
         group.setAlignment(Pos.TOP_CENTER);
@@ -128,6 +149,11 @@ public class BoardSelfPanelController implements ViewController {
         return group;
     }
 
+    /**
+     * Called by {@link #update(LocalGameState)}, builds the tribe cards view.
+     * @param cards Dto of cards
+     * @return A list of VBox, in which one element is a group of card based on the type of the card.
+     */
     private List<VBox> buildTribeGroups(List<CardDto> cards) {
         Map<String, List<CardDto>> grouped = new LinkedHashMap<>();
         for (String t : new String[]{"HUNTER", "BUILDER", "SHAMAN", "ARTIST", "INVENTOR", "GATHERER"}) {
@@ -143,6 +169,12 @@ public class BoardSelfPanelController implements ViewController {
         return out;
     }
 
+    /**
+     * Helper method to {@link #buildTribeGroups(List)}, it builds a VBox for one tribe, with the header and the cards.
+     * @param title header of the group of cards, the type of cards
+     * @param cards the cards to be rendered
+     * @return the VBox containing the group of cards
+     */
     private VBox buildSingleGroup(String title, List<CardDto> cards) {
         VBox group = new VBox(4);
         group.setAlignment(Pos.TOP_CENTER);

@@ -17,11 +17,20 @@ import java.io.InputStream;
  */
 public class DeckView extends StackPane {
 
-    private static final double CARD_WIDTH  = 90;
+    /**Card width*/
+    private static final double CARD_WIDTH = 90;
+    /**Number of cards*/
     private static final int STACK_SIZE = 4;
-    private static final double OFFSET     = 3.5;
+    /**Offset between cards*/
+    private static final double OFFSET = 3.5;
 
 
+    /**
+     * Constructor method of the deck view on the right of the board.
+     * @param backImageFilename path to the back of the image.
+     * @param cardWidth dimension of the card
+     * @param cardHeight dimension of the card
+     */
     public DeckView(String backImageFilename, double cardWidth, double cardHeight) {
         String path = "/images/BackCards/" + backImageFilename;
         Image img = backImageFilename != null ? ImageCache.get(path) : null;

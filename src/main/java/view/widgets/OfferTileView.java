@@ -18,8 +18,17 @@ import java.util.function.Consumer;
  */
 public class OfferTileView extends StackPane {
 
+    /**Dimension of the single offe tile*/
     public static final double TILE_HEIGHT = 110;
 
+    /**
+     * Builds the offerTile view as an interactive UI object.
+     * @param tile tileDTO
+     * @param playersByName Map of players and DTOs
+     * @param clickable is clickable or not
+     * @param onClick consumer of the action
+     * @param tileHeight dimension
+     */
     public OfferTileView(OfferTileDto tile,
                          Map<String, PlayerDto> playersByName,
                          boolean clickable,

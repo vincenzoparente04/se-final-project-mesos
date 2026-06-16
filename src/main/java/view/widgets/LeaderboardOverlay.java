@@ -21,18 +21,36 @@ import java.util.List;
  */
 public final class LeaderboardOverlay {
 
+    /** Formatter for date and time. */
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
+    /** Emoticons used as medals for the top 3 ranks. */
     private static final String[] MEDALS = { "🥇", "🥈", "🥉" };
 
     // Column widths  (total ≈ 644 + 28 left padding = fits 700px panel)
+    /** Column width for rank. */
     private static final double W_RANK  = 56;
+    /** Column width for nickname. */
     private static final double W_NICK  = 280;
+    /** Column width for score. */
     private static final double W_SCORE = 120;
+    /** Column width for date. */
     private static final double W_DATE  = 140;
-
+    
+    /**
+    noooooooo
+     */
     private LeaderboardOverlay() {}
 
+    /**
+     * Displays the leaderboard overlay on top of the given root pane.
+     * 
+     * @param root the root stack pane to attach the overlay to
+     * @param leaderboard the list of score records to display
+     * @param rankPosition the rank of the current player
+     * @param myPoints the score of the current player
+     * @param myName the nickname of the current player
+     */
     public static void show(StackPane root, List<ScoreRecord> leaderboard,
                             int rankPosition, int myPoints, String myName) {
 
@@ -107,6 +125,11 @@ public final class LeaderboardOverlay {
         root.getChildren().add(backdrop);
     }
 
+    /**
+     * Builds the header row for the leaderboard table.
+     *
+     * @return an HBox containing the header cells
+     */
     private static HBox buildHeader() {
         HBox h = new HBox(0);
         h.setAlignment(Pos.CENTER_LEFT);
@@ -122,6 +145,13 @@ public final class LeaderboardOverlay {
         return h;
     }
 
+    /**
+     * Creates a header cell with the specified text and width.
+     *
+     * @param text the label text
+     * @param w the preferred width of the label
+     * @return a configured Label for the header cell
+     */
     private static Label headerCell(String text, double w) {
         Label l = new Label(text);
         l.getStyleClass().add("mesos-winner-header-cell");
@@ -130,6 +160,14 @@ public final class LeaderboardOverlay {
         return l;
     }
 
+    /**
+     * Builds a single row for the leaderboard table.
+     *
+     * @param rank the rank position of the record
+     * @param r the score record to display
+     * @param isMe true if this record belongs to the current player, false otherwise
+     * @return an HBox representing the table row
+     */
     private static HBox buildRow(int rank, ScoreRecord r, boolean isMe) {
         HBox row = new HBox(0);
         row.setAlignment(Pos.CENTER_LEFT);
