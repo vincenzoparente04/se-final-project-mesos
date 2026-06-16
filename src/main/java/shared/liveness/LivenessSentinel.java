@@ -6,36 +6,35 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Astrazione bidirezionale di liveness che incapsula un sender periodico e un watchdog.
+ * Bidirectional liveness abstraction encapsulating a periodic heartbeat sender
+ * and a watchdog.
  *
- * <p>Il <em>sender</em> esegue {@code sendHeartbeatAction} ogni {@code sendIntervalMs} ms.
- * Il <em>watchdog</em> controlla ogni {@code checkIntervalMs} ms se dall'ultimo heartbeat
- * inbound è trascorso più di {@code timeoutMs} ms; in tal caso invoca {@code onTimeoutAction}
- * <strong>una sola volta</strong> e si ferma.
+ * The sender invokes {@code sendHeartbeatAction} every {@code sendIntervalMs} ms.
+ * The watchdog checks every {@code checkIntervalMs} ms whether more than
+ * {@code timeoutMs} ms have elapsed since the last inbound heartbeat; if so,
+ * it invokes {@code onTimeoutAction} exactly once and stops.
  *
- * <h2>Canale di liveness isolato</h2>
- * {@link #notifyInbound()} deve essere chiamato <em>esclusivamente</em> dagli handler dei
- * messaggi heartbeat dedicati (es. {@code HeartbeatCommand} lato server,
- * {@code HeartbeatMessage} lato client). Il traffico applicativo (stati di gioco, comandi di
- * lobby, ecc.) non aggiorna il timestamp di liveness. Questo garantisce che un blocco del
- * traffico applicativo non mascheri un server/client morto, e che un silenzio sugli heartbeat
- * non venga compensato da messaggi applicativi intensi.
+ * Isolated liveness channel: {@link #notifyInbound()} must be called exclusively
+ * by the handlers of dedicated heartbeat messages (e.g. {@code HeartbeatCommand}
+ * on the server side, {@code HeartbeatMessage} on the client side). Application
+ * traffic (game states, lobby commands, etc.) does not update the liveness
+ * timestamp. This ensures that a stall in application traffic does not mask a
+ * dead server/client, and that silence on heartbeats is not compensated by heavy
+ * application messaging.
  *
- * <h2>Invariante temporale</h2>
- * {@code timeoutMs > 2 * sendIntervalMs} è necessaria per tollerare il jitter di scheduling
- * e ritardi temporanei dovuti a messaggi grandi che impegnano il sender. Con i valori di
- * default ({@code sendIntervalMs=2s}, {@code timeoutMs=10s}) il detection time massimo è
+ * Timing invariant: {@code timeoutMs > 2 * sendIntervalMs} is required to
+ * tolerate scheduling jitter and transient delays caused by large messages that
+ * keep the sender busy. With the default values ({@code sendIntervalMs=2s},
+ * {@code timeoutMs=10s}) the maximum detection time is
  * {@code timeoutMs + checkIntervalMs = 12s}.
  *
- * <h2>Thread safety</h2>
- * Questa classe è thread-safe. {@link #notifyInbound()} può essere chiamato da qualunque
- * thread in qualunque momento; il costo è O(1) senza lock (scrittura su campo {@code volatile}).
- * {@link #start()} e {@link #stop()} sono idempotenti.
+ * Thread safety: this class is thread-safe. {@link #notifyInbound()} may be
+ * called from any thread at any time at O(1) cost with no lock (volatile field
+ * write). {@link #start()} and {@link #stop()} are idempotent.
  *
- * <h2>Agnosticismo</h2>
- * La classe non importa nulla da {@code network.*}, {@code shared.message.*} o
- * {@code shared.command.*}. L'accoppiamento avviene esclusivamente tramite le callback
- * passate al costruttore.
+ * Transport agnostic: this class imports nothing from {@code network.*},
+ * {@code shared.message.*} or {@code shared.command.*}. Coupling happens
+ * exclusively through the callbacks passed to the constructor.
  */
 public class LivenessSentinel {
 
@@ -46,32 +45,31 @@ public class LivenessSentinel {
     private final Runnable onTimeoutAction;
     private final String threadNameSuffix;
 
-    /** Timestamp (millis epoch) dell'ultimo messaggio inbound ricevuto. */
+    /** Epoch timestamp (ms) of the last inbound message received. */
     private volatile long lastInbound;
 
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final AtomicBoolean stopped = new AtomicBoolean(false);
-    /** Garantisce che onTimeoutAction venga invocata al più una volta. */
+    /** Ensures onTimeoutAction is invoked at most once. */
     private final AtomicBoolean timedOut = new AtomicBoolean(false);
 
     private ScheduledExecutorService executor;
 
     /**
-     * Costruisce un sentinel non ancora avviato.
+     * Constructs a sentinel that is not yet started.
      *
-     * @param threadNameSuffix    suffisso usato per nominare il thread interno
+     * @param threadNameSuffix    suffix used to name the internal thread
      *                            ({@code "liveness-" + suffix})
-     * @param sendIntervalMs      periodo di invio heartbeat in millisecondi
-     * @param checkIntervalMs     periodo di controllo watchdog in millisecondi
-     * @param timeoutMs           soglia di silenzio oltre la quale la connessione è dichiarata
-     *                            persa; deve essere {@code > 2 * sendIntervalMs}
-     * @param sendHeartbeatAction callback invocata periodicamente per inviare un heartbeat;
-     *                            le eccezioni vengono silenziate (lo stream potrebbe essere già
-     *                            chiuso: il watchdog è il giudice di liveness)
-     * @param onTimeoutAction     callback invocata al più una volta quando il watchdog scatta;
-     *                            può chiamare {@link #stop()} sullo stesso sentinel senza
-     *                            deadlock, perché {@code stop()} non acquisisce nessun lock
-     *                            interno
+     * @param sendIntervalMs      heartbeat send interval in milliseconds
+     * @param checkIntervalMs     watchdog check interval in milliseconds
+     * @param timeoutMs           silence threshold beyond which the connection is declared dead;
+     *                            must be {@code > 2 * sendIntervalMs}
+     * @param sendHeartbeatAction callback invoked periodically to send a heartbeat;
+     *                            exceptions are silenced (the stream may already be closed —
+     *                            the watchdog is the sole arbiter of liveness)
+     * @param onTimeoutAction     callback invoked at most once when the watchdog fires;
+     *                            may call {@link #stop()} on this same sentinel without
+     *                            deadlock, since {@code stop()} acquires no internal lock
      */
     public LivenessSentinel(
             String threadNameSuffix,
@@ -89,8 +87,9 @@ public class LivenessSentinel {
     }
 
     /**
-     * Avvia sender e watchdog. Idempotente: chiamate successive a {@code start()} sono no-op.
-     * {@code lastInbound} viene inizializzato al momento di questa chiamata.
+     * Starts the sender and the watchdog. Idempotent: subsequent calls to
+     * {@code start()} are no-ops. {@code lastInbound} is initialised to the
+     * current time at this call.
      */
     public void start() {
         if (!started.compareAndSet(false, true)) return;
@@ -107,16 +106,16 @@ public class LivenessSentinel {
     }
 
     /**
-     * Notifica il sentinel che un messaggio inbound è arrivato, aggiornando il timestamp
-     * usato dal watchdog. Costo O(1), nessun lock.
+     * Notifies the sentinel that an inbound message has arrived, updating the
+     * timestamp used by the watchdog. O(1) cost, no lock.
      */
     public void notifyInbound() {
         lastInbound = System.currentTimeMillis();
     }
 
     /**
-     * Ferma sender e watchdog. Idempotente: usa {@link AtomicBoolean#compareAndSet} per
-     * garantire safe-by-default su doppia chiamata.
+     * Stops the sender and the watchdog. Idempotent: uses
+     * {@link AtomicBoolean#compareAndSet} to guarantee safety on repeated calls.
      */
     public void stop() {
         if (!stopped.compareAndSet(false, true)) return;
@@ -128,8 +127,8 @@ public class LivenessSentinel {
         try {
             sendHeartbeatAction.run();
         } catch (Exception ignored) {
-            // Se la callback fallisce, lo stream è probabilmente già chiuso.
-            // Il watchdog è il giudice unico di liveness: non propaghiamo l'eccezione.
+            // If the callback fails, the stream is likely already closed.
+            // The watchdog is the sole arbiter of liveness: do not propagate.
         }
     }
 
