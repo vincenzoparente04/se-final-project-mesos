@@ -1,0 +1,184 @@
+' ╔═══════════════════════════════════════════════════════════════════╗
+' ║  DIAGRAMMA 2 — CATALOGO WIDGET / OVERLAY / UTILITY                 ║
+' ╚═══════════════════════════════════════════════════════════════════╝
+@startuml view_widgets
+title Mesos · view.widgets — widget, overlay & utility
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classFontSize 12
+skinparam nodesep 25
+skinparam ranksep 65
+
+!define COLOR_NODE      #F1ECF8
+!define COLOR_OVERLAY   #FDEBD0
+!define COLOR_UTIL      #E0F0E9
+!define COLOR_CTRL      #ECECEC
+
+' ───── controller di riferimento (solo nomi) ─────────────
+package "controller (rif.)" as pkg_ctrl COLOR_CTRL {
+    class BoardGameAreaController
+    class BoardSelfPanelController
+    class BoardViewController
+    class PlayerViewController
+    class TribePopupController
+    class WinnerViewController
+    class LobbyViewController
+}
+
+' ───── widget = nodi JavaFX ──────────────────────────────
+package "view.widgets — nodi JavaFX" as pkg_nodes COLOR_NODE {
+    class CardView <<JavaFX:StackPane>> {
+        + CardView(CardDto, faceUp, w, h)
+        - {static} fallbackColor(card) : Color
+    }
+    class DeckView <<JavaFX:StackPane>> {
+        - {static} CARD_WIDTH / STACK_SIZE / OFFSET
+        + DeckView(backFilename, cardW, cardH)
+    }
+    class TotemView <<JavaFX:StackPane>> {
+        + TotemView(colorName, size)
+        - {static} paintFor(colorName) : Color
+    }
+    class OfferTileView <<JavaFX:StackPane>> {
+        + {static} TILE_HEIGHT : double
+        + OfferTileView(tile, playersByName,\n  clickable, onClick, tileHeight)
+    }
+    class TurnOrderTileView <<JavaFX:StackPane>> {
+        + {static} TILE_HEIGHT : double
+        + TurnOrderTileView(slots, playersByName, tileHeight)
+    }
+    class FoodWidget <<JavaFX:HBox>> {
+        + FoodWidget(amount)
+    }
+    class PpWidget <<JavaFX:StackPane>> {
+        - {static} SIZE / LABEL_OFFSET_Y
+        + PpWidget(amount)
+    }
+    class MusicPlayerWidget <<JavaFX:HBox>> {
+        + MusicPlayerWidget()
+        - buildPopup() / togglePopup(anchor)
+        - refreshUI() / setVolume(raw)
+    }
+    class CreateLobbyDialog <<JavaFX:Stage>> {
+        - chosen : Integer
+        + CreateLobbyDialog()
+        + showAndWait(owner) : Optional<Integer>
+    }
+}
+
+' ───── overlay & utility statiche ────────────────────────
+package "view.widgets — overlay & utility" as pkg_util COLOR_OVERLAY {
+    class CardZoomOverlay <<static>> {
+        + {static} show(root, card)
+    }
+    class SummaryCardOverlay <<static>> {
+        + {static} show(root, images...)
+        - {static} makeArrow(symbol)
+    }
+    class LeaderboardOverlay <<static>> {
+        + {static} show(root, lb, rank, pts, name)
+        - {static} buildRow(..) / buildHeader()
+    }
+    class RulesOverlay <<static>> {
+        - {static} cachedPages : List<Image>
+        + {static} show(root)
+        - {static} displayOverlay(..) / loadPages()
+    }
+    class EventResolutionOverlay <<static>> {
+        - {static} queue : Deque<PendingEvent>
+        + {static} enqueue(root, dto)
+        + {static} reset() / isQueueEmpty()
+        + {static} setOnQueueDrained(cb)
+        - {static} showNext() / advance() / startDwell()
+        - {static} buildPanel(..) / buildHeader(..)
+        - {static} buildPlayerRow(..) / buildStatBox(..)
+        - {static} iconForEvent(t) / prettyEventType(t) / prettyEra(e)
+    }
+    class ErrorToast <<static>> {
+        + {static} show(root, message)
+    }
+    class CardFormatter <<static>> {
+        + {static} prettyType(t) / formatType(c)
+        + {static} buildCardMeta(c) / buildMetaText(c)
+    }
+    class ImageCache <<static cache>> {
+        + {static} get(resourcePath) : Image
+    }
+    class MusicManager <<singleton · pkg view>> {
+        + {static} getInstance() : MusicManager
+        + playRandom(folder) / playNext() / playPrev()
+        + pauseResume() / stop() / setVolume(v)
+        + isPaused() : boolean
+        + getCurrentTrackName() / setOnTrackChange(cb)
+        - loadTracks(folder) / playUri(uri) / fireTrackChange()
+    }
+}
+
+note bottom of MusicManager
+  Vive nel package "view"
+  (non in view.widgets).
+end note
+
+' ═══════════════ chi istanzia cosa ═══════════════════════
+BoardGameAreaController  ..> CardView
+BoardGameAreaController  ..> DeckView
+BoardGameAreaController  ..> OfferTileView
+BoardGameAreaController  ..> TurnOrderTileView
+BoardGameAreaController  ..> CardZoomOverlay
+BoardSelfPanelController ..> CardView
+BoardSelfPanelController ..> CardZoomOverlay
+BoardSelfPanelController ..> SummaryCardOverlay
+BoardGameAreaController  ..> TribePopupController : show()
+PlayerViewController     ..> TotemView
+PlayerViewController     ..> FoodWidget
+PlayerViewController     ..> PpWidget
+TribePopupController     ..> CardView
+TribePopupController     ..> CardZoomOverlay
+TribePopupController     ..> TotemView
+TribePopupController     ..> FoodWidget
+TribePopupController     ..> PpWidget
+WinnerViewController     ..> LeaderboardOverlay
+WinnerViewController     ..> TotemView
+LobbyViewController      ..> CreateLobbyDialog
+LobbyViewController      ..> MusicManager : playRandom()
+BoardViewController      ..> MusicPlayerWidget
+BoardViewController      ..> RulesOverlay
+
+' widget → widget
+OfferTileView      ..> TotemView
+TurnOrderTileView  ..> TotemView
+CardZoomOverlay    ..> CardView
+MusicPlayerWidget  ..> MusicManager
+EventResolutionOverlay ..> TribePopupController : closeIfOpen()
+
+' ═══════════════ dipendenze diffuse → note ═══════════════
+note right of ImageCache
+  Usata da TUTTI i nodi widget
+  (CardView, DeckView, TotemView,
+  OfferTileView, TurnOrderTileView,
+  FoodWidget, PpWidget) e da diversi
+  controller per caricare le immagini.
+end note
+
+note right of CardFormatter
+  Usata da CardZoomOverlay,
+  TribePopupController e
+  BoardSelfPanelController.
+end note
+
+note bottom of ErrorToast
+  Mostrato da SceneRouter,
+  NetworkSetup / Nick / Lobby
+  per le notifiche di errore.
+end note
+
+note bottom of EventResolutionOverlay
+  enqueue() chiamato da
+  ClientStateListenerGui;
+  reset() da SceneRouter.toLobby().
+end note
+
+@enduml

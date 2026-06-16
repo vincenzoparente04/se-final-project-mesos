@@ -1,0 +1,228 @@
+' ═════════════════════════════════════════════════════════════════════
+'   Mesos — package view (GUI JavaFX)
+'   File con DUE diagrammi separati per leggibilità:
+'     1) view_structure  → contratti, router, controller di schermata
+'     2) view_widgets    → catalogo widget / overlay / utility
+'   Legenda frecce:
+'     ▷ piena     = implements / extends
+'     ◆ piena     = composizione (FXML fx:include / ownership)
+'     ┈▷ tratteg. = uses / crea / invoca
+'   Le dipendenze "diffuse" (ImageCache, CardFormatter, DTO, router)
+'   sono espresse come NOTE per non intasare il grafo.
+' ═════════════════════════════════════════════════════════════════════
+
+
+' ╔═══════════════════════════════════════════════════════════════════╗
+' ║  DIAGRAMMA 1 — STRUTTURA & NAVIGAZIONE                             ║
+' ╚═══════════════════════════════════════════════════════════════════╝
+@startuml view_structure
+title Mesos · view — Struttura & navigazione
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classFontSize 12
+skinparam nodesep 25
+skinparam ranksep 70
+
+!define COLOR_IFACE   #FFF6D9
+!define COLOR_ROUTER  #FAD8D8
+!define COLOR_SCREEN  #E8F1FB
+!define COLOR_BOARD   #E5F3E0
+!define COLOR_PLAYER  #EAF3FB
+!define COLOR_EXT     #ECECEC
+
+' ───── contratti ─────────────────────────────────────────
+package "view (contracts)" as pkg_contracts COLOR_IFACE {
+    interface ViewController {
+        + update(LocalGameState) : void «default»
+        + setLobby(LobbyDto) : void «default»
+        + showLobbies(List<LobbyDto>) : void «default»
+        + showLobbyState(LobbyDto) : void «default»
+        + showWinners(players, winners) : void «default»
+        + showWinners(players, winners, scoring) : void «default»
+    }
+    interface SceneController {
+        + bind(SceneRouter) : void
+        + root() : StackPane
+    }
+    SceneController -up-|> ViewController
+}
+
+' ───── router ────────────────────────────────────────────
+package "view (router)" as pkg_router COLOR_ROUTER {
+    class SceneRouter {
+        - clientMain : ClientMain
+        - stage : Stage
+        - localState : LocalGameState
+        - session : ClientSession
+        - currentViewController : SceneController
+        - pendingGameReconnect : boolean
+        - pendingLeaderboard : List<ScoreRecord>
+        --
+        + SceneRouter(stage, localState, main)
+        + toSplash() / toNetworkSetup() / toNick()
+        + toLobby() / toWaiting(LobbyDto)
+        + toTotemPick() / toBoard() / toWinner(..)
+        + connect(..) / connectionEstablished()
+        + connectionErrorHandling(msg)
+        + setName(..) / setupSession(..)
+        + applyPendingReconnectIfNeeded() : boolean
+        + offerLeaderboard(..) / nickRejected()
+        + getVirtualServer() / playerName() / localState()
+        + currentController() / currentRoot() / stage()
+        - load(fxml) / navigateByPhase()
+        - applyPendingLeaderboardIfWinner()
+    }
+}
+
+' ───── schermate ─────────────────────────────────────────
+package "view (screens)" as pkg_screens COLOR_SCREEN {
+    class SplashViewController {
+        - router : SceneRouter
+        - onAdvance(MouseEvent) / onAdvance(KeyEvent)
+    }
+    note top of SplashViewController
+      bind(SceneRouter) e root() sono
+      dichiarati da tutti i SceneController
+      (omessi sugli implementatori).
+    end note
+    class NetworkSetupViewController {
+        - hostField / portField : TextField
+        - rmiRadio / socketRadio : RadioButton
+        + initialize()
+        - onConnect()
+        + onConnectionError(msg)
+        - setStatus(msg, error)
+    }
+    class NickViewController {
+        - nameField : TextField
+        - onJoin()
+        + onNickRejected()
+        - setStatus(msg, error)
+    }
+    class LobbyViewController {
+        - items : ObservableList<LobbyDto>
+        + showLobbies(..) / showLobbyState(..)
+        + update(LocalGameState)
+        - onCreate() / joinSelected()
+        .. inner ..
+        - LobbyCell «ListCell»
+    }
+    class WaitingViewController {
+        - lobby : LobbyDto
+        + setLobby(..) / showLobbyState(..)
+        - onLeave()
+    }
+    class TotemPickViewController {
+        - COLORS : String[]
+        - colorButtons : List<Button>
+        + update(LocalGameState)
+        - buildButtons()
+    }
+    class WinnerViewController {
+        - leaderboardData : List<ScoreRecord>
+        + showWinners(..) / showWinners(.., scoring)
+        + applyLeaderboard(..)
+        - buildRow(..) / buildTableHeader()
+        - cell(..) / headerCell(..) / scoringCell(..) / totalCell(..)
+        - onLeaderboard() / onBack()
+    }
+}
+
+' ───── board ─────────────────────────────────────────────
+package "view.board" as pkg_board COLOR_BOARD {
+    class BoardViewController {
+        + bind(router) / root()
+        + update(LocalGameState)
+        - updateStatusBar(state, phase, isMyTurn)
+        - onEndTurn() / onOpenRules()
+        - {static} formatPhase(phase)
+    }
+    class BoardGameAreaController {
+        - userScale : double
+        - cachedCardW / cachedMaxCards : double/int
+        + init(router, overlayRoot, selfPanel)
+        + update(LocalGameState)
+        - computeBaseCardWidth() / cardWidth() / cardHeight()
+        - rescale() / rescaleCMD()
+        - updatePlayersBar(..) / updateCentralBox(..)
+        - updateRowsBox(..) / buildRow(..) / updateDecks(..)
+        - tileHeight() / maxCardsInAnyRow() / effectiveW() / effectiveH()
+        - eraNumber(era) / buildingBackForEra(n) / indexByName(players)
+    }
+    class BoardSelfPanelController {
+        + init(router, overlayRoot)
+        + update(LocalGameState)
+        + panelHeight() : double
+        - buildTribeGroups(..) / buildSingleGroup(..)
+        - buildHeaderlessGroup(..) / attachSummaryCard()
+    }
+}
+
+' ───── player / popup ────────────────────────────────────
+package "view (player)" as pkg_player COLOR_PLAYER {
+    class PlayerViewController {
+        - player : PlayerDto
+        + {static} load(p, isSelf, isCurrent) : PlayerViewController
+        + root() : Parent / player() : PlayerDto
+        - init(..) / buildChips(TribeDto)
+        - addIconChipTo(..) / buildIconChip(..)
+        - buildTextChip(..) / countStars(details)
+    }
+    class TribePopupController <<modal Stage>> {
+        - {static} openStage : Stage
+        + {static} show(Window, PlayerDto)
+        + {static} closeIfOpen()
+        - init(..) / renderCharacters(..) / renderBuildings(..)
+        - buildGroup(title, cards) / onClose()
+    }
+}
+
+' ───── tipi esterni ──────────────────────────────────────
+package "external" as pkg_ext COLOR_EXT {
+    class ClientMain <<network>>
+    class LocalGameState <<network>>
+    class VirtualServer <<network>>
+}
+
+' ═══════════════ relazioni strutturali ═══════════════════
+SplashViewController        ..|> SceneController
+NetworkSetupViewController  ..|> SceneController
+NickViewController          ..|> SceneController
+LobbyViewController         ..|> SceneController
+WaitingViewController       ..|> SceneController
+TotemPickViewController     ..|> SceneController
+WinnerViewController        ..|> SceneController
+BoardViewController         ..|> SceneController
+
+BoardGameAreaController     ..|> ViewController
+BoardSelfPanelController    ..|> ViewController
+PlayerViewController        ..|> ViewController
+TribePopupController        ..|> ViewController
+
+BoardViewController *-- BoardGameAreaController : fx:include
+BoardViewController *-- BoardSelfPanelController : fx:include
+BoardGameAreaController ..> PlayerViewController : crea
+BoardSelfPanelController ..> PlayerViewController : crea
+
+SceneRouter o-- "1" SceneController : currentController
+SceneRouter ..> ClientMain
+SceneRouter ..> LocalGameState
+
+note right of SceneRouter
+  Tutte le schermate navigano
+  chiamando router.toXxx().
+  ClientStateListenerGui chiama
+  currentController.update(state)
+  e i comandi passano da
+  router.getVirtualServer().
+end note
+
+note bottom of TribePopupController
+  load()/show() istanziano i widget
+  (vedi diagramma "view_widgets")
+end note
+
+@enduml
