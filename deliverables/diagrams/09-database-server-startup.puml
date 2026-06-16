@@ -23,7 +23,7 @@ alt database enabled
     DM -> SQL : CREATE TABLE IF NOT EXISTS match_archive (...)
   else SQLState 08S01 (cannot contact MySQL)
     SM -> DM : DatabaseManager.disable()
-    note right of SM : the server starts without persistence
+    note right of SM : the server starts without database functionality
   end
 
 else database disabled
