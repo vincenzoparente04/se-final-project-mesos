@@ -1,0 +1,284 @@
+@startuml architecture-high-level
+
+left to right direction
+
+title MESOS — High-level architecture\ngeneric network (RMI/Socket abstracted) · asynchronous command flow (queues)
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+skinparam classFontSize 15
+skinparam classAttributeFontSize 13
+skinparam nodesep 20
+skinparam ranksep 45
+skinparam dpi 140
+
+' ───── palette (one tint per side: RMI/Socket are abstracted) ─────
+!define COLOR_CLIENT   #E8F1FB
+!define COLOR_SERVER   #FDECEC
+!define COLOR_CMD      #FFF6D9
+!define COLOR_MSG      #FFF1B8
+!define COLOR_LIVE     #FFEAA0
+!define COLOR_CTRL     #E5F3E0
+!define COLOR_MODEL    #E0F0E9
+!define COLOR_DB       #ECE3F5
+
+skinparam class {
+    BackgroundColor<<BlockingQueue>> #FFE0B2
+    BorderColor<<BlockingQueue>>     #E65100
+    BackgroundColor<<inbound>>       #FFFFFF
+    BorderColor<<inbound>>           #8E24AA
+    BackgroundColor<<entry point>>   #FFFFFF
+    BorderColor<<entry point>>       #1565C0
+}
+
+legend top
+  <b>Generic view</b>: RMI and Socket are abstracted behind the VirtualServer/VirtualView interfaces
+  and the <<inbound>> blocks. The detailed per-transport class diagram lives in architecture.puml.
+  ── Solid arrows = composition/realization · dashed = dependency/use.
+  ── Thick blue arrows = <b>network boundary</b> (client process  <->  server process).
+  ── Orange boxes = <b>queues</b> (BlockingQueue): they decouple producer from consumer (no synchronous calls).
+endlegend
+
+' ════════════════════════════════════════════════════════════════
+'  SHARED wire vocabulary
+' ════════════════════════════════════════════════════════════════
+package "shared.command" as pkg_cmd COLOR_CMD {
+    interface ClientCommand <<sealed>> {
+        + accept(ClientCommandVisitor)
+        + getPlayerName() : String
+    }
+    interface GameCommand <<sealed>>
+    interface LobbyCommand <<sealed>>
+    class HeartbeatCommand <<record>>
+}
+ClientCommand <|.. GameCommand
+ClientCommand <|.. LobbyCommand
+ClientCommand <|.. HeartbeatCommand
+
+package "shared.message" as pkg_msg COLOR_MSG {
+    interface ServerMessage <<sealed>> {
+        + accept(ServerMessageVisitor)
+    }
+}
+
+package "shared.liveness" as pkg_live COLOR_LIVE {
+    class LivenessSentinel {
+        + start()
+        + stop()
+        + notifyInbound()
+    }
+}
+
+pkg_cmd -[hidden]right- pkg_msg
+pkg_msg -[hidden]right- pkg_live
+
+' ════════════════════════════════════════════════════════════════
+'  CLIENT
+' ════════════════════════════════════════════════════════════════
+package "network.client" as pkg_client COLOR_CLIENT {
+
+    class ClientMainLauncher <<entry point>>
+    class ClientMain <<entry point>> {
+        - virtualServer : VirtualServer
+        - localState : LocalGameState
+        - listener : ClientStateListener
+        + connect(transport, host, port)
+        + setName(String)
+    }
+    class ClientMainCli <<entry point>>
+
+    enum ConnectionProtocol {
+        SOCKET
+        RMI
+    }
+
+    class VirtualServerFactory {
+        + {static} connect(ConnectionProtocol, host, int) : VirtualServer
+    }
+
+    interface VirtualServer {
+        + tryRegisterName(name, state, listener) : boolean
+        + start()
+        + sendChooseColor / sendPlaceTotem / sendDrawCard / sendEndTurn
+        + sendCreateLobby / sendJoinLobby / sendListLobbies / sendLeaveCommand
+        + close()
+    }
+
+    class ServerMessageReceiver <<inbound>> {
+        RMI: ClientCallbackImpl
+        Socket: SocketClientThread
+    }
+
+    class LocalGameState {
+        + update(GameStateDto)
+    }
+
+    interface ClientStateListener {
+        + onGameStateUpdated(LocalGameState)
+        + onLobbyList / onLobbyState / onGameStarting
+        + onError(String)
+        + onGameOver(..)
+    }
+}
+
+' ════════════════════════════════════════════════════════════════
+'  SERVER
+' ════════════════════════════════════════════════════════════════
+package "network.server" as pkg_server COLOR_SERVER {
+
+    class ServerMain <<entry point>> {
+        + {static} main()
+    }
+
+    class ConnectionHandshaker <<Runnable>> {
+        + run()
+    }
+
+    class ClientCommandReceiver <<inbound>> {
+        RMI: GameServerRemoteImpl
+        Socket: SocketClientHandler
+    }
+
+    class LobbyManager <<Runnable>> {
+        - connectedPlayers : Map<String,PlayerEntry>
+        - lobbies : Map<String,Lobby>
+        - activeGames : Map<String,GameController>
+        + submit(LobbyCommand)
+        + submitSocketRegistration(..) / submitRmiRegistration(..)
+        + run()
+        + onDisconnect(String)
+    }
+
+    class Lobby {
+        + addPlayer(PlayerEntry)
+        + isFull() : boolean
+        + broadcastState()
+    }
+
+    interface PlayerEntry {
+        + getName() : String
+        + getView() : VirtualView
+        + setGameQueue(BlockingQueue<GameCommand>)
+    }
+
+    interface VirtualView {
+        + sendState(GameStateDto)
+        + sendError(String)
+        + sendGameOver(..)
+        + activateLiveness()
+        + notifyInbound()
+        + close()
+    }
+
+    class "lobbyQueue\n: BlockingQueue<LobbyCommand>" as LobbyQueue <<BlockingQueue>>
+}
+
+' ════════════════════════════════════════════════════════════════
+'  CONTROLLER | MODEL | DATABASE
+' ════════════════════════════════════════════════════════════════
+package "controller" as pkg_ctrl COLOR_CTRL {
+
+    class "gameQueue\n: BlockingQueue<GameCommand>" as GameQueue <<BlockingQueue>>
+
+    class GameController <<Runnable>> <<ClientCommandVisitor>> {
+        - model : GameModel
+        - players : List<PlayerEntry>
+        + start()
+        + run()
+        + handleCommand(GameCommand)
+        + getGameCommandQueue() : BlockingQueue<GameCommand>
+    }
+}
+
+package "model" as pkg_model COLOR_MODEL {
+    class GameModel {
+        - views : List<VirtualView>
+        - board : Board
+        - players : List<Player>
+        - rowsManager : RowsManager
+        - currentPhaseHandler : GamePhaseHandler
+        + handleCommand(GameCommand)
+        + notifyChange()
+        + notifyEndGame()
+        + setLeaderboard(LeaderboardData)
+    }
+    class GameStateDtoBuilder {
+        + {static} build(GameModel) : GameStateDto
+    }
+    interface GamePhaseHandler <<state machine>> {
+        + onEnter()
+        + getPhase() : GamePhase
+    }
+}
+
+package "database" as pkg_db COLOR_DB {
+    class DatabaseManager {
+        + {static} initializeDatabase(DatabaseConfig)
+        + {static} disable()
+    }
+    class MatchDAO {
+        + persistMatch(..)
+        + loadLeaderboard() : List<ScoreRecord>
+    }
+    class ScoreRecord <<record>>
+}
+MatchDAO ..> ScoreRecord
+
+' ════════════════════════════════════════════════════════════════
+'  RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════
+
+' ── client bootstrap & ownership ──
+ClientMainLauncher ..> ClientMain : launch
+ClientMain    ..> VirtualServerFactory : connect()
+ClientMainCli ..> VirtualServerFactory : connect()
+VirtualServerFactory ..> ConnectionProtocol
+VirtualServerFactory ..> VirtualServer : creates «RMI | Socket»
+ClientMain o-- VirtualServer
+ClientMain o-- LocalGameState
+ClientMain o-- ClientStateListener
+VirtualServer *-- ServerMessageReceiver : owns reader/callback
+ServerMessageReceiver ..> LocalGameState : update(dto)
+ServerMessageReceiver ..> ClientStateListener : on…()
+ServerMessageReceiver ..> ServerMessage : dispatch
+
+' ── server bootstrap ──
+ServerMain ..> LobbyManager : creates + start()
+ServerMain ..> ClientCommandReceiver : binds RMI / spawns acceptor
+ServerMain ..> ConnectionHandshaker : spawns per socket
+ServerMain ..> DatabaseManager : initialize
+ConnectionHandshaker ..> LobbyManager : submitSocketRegistration
+ClientCommandReceiver ..> ClientCommand : dispatch
+
+' ── network boundary (the ONLY inter-process hops) ──
+VirtualServer -[#1565C0,thickness=3]-> ClientCommandReceiver : <<network>>  ClientCommand
+VirtualView   -[#1565C0,thickness=3]-> ServerMessageReceiver  : <<network>>  ServerMessage
+
+' ── command routing: producer → QUEUE → consumer (asynchronous) ──
+ClientCommandReceiver ..> GameQueue  : put(GameCommand)
+ClientCommandReceiver ..> LobbyQueue : put(LobbyCommand)
+GameQueue  ..> GameController : take()  <<game-thread>>
+LobbyQueue ..> LobbyManager   : take()  <<lobby-thread>>
+
+' ── server: lobby, bridge, match creation ──
+LobbyManager *-- Lobby
+LobbyManager o-- PlayerEntry : connectedPlayers
+PlayerEntry  ..> VirtualView : getView()
+VirtualView  ..> LivenessSentinel : heartbeat
+LobbyManager ..> GameController : creates on Lobby.isFull\n+ setGameQueue
+
+' ── controller → model → view notification (cycle closes) ──
+GameController *-- GameModel
+GameModel o-- VirtualView : views · notifyChange→sendState
+GameModel ..> GameStateDtoBuilder : build
+GameModel o-- GamePhaseHandler : current
+GameModel ..> MatchDAO : persist results
+
+' ── layout: keep client / server / compute as bands ──
+pkg_client -[hidden]right- pkg_server
+pkg_ctrl   -[hidden]right- pkg_model
+pkg_model  -[hidden]right- pkg_db
+
+@enduml

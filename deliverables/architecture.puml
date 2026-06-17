@@ -22,10 +22,17 @@ skinparam ranksep 50
 !define COLOR_MODEL        #E0F0E9
 !define COLOR_PHASE        #D7E8DA
 
+' code (BlockingQueue) evidenziate
+skinparam class {
+    BackgroundColor<<queue>> #FFE0B2
+    BorderColor<<queue>>     #E65100
+}
+
 ' ═════════════════════════════════════════════════════════════════════
 '   Legenda canali:
 '     BLU   = RMI    (client → server requests, server → client callbacks)
 '     VERDE = Socket (TCP stream, entrambi i versi)
+'     ARANCIO = code BlockingQueue (put dei produttori / take dei consumatori)
 '   Le altre frecce sono nere: piene = inheritance/composition,
 '   tratteggiate = uses/dependency.
 ' ═════════════════════════════════════════════════════════════════════
@@ -55,7 +62,10 @@ package "shared.command" as pkg_cmd COLOR_SHARED_CMD {
             + visit(DrawCardCommand)
             + visit(EndTurnCommand)
         }
-        class "ChooseColorCommand\nPlaceTotemCommand\nDrawCardCommand\nEndTurnCommand" as GameCmdRecords <<records>>
+        class "ChooseColorCommand\nPlaceTotemCommand\nDrawCardCommand\nEndTurnCommand" as GameCmdRecords <<records>> {
+            + accept(GameCommandVisitor)
+            + getPlayerName() : String
+        }
     }
 
     package "lobbyCommand" as pkg_lc COLOR_SHARED_CMD {
@@ -70,10 +80,33 @@ package "shared.command" as pkg_cmd COLOR_SHARED_CMD {
             + visit(PlayerDisconnectedCommand)
             + visit(PlayerReconnectedCommand)
             + visit(SuspensionTimeoutCommand)
+            + visit(RegisterSocketPlayerCommand)
+            + visit(RegisterRmiPlayerCommand)
+            + visit(LobbyDisconnectCommand)
         }
         class "CreateLobbyCommand\nJoinLobbyCommand\nListLobbiesCommand\nLeaveCommand" as LobbyCmdRecords <<user records>>
-        class "PlayerDisconnectedCommand\nPlayerReconnectedCommand\nSuspensionTimeoutCommand" as InternalLobbyRecords <<server-internal>>
-        class HeartbeatCommand <<record>>
+        class "PlayerDisconnectedCommand\nPlayerReconnectedCommand\nSuspensionTimeoutCommand\nLobbyDisconnectCommand" as InternalLobbyRecords <<server-internal>>
+
+        ' "ask" pattern: registrazioni che portano la CompletableFuture (mai serializzate)
+        class RegisterSocketPlayerCommand <<server-internal>> {
+            + playerName : String
+            + socket : Socket
+            + in : ObjectInputStream
+            + out : ObjectOutputStream
+            + future : CompletableFuture<Boolean>
+            + accept(LobbyCommandVisitor)
+        }
+        class RegisterRmiPlayerCommand <<server-internal>> {
+            + playerName : String
+            + entry : PlayerEntry
+            + future : CompletableFuture<Boolean>
+            + accept(LobbyCommandVisitor)
+        }
+
+        class HeartbeatCommand <<record>> {
+            + accept(ClientCommandVisitor)
+            + getPlayerName() : String
+        }
     }
 }
 
@@ -83,6 +116,8 @@ ClientCommand <|.. HeartbeatCommand
 GameCommand <|.. GameCmdRecords
 LobbyCommand <|.. LobbyCmdRecords
 LobbyCommand <|.. InternalLobbyRecords
+LobbyCommand <|.. RegisterSocketPlayerCommand
+LobbyCommand <|.. RegisterRmiPlayerCommand
 
 package "shared.message" as pkg_msg COLOR_SHARED_MSG {
     interface ServerMessage <<sealed>> {
@@ -95,22 +130,28 @@ package "shared.message" as pkg_msg COLOR_SHARED_MSG {
         + visit(LobbyStateMessage)
         + visit(GameStartingMessage)
         + visit(GameOverMessage)
+        + visit(LeaderboardMessage)
         + visit(EventResolvedMessage)
         + visit(HeartbeatMessage)
     }
-    class "StateMessage\nErrorMessage\nLobbyListMessage\nLobbyStateMessage\nGameStartingMessage\nGameOverMessage\nEventResolvedMessage\nHeartbeatMessage" as ServerMsgRecords <<records>>
+    class "StateMessage\nErrorMessage\nLobbyListMessage\nLobbyStateMessage\nGameStartingMessage\nGameOverMessage\nLeaderboardMessage\nEventResolvedMessage\nHeartbeatMessage" as ServerMsgRecords <<records>>
+    class ConnectMessage <<record>> {
+        + playerName : String
+    }
 }
 ServerMessage <|.. ServerMsgRecords
 
 package "shared.liveness" as pkg_live COLOR_SHARED_LIVE {
     class LivenessSentinel {
+        - lastInbound : long {volatile}
+        + LivenessSentinel(suffix, sendMs, checkMs, timeoutMs, Runnable, Runnable)
         + start()
-        + stop()
         + notifyInbound()
+        + stop()
     }
 }
 
-' hidden ordering: tre blocchi shared in fila orizzontale
+' hidden ordering: blocchi shared in fila orizzontale
 pkg_cmd -[hidden]right- pkg_msg
 pkg_msg -[hidden]right- pkg_live
 
@@ -119,18 +160,45 @@ pkg_msg -[hidden]right- pkg_live
 ' ════════════════════════════════════════════════════════
 package "network.client" as pkg_client COLOR_CLIENT {
 
-    class ClientMain <<Application>>
-    class ClientMainCli <<Application>>
+    class ClientMainLauncher <<Application>> {
+        + {static} main(String[])
+    }
+    class ClientMain <<Application>> {
+        - virtualServer : VirtualServer
+        - localState : LocalGameState
+        - listener : ClientStateListenerGui
+        - router : SceneRouter
+        + {static} main(String[])
+        + connect(transport, host, port)
+        + setName(String)
+        + start(Stage)
+        + stop()
+    }
+    class ClientMainCli <<Application>> {
+        + {static} main(String[])
+    }
+
+    enum ConnectionProtocol {
+        SOCKET
+        RMI
+    }
+    class VirtualServerFactory {
+        + {static} connect(ConnectionProtocol, String, int) : VirtualServer
+    }
+    class ClientSession <<record>> {
+        + playerName : String
+        + virtualServer : VirtualServer
+    }
 
     class LocalGameState {
         + update(GameStateDto)
         + snapshot() : GameStateDto
+        + isGameOver() : boolean
     }
 
     interface VirtualServer {
         + tryRegisterName(String, LocalGameState, ClientStateListener) : boolean
         + start()
-        + close()
         + sendChooseColor(String)
         + sendPlaceTotem(char)
         + sendDrawCard(int)
@@ -139,16 +207,19 @@ package "network.client" as pkg_client COLOR_CLIENT {
         + sendJoinLobby(String)
         + sendListLobbies()
         + sendLeaveCommand()
+        + close()
     }
 
     interface ClientStateListener {
         + onGameStateUpdated(LocalGameState)
+        + onWaiting(String)
         + onLobbyList(List<LobbyDto>)
         + onLobbyState(LobbyDto)
         + onGameStarting()
         + onError(String)
         + onEventResolved(EventResolutionDto)
         + onGameOver(List<String>, EndGameScoringDto)
+        + onLeaderboardUpdate(List<ScoreRecord>, int, int)
         + onDisconnected()
     }
 
@@ -158,14 +229,56 @@ package "network.client" as pkg_client COLOR_CLIENT {
     package "socket" as pkg_client_sk COLOR_CLIENT_SK {
         class SocketVirtualServer {
             - sentinel : LivenessSentinel
+            + SocketVirtualServer(host, port)
+            + tryRegisterName(String, LocalGameState, ClientStateListener) : boolean
+            + start()
+            + sendChooseColor(String)
+            + sendPlaceTotem(char)
+            + sendDrawCard(int)
+            + sendEndTurn()
+            + sendCreateLobby(int)
+            + sendJoinLobby(String)
+            + sendListLobbies()
+            + sendLeaveCommand()
+            + visit(StateMessage)
+            + visit(ErrorMessage)
+            + visit(GameOverMessage)
+            + visit(LeaderboardMessage)
+            + visit(EventResolvedMessage)
+            + visit(LobbyListMessage)
+            + visit(LobbyStateMessage)
+            + visit(GameStartingMessage)
+            + visit(HeartbeatMessage)
+            + notifyInbound()
+            + onDisconnected()
+            + close()
+            - send(ClientCommand)
         }
-        class SocketClientThread <<Runnable>>
+        class SocketClientThread <<Runnable>> {
+            + SocketClientThread(ObjectInputStream, SocketVirtualServer)
+            + run()
+        }
     }
 
     package "rmi" as pkg_client_rmi COLOR_CLIENT_RMI {
         class RmiVirtualServer {
             - serverStub : GameServerRemote
             - sentinel : LivenessSentinel
+            + RmiVirtualServer(host, rmiPort)
+            + tryRegisterName(String, LocalGameState, ClientStateListener) : boolean
+            + start()
+            + sendChooseColor(String)
+            + sendPlaceTotem(char)
+            + sendDrawCard(int)
+            + sendEndTurn()
+            + sendCreateLobby(int)
+            + sendJoinLobby(String)
+            + sendListLobbies()
+            + sendLeaveCommand()
+            + close()
+            - submitAsync(ClientCommand)
+            - onConnectionLost()
+            - cleanupLocalResources()
         }
         interface ClientCallbackRemote <<remote>> {
             + onState(GameStateDto)
@@ -174,45 +287,104 @@ package "network.client" as pkg_client COLOR_CLIENT {
             + onLobbyState(LobbyDto)
             + onGameStarting()
             + onGameOver(List<String>, EndGameScoringDto)
+            + onLeaderboardUpdate(List<ScoreRecord>, int, int)
             + onEventResolved(EventResolutionDto)
             + onHeartbeat()
         }
-        class ClientCallbackImpl <<UnicastRemoteObject>>
+        class ClientCallbackImpl <<UnicastRemoteObject>> {
+            + ClientCallbackImpl(LocalGameState, ClientStateListener, Runnable)
+            + onState(GameStateDto)
+            + onError(String)
+            + onLobbyList(List<LobbyDto>)
+            + onLobbyState(LobbyDto)
+            + onGameStarting()
+            + onGameOver(List<String>, EndGameScoringDto)
+            + onLeaderboardUpdate(List<ScoreRecord>, int, int)
+            + onEventResolved(EventResolutionDto)
+            + onHeartbeat()
+        }
     }
 }
 
 VirtualServer <|.. SocketVirtualServer
 VirtualServer <|.. RmiVirtualServer
+SocketVirtualServer ..|> ServerMessageVisitor
 ClientStateListener <|.. ClientStateListenerCli
 ClientStateListener <|.. ClientStateListenerGui
 ClientCallbackRemote <|.. ClientCallbackImpl
+ClientMainLauncher ..> ClientMain : launch
+ClientMain ..> VirtualServerFactory : connect()
+ClientMainCli ..> VirtualServerFactory : connect()
+VirtualServerFactory ..> ConnectionProtocol
+VirtualServerFactory ..> SocketVirtualServer : creates
+VirtualServerFactory ..> RmiVirtualServer : creates
 ClientMain ..> VirtualServer
 ClientMainCli ..> VirtualServer
+ClientMain *-- ClientSession
 SocketVirtualServer *-- SocketClientThread
-SocketVirtualServer ..|> ServerMessageVisitor
 RmiVirtualServer *-- ClientCallbackImpl
 ClientCallbackImpl ..> ClientStateListener
 SocketVirtualServer ..> ClientStateListener
+ClientCallbackImpl ..> LocalGameState
+SocketVirtualServer ..> LocalGameState
 
 package "network.server" as pkg_server COLOR_SERVER {
 
-    class ServerMain <<Application>>
+    class ServerMain <<Application>> {
+        + {static} main(String[])
+        - startRmiRegistry(LobbyManager)
+        - startSocketAcceptor(LobbyManager)
+    }
 
-    class LobbyManager {
+    class ConnectionHandshaker <<Runnable>> {
+        + ConnectionHandshaker(Socket, LobbyManager)
+        + run()
+        - sendHandshakeError(ObjectOutputStream, String)
+        - closeSocket()
+    }
+
+    class LobbyManager <<Runnable>> {
         - lobbies : Map<String,Lobby>
         - connectedPlayers : Map<String,PlayerEntry>
         - activeGames : Map<String,GameController>
-        + openSocketConnection(Socket)
-        + addRmiPlayer(RmiPlayerEntry) : boolean
+        - queue : BlockingQueue<LobbyCommand>
+        - lobbyThread : Thread
+        - running : boolean {volatile}
+        - shutdownExecutor : ExecutorService
+        + start()
+        + submit(LobbyCommand)
         + onDisconnect(String)
+        + submitSocketRegistration(name, Socket, in, out) : CompletableFuture<Boolean>
+        + submitRmiRegistration(PlayerEntry) : CompletableFuture<Boolean>
+        + run()
         + shutdown()
+        + visit(RegisterSocketPlayerCommand)
+        + visit(RegisterRmiPlayerCommand)
+        + visit(CreateLobbyCommand)
+        + visit(JoinLobbyCommand)
+        + visit(ListLobbiesCommand)
+        + visit(LeaveCommand)
+        + visit(LobbyDisconnectCommand)
+        - registerPlayer(String, PlayerEntry)
+        - startIfFull(Lobby)
     }
 
+    class "lobbyQueue\n: BlockingQueue<LobbyCommand>" as LobbyQueue <<queue>>
+
     class Lobby {
+        + Lobby(name, maxPlayers)
         + addPlayer(PlayerEntry)
+        + removePlayer(PlayerEntry)
         + removePlayerByName(String)
-        + broadcastState()
         + isFull() : boolean
+        + isEmpty() : boolean
+        + containsPlayer(String) : boolean
+        + getPlayers() : List<PlayerEntry>
+        + getViews() : List<VirtualView>
+        + getId() : String
+        + toDto() : LobbyDto
+        + broadcastState()
+        + notifyGameStarting()
     }
 
     interface PlayerEntry {
@@ -229,26 +401,77 @@ package "network.server" as pkg_server COLOR_SERVER {
         + sendGameStarting()
         + sendEventResolved(EventResolutionDto)
         + sendGameOver(List<String>, EndGameScoringDto)
+        + sendLeaderboard(List<ScoreRecord>, int, int)
         + sendHeartbeat()
+        + getPlayerName() : String
         + activateLiveness()
         + notifyInbound()
         + close()
     }
 
     package "socket" as pkg_srv_sk COLOR_SERVER_SK {
-        class SocketPlayerEntry
+        class SocketPlayerEntry {
+            + SocketPlayerEntry(name, in, SocketVirtualView, SocketClientHandler)
+            + getName() : String
+            + getView() : VirtualView
+            + setGameQueue(BlockingQueue<GameCommand>)
+            + getIn() : ObjectInputStream
+        }
         class SocketVirtualView {
             - sentinel : LivenessSentinel
             - senderExecutor : ExecutorService
+            + SocketVirtualView(name, Socket, ObjectOutputStream, LobbyManager)
+            + sendState(GameStateDto)
+            + sendError(String)
+            + sendLobbyList(List<LobbyDto>)
+            + sendLobbyState(LobbyDto)
+            + sendGameStarting()
+            + sendEventResolved(EventResolutionDto)
+            + sendGameOver(List<String>, EndGameScoringDto)
+            + sendLeaderboard(List<ScoreRecord>, int, int)
+            + sendHeartbeat()
+            + getPlayerName() : String
+            + activateLiveness()
+            + notifyInbound()
+            + close()
+            - rawSend(ServerMessage)
         }
-        class SocketClientHandler <<Runnable>>
+        class SocketClientHandler <<Runnable>> {
+            - gameQueue : BlockingQueue<GameCommand> {volatile}
+            - dispatcher : ClientCommandVisitor
+            + SocketClientHandler(VirtualView, ObjectInputStream, LobbyManager)
+            + setGameQueue(BlockingQueue<GameCommand>)
+            + run()
+            - handleCommand(ClientCommand)
+        }
     }
 
     package "rmi" as pkg_srv_rmi COLOR_SERVER_RMI {
-        class RmiPlayerEntry
+        class RmiPlayerEntry {
+            + RmiPlayerEntry(RmiVirtualView, GameServerRemoteImpl)
+            + getName() : String
+            + getView() : VirtualView
+            + setGameQueue(BlockingQueue<GameCommand>)
+        }
         class RmiVirtualView {
             - callback : ClientCallbackRemote
             - sentinel : LivenessSentinel
+            - senderExecutor : ExecutorService
+            + RmiVirtualView(name, ClientCallbackRemote, LobbyManager)
+            + sendState(GameStateDto)
+            + sendError(String)
+            + sendLobbyList(List<LobbyDto>)
+            + sendLobbyState(LobbyDto)
+            + sendGameStarting()
+            + sendEventResolved(EventResolutionDto)
+            + sendGameOver(List<String>, EndGameScoringDto)
+            + sendLeaderboard(List<ScoreRecord>, int, int)
+            + sendHeartbeat()
+            + getPlayerName() : String
+            + activateLiveness()
+            + notifyInbound()
+            + close()
+            - handleDisconnect()
         }
         interface GameServerRemote <<remote>> {
             + join(String, ClientCallbackRemote, String) : boolean
@@ -256,8 +479,15 @@ package "network.server" as pkg_server COLOR_SERVER {
             + disconnect(String)
         }
         class GameServerRemoteImpl <<UnicastRemoteObject>> {
-            - gameQueues : Map<String,BlockingQueue<GameCommand>>
-            - rmiViews : Map<String,RmiVirtualView>
+            - lobbyManager : LobbyManager
+            - gameQueues : ConcurrentHashMap<String,BlockingQueue<GameCommand>>
+            - rmiViews : ConcurrentHashMap<String,RmiVirtualView>
+            - dispatcher : ClientCommandVisitor
+            + GameServerRemoteImpl(LobbyManager)
+            + registerQueue(String, BlockingQueue<GameCommand>)
+            + join(String, ClientCallbackRemote, String) : boolean
+            + submitClientCommand(ClientCommand)
+            + disconnect(String)
         }
     }
 }
@@ -271,13 +501,12 @@ GameServerRemote <|.. GameServerRemoteImpl
 SocketPlayerEntry *-- SocketVirtualView
 SocketPlayerEntry *-- SocketClientHandler
 RmiPlayerEntry *-- RmiVirtualView
-ServerMain ..> LobbyManager
-ServerMain ..> GameServerRemoteImpl
+ServerMain ..> LobbyManager : creates + start()
+ServerMain ..> GameServerRemoteImpl : binds (RMI registry)
+ServerMain ..> ConnectionHandshaker : spawns per socket
 LobbyManager *-- Lobby
 LobbyManager o-- PlayerEntry
 GameServerRemoteImpl o-- RmiVirtualView
-GameServerRemoteImpl ..> LobbyManager
-SocketClientHandler ..> LobbyManager
 
 ' hidden link: forza client a sinistra del server
 pkg_client -[hidden]right- pkg_server
@@ -286,45 +515,77 @@ pkg_client -[hidden]right- pkg_server
 '  TIER 3 — CONTROLLER + MODEL  (in basso)
 ' ════════════════════════════════════════════════════════
 package "controller" as pkg_ctrl COLOR_CTRL {
+
+    class "gameQueue\n: BlockingQueue<GameCommand>" as GameQueue <<queue>>
+
     class GameController <<Runnable>> {
         - model : GameModel
         - queue : BlockingQueue<ClientCommand>
         - players : List<PlayerEntry>
         - gameThread : Thread
+        - running : boolean {volatile}
         - suspended : boolean {volatile}
-        - lifecycleVisitor : LobbyCommandVisitor
+        - suspensionScheduler : ScheduledExecutorService
+        - suspensionTimeoutFuture : ScheduledFuture
+        - lobbyCommandVisitor : LobbyCommandVisitor
+        + GameController(List<PlayerEntry>)
+        + GameController(GameModel)
+        + startGame(List<String>)
         + start()
         + run()
         + handleCommand(GameCommand)
         + getQueue() : BlockingQueue<ClientCommand>
         + getGameCommandQueue() : BlockingQueue<GameCommand>
+        + isGameOver() : boolean
         + shutdown()
         + visit(GameCommand)
         + visit(LobbyCommand)
         + visit(HeartbeatCommand)
+        - cancelSuspensionTimer()
+        - enqueueSelf(LobbyCommand)
+        - findView(String) : Optional<VirtualView>
+    }
+
+    class "lobbyCommandVisitor\n(anonymous)" as GcLifecycle <<LobbyCommandVisitor>> {
+        + visit(LeaveCommand)
+        + visit(PlayerDisconnectedCommand)
+        + visit(PlayerReconnectedCommand)
+        + visit(SuspensionTimeoutCommand)
     }
 }
 
 GameController ..|> ClientCommandVisitor
-LobbyManager ..> GameController
-GameServerRemoteImpl ..> GameController
-SocketClientHandler ..> GameController
+GameController *-- GcLifecycle
+GcLifecycle ..|> LobbyCommandVisitor
+LobbyManager ..> GameController : creates (Lobby full) + setGameQueue\n+ enqueue lifecycle (getQueue)
 
 package "model" as pkg_model COLOR_MODEL {
     class GameModel {
-        - players : List<Player>
+        - views : List<VirtualView>
         - board : Board
+        - players : List<Player>
         - rowsManager : RowsManager
         - currentPhaseHandler : GamePhaseHandler {volatile}
-        - views : List<VirtualView>
+        - currentRound : int {volatile}
+        - leaderboard : LeaderboardData {volatile}
+        + GameModel(List<VirtualView>)
         + startGame(List<String>)
-        + handleCommand(GameCommand)
         + setPhase(GamePhaseHandler)
+        + handleCommand(GameCommand)
         + notifyChange()
+        + notifyEndGame()
         + swapView(String, VirtualView)
         + removeView(String)
-        + setGameOver()
+        + getViews() : List<VirtualView>
         + isGameOver() : boolean
+        + setGameOver()
+        + setWinners(List<String>)
+        + setEndGameScoring(EndGameScoringDto)
+        + setLeaderboard(LeaderboardData)
+        + getLeaderboard() : LeaderboardData
+        + getCurrentPlayer() : Player
+        + getCurrentPhase() : GamePhase
+        + getPlayerByName(String) : Player
     }
 
     class GameStateDtoBuilder {
@@ -333,9 +594,9 @@ package "model" as pkg_model COLOR_MODEL {
 
     package "phaseHandlers" as pkg_phase COLOR_PHASE {
         interface GamePhaseHandler {
-            + onEnter()
             + getPhase() : GamePhase
             + getCurrentPlayer() : Player
+            + onEnter()
             + skipCurrentPlayerTurn()
         }
         class "ColorChoosingPhase\nSetupPhase\nPlacementPhase\nActionPhase\nPreEndOfRoundPhase\nEndOfRoundPhase\nEndOfGamePhase" as PhaseImpls <<7 concrete phases>>
@@ -351,11 +612,26 @@ GamePhaseHandler <|.. PhaseImpls
 pkg_ctrl -[hidden]right- pkg_model
 
 ' ════════════════════════════════════════════════════════════════════
-'  INTER-PROCESS CHANNELS — le UNICHE frecce colorate
+'  CODE (BlockingQueue) — produttori (put) / consumatori (take)
+' ════════════════════════════════════════════════════════════════════
+' gameQueue: i dispatcher RMI/Socket fanno put(GameCommand); GameController.run() fa take()
+GameServerRemoteImpl -[#E65100]-> GameQueue  : put(GameCommand)
+SocketClientHandler  -[#E65100]-> GameQueue  : put(GameCommand)
+GameQueue            -[#E65100]-> GameController : take()  <<game-thread>>
+
+' lobbyQueue: i produttori accodano via submit*(); LobbyManager.run() fa take()
+GameServerRemoteImpl -[#E65100]-> LobbyQueue : submit(LobbyCommand)
+SocketClientHandler  -[#E65100]-> LobbyQueue : submit(LobbyCommand)
+ConnectionHandshaker -[#E65100]-> LobbyQueue : submitSocketRegistration
+LobbyQueue           -[#E65100]-> LobbyManager : take()  <<lobby-thread>>
+
+' ════════════════════════════════════════════════════════════════════
+'  CANALI INTER-PROCESSO — le UNICHE frecce blu/verdi
 '  Direzione esplicita per evitare incroci col layout left→right.
 ' ════════════════════════════════════════════════════════════════════
-RmiVirtualServer    -[#blue,thickness=3]right->   GameServerRemote     : <<rmi>>  ClientCommand
-RmiVirtualView      -[#blue,thickness=3]left->    ClientCallbackRemote : <<rmi>>  ServerMessage
+RmiVirtualServer    -[#blue,thickness=3]right->   GameServerRemote     : <<rmi>>  join / submitClientCommand
+RmiVirtualView      -[#blue,thickness=3]left->    ClientCallbackRemote : <<rmi>>  on*(ServerMessage)
+SocketVirtualServer -[#green,thickness=3]right->  ConnectionHandshaker : <<socket>>  ConnectMessage (handshake)
 SocketVirtualServer -[#green,thickness=3]right->  SocketClientHandler  : <<socket>>  ClientCommand
 SocketVirtualView   -[#green,thickness=3]left->   SocketClientThread   : <<socket>>  ServerMessage
 

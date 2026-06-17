@@ -1,0 +1,588 @@
+@startuml "Mesos - Class Diagram"
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam packageFontSize 14
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 50
+skinparam groupInheritance 2
+
+' ═══════════════════════════════════════════
+'  ENUMS
+' ═══════════════════════════════════════════
+package "model.enums" as enums <<Rectangle>> #F5F5DC {
+
+    enum Era {
+        ERA_I
+        ERA_II
+        ERA_III
+        GOLDEN_BORE_ERA
+    }
+
+    enum GamePhase {
+        SETUP
+        COLOR_CHOOSING_PHASE
+        PLACEMENT
+        ACTION
+        END_OF_ROUND
+        END_OF_GAME
+    }
+
+    enum TotemColor {
+        RED
+        BLUE
+        GREEN
+        YELLOW
+        WHITE
+    }
+
+    enum TotemLocation {
+        TURN_ORDER_TILE
+        OFFER_TRACK
+    }
+
+    enum CharacterType {
+        HUNTER
+        BUILDER
+        SHAMAN
+        INVENTOR
+        ARTIST
+        GATHERER
+    }
+
+    enum CardType {
+        CHARACTER
+        EVENT
+        BUILDING
+    }
+
+    enum EventType {
+        HUNT
+        SHAMANIC_RITUAL
+        CAVE_PAINTINGS
+        SUSTENANCE
+        NASCONDINO
+    }
+
+    enum InventionIcon {
+        ICON_1
+        ICON_2
+        ..
+        ICON_10
+    }
+
+    enum GameState {
+        SETUP
+        RUNNING
+        ENDED
+    }
+}
+
+
+' ═══════════════════════════════════════════
+'  CONTROLLER
+' ═══════════════════════════════════════════
+package "controller" as ctrl #E8F5E9 {
+    class GameController {
+        - gameModel : GameModel
+        + startGame(players : List<String>)
+        + placeTotem(player : Player, tile : OfferTile)
+        + chooseColor(player : Player, color : TotemColor)
+        + drawCard(player : Player, cardId : int)
+    }
+}
+
+
+' ═══════════════════════════════════════════
+'  VIEW
+' ═══════════════════════════════════════════
+package "view" #FFF3E0 {
+    class GameView {
+    }
+}
+
+
+' ═══════════════════════════════════════════
+'  MODEL – Core
+' ═══════════════════════════════════════════
+package "model" as mdl #E3F2FD {
+
+    class GameModel {
+        - board : Board
+        - players : List<Player>
+        - playerCount : int
+        - currentRound : int
+        - currentEra : Era
+        - currentPhaseHandler : GamePhaseHandler
+        + startGame(playerNames : List<String>)
+        + chooseColor(player : Player, color : TotemColor)
+        + placeTotem(player : Player, tile : OfferTile)
+        + drawCard(cardId : int)
+        + setPhase(phase : GamePhaseHandler)
+        + getCurrentPhase() : GamePhase
+        + getCurrentPlayer() : Player
+        + getTurnOrder() : List<Player>
+        + getCurrentEra() : Era
+        + isGameOver() : boolean
+        + incrementRound()
+    }
+
+
+    ' ───────────────────────────────────────
+    '  PLAYER
+    ' ───────────────────────────────────────
+    package "model.player" as plyr #BBDEFB {
+
+        class Player {
+            - name : String
+            - tribe : Tribe
+            - food : int
+            - prestigePoints : int
+            - totemLocation : TotemLocation
+            - color : TotemColor
+            - shamanicImmunity : boolean
+            - shamanicBonusStars : boolean
+            - shamanicDoublePrestige : boolean
+            - extraFoodOnTotemReturn : boolean
+            - extraDraw : boolean
+            + addFood(amount : int)
+            + removeFood(amount : int, ppMultiplier : int)
+            + addPrestigePoints(amount : int)
+            + removePrestigePoints(amount : int)
+            + getTribe() : Tribe
+        }
+
+        class Tribe {
+            - artists : List<ArtistCard>
+            - builders : List<BuilderCard>
+            - gatherers : List<GathererCard>
+            - hunters : List<HunterCard>
+            - inventorsByIcon : Map<InventionIcon, List<InventorCard>>
+            - shamans : List<ShamanCard>
+            - buildings : List<BuildingCard>
+            - endGameBuildingEffects : List<EndGameBuildingEffect>
+            - onAcquireBuildingEffects : List<OnAcquireBuildingEffect>
+            - onEventBuildingEffects : List<OnEventBuildingEffect>
+            + addArtist(card) / addBuilder(card) / ...
+            + registerOnEventEffect(effect)
+            + registerOnAcquireEffect(effect)
+            + registerEndGameEffect(effect)
+            + getTotalCharacterCount() : int
+            + getTotalBuilderDiscount() : int
+            + getTotalShamanStars() : int
+            + getTotalGatherersDiscount() : int
+            + countCompleteSets() : int
+            + calculateBuildersEndGamePoints() : int
+            + calculateArtistEndGamePoints() : int
+            + calculateInventorEndGamePoints() : int
+            + calculateBuildingPrintedPoints() : int
+        }
+    }
+
+
+    ' ───────────────────────────────────────
+    '  BOARD
+    ' ───────────────────────────────────────
+    package "model.board" as brd #C8E6C9 {
+
+        class Board {
+            - topRowTribe : List<TribeCard>
+            - bottomRowTribe : List<TribeCard>
+            - topRowBuilding : List<BuildingCard>
+            - bottomRowBuilding : List<BuildingCard>
+            - eventsToResolve : List<EventCard>
+            - sustenanceToResolve : List<SustenanceEventCard>
+            + setup(playerCount : int)
+            + placeTotem(player : Player, tile : OfferTile)
+            + resolveEvents(players : List<Player>)
+            + resolveAllEvents(players : List<Player>)
+            + endRound(playerCount : int)
+            + changeEra()
+            + findCardById(cardId : int) : Card
+            + removeCard(cardId : int)
+        }
+
+        interface CardVisitor <<Visitor>> {
+            + visit(card : CharacterCard)
+            + visit(card : EventCard)
+            + visit(card : SustenanceEventCard)
+        }
+
+        class OfferTrack {
+            - tiles : List<OfferTile>
+            + setup(playerCount : int)
+            + placeTotem(player : Player, tile : OfferTile)
+            + getNextPlayer() : Player
+            + getAvailableTiles() : List<OfferTile>
+        }
+
+        class OfferTile {
+            - letter : char
+            - foodBonus : int
+            - occupant : Player
+            - action : OfferTileAction
+            + isOccupied() : boolean
+            + placeTotem(player : Player)
+            + removeTotem()
+        }
+
+        class TurnOrderTile {
+            - playerCount : int
+            - slots : List<TurnOrderSlot>
+            + setup(playerCount : int)
+            + returnTotemAndResolveEffects(player : Player)
+            + getTurnOrder() : List<Player>
+        }
+
+        class TurnOrderSlot {
+            - foodBonus : int
+            - isLast : boolean
+            - occupant : Player
+            + applyEffect()
+            + isOccupied() : boolean
+            + placeTotem(player : Player)
+        }
+    }
+
+
+    ' ───────────────────────────────────────
+    '  OFFER TILE ACTIONS
+    ' ───────────────────────────────────────
+    package "model.board.OfferTileAction" as ota #A5D6A7 {
+
+        interface OfferTileAction <<Strategy>> {
+            + onEnterAction(player : Player, model : GameModel)
+            + canDraw(card : Card, board : Board) : boolean
+            + performDraw(card : Card, board : Board)
+            + isFinished() : boolean
+        }
+
+        class DrawCardsAction {
+            - maxTopRowDraws : int
+            - maxBottomRowDraws : int
+            - currentTopRowDraws : int
+            - currentBottomRowDraws : int
+        }
+
+        class TakeFoodAction {
+            - foodAmount : int
+            - finished : boolean
+        }
+    }
+
+
+    ' ───────────────────────────────────────
+    '  CARDS
+    ' ───────────────────────────────────────
+    package "model.cards" as crds #E1BEE7 {
+
+        interface Drawable {
+            + canBeAcquiredBy(player : Player, model : GameModel) : boolean
+            + acquiredBy(player : Player, model : GameModel)
+        }
+
+        abstract class Card {
+            - id : int
+            - era : Era
+            - playerCount : int
+            + {abstract} registerToTribe(player : Player)
+        }
+
+        abstract class TribeCard {
+            + {abstract} registerSelf(player : Player)
+            + {abstract} accept(visitor : CardVisitor)
+        }
+
+        package "charachterCards" as charCards #CE93D8 {
+            abstract class CharacterCard {
+                + canBeAcquiredBy() : boolean
+                + acquiredBy(player, model)
+                + accept(visitor : CardVisitor)
+            }
+            class HunterCard {
+                - triggerIcon : boolean
+            }
+            class BuilderCard {
+                - builderDiscount : int
+                - prestigePoints : int
+            }
+            class ShamanCard {
+                - starCount : int
+            }
+            class InventorCard {
+                - inventionIcon : InventionIcon
+            }
+            class ArtistCard
+            class GathererCard
+        }
+
+        package "eventCards" as evtCards #F48FB1 {
+            abstract class EventCard {
+                + {abstract} resolve(players : List<Player>)
+                + canBeAcquiredBy() : boolean  ──  always false
+                + accept(visitor : CardVisitor)
+            }
+            class HuntEventCard
+            class ShamanicRitualEventCard
+            class CavePaintingsEventCard
+            class SustenanceEventCard {
+                + accept(visitor : CardVisitor)
+            }
+        }
+
+        package "buildingCards" as bldCards #EF9A9A {
+            class BuildingCard {
+                - foodCost : int
+                - endGamePoints : int
+                - effect : BuildingEffect
+                + getDiscountedCost(player : Player) : int
+                + canBeAcquiredBy(player, model) : boolean
+                + acquiredBy(player, model)
+                + registerToTribe(player, model)
+            }
+        }
+    }
+
+
+    ' ───────────────────────────────────────
+    '  DECKS
+    ' ───────────────────────────────────────
+    package "model.deck" as dck #FFF9C4 {
+        class TribeDeck {
+            - cards : Deque<TribeCard>
+            - currentEra : Era
+            + initializeDeck(playerCount : int)
+            + draw() : TribeCard
+            + drawMultiple(count : int) : List<TribeCard>
+            + getCurrentEra() : Era
+            + isNewEraRevealed() : boolean
+        }
+
+        class BuildingDeck {
+            - era : Era
+            - cards : List<BuildingCard>
+            + initializeDeck(playerCount : int)
+            + drawAll() : List<BuildingCard>
+            + isEmpty() : boolean
+        }
+    }
+
+
+    ' ───────────────────────────────────────
+    '  BUILDING EFFECTS
+    ' ───────────────────────────────────────
+    package "model.buildingEffects" as bfx #FFCCBC {
+
+        interface BuildingEffect <<Strategy>> {
+            + registerSelf(player : Player)
+        }
+
+        package "EndGameEffects" as ege #FFAB91 {
+            class EndGameBuildingEffect {
+                - multiplier : int
+                - getter : ToIntFunction<Tribe>
+                + applyEffect(player : Player)
+            }
+        }
+
+        package "OnCharacterAcquiredEffects" as oce #FFAB91 {
+            abstract class OnAcquireBuildingEffect {
+                + {abstract} applyEffect(player : Player)
+            }
+            class BonusForCompletedSet {
+                - alreadyCompletedSets : int
+            }
+            class InventorsPairBonus {
+                - alreadyPaired : Set<InventionIcon>
+            }
+        }
+
+        package "OnEventEffects" as oee #FFAB91 {
+            class OnEventBuildingEffect {
+                + applyOnSustenance(player) : int
+                + applyOnShamanicRitual(player)
+                + applyOnCavePaintings(player)
+                + applyOnHunt(player)
+            }
+            class SustenanceDiscountEffect {
+                - discountPerCharacter : int
+                - correctGetter : ToIntFunction<Tribe>
+            }
+            class ArtistBonusForCavePaintings {
+                - foodMultiplier : int
+            }
+            class HunterBonusForHuntEvent {
+                - prestigeMultiplier : int
+                - foodMultiplier : int
+            }
+        }
+
+        package "OnPickingEffects" as ope #FFAB91 {
+            class OnPickingEffects {
+                - flagSetter : Consumer<Player>
+            }
+        }
+    }
+
+
+    ' ───────────────────────────────────────
+    '  PHASE HANDLERS  (State Pattern)
+    ' ───────────────────────────────────────
+    package "model.phaseHandlers" as ph #D1C4E9 {
+
+        abstract class GamePhaseHandler <<State>> {
+            # model : GameModel
+            + onEnter()
+            + chooseColor(player, color)
+            + placeTotem(player, tile)
+            + drawCard(cardId : int)
+            + {abstract} getPhase() : GamePhase
+            + {abstract} getCurrentPlayer() : Player
+        }
+
+        class ColorChoosingPhase {
+            - availableColors : Set<TotemColor>
+            - currentIndex : int
+        }
+        class SetupPhase {
+            + randomizeTurnOrder(players)
+            - distributeStartingResources()
+        }
+        class PlacementPhase {
+            - turnOrder : List<Player>
+            - currentIndex : int
+            + canPlaceTotem(player, tile) : boolean
+        }
+        class ActionPhase {
+            - currentPlayer : Player
+            - currentAction : OfferTileAction
+            + drawCard(cardId : int)
+            - checkActionCompletionOrAutoAdvance()
+            - hasAnyLegalMove() : boolean
+        }
+        class PreEndOfRoundPhase {
+            - waitingForInput : Player
+        }
+        class EndOfRoundPhase
+        class EndOfGamePhase {
+            - winners : List<Player>
+            - resolveAllVisibleEvents()
+            - calculateEndGameScoring()
+            - determineWinner()
+        }
+    }
+}
+
+
+' ═══════════════════════════════════════════
+'  RELATIONSHIPS
+' ═══════════════════════════════════════════
+
+' --- Controller → Model ---
+GameController --> GameModel : delegates to >
+
+' --- GameModel composition ---
+GameModel *-- Board
+GameModel *--> "1..*" Player
+GameModel o--> GamePhaseHandler : currentPhaseHandler
+
+' --- Player ↔ Tribe ---
+Player *-- Tribe
+
+' --- Board composition ---
+Board *-- OfferTrack
+Board *-- TurnOrderTile
+Board o-- "3" BuildingDeck : eraI / eraII / eraIII
+Board o-- TribeDeck
+Board ..|> CardVisitor
+
+' --- OfferTrack / Tiles ---
+OfferTrack *-- "2..7" OfferTile
+OfferTile --> Player : occupant
+OfferTile *-- OfferTileAction : action
+
+' --- TurnOrderTile / Slots ---
+TurnOrderTile *-- "2..5" TurnOrderSlot
+TurnOrderSlot --> Player : occupant
+
+' --- OfferTileAction hierarchy ---
+DrawCardsAction ..|> OfferTileAction
+TakeFoodAction ..|> OfferTileAction
+
+' --- Card hierarchy ---
+Card ..|> Drawable
+TribeCard --|> Card
+CharacterCard --|> TribeCard
+EventCard --|> TribeCard
+
+HunterCard --|> CharacterCard
+BuilderCard --|> CharacterCard
+ShamanCard --|> CharacterCard
+InventorCard --|> CharacterCard
+ArtistCard --|> CharacterCard
+GathererCard --|> CharacterCard
+
+HuntEventCard --|> EventCard
+ShamanicRitualEventCard --|> EventCard
+CavePaintingsEventCard --|> EventCard
+SustenanceEventCard --|> EventCard
+
+BuildingCard --|> Card
+BuildingCard --> BuildingEffect : effect
+
+' --- Deck → Cards ---
+TribeDeck o-- "*" TribeCard
+BuildingDeck o-- "*" BuildingCard
+
+' --- BuildingEffect hierarchy ---
+EndGameBuildingEffect ..|> BuildingEffect
+OnAcquireBuildingEffect ..|> BuildingEffect
+OnEventBuildingEffect ..|> BuildingEffect
+OnPickingEffects ..|> BuildingEffect
+
+BonusForCompletedSet --|> OnAcquireBuildingEffect
+InventorsPairBonus --|> OnAcquireBuildingEffect
+
+SustenanceDiscountEffect --|> OnEventBuildingEffect
+ArtistBonusForCavePaintings --|> OnEventBuildingEffect
+HunterBonusForHuntEvent --|> OnEventBuildingEffect
+
+' --- Tribe → Effects ---
+Tribe o-- "*" EndGameBuildingEffect
+Tribe o-- "*" OnAcquireBuildingEffect
+Tribe o-- "*" OnEventBuildingEffect
+
+' --- PhaseHandler hierarchy ---
+ColorChoosingPhase --|> GamePhaseHandler
+SetupPhase --|> GamePhaseHandler
+PlacementPhase --|> GamePhaseHandler
+ActionPhase --|> GamePhaseHandler
+PreEndOfRoundPhase --|> GamePhaseHandler
+EndOfRoundPhase --|> GamePhaseHandler
+EndOfGamePhase --|> GamePhaseHandler
+
+' --- Phase transitions (notes) ---
+note bottom of ph
+  **Game Flow (State transitions):**
+  ColorChoosingPhase → SetupPhase
+  → PlacementPhase → ActionPhase
+  → PreEndOfRoundPhase → EndOfRoundPhase
+  → PlacementPhase  ── (loop until game over)
+  → EndOfGamePhase
+end note
+
+note top of CardVisitor
+  **Visitor Pattern**
+  Used by Board to sort
+  events (sustenance last)
+end note
+
+note right of OfferTileAction
+  **Strategy Pattern**
+  Each OfferTile has a
+  different action strategy
+end note
+
+@enduml
