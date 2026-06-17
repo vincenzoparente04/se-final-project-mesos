@@ -121,6 +121,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
     }
 
     /**
+     * Only for test purpose.
      * Wires every player's command queue to this controller's queue and
      * starts the game thread. Only valid for instances built via
      * {@link #GameController(List)}.
@@ -133,7 +134,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
 
     /**
      * The controller's internal queue, typed on {@link ClientCommand}. The
-     * {@code LobbyManager} uses this view to impilare i lifecycle command
+     * {@code LobbyManager} uses this view to stack lifecycle command
      * ({@code PlayerDisconnectedCommand}, {@code PlayerReconnectedCommand},
      * {@code LeaveCommand} during END_OF_GAME).
      */
@@ -338,7 +339,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
             if (connected == 1 && !suspended) {
                 suspended = true;
                 for (VirtualView v : model.getViews()) {
-                    v.sendError("GAME_SUSPENDED: in attesa di una riconnessione, timer " + SUSPENSION_TIMEOUT_SECONDS + "s");
+                    v.sendError("GAME_SUSPENDED: waiting for a reconnection, timer " + SUSPENSION_TIMEOUT_SECONDS + "s");
                 }
                 suspensionTimeoutFuture = suspensionScheduler.schedule(
                         () -> enqueueSelf(new SuspensionTimeoutCommand()),
@@ -375,7 +376,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
                 model.swapView(cmd.getPlayerName(), cmd.newView());
                 model.getPlayerByName(cmd.getPlayerName()).setConnected();
             } catch (IllegalArgumentException ignored) {
-                // player non in questa session — nulla da fare
+                // player not in this session — nothing to do
                 return;
             }
 
