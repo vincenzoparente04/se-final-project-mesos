@@ -191,7 +191,6 @@ public final class EventResolutionOverlay {
 
     /**
      * Polls the next {@link PendingEvent} from {@link #queue} and displays it.
-     * <p>
      * If the queue is empty, clears {@link #activeRoot} and fires
      * {@link #onQueueDrained} (if registered). Otherwise:
      * <ol>
@@ -201,7 +200,6 @@ public final class EventResolutionOverlay {
      *       adds it to the scene root, and plays the fade-in animation.</li>
      *   <li>On fade-in completion, calls {@link #startDwell()} to begin the timer.</li>
      * </ol>
-     * </p>
      */
     private static void showNext() {
         PendingEvent next = queue.poll();
@@ -273,7 +271,6 @@ public final class EventResolutionOverlay {
      * Builds the full visual panel (stone-slab background + content overlay) for
      * a single event. Also creates and assigns {@link #activeProgress}, the
      * {@link Timeline} that animates the countdown {@link ProgressBar}.
-     * <p>
      * The panel layout from top to bottom:
      * <ol>
      *   <li>Header row — event-type icon, title, and era label ({@link #buildHeader}).</li>
@@ -283,7 +280,6 @@ public final class EventResolutionOverlay {
      *   <li>Countdown {@link ProgressBar} (4 px tall, drains left-to-right).</li>
      *   <li>Footer with "tap to continue" hint.</li>
      * </ol>
-     * </p>
      *
      * @param dto the event data used to populate the panel
      * @return the fully constructed slab {@link StackPane} ready to be added to a backdrop

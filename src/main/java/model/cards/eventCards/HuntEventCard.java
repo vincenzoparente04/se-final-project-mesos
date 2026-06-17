@@ -36,7 +36,6 @@ public class HuntEventCard extends EventCard {
     }
 
     /**
-     * <p>
      * <b>Algorithmic Resolution Pipeline:</b>
      * <ol>
      * <li>Computes the chronological scaling index: {@code eraIndex = era.ordinal() + 1} (e.g., 1 for ERA_I, 2 for ERA_II, 3 for ERA_III).</li>
@@ -46,7 +45,6 @@ public class HuntEventCard extends EventCard {
      * executing the {@link OnEventBuildingEffect#applyOnHunt(Player)} hook to resolve building-specific bonuses.</li>
      * <li>Snapshots mutated resource pools and compiles the delta metrics into a client-bound {@link PlayerEventDeltaDto} wrapper.</li>
      * </ol>
-     * </p>
      *
      * @param players the active list of {@link Player} instances participating in the game
      * @return a fully populated, serialized network transport object {@link EventResolutionDto} summarizing the phase outcomes

@@ -37,7 +37,6 @@ public class SustenanceEventCard extends EventCard {
     }
 
     /**
-     * <p>
      * <b>Algorithmic Resolution Pipeline:</b>
      * <ol>
      * <li>Computes the chronological scaling index: {@code eraIndex = era.ordinal() + 1}.</li>
@@ -54,7 +53,6 @@ public class SustenanceEventCard extends EventCard {
      * <li><b>State Serialization:</b> Packages individual asset deltas and details metrics into client-bound
      * {@link PlayerEventDeltaDto} data wrappers.</li>
      * </ol>
-     * </p>
      *
      * @param players the active list of {@link Player} instances participating in the game
      * @return a fully populated, serialized network transport object {@link EventResolutionDto} summarizing the phase outcomes

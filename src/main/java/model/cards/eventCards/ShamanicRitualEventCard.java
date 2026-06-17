@@ -37,7 +37,6 @@ public class ShamanicRitualEventCard extends EventCard {
     }
 
     /**
-     * <p>
      * <b>Algorithmic Resolution Pipeline:</b>
      * <ol>
      * <li>Computes the chronological scaling index: {@code eraIndex = era.ordinal() + 1}.</li>
@@ -56,7 +55,6 @@ public class ShamanicRitualEventCard extends EventCard {
      * <li><b>State Serialization:</b> Compiles data deltas and performance context labels ("tied", "majority",
      * "minority", "middle") into transportable {@link PlayerEventDeltaDto} instances.</li>
      * </ol>
-     * </p>
      *
      * @param players the active list of {@link Player} instances participating in the game
      * @return a fully populated, serialized network transport object {@link EventResolutionDto} summarizing the phase outcomes

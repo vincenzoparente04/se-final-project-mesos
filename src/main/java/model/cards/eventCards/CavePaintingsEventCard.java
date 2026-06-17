@@ -36,7 +36,6 @@ public class CavePaintingsEventCard extends EventCard {
     }
 
     /**
-     * <p>
      * <b>Algorithmic Resolution Pipeline:</b>
      * <ol>
      * <li>Computes the current environmental threshold coefficient: {@code eraIndex = era.ordinal() + 1}.</li>
@@ -48,7 +47,6 @@ public class CavePaintingsEventCard extends EventCard {
      * intercepting the {@link OnEventBuildingEffect#applyOnCavePaintings(Player)} hook to apply building-specific yields.</li>
      * <li>Snapshots the final state and packages individual deltas into client-bound {@link PlayerEventDeltaDto} data wrappers.</li>
      * </ol>
-     * </p>
      *
      * @param players the active list of {@link Player} instances participating in the game
      * @return a fully populated, serialized network transport object {@link EventResolutionDto} summarizing the phase outcomes
