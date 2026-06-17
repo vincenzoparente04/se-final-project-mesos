@@ -23,18 +23,13 @@ import java.util.List;
  * Each screen calls back into the router to move forward (or backward),
  * the {@link network.client.core.ClientStateListenerGui} uses it to address the {@link ViewController} that is on screen
  * and to overlay toasts on top of the current root.
- * <p>
  * It's created by the {@link ClientMain} and passed to each controller.
- * </p>
- *
- * <p>
  * Handles the followings:
  * <ul>
  *     <li>Move from one ViewController to another and loads its FXML</li>
  *     <li>Handles commands and errors for joining the server between the {@link NickViewController} and the
  *     {@link ClientMain}</li>
  * </ul>
- * </p>
  */
 public class SceneRouter {
 

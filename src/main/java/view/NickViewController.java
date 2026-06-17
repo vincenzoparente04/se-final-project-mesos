@@ -44,7 +44,7 @@ public class NickViewController implements SceneController {
 
     /**
      * Called when the {@code joinButton} is clicked.
-     * Checks the length of the inserted name (0 < name lenght < 21), disable the button and asks the {@link SceneRouter}
+     * Checks the length of the inserted name (0 less than name lenght less than 21), disable the button and asks the {@link SceneRouter}
      * to set the name.
      */
     @FXML
