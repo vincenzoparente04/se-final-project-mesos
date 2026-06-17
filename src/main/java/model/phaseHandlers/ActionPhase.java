@@ -82,7 +82,7 @@ public class ActionPhase implements GamePhaseHandler {
             }
         } while (!currentPlayer.isConnected());
 
-        // Se non ci sono più giocatori, la fase Action è finita
+        // If there are no more player, the action phase is ended
         if (currentPlayer == null) {
             currentAction = null;
             model.setPhase(new PreEndOfRoundPhase(model));
@@ -93,7 +93,6 @@ public class ActionPhase implements GamePhaseHandler {
                 .getOccupiedTileByPlayer(currentPlayer)
                 .getAction();
 
-        // si può cancellare?
         if (currentAction == null) {
             throw new IllegalStateException("No action associated with the offer tile.");
         }
@@ -123,7 +122,6 @@ public class ActionPhase implements GamePhaseHandler {
     @Override
     public void visit(DrawCardCommand cmd) throws Exception {
         int cardId = cmd.cardId();
-        //ensureActiveTurn();
 
         RowsManager rowsManager = model.getRowsManager();
         Card card = rowsManager.findCardById(cardId)
@@ -138,7 +136,7 @@ public class ActionPhase implements GamePhaseHandler {
 
         model.notifyChange();
 
-        // Dopo ogni pescata, verifichiamo se il turno è finito o deve essere forzatamente terminato
+        //after each draw, verify if the turn is finished or has to be force ended
         checkActionCompletionOrAutoAdvance();
     }
 
@@ -156,7 +154,6 @@ public class ActionPhase implements GamePhaseHandler {
      */
     @Override
     public void visit(EndTurnCommand cmd) throws Exception {
-        //ensureActiveTurn();
 
         if (hasAnyForcedMove()) {
             throw new IllegalStateException("All mandatory draws must be completed before ending the turn");

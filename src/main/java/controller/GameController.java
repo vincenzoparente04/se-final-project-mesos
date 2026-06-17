@@ -202,7 +202,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
         }
     }
 
-    // ─── ClientCommandVisitor: famiglia → handler giusto ─────────────────
+    // ─── ClientCommandVisitor: family command → right handler ─────────────────
 
     /**
      * Entry point for in-game commands. Rejects the command with an error if
@@ -264,7 +264,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
         model.handleCommand(cmd);
     }
 
-    // ─── LobbyCommandVisitor anonimo: solo i 4 lifecycle che ci interessano
+    // ─── LobbyCommandVisitor anonymous: only the 4 interesting lifecycles
 
     /**
      * Handles the four lifecycle events ({@link LeaveCommand},
