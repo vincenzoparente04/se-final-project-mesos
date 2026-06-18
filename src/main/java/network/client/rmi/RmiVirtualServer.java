@@ -104,8 +104,7 @@ public class RmiVirtualServer implements VirtualServer {
             Registry registry = LocateRegistry.getRegistry(host, rmiPort);
             this.serverStub = (GameServerRemote) registry.lookup(SERVICE_NAME);
         } catch (NotBoundException e) {
-            throw new Exception("RMI service '" + SERVICE_NAME
-                    + "' not bound on " + host + ":" + rmiPort, e);
+            throw new Exception("RMI service '" + SERVICE_NAME + "' not bound on " + host + ":" + rmiPort, e);
         } catch (RemoteException e) {
             throw new Exception("Cannot reach RMI registry at " + host + ":" + rmiPort + " (" + e.getMessage() + ")", e);
         }

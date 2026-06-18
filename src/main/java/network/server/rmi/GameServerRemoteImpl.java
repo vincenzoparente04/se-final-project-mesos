@@ -127,5 +127,7 @@ public class GameServerRemoteImpl extends UnicastRemoteObject implements GameSer
     @Override
     public void disconnect(String playerName) throws RemoteException {
         lobbyManager.onDisconnect(playerName);
+        gameQueues.remove(playerName);
+        rmiViews.remove(playerName);
     }
 }

@@ -16,8 +16,6 @@ import java.util.Collections;
  */
 public final class NetworkUtil {
 
-    private NetworkUtil() {}
-
     /**
      * Returns the best-effort local IPv4 address to expose to remote peers.
      * Resolution order:

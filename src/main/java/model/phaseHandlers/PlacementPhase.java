@@ -131,7 +131,7 @@ public class PlacementPhase implements GamePhaseHandler {
                     model.getBoard().getTurnOrderTile().disconnectedReturnTotemAndResolveEffects(p);
                 }
             }
-            // all totems placed → move to action phase
+            // all totems placed -> move to action phase
             model.setPhase(new ActionPhase(model));
             model.notifyChange();
         }
