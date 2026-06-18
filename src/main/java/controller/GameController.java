@@ -217,7 +217,7 @@ public final class GameController implements Runnable, ClientCommandVisitor {
     public void visit(GameCommand cmd) {
         if (suspended) {
             findView(cmd.getPlayerName()).ifPresent(v ->
-                    v.sendError("GAME_SUSPENDED: La partita è sospesa, in attesa di riconnessioni.")
+                    v.sendError("GAME_SUSPENDED: waiting for a reconnection, timer " + SUSPENSION_TIMEOUT_SECONDS + "s")
             );
             return;
         }
