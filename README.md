@@ -1,5 +1,7 @@
 Mesos 
 
+Note: jar files are not uploaded in the repo beacause of github files size limitations.  
+
 Developed features
 - complete rules
 - TUI
