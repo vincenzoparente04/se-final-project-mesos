@@ -240,6 +240,7 @@ ClientMain o-- VirtualServer
 ClientMain o-- LocalGameState
 ClientMain o-- ClientStateListener
 VirtualServer *-- ServerMessageReceiver : owns reader/callback
+VirtualServer ..> LivenessSentinel : heartbeat
 ServerMessageReceiver ..> LocalGameState : update(dto)
 ServerMessageReceiver ..> ClientStateListener : on…()
 ServerMessageReceiver ..> ServerMessage : dispatch

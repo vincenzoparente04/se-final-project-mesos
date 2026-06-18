@@ -327,6 +327,8 @@ ClientCallbackImpl ..> ClientStateListener
 SocketVirtualServer ..> ClientStateListener
 ClientCallbackImpl ..> LocalGameState
 SocketVirtualServer ..> LocalGameState
+SocketVirtualServer *-- LivenessSentinel
+RmiVirtualServer    *-- LivenessSentinel
 
 package "network.server" as pkg_server COLOR_SERVER {
 
@@ -507,6 +509,8 @@ ServerMain ..> ConnectionHandshaker : spawns per socket
 LobbyManager *-- Lobby
 LobbyManager o-- PlayerEntry
 GameServerRemoteImpl o-- RmiVirtualView
+SocketVirtualView *-- LivenessSentinel
+RmiVirtualView    *-- LivenessSentinel
 
 ' hidden link: forza client a sinistra del server
 pkg_client -[hidden]right- pkg_server
