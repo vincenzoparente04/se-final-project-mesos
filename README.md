@@ -4,6 +4,7 @@
 
 A distributed, client-server implementation of the **Mesos** board game, developed as the
 **Software Engineering final project** (Prova Finale di Ingegneria del Software) at **Politecnico di Milano**, 2026.
+Grade: 30/30 cum laude.
 
 ![In-game GUI](docs/screenshots/game.png)
 
